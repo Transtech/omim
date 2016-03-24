@@ -1380,4 +1380,9 @@ extern "C"
     static jfieldID const buildingsField = env->GetFieldID(resultClass, "buildings", "Z");
     env->SetBooleanField(result, buildingsField, buildings);
   }
+
+  JNIEXPORT void JNICALL
+  Java_com_mapswithme_maps_Framework_nativeSetExternalRouter(JNIEnv * env, jclass thiz, jobject router)
+  {
+  }
 } // extern "C"

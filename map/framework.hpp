@@ -562,6 +562,8 @@ public:
   void Save3dMode(bool allow3d, bool allow3dBuildings);
   void Load3dMode(bool & allow3d, bool & allow3dBuildings);
 
+  void SetExternalRouter(routing::IRouter *router) { m_externalRouter = router; }
+
 private:
   void SetRouterImpl(routing::RouterType type);
   void RemoveRoute(bool deactivateFollowing);
@@ -577,6 +579,7 @@ private:
   TRouteBuildingCallback m_routingCallback;
   TRouteProgressCallback m_progressCallback;
   routing::RouterType m_currentRouterType;
+  routing::IRouter *m_externalRouter;
   //@}
 
   DECLARE_THREAD_CHECKER(m_threadChecker);

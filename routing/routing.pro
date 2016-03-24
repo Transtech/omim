@@ -44,6 +44,7 @@ SOURCES += \
     turns_sound_settings.cpp \
     turns_tts_text.cpp \
     vehicle_model.cpp \
+    external_router.cpp
 
 HEADERS += \
     async_router.hpp \
@@ -81,3 +82,4 @@ HEADERS += \
     turns_sound_settings.hpp \
     turns_tts_text.hpp \
     vehicle_model.hpp \
+    external_router.hpp

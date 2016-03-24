@@ -29,13 +29,16 @@ dependencies {
   compile 'com.google.android.gms:play-services-analytics:8.4.0'
   compile 'com.google.android.gms:play-services-plus:8.4.0'
   // 3-party
-  compile 'com.facebook.android:facebook-android-sdk:4.10.0'
+  compile 'com.facebook.android:facebook-android-sdk:4.8.0'
   compile 'com.parse.bolts:bolts-android:1.4.0'
   compile 'com.parse:parse-android:1.13.0'
   compile 'com.google.code.gson:gson:2.6.1'
   compile fileTree(dir: '3rd_party', include: '*.jar')
+
   // BottomSheet
+  compile project(":3rd_party:TransitionsBackport")
   compile project(":3rd_party:BottomSheet")
+
   // LinearLayoutManager allowing wrap_content of RecyclerView-s
   // TODO remove this library when default LinearLayoutManager will be fixed.
   compile 'org.solovyev.android.views:linear-layout-manager:0.5@aar'

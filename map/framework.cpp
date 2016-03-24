@@ -12,6 +12,7 @@
 #include "routing/road_graph_router.hpp"
 #include "routing/route.hpp"
 #include "routing/routing_algorithm.hpp"
+#include "routing/external_router.hpp"
 
 #include "search/intermediate_result.hpp"
 #include "search/result.hpp"
@@ -305,7 +306,7 @@ Framework::Framework()
   routing::RouterDelegate::TPointCheckCallback const routingVisualizerFn = nullptr;
 //#endif
   m_routingSession.Init(routingStatisticsFn, routingVisualizerFn);
-
+  m_externalRouter = nullptr;
   SetRouterImpl(RouterType::Vehicle);
 
   LOG(LDEBUG, ("Routing engine initialized"));
@@ -2032,6 +2033,17 @@ void Framework::SetRouterImpl(RouterType type)
     router = CreatePedestrianAStarBidirectionalRouter(m_model.GetIndex(), countryFileGetter);
     m_routingSession.SetRoutingSettings(routing::GetPedestrianRoutingSettings());
   }
+  else if(type == RouterType::Truck && m_externalRouter != nullptr)
+  {
+    auto localFileGetter = [this](string const & countryFile) -> shared_ptr<LocalCountryFile>
+    {
+      return m_storage.GetLatestLocalFile(CountryFile(countryFile));
+    };
+
+    router.reset(new ExternalRouter(m_externalRouter, &m_model.GetIndex(), countryFileGetter));
+    fetcher.reset(new OnlineAbsentCountriesFetcher(countryFileGetter, localFileGetter));
+    m_routingSession.SetRoutingSettings(routing::GetCarRoutingSettings());
+  }
   else
   {
     auto localFileGetter = [this](string const & countryFile) -> shared_ptr<LocalCountryFile>
@@ -2081,7 +2093,7 @@ void Framework::InsertRoute(Route const & route)
   }
 
   vector<double> turns;
-  if (m_currentRouterType == RouterType::Vehicle)
+  if (m_currentRouterType != RouterType::Pedestrian)
     route.GetTurnsDistances(turns);
 
   df::ColorConstant const routeColor = (m_currentRouterType == RouterType::Pedestrian) ?
@@ -2185,7 +2197,11 @@ RouterType Framework::GetLastUsedRouter() const
 {
   string routerType;
   Settings::Get(kRouterTypeKey, routerType);
-  return (routerType == routing::ToString(RouterType::Pedestrian) ? RouterType::Pedestrian : RouterType::Vehicle);
+  return (routerType == routing::ToString(RouterType::Pedestrian)
+          ? RouterType::Pedestrian
+          : (routerType == routing::ToString(RouterType::Vehicle)
+             ? RouterType::Vehicle
+             : RouterType::Truck));
 }
 
 void Framework::SetLastUsedRouter(RouterType type)

@@ -1,0 +1,67 @@
+/*
+apply plugin: 'com.android.library'
+
+android {
+  // All properties are read from gradle.properties file
+  compileSdkVersion propTargetSdkVersion.toInteger()
+  buildToolsVersion propBuildToolsVersion
+}
+
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath 'com.android.tools.build:gradle:1.3.1'
+    }
+
+    project.ext {
+        compileSdkVersion = 19
+        buildToolsVersion = "19.1"
+        minSdkVersion = 14
+        targetSdkVersion = 19
+    }
+}
+
+def isReleaseBuild() {
+    return version.contains("SNAPSHOT") == false
+}
+
+allprojects {
+
+    repositories {
+        mavenCentral()
+    }
+}
+
+apply plugin: 'android-reporting'
+*/
+buildscript {
+  repositories {
+    mavenCentral()
+  }
+
+  dependencies {
+    classpath 'com.android.tools.build:gradle:1.3.1'
+  }
+}
+
+
+apply plugin: 'com.android.library'
+
+
+dependencies {
+  compile 'com.android.support:support-v4:22.2.0'
+}
+
+
+android {
+  compileSdkVersion propTargetSdkVersion.toInteger()
+  buildToolsVersion propBuildToolsVersion
+
+  defaultConfig {
+    minSdkVersion propMinSdkVersion.toInteger()
+  }
+}
+

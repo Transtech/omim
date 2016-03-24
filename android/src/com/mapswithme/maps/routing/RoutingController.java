@@ -12,11 +12,6 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
-
-import java.util.Calendar;
-import java.util.Locale;
-import java.util.concurrent.TimeUnit;
-
 import com.mapswithme.country.ActiveCountryTree;
 import com.mapswithme.country.StorageOptions;
 import com.mapswithme.maps.Framework;
@@ -32,6 +27,10 @@ import com.mapswithme.util.Utils;
 import com.mapswithme.util.concurrency.UiThread;
 import com.mapswithme.util.statistics.AlohaHelper;
 import com.mapswithme.util.statistics.Statistics;
+
+import java.util.Calendar;
+import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 
 @android.support.annotation.UiThread
 public class RoutingController
@@ -70,7 +69,7 @@ public class RoutingController
      * @param router selected router type. One of {@link Framework#ROUTER_TYPE_VEHICLE} and {@link Framework#ROUTER_TYPE_PEDESTRIAN}.
      * */
     void updateBuildProgress(@IntRange(from = 0, to = 100) int progress,
-                             @IntRange(from = Framework.ROUTER_TYPE_VEHICLE, to = Framework.ROUTER_TYPE_PEDESTRIAN) int router);
+                             @IntRange(from = Framework.ROUTER_TYPE_VEHICLE, to = Framework.ROUTER_TYPE_TRUCK) int router);
   }
 
   private static final RoutingController sInstance = new RoutingController();

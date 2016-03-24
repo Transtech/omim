@@ -42,6 +42,12 @@
     android:layout_height="match_parent"
     android:layout_alignLeft="@id/progress_frame"
     android:orientation="horizontal">
+      <RadioButton
+              android:id="@+id/truck"
+              android:layout_width="@dimen/routing_selector_size"
+              android:layout_height="@dimen/routing_selector_size"
+              tools:button="@drawable/ic_truck"
+              tools:buttonTint="?colorAccent"/>
     <RadioButton
       android:id="@+id/vehicle"
       android:layout_width="@dimen/routing_selector_size"

@@ -3,6 +3,7 @@ package com.mapswithme.maps;
 import com.mapswithme.maps.MapStorage.Index;
 import com.mapswithme.maps.bookmarks.data.DistanceAndAzimut;
 import com.mapswithme.maps.bookmarks.data.MapObject;
+import com.mapswithme.maps.routing.IRouter;
 import com.mapswithme.maps.routing.RoutingInfo;
 import com.mapswithme.util.Constants;
 
@@ -18,6 +19,7 @@ public class Framework
 
   public static final int ROUTER_TYPE_VEHICLE = 0;
   public static final int ROUTER_TYPE_PEDESTRIAN = 1;
+  public static final int ROUTER_TYPE_TRUCK = 2;
 
   @SuppressWarnings("unused")
   public interface OnBalloonListener
@@ -46,6 +48,10 @@ public class Framework
   {
     void onRouteBuildingProgress(float progress);
   }
+
+    public interface ExternalRouter
+    {
+    }
 
   public static class Params3dMode
   {
@@ -175,7 +181,7 @@ public class Framework
   public native static int nativeGetLastUsedRouter();
 
   /**
-   * @return {@link Framework#ROUTER_TYPE_VEHICLE} or {@link Framework#ROUTER_TYPE_PEDESTRIAN}
+   * @return {@link Framework#ROUTER_TYPE_VEHICLE} or {@link Framework#ROUTER_TYPE_PEDESTRIAN} or {@link Framework#ROUTER_TYPE_TRUCK}
    */
   public native static int nativeGetBestRouter(double srcLat, double srcLon, double dstLat, double dstLon);
 
@@ -202,4 +208,6 @@ public class Framework
   public native static void nativeGet3dMode(Params3dMode result);
 
   public native static void nativeSet3dMode(boolean allow3d, boolean allow3dBuildings);
+
+    public native static void nativeSetExternalRouter(IRouter router);
 }

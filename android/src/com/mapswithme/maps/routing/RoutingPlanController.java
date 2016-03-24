@@ -79,7 +79,18 @@ public class RoutingPlanController extends ToolbarController
 
     mRouterTypes = (RadioGroup) planFrame.findViewById(R.id.route_type);
 
-    setupRouterButton(R.id.vehicle, R.drawable.ic_drive, new View.OnClickListener()
+      setupRouterButton(R.id.truck, R.drawable.ic_truck, new View.OnClickListener()
+      {
+          @Override
+          public void onClick(View v)
+          {
+//              AlohaHelper.logClick(AlohaHelper.ROUTING_VEHICLE_SET);
+//              Statistics.INSTANCE.trackEvent(Statistics.EventName.ROUTING_VEHICLE_SET);
+              RoutingController.get().setRouterType(Framework.ROUTER_TYPE_TRUCK);
+          }
+      });
+
+      setupRouterButton(R.id.vehicle, R.drawable.ic_drive, new View.OnClickListener()
     {
       @Override
       public void onClick(View v)
@@ -192,8 +203,9 @@ public class RoutingPlanController extends ToolbarController
   {
     updateProgressLabels();
 
-    boolean vehicle = (router == Framework.ROUTER_TYPE_VEHICLE);
-    mRouterTypes.check(vehicle ? R.id.vehicle : R.id.pedestrian);
+    boolean vehicle = (router == Framework.ROUTER_TYPE_VEHICLE || router == Framework.ROUTER_TYPE_TRUCK);
+    mRouterTypes.check(router == Framework.ROUTER_TYPE_TRUCK ? R.id.truck :
+            (router == Framework.ROUTER_TYPE_VEHICLE ? R.id.vehicle : R.id.pedestrian));
 
     if (!RoutingController.get().isBuilding())
     {

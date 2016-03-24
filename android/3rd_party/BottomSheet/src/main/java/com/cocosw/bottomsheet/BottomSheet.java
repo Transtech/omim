@@ -34,9 +34,9 @@ import android.support.annotation.MenuRes;
 import android.support.annotation.NonNull;
 import android.support.annotation.StringRes;
 import android.support.annotation.StyleRes;
-import android.transition.ChangeBounds;
-import android.transition.Transition;
-import android.transition.TransitionManager;
+import android.support.transition.ChangeBounds;
+import android.support.transition.Transition;
+import android.support.transition.TransitionManager;
 import android.util.DisplayMetrics;
 import android.util.SparseIntArray;
 import android.view.Gravity;
@@ -459,7 +459,7 @@ public class BottomSheet extends Dialog implements DialogInterface {
 
         if (!builder.grid && actions.size() > 0) {
             int groupId = actions.getItem(0).getGroupId();
-            ArrayList<SimpleSectionedGridAdapter.Section> sections = new ArrayList<>();
+            ArrayList<SimpleSectionedGridAdapter.Section> sections = new ArrayList<SimpleSectionedGridAdapter.Section>();
             for (int i = 0; i < actions.size(); i++) {
                 if (actions.getItem(i).getGroupId() != groupId) {
                     groupId = actions.getItem(i).getGroupId();

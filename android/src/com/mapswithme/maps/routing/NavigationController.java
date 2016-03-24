@@ -111,7 +111,8 @@ public class NavigationController
     if (info == null)
       return;
 
-    if (Framework.nativeGetRouter() == Framework.ROUTER_TYPE_VEHICLE)
+    int rt = Framework.nativeGetRouter();
+    if (rt == Framework.ROUTER_TYPE_VEHICLE || rt == Framework.ROUTER_TYPE_TRUCK)
       updateVehicle(info);
     else
       updatePedestrian(info);

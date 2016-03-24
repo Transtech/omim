@@ -16,10 +16,6 @@
 
 package com.cocosw.bottomsheet;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -27,9 +23,12 @@ import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.support.v4.internal.view.SupportMenu;
 import android.view.KeyEvent;
-import android.view.Menu;
 import android.view.MenuItem;
 import android.view.SubMenu;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * @hide
@@ -52,7 +51,7 @@ import android.view.SubMenu;
 
     public ActionMenu(Context context) {
         mContext = context;
-        mItems = new ArrayList<>();
+        mItems = new ArrayList<ActionMenuItem>();
     }
 
     public Context getContext() {
@@ -310,7 +309,7 @@ import android.view.SubMenu;
 
     ActionMenu clone(int size) {
         ActionMenu out = new ActionMenu(getContext());
-        out.mItems = new ArrayList<>(this.mItems.subList(0,size));
+        out.mItems = new ArrayList<ActionMenuItem>(this.mItems.subList(0,size));
         return out;
     }
 
