@@ -10,6 +10,7 @@ string ToString(RouterType type)
     case RouterType::Vehicle: return "Vehicle";
     case RouterType::Pedestrian: return "Pedestrian";
     case RouterType::Truck: return "Truck";
+    case RouterType::Bicycle: return "Bicycle";
   }
   ASSERT(false, ());
   return "Error";

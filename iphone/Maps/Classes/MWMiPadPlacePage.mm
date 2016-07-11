@@ -1,21 +1,18 @@
 #import "Common.h"
 #import "MWMBasePlacePageView.h"
-#import "MWMBookmarkColorViewController.h"
-#import "MWMBookmarkDescriptionViewController.h"
 #import "MWMiPadPlacePage.h"
 #import "MWMPlacePageActionBar.h"
 #import "MWMPlacePageViewManager.h"
-#import "SelectSetVC.h"
+#import "MWMViewController.h"
 #import "UIColor+MapsMeColor.h"
 #import "UIViewController+Navigation.h"
-#import "ViewController.h"
 
 static CGFloat const kLeftOffset = 12.;
 static CGFloat const kTopOffset = 36.;
 static CGFloat const kBottomOffset = 60.;
 static CGFloat const kKeyboardOffset = 12.;
 
-@interface MWMiPadPlacePageViewController : ViewController
+@interface MWMiPadPlacePageViewController : MWMViewController
 
 @property (nonatomic) UIView * placePageView;
 @property (nonatomic) UIView * actionBarView;
@@ -195,57 +192,27 @@ static CGFloat const kKeyboardOffset = 12.;
   }];
 }
 
-- (void)willStartEditingBookmarkTitle
-{
-  [super willStartEditingBookmarkTitle];
-  [self updatePlacePagePosition];
-}
-
-- (void)willFinishEditingBookmarkTitle:(NSString *)title
-{
-  [super willFinishEditingBookmarkTitle:title];
-  [self updatePlacePageLayoutAnimated:NO];
-}
-
 - (void)addBookmark
 {
   [super addBookmark];
-  [self updatePlacePageLayoutAnimated:YES];
+  [self refresh];
 }
 
 - (void)removeBookmark
 {
   [super removeBookmark];
-  [self updatePlacePageLayoutAnimated:YES];
+  [self refresh];
 }
 
 - (void)reloadBookmark
 {
   [super reloadBookmark];
+  [self refresh];
+}
+
+- (void)refresh
+{
   [self updatePlacePageLayoutAnimated:YES];
-}
-
-- (void)changeBookmarkColor
-{
-  MWMBookmarkColorViewController * controller = [[MWMBookmarkColorViewController alloc] initWithNibName:[MWMBookmarkColorViewController className] bundle:nil];
-  controller.iPadOwnerNavigationController = self.navigationController;
-  controller.placePageManager = self.manager;
-  [self.navigationController pushViewController:controller animated:YES];
-}
-
-- (void)changeBookmarkCategory
-{
-  SelectSetVC * controller = [[SelectSetVC alloc] initWithPlacePageManager:self.manager];
-  controller.iPadOwnerNavigationController = self.navigationController;
-  [self.navigationController pushViewController:controller animated:YES];
-}
-
-- (void)changeBookmarkDescription
-{
-  MWMBookmarkDescriptionViewController * controller = [[MWMBookmarkDescriptionViewController alloc] initWithPlacePageManager:self.manager];
-  controller.iPadOwnerNavigationController = self.navigationController;
-  [self.navigationController pushViewController:controller animated:YES];
-  [self updatePlacePageLayoutAnimated:NO];
 }
 
 - (IBAction)didPan:(UIPanGestureRecognizer *)sender
@@ -296,7 +263,7 @@ static CGFloat const kKeyboardOffset = 12.;
   UITableView * featureTable = self.basePlacePageView.featureTable;
   CGFloat const height = self.navigationController.view.height;
   CGFloat const tableContentHeight = featureTable.contentSize.height;
-  CGFloat const headerHeight = self.basePlacePageView.separatorView.maxY;
+  CGFloat const headerHeight = self.basePlacePageView.ppPreview.height;
   CGFloat const actionBarHeight = self.actionBar.height;
   CGFloat const anchorHeight = self.anchorImageView.height;
   CGFloat const availableTableHeight = height - headerHeight - actionBarHeight - anchorHeight;
@@ -311,18 +278,6 @@ static CGFloat const kKeyboardOffset = 12.;
     featureTable.contentInset = UIEdgeInsetsZero;
     featureTable.scrollEnabled = NO;
   }
-}
-
-- (void)keyboardWillShow:(NSNotification *)aNotification
-{
-  [super keyboardWillShow:aNotification];
-  [self updatePlacePageLayoutAnimated:YES];
-}
-
-- (void)keyboardWillHide
-{
-  [super keyboardWillHide];
-  [self updatePlacePageLayoutAnimated:YES];
 }
 
 - (CGFloat)getAvailableHeight

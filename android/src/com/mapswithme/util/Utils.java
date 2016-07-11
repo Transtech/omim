@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.ClipData;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -11,8 +12,12 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Bundle;
 import android.support.annotation.DimenRes;
+import android.support.annotation.NonNull;
+import android.support.annotation.StringRes;
 import android.support.v4.app.NavUtils;
+import android.support.v7.app.AlertDialog;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.TextUtils;
@@ -32,12 +37,18 @@ import java.util.Map;
 
 import com.mapswithme.maps.BuildConfig;
 import com.mapswithme.maps.MwmApplication;
+import com.mapswithme.maps.R;
 import com.mapswithme.maps.activity.CustomNavigateUpListener;
 import com.mapswithme.util.statistics.AlohaHelper;
 
 public class Utils
 {
   private static final String TAG = "Utils";
+
+  public interface Proc<T>
+  {
+    void invoke(T param);
+  }
 
   private Utils() {}
 
@@ -186,7 +197,7 @@ public class Utils
    */
   public static String saveLogToFile()
   {
-    String fullName = MwmApplication.getDataStoragePath() + "log.txt";
+    String fullName = MwmApplication.getSettingsPath() + "log.txt";
     File file = new File(fullName);
     InputStreamReader reader = null;
     FileWriter writer = null;
@@ -308,12 +319,25 @@ public class Utils
     }
   }
 
-  public static void navigateToParent(Activity activity)
+  public static void navigateToParent(@NonNull Activity activity)
   {
     if (activity instanceof CustomNavigateUpListener)
       ((CustomNavigateUpListener) activity).customOnNavigateUp();
     else
       NavUtils.navigateUpFromSameTask(activity);
+  }
+
+  public static void navigateToParent(@NonNull Activity activity, @NonNull Bundle extras)
+  {
+    if (activity instanceof CustomNavigateUpListener)
+    {
+      ((CustomNavigateUpListener) activity).customOnNavigateUp();
+      return;
+    }
+
+    final Intent intent = NavUtils.getParentActivityIntent(activity);
+    intent.putExtras(extras);
+    NavUtils.navigateUpTo(activity, intent);
   }
 
   public static SpannableStringBuilder formatUnitsText(@DimenRes int size, @DimenRes int units, String dimension, String unitText)
@@ -322,5 +346,41 @@ public class Utils
     res.setSpan(new AbsoluteSizeSpan(UiUtils.dimen(size), false), 0, dimension.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
     res.setSpan(new AbsoluteSizeSpan(UiUtils.dimen(units), false), dimension.length(), res.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
     return res;
+  }
+
+  public static void checkConnection(final Context context, final @StringRes int message, final Proc<Boolean> onCheckPassedCallback)
+  {
+    if (ConnectionState.isConnected())
+    {
+      onCheckPassedCallback.invoke(true);
+      return;
+    }
+
+    class Holder
+    {
+      boolean accepted;
+    }
+
+    final Holder holder = new Holder();
+    new AlertDialog.Builder(context)
+                   .setMessage(message)
+                   .setNegativeButton(android.R.string.cancel, null)
+                   .setPositiveButton(R.string.downloader_retry, new DialogInterface.OnClickListener()
+                   {
+                     @Override
+                     public void onClick(DialogInterface dialog, int which)
+                     {
+                       holder.accepted = true;
+                       checkConnection(context, message, onCheckPassedCallback);
+                     }
+                   }).setOnDismissListener(new DialogInterface.OnDismissListener()
+                   {
+                     @Override
+                     public void onDismiss(DialogInterface dialog)
+                     {
+                       if (!holder.accepted)
+                         onCheckPassedCallback.invoke(false);
+                     }
+                   }).show();
   }
 }

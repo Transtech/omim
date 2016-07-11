@@ -15,6 +15,7 @@ node|z1[place=continent]
   text-color: @country_label;
   max-width: 5;
   z-index: 999;
+  -x-me-text-priority:16000;
 }
 
 node|z2[place=continent]
@@ -24,6 +25,7 @@ node|z2[place=continent]
   text-color: @country_label;
   max-width: 5;
   z-index: 999;
+  -x-me-text-priority:16000;
 }
 
 /* COUNTRIES */
@@ -34,6 +36,7 @@ node|z3[place=country]
   font-size: 10;
   text-color: @country_label;
   z-index: 1000;
+  -x-me-text-priority:16000;
 }
 node|z3[place=country]::int_name
 {
@@ -41,6 +44,7 @@ node|z3[place=country]::int_name
   font-size: 8;
   text-color: @country_label;
   z-index: 1000;
+  -x-me-text-priority:16000;
 }
 
 node|z4[place=country]
@@ -49,6 +53,7 @@ node|z4[place=country]
   font-size: 12;
   text-color: @country_label;
   z-index: 1000;
+  -x-me-text-priority:16000;
 }
 
 node|z4[place=country]::int_name
@@ -57,6 +62,7 @@ node|z4[place=country]::int_name
   font-size: 10;
   text-color: @country_label;
   z-index: 1000;
+  -x-me-text-priority:16000;
 }
 
 node|z5[place=country]
@@ -65,6 +71,7 @@ node|z5[place=country]
   font-size: 13;
   text-color: @country_label;
   z-index: 1000;
+  -x-me-text-priority:16000;
 }
 node|z5[place=country]::int_name
 {
@@ -72,6 +79,7 @@ node|z5[place=country]::int_name
   font-size: 11;
   text-color: @country_label;
   z-index: 1000;
+-x-me-text-priority:16000;
 }
 node|z6[place=country]
 {
@@ -79,6 +87,7 @@ node|z6[place=country]
   font-size: 15;
   text-color: @country_label;
   z-index: 1000;
+  -x-me-text-priority:16000;
 }
 node|z6[place=country]::int_name
 {
@@ -86,6 +95,7 @@ node|z6[place=country]::int_name
   font-size: 13;
   text-color: @country_label;
   z-index: 1000;
+  -x-me-text-priority:16000;
 }
 node|z7[place=country]
 {
@@ -93,6 +103,7 @@ node|z7[place=country]
   font-size: 17;
   text-color: @country_label;
   z-index: 1000;
+  -x-me-text-priority:16000;
 }
 node|z7[place=country]::int_name
 {
@@ -100,6 +111,7 @@ node|z7[place=country]::int_name
   font-size: 15;
   text-color: @country_label;
   z-index: 1000;
+  -x-me-text-priority:16000;
 }
 node|z8[place=country]
 {
@@ -107,6 +119,7 @@ node|z8[place=country]
   font-size: 19;
   text-color: @country_label;
   z-index: 1000;
+  -x-me-text-priority:16000;
 }
 node|z8[place=country]::int_name
 {
@@ -114,6 +127,7 @@ node|z8[place=country]::int_name
   font-size: 17;
   text-color: @country_label;
   z-index: 1000;
+  -x-me-text-priority:16000;
 }
 node|z9-[place=country]
 {
@@ -121,6 +135,7 @@ node|z9-[place=country]
   font-size: 21;
   text-color: @country_label;
   z-index: 1000;
+  -x-me-text-priority:16000;
 }
 node|z9-[place=country]::int_name
 {
@@ -128,6 +143,7 @@ node|z9-[place=country]::int_name
   font-size: 19;
   text-color: @country_label;
   z-index: 1000;
+  -x-me-text-priority:16000;
 }
 /* Z-INDEXES */
 
@@ -1143,7 +1159,8 @@ line|z16-17[highway=secondary] {
 line|z15-[highway=bridleway],
 line|z15-[highway=path],
 line|z15-[highway=footway],
-line|z15-[highway=cycleway]  {
+line|z15-[highway=cycleway],
+line|z15-[highway=track]  {
   font-size: 8;
   text: name;
   text-color: @label_medium;
@@ -1154,7 +1171,8 @@ line|z15-[highway=cycleway]  {
 line|z16-17[highway=bridleway],
 line|z16-17[highway=path],
 line|z16-17[highway=footway],
-line|z16-17[highway=cycleway]  {
+line|z16-17[highway=cycleway],
+line|z16-17[highway=track]  {
   font-size: 9;
   text: name;
   text-color: @label_medium;
@@ -1165,7 +1183,8 @@ line|z16-17[highway=cycleway]  {
 line|z18-[highway=bridleway],
 line|z18-[highway=path],
 line|z18-[highway=footway],
-line|z18-[highway=cycleway]  {
+line|z18-[highway=cycleway],
+line|z18-[highway=track]  {
   font-size: 10;
   text: name;
   text-color: @label_medium;
@@ -1374,7 +1393,7 @@ node|z18-[entrance]
 {
   font-size: 10;
   text: ref;
-  text-offset-x: 9;
+  text-offset-x: 10;
   z-index: 10;
   text-color: @building_label;
 }
@@ -1492,7 +1511,7 @@ area|z14-15[natural=bay]
   font-size: 10;
   text-color: @water_label;
   text-halo-opacity: 0.1;
-  text-halo-color: @halo_water_lable;
+  text-halo-color: @halo_water_label;
   text-halo-radius: 0;
 
 }
@@ -1501,187 +1520,172 @@ node|z16-[natural=bay],
 area|z16-[natural=water],
 area|z16-[natural=bay],
 node|z16-[natural=wetland],
-node|z16-[natural=marsh]
 area|z16-[natural=wetland],
-area|z16-[natural=marsh]
 {
   text: name;
   font-size: 11;
   text-color: @water_label;
   text-halo-opacity: 0.1;
-  text-halo-color: @halo_water_lable;
+  text-halo-color: @halo_water_label;
   text-halo-radius: 0;
 }
 
 /* water LABELS */
-line[waterway]
-{
-  text-position: line;
-}
 
 area|z10-[natural=lake][bbox_area>=4000000],
 area|z10-[landuse=reservoir][bbox_area>=4000000],
-area|z10-[natural=water][bbox_area>=4000000]
-{text: name;
-font-size: 9;
-text-color: @water_label;
-z-index: 10000;}
+area|z10-[natural=water][bbox_area>=4000000],
+{
+  text: name;
+  font-size: 9;
+  text-color: @water_label;
+  z-index: 10000;
+}
 
 area|z10-[natural=lake][bbox_area<4000000],
 area|z10-[landuse=reservoir][bbox_area<4000000],
-area|z10-[natural=water][bbox_area<4000000]
-{}
+area|z10-[natural=water][bbox_area<4000000],
+{
+}
 /*
 area|z12-[natural=lake][bbox_area>=10000000],
 area|z12-[landuse=reservoir][bbox_area>=10000000],
 area|z12-[natural=water][bbox_area>=10000000]
-  {text: name;
+{
+  text: name;
   font-size: 10;
   text-color: @water_label;
-  z-index: 300;}
+  z-index: 300;
+}
 
 area|z12-[natural=lake][bbox_area<10000000],
 area|z12-[landuse=reservoir][bbox_area<10000000],
-area|z12-[natural=water][bbox_area<10000000]
-  {}
-  */
+area|z12-[natural=water][bbox_area<10000000],
+{
+}
+*/
 
-line[waterway] {
-    text-position: line;
-    z-index:10000;
+line[waterway]
+{
+  text-position: line;
+  z-index:10000;
 }
 
-line|z11-[waterway=river][!tunnel?] {
+line|z11-[waterway=river],
+line|z11-[waterway=riverbank],
+{
   text: name;
   font-size: 10;
   text-color: @water_label;
   text-halo-opacity: 0.1;
-  text-halo-color: @halo_water_lable;
-  text-halo-radius: 0;
-  z-index: 10000;
-}
-
-line|z11-[waterway=riverbank] {
-  text: name;
-  font-size: 10;
-  text-color: @water_label;
-  text-halo-opacity: 0.1;
-  text-halo-color: @halo_water_lable;
+  text-halo-color: @halo_water_label;
   text-halo-radius: 0;
   z-index: 10000;
 }
 
 line|z13-[waterway=riverbank],
-line|z13-[waterway=river][!tunnel?] {
+line|z13-[waterway=river],
+{
   text: name;
   font-size: 10;
   text-color: @water_label;
   text-halo-opacity: 0.1;
-  text-halo-color: @halo_water_lable;
+  text-halo-color: @halo_water_label;
   text-halo-radius: 0;
   z-index: 10000;
 }
 
 line|z13-[waterway=stream],
-line|z13-[waterway=canal] {
+line|z13-[waterway=canal],
+{
   text: name;
   font-size: 10;
   text-color: @water_label;
   text-halo-opacity: 0.1;
-  text-halo-color: @halo_water_lable;
-  text-halo-radius: 0;
-  z-index: 10000;
-}
-line|z15-[waterway=river][!tunnel?] {
-  text: name;
-  font-size: 12;
-  text-color: @water_label;
-  text-halo-opacity: 0.1;
-  text-halo-color: @halo_water_lable;
+  text-halo-color: @halo_water_label;
   text-halo-radius: 0;
   z-index: 10000;
 }
 
-line|z15-[waterway=riverbank] {
+line|z15-[waterway=river],
+line|z15-[waterway=riverbank],
+{
   text: name;
   font-size: 12;
   text-color: @water_label;
   text-halo-opacity: 0.1;
-  text-halo-color: @halo_water_lable;
+  text-halo-color: @halo_water_label;
   text-halo-radius: 0;
   z-index: 10000;
 }
 
 line|z15-[waterway=stream],
-line|z15-[waterway=canal] {
+line|z15-[waterway=canal],
+{
   text: name;
   font-size: 11;
   text-color: @water_label;
   text-halo-opacity: 0.1;
-  text-halo-color: @halo_water_lable;
-  text-halo-radius: 0;
-  z-index: 10000;
-}
-line|z17-[waterway=river][!tunnel?] {
-  text: name;
-  font-size: 12;
-  text-color: @water_label;
-  text-halo-opacity: 0.1;
-  text-halo-color: @halo_water_lable;
+  text-halo-color: @halo_water_label;
   text-halo-radius: 0;
   z-index: 10000;
 }
 
-line|z17-[waterway=riverbank] {
+line|z17-[waterway=river],
+line|z17-[waterway=riverbank],
+{
   text: name;
   font-size: 12;
   text-color: @water_label;
   text-halo-opacity: 0.1;
-  text-halo-color: @halo_water_lable;
+  text-halo-color: @halo_water_label;
   text-halo-radius: 0;
   z-index: 10000;
 }
 
 line|z17-[waterway=stream],
-line|z17-[waterway=canal] {
+line|z17-[waterway=canal],
+{
   text: name;
   font-size: 11;
   text-color: @water_label;
   text-halo-opacity: 0.1;
-  text-halo-color: @halo_water_lable;
-  text-halo-radius: 0;
-  z-index: 10000;
-}
-line|z18-[waterway=river][!tunnel?] {
-  text: name;
-  font-size: 12;
-  text-color: @water_label;
-  text-halo-opacity: 0.1;
-  text-halo-color: @halo_water_lable;
+  text-halo-color: @halo_water_label;
   text-halo-radius: 0;
   z-index: 10000;
 }
 
-line|z18-[waterway=riverbank] {
+line|z18-[waterway=river],
+line|z18-[waterway=riverbank],
+{
   text: name;
   font-size: 12;
   text-color: @water_label;
   text-halo-opacity: 0.1;
-  text-halo-color: @halo_water_lable;
+  text-halo-color: @halo_water_label;
   text-halo-radius: 0;
   z-index: 10000;
 }
 
 line|z18-[waterway=stream],
-line|z18-[waterway=canal] {
+line|z18-[waterway=canal],
+{
   text: name;
   font-size: 12;
   text-color: @water_label;
   text-halo-opacity: 0.1;
-  text-halo-color: @halo_water_lable;
+  text-halo-color: @halo_water_label;
   text-halo-radius: 0;
   z-index: 10000;
 }
+
+/* Do not draw tunnel waterways */
+
+line[waterway][tunnel]
+{
+  text: none;
+}
+
 /* FERRY */
 
 line|z10-[route=ferry],
@@ -1691,7 +1695,7 @@ line|z10-[route=ferry_motorcar]
   font-size: 9;
   text-color: @water_label;
   text-halo-opacity: 0.0;
-  text-halo-color: @halo_water_lable;
+  text-halo-color: @halo_water_label;
   text-halo-radius: 0.0;
   z-index: 120;
   text-position: line;
@@ -1703,7 +1707,7 @@ line|z15-[route=ferry_motorcar]
   font-size: 9;
   text-color: @water_label;
   text-halo-opacity: 0.0;
-  text-halo-color: @halo_water_lable;
+  text-halo-color: @halo_water_label;
   text-halo-radius: 0.0;
   z-index: 115;
   text-position: line;
@@ -1715,7 +1719,7 @@ line|z17-[route=ferry_motorcar]
   font-size: 10;
   text-color: @water_label;
   text-halo-opacity: 0.0;
-  text-halo-color: @halo_water_lable;
+  text-halo-color: @halo_water_label;
   text-halo-radius: 0.0;
   z-index: 120;
   text-position: line;
@@ -1729,7 +1733,7 @@ area|z10-[natural=water][bbox_area>=100000000000]
 font-size: 20;
 text-color: #090909;
 text-halo-opacity: 0.1;
-text-halo-color: @halo_water_lable;
+text-halo-color: @halo_water_label;
 text-halo-radius: 0;
 z-index: 100000;}
 
@@ -1744,24 +1748,25 @@ area|z10-[natural=water][bbox_area<100000000000]
 area|z14-[leisure=park][name],
 area|z14-[landuse=forest][name] {
   icon-image: park-s.svg;
-  text-offset: 8;
+  text-offset: 6;
   text: name;
-  font-size: 11;
+  font-size: 10;
   text-color: @park_label;
-  text-halo-color: @halo_park_lable;
+  text-halo-color: @halo_park_label;
   text-halo-radius: 0.5;
   text-halo-opacity: 0.8;
+  icon-min-distance: 10;
 }
 area|z14-[leisure=park][!name],
 area|z14-[landuse=forest][!name] {
 }
 area|z14-[leisure=park][name]::int_name,
 area|z14-[landuse=forest][name]::int_name {
-  text-offset: 18;
+  text-offset: 6;
   text: int_name;
   font-size: 10;
   text-color: @park_label;
-  text-halo-color: @halo_park_lable;
+  text-halo-color: @halo_park_label;
   text-halo-radius: 0.5;
   text-halo-opacity: 0.8;
 }
@@ -1772,7 +1777,7 @@ area|z15-[landuse=forest][name] {
   text: name;
   font-size: 11;
   text-color: @park_label;
-  text-halo-color: @halo_park_lable;
+  text-halo-color: @halo_park_label;
   text-halo-radius: 0.5;
   text-halo-opacity: 0.8;
 }
@@ -1782,25 +1787,14 @@ area|z15-[landuse=forest][name]::int_name  {
   font-size: 10;
   text: int_name;
   text-color: @park_label;
-  text-halo-color: @halo_park_lable;
+  text-halo-color: @halo_park_label;
   text-halo-radius: 0.5;
   text-halo-opacity: 0.8;
 }
-/*
-area|z15[leisure=garden][name] {
-  icon-image: garden-m.svg;
-  text-offset: 8;
-  text: name;
-  font-size: 10;
-  text-color: @park_label;
-  text-halo-color: @label_halo_light;
-  text-halo-radius: 0.4;
-  text-halo-opacity: 0.4;
-}
-*/
+
 area|z15[leisure=park][!name],
 area|z15[landuse=forest][!name]
-/*area|z15[leisure=garden][!name]*/ {
+ {
 
 }
 
@@ -1812,7 +1806,7 @@ area|z16[landuse=forest][name]{
   font-size: 11;
   text-color: @park_label;
   text-halo-opacity: 0.8;
-  text-halo-color: @halo_park_lable;
+  text-halo-color: @halo_park_label;
   text-halo-radius: 0.5;
 }
 area|z16[leisure=garden][name] {
@@ -1822,7 +1816,7 @@ area|z16[leisure=garden][name] {
   font-size: 11;
   text-color: @park_label;
   text-halo-opacity: 0.8;
-  text-halo-color: @halo_park_lable;
+  text-halo-color: @halo_park_label;
   text-halo-radius: 0.5;
   icon-min-distance: 10;
 }
@@ -1838,7 +1832,7 @@ area|z16[landuse=forest][name]::int_name {
   font-size: 10;
   text-color: @park_label;
   text-halo-opacity: 0.8;
-  text-halo-color: @halo_park_lable;
+  text-halo-color: @halo_park_label;
   text-halo-radius: 0.5;
 }
 area|z16[leisure=park][!name]::int_name,
@@ -1855,7 +1849,7 @@ area|z17[landuse=forest][name] {
   font-size: 12;
   text-color: @park_label;
   text-halo-opacity: 0.8;
-  text-halo-color: @halo_park_lable;
+  text-halo-color: @halo_park_label;
   text-halo-radius: 0.5;
 }
 
@@ -1866,7 +1860,7 @@ area|z17[leisure=garden][name] {
   font-size: 12;
   text-color: @park_label;
   text-halo-opacity: 0.8;
-  text-halo-color: @halo_park_lable;
+  text-halo-color: @halo_park_label;
   text-halo-radius: 0.5;
   icon-min-distance: 10;
 }
@@ -1885,7 +1879,7 @@ area|z17[leisure=forest][name]::int_name
   font-size: 10;
   text-color: @park_label;
   text-halo-opacity: 0.8;
-  text-halo-color: @halo_park_lable;
+  text-halo-color: @halo_park_label;
   text-halo-radius: 0.5;
 }
 area|z17[leisure=park][!name]::int_name,
@@ -1902,7 +1896,7 @@ area|z18-[landuse=forest]{
   font-size: 13;
   text-color: @park_label;
   text-halo-opacity: 0.8;
-  text-halo-color: @halo_park_lable;
+  text-halo-color: @halo_park_label;
   text-halo-radius: 0.5;
 }
 area|z18-[leisure=garden]{
@@ -1912,7 +1906,7 @@ area|z18-[leisure=garden]{
   font-size: 13;
   text-color: @park_label;
   text-halo-opacity: 0.8;
-  text-halo-color: @halo_park_lable;
+  text-halo-color: @halo_park_label;
   text-halo-radius: 0.5;
 }
 area|z18-[leisure=park]::int_name,
@@ -1923,7 +1917,7 @@ area|z18-[leisure=forest]::int_name {
   font-size: 11;
   text-color: @park_label;
   text-halo-opacity: 0.8;
-  text-halo-color: @halo_park_lable;
+  text-halo-color: @halo_park_label;
   text-halo-radius: 0.5;
 }
 
@@ -1966,6 +1960,12 @@ area|z17-[landuse=vineyard],
 
 
 /* MILITARY */
+area|z16[landuse=military],
+node|z16[landuse=military] {
+  icon-image: military-m.svg;
+  z-index: 1000;
+  icon-min-distance: 10;
+}
 
 area|z17-[landuse=military],
 node|z17-[landuse=military] {

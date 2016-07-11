@@ -115,18 +115,14 @@ template <class DataFacadeT> class MapsMePlugin final : public BasePlugin
     };
 
 public:
-    explicit MapsMePlugin(DataFacadeT *facade, std::string const &baseDir, std::string const & nodeDataFile)
+    explicit MapsMePlugin(DataFacadeT *facade, std::string const &baseDir, osrm::NodeDataVectorT const & nodeData)
         : m_descriptorString("mapsme"), m_facade(facade),
-          m_reader(baseDir + '/' + PACKED_POLYGONS_FILE)
+          m_reader(baseDir + '/' + PACKED_POLYGONS_FILE),
+          m_nodeData(nodeData)
     {
 #ifndef MT_STRUCTURES
         SimpleLogger().Write(logWARNING) << "Multitreaded storage was not set on compile time!!! Do not use osrm-routed in several threads."
 #endif
-        if (!osrm::LoadNodeDataFromFile(nodeDataFile, m_nodeData))
-        {
-          SimpleLogger().Write(logDEBUG) << "Can't load node data";
-          return;
-        }
         ReaderSource<ModelReaderPtr> src(m_reader.GetReader(PACKED_POLYGONS_INFO_TAG));
         rw::Read(src, m_countries);
         m_regions.resize(m_countries.size());
@@ -276,7 +272,7 @@ public:
             osrm::json::Array pointArray;
             pointArray.values.push_back(mwm.second.x);
             pointArray.values.push_back(mwm.second.y);
-            pointArray.values.push_back(m_countries[mwm.first].m_name);
+            pointArray.values.push_back(m_countries[mwm.first].m_countryId);
             json_array.values.push_back(pointArray);
         }
         reply.values["used_mwms"] = json_array;
@@ -291,5 +287,5 @@ public:
     std::string m_descriptorString;
     DataFacadeT * m_facade;
     FilesContainerR m_reader;
-    osrm::NodeDataVectorT m_nodeData;
+    osrm::NodeDataVectorT const & m_nodeData;
 };

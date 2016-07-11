@@ -24,6 +24,7 @@ world  +
         bar  -
         bbq  -
         bench  -
+        bicycle_parking  -
         bicycle_rental  -
         brothel  -
         bureau_de_change  -
@@ -31,10 +32,15 @@ world  +
         cafe  -
         car_rental  -
         car_sharing  -
+        car_wash  -
         casino  -
+        charging_station  -
+        childcare  -
         cinema  -
         clinic  -
         college  -
+        community_centre  -
+        courthouse  -
         dentist  -
         doctors  -
         drinking_water  -
@@ -82,11 +88,9 @@ world  +
         post_box  -
         post_office  -
         pub  -
+        public_bookcase  -
         recycling  -
-        restaurant  +
-            vegan  -
-            vegetarian  -
-            {}
+        restaurant  -
         school  -
         shelter  -
         speed_trap  -
@@ -97,9 +101,13 @@ world  +
         townhall  -
         university  -
         vending_machine  +
+            cigarettes  -
+            drinks  -
             parking_tickets  -
             public_transport_tickets  -
             {}
+        veterinary  -
+        waste_basket  -
         waste_disposal  -
         {}
     area:highway  +
@@ -162,6 +170,8 @@ world  +
         {}
     building  +
         address  -
+        garage  -
+        train_station  -
         {}
     building:part  -
     communication  +
@@ -184,6 +194,9 @@ world  +
         {}
     earthquake:damage  +
         spontaneous_camp  -
+        {}
+    emergency  +
+        phone  -
         {}
     entrance  -
     highway  +
@@ -208,7 +221,6 @@ world  +
             difficult_alpine_hiking  -
             hiking  -
             mountain_hiking  -
-            no-access  -
             permissive  -
             tunnel  -
             {}
@@ -229,8 +241,6 @@ world  +
         path  +
             alpine_hiking  -
             bicycle  -
-            bicycle-bridge  -
-            bicycle-tunnel  -
             bridge  -
             demanding_alpine_hiking  -
             demanding_mountain_hiking  -
@@ -238,7 +248,6 @@ world  +
             hiking  -
             horse  -
             mountain_hiking  -
-            no-access  -
             permissive  -
             tunnel  -
             {}
@@ -263,6 +272,7 @@ world  +
             bridge  -
             tunnel  -
             {}
+        rest_area  -
         road  +
             bridge  -
             tunnel  -
@@ -320,6 +330,7 @@ world  +
             permissive  -
             tunnel  -
             {}
+        traffic_signals  -
         trunk  +
             bridge  -
             tunnel  -
@@ -333,6 +344,8 @@ world  +
             bridge  -
             tunnel  -
             {}
+        world_level  -
+        world_towns_level  -
         {}
     historic  +
         archaeological_site  -
@@ -350,10 +363,13 @@ world  +
         wayside_shrine  -
         {}
     hwtag  +
+        bidir_bicycle  -
         lit  -
+        nobicycle  -
         nofoot  -
         oneway  -
         private  -
+        yesbicycle  -
         yesfoot  -
         {}
     internet_access  +
@@ -407,6 +423,7 @@ world  +
         dog_park  +
             tennis  -
             {}
+        fitness_centre  -
         garden  -
         golf_course  -
         landscape_reserve  -
@@ -426,8 +443,14 @@ world  +
             tennis  -
             {}
         recreation_ground  -
+        sauna  -
         slipway  -
-        sports_centre  -
+        sports_centre  +
+            climbing  -
+            shooting  -
+            swimming  -
+            yoga  -
+            {}
         stadium  -
         swimming_pool  -
         track  -
@@ -436,15 +459,17 @@ world  +
     man_made  +
         breakwater  -
         cairn  -
+        chimney  -
         cutline  -
         lighthouse  -
         pier  -
         pipeline  +
             overground  -
             {}
-        survey_point  -
+        tower  -
         wastewater_plant  -
         water_tower  -
+        water_well  -
         windmill  -
         {}
     mapswithme  +
@@ -474,7 +499,6 @@ world  +
         heath  -
         lake  -
         land  -
-        marsh  -
         meadow  -
         orchard  -
         peak  -
@@ -488,9 +512,9 @@ world  +
         vineyard  -
         volcano  -
         water  -
-        waterfall  -
         wetland  +
             bog  -
+            marsh  -
             {}
         wood  +
             coniferous  -
@@ -574,8 +598,14 @@ world  +
         minor_line  -
         pole  -
         station  -
-        sub_station  -
+        substation  -
         tower  -
+        {}
+    psurface  +
+        paved_bad  -
+        paved_good  -
+        unpaved_bad  -
+        unpaved_good  -
         {}
     public_transport  +
         platform  -
@@ -705,6 +735,7 @@ world  +
             motor_vehicle  -
             motorcar  -
             {}
+        shuttle_train  -
         {}
     shop  +
         alcohol  -
@@ -712,17 +743,24 @@ world  +
         beauty  -
         beverages  -
         bicycle  -
+        bookmaker  -
         books  -
         butcher  -
         car  -
-        car_repair  -
+        car_parts  -
+        car_repair  +
+            tyres  -
+            {}
         chemist  -
         clothes  -
         computer  -
         confectionery  -
         convenience  -
+        copyshop  -
+        cosmetics  -
         department_store  -
         doityourself  -
+        dry_cleaning  -
         electronics  -
         florist  -
         furniture  -
@@ -737,10 +775,21 @@ world  +
         mall  -
         mobile_phone  -
         optician  -
+        outdoor  -
+        pet  -
+        photo  -
+        seafood  -
         shoes  -
         sports  -
         supermarket  -
+        ticket  -
         toys  -
+        travel_agency  -
+        tyres  -
+        wine  -
+        {}
+    sponsored  +
+        booking  -
         {}
     sport  +
         american_football  -
@@ -768,22 +817,31 @@ world  +
         {}
     tourism  +
         alpine_hut  -
+        apartment  -
         artwork  -
         attraction  -
         camp_site  -
         caravan_site  -
+        chalet  -
         guest_house  -
         hostel  -
         hotel  -
         information  +
+            board  -
             guidepost  -
+            map  -
             office  -
             {}
         motel  -
         museum  -
         picnic_site  -
+        resort  -
         viewpoint  -
         zoo  -
+        {}
+    traffic_calming  +
+        bump  -
+        hump  -
         {}
     waterway  +
         canal  +
@@ -810,5 +868,10 @@ world  +
             {}
         waterfall  -
         weir  -
+        {}
+    wheelchair  +
+        limited  -
+        no  -
+        yes  -
         {}
     {}

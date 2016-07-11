@@ -11,18 +11,27 @@
   return self;
 }
 
-- (instancetype)initWithCoder:(NSCoder *)aDecoder
+- (void)awakeFromNib
 {
-  self = [super initWithCoder:aDecoder];
-  if (self)
-    [self configure];
-  return self;
+  [self configure];
 }
 
 - (void)configure
 {
+  self.backgroundColor = [UIColor white];
+  self.textLabel.textColor = [UIColor blackPrimaryText];
+  self.detailTextLabel.textColor = [UIColor blackSecondaryText];
   self.selectedBackgroundView = [[UIView alloc] init];
   self.selectedBackgroundView.backgroundColor = [UIColor pressBackground];
+}
+
+@end
+
+@implementation MWMTableViewSubtitleCell
+
+- (instancetype)initWithStyle:(UITableViewCellStyle)style reuseIdentifier:(NSString *)reuseIdentifier
+{
+  return [super initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:reuseIdentifier];
 }
 
 @end

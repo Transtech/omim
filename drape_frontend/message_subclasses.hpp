@@ -1,23 +1,24 @@
 #pragma once
 
-#include "drape_frontend/gui/country_status_helper.hpp"
 #include "drape_frontend/gui/layer_render.hpp"
 #include "drape_frontend/gui/skin.hpp"
 
 #include "drape_frontend/color_constants.hpp"
 #include "drape_frontend/gps_track_point.hpp"
 #include "drape_frontend/gps_track_shape.hpp"
-#include "drape_frontend/route_builder.hpp"
-#include "drape_frontend/my_position.hpp"
-#include "drape_frontend/selection_shape.hpp"
 #include "drape_frontend/message.hpp"
-#include "drape_frontend/viewport.hpp"
+#include "drape_frontend/my_position.hpp"
+#include "drape_frontend/overlay_batcher.hpp"
+#include "drape_frontend/route_builder.hpp"
+#include "drape_frontend/selection_shape.hpp"
 #include "drape_frontend/tile_utils.hpp"
 #include "drape_frontend/user_marks_provider.hpp"
+#include "drape_frontend/viewport.hpp"
 
 #include "geometry/polyline2d.hpp"
 #include "geometry/rect2d.hpp"
 #include "geometry/screenbase.hpp"
+#include "geometry/triangle2d.hpp"
 
 #include "drape/glstate.hpp"
 #include "drape/pointers.hpp"
@@ -87,34 +88,23 @@ private:
   TileKey m_tileKey;
 };
 
-class TileReadStartMessage : public BaseTileMessage
-{
-public:
-  TileReadStartMessage(TileKey const & key)
-    : BaseTileMessage(key) {}
-
-  Type GetType() const override { return Message::TileReadStarted; }
-};
-
-class TileReadEndMessage : public BaseTileMessage
-{
-public:
-  TileReadEndMessage(TileKey const & key)
-    : BaseTileMessage(key) {}
-
-  Type GetType() const override { return Message::TileReadEnded; }
-};
-
 class FinishReadingMessage : public Message
 {
 public:
-  template<typename T> FinishReadingMessage(T && tiles)
+  FinishReadingMessage() = default;
+  Type GetType() const override { return Message::FinishReading; }
+};
+
+class FinishTileReadMessage : public Message
+{
+public:
+  template<typename T> FinishTileReadMessage(T && tiles)
     : m_tiles(forward<T>(tiles))
   {}
 
-  Type GetType() const override { return Message::FinishReading; }
+  Type GetType() const override { return Message::FinishTileRead; }
 
-  TTilesCollection const & GetTiles() { return m_tiles; }
+  TTilesCollection const & GetTiles() const { return m_tiles; }
   TTilesCollection && MoveTiles() { return move(m_tiles); }
 
 private:
@@ -138,6 +128,18 @@ public:
 private:
   dp::GLState m_state;
   drape_ptr<dp::RenderBucket> m_buffer;
+};
+
+class FlushOverlaysMessage : public Message
+{
+public:
+  FlushOverlaysMessage(TOverlaysRenderData && data) : m_data(move(data)) {}
+
+  Type GetType() const override { return Message::FlushOverlays; }
+  TOverlaysRenderData && AcceptRenderData() { return move(m_data); }
+
+private:
+  TOverlaysRenderData m_data;
 };
 
 class InvalidateRectMessage : public Message
@@ -257,34 +259,37 @@ private:
 class GuiLayerRecachedMessage : public Message
 {
 public:
-  GuiLayerRecachedMessage(drape_ptr<gui::LayerRenderer> && renderer)
-    : m_renderer(move(renderer)) {}
+  GuiLayerRecachedMessage(drape_ptr<gui::LayerRenderer> && renderer, bool needResetOldGui)
+    : m_renderer(move(renderer))
+    , m_needResetOldGui(needResetOldGui)
+  {}
 
   Type GetType() const override { return Message::GuiLayerRecached; }
 
   drape_ptr<gui::LayerRenderer> && AcceptRenderer() { return move(m_renderer); }
+  bool NeedResetOldGui() const { return m_needResetOldGui; }
 
 private:
   drape_ptr<gui::LayerRenderer> m_renderer;
+  bool const m_needResetOldGui;
 };
 
-class GuiRecacheMessage : public BaseBlockingMessage
+class GuiRecacheMessage : public Message
 {
 public:
-  GuiRecacheMessage(Blocker & blocker, gui::TWidgetsInitInfo const & initInfo, gui::TWidgetsSizeInfo & resultInfo)
-    : BaseBlockingMessage(blocker)
-    , m_initInfo(initInfo)
-    , m_sizeInfo(resultInfo)
-  {
-  }
+  GuiRecacheMessage(gui::TWidgetsInitInfo const & initInfo, bool needResetOldGui)
+    : m_initInfo(initInfo)
+    , m_needResetOldGui(needResetOldGui)
+  {}
 
   Type GetType() const override { return Message::GuiRecache;}
+
   gui::TWidgetsInitInfo const & GetInitInfo() const { return m_initInfo; }
-  gui::TWidgetsSizeInfo & GetSizeInfoMap() const { return m_sizeInfo; }
+  bool NeedResetOldGui() const { return m_needResetOldGui; }
 
 private:
   gui::TWidgetsInitInfo m_initInfo;
-  gui::TWidgetsSizeInfo & m_sizeInfo;
+  bool const m_needResetOldGui;
 };
 
 class GuiLayerLayoutMessage : public Message
@@ -303,46 +308,78 @@ private:
   gui::TWidgetsLayoutInfo m_layoutInfo;
 };
 
-class CountryInfoUpdateMessage : public Message
+class ShowChoosePositionMarkMessage : public Message
 {
 public:
-  CountryInfoUpdateMessage()
-    : m_needShow(false)
+  ShowChoosePositionMarkMessage() = default;
+  Type GetType() const override { return Message::ShowChoosePositionMark; }
+};
+
+class SetKineticScrollEnabledMessage : public Message
+{
+public:
+  SetKineticScrollEnabledMessage(bool enabled)
+    : m_enabled(enabled)
   {}
 
-  CountryInfoUpdateMessage(gui::CountryInfo const & info, bool isCurrentCountry)
-    : m_countryInfo(info)
-    , m_isCurrentCountry(isCurrentCountry)
-    , m_needShow(true)
-  {}
-
-  Type GetType() const override { return Message::CountryInfoUpdate;}
-  gui::CountryInfo const & GetCountryInfo() const { return m_countryInfo; }
-  bool IsCurrentCountry() const { return m_isCurrentCountry; }
-  bool NeedShow() const { return m_needShow; }
+  Type GetType() const override { return Message::SetKineticScrollEnabled; }
+  bool IsEnabled() const { return m_enabled; }
 
 private:
-  gui::CountryInfo m_countryInfo;
-  bool m_isCurrentCountry;
-  bool m_needShow;
+  bool m_enabled;
 };
 
-class CountryStatusRecacheMessage : public Message
+class SetAddNewPlaceModeMessage : public Message
 {
 public:
-  CountryStatusRecacheMessage() {}
-  Type GetType() const override { return Message::CountryStatusRecache ;}
+  SetAddNewPlaceModeMessage(bool enable, vector<m2::TriangleD> && boundArea, bool enableKineticScroll,
+                            bool hasPosition, m2::PointD const & position)
+    : m_enable(enable)
+    , m_boundArea(move(boundArea))
+    , m_enableKineticScroll(enableKineticScroll)
+    , m_hasPosition(hasPosition)
+    , m_position(position)
+  {}
+
+  Type GetType() const override { return Message::SetAddNewPlaceMode; }
+  vector<m2::TriangleD> && AcceptBoundArea() { return move(m_boundArea); }
+  bool IsEnabled() const { return m_enable; }
+  bool IsKineticScrollEnabled() const { return m_enableKineticScroll; }
+  bool HasPosition() const { return m_hasPosition; }
+  m2::PointD const & GetPosition() const { return m_position; }
+
+private:
+  bool m_enable;
+  vector<m2::TriangleD> m_boundArea;
+  bool m_enableKineticScroll;
+  bool m_hasPosition;
+  m2::PointD m_position;
 };
 
-class MyPositionShapeMessage : public Message
+class BlockTapEventsMessage : public Message
 {
 public:
-  MyPositionShapeMessage(drape_ptr<MyPosition> && shape, drape_ptr<SelectionShape> && selection)
+  BlockTapEventsMessage(bool block)
+    : m_needBlock(block)
+  {}
+
+  Type GetType() const override { return Message::BlockTapEvents; }
+
+  bool NeedBlock() const { return m_needBlock; }
+
+private:
+  bool const m_needBlock;
+};
+
+class MapShapesMessage : public Message
+{
+public:
+  MapShapesMessage(drape_ptr<MyPosition> && shape, drape_ptr<SelectionShape> && selection)
     : m_shape(move(shape))
     , m_selection(move(selection))
   {}
 
-  Type GetType() const override { return Message::MyPositionShape; }
+  Type GetType() const override { return Message::MapShapes; }
 
   drape_ptr<MyPosition> && AcceptShape() { return move(m_shape); }
   drape_ptr<SelectionShape> AcceptSelection() { return move(m_selection); }
@@ -352,42 +389,25 @@ private:
   drape_ptr<SelectionShape> m_selection;
 };
 
-class StopRenderingMessage : public Message
-{
-public:
-  StopRenderingMessage(){}
-  Type GetType() const override { return Message::StopRendering; }
-};
-
 class ChangeMyPositionModeMessage : public Message
 {
 public:
   enum EChangeType
   {
-    TYPE_NEXT,
-    TYPE_CANCEL,
-    TYPE_STOP_FOLLOW,
-    TYPE_INVALIDATE
+    SwitchNextMode,
+    LoseLocation,
+    StopFollowing
   };
 
   explicit ChangeMyPositionModeMessage(EChangeType changeType)
     : m_changeType(changeType)
-    , m_preferredZoomLevel(-1)
-  {}
-
-  explicit ChangeMyPositionModeMessage(EChangeType changeType, int zoomLevel)
-    : m_changeType(changeType)
-    , m_preferredZoomLevel(zoomLevel)
   {}
 
   EChangeType GetChangeType() const { return m_changeType; }
   Type GetType() const override { return Message::ChangeMyPostitionMode; }
 
-  int GetPreferredZoomLevel() const { return m_preferredZoomLevel; }
-
 private:
   EChangeType const m_changeType;
-  int m_preferredZoomLevel;
 };
 
 class CompassInfoMessage : public Message
@@ -451,31 +471,33 @@ class SelectObjectMessage : public Message
 {
 public:
   struct DismissTag {};
+
   SelectObjectMessage(DismissTag)
-    : SelectObjectMessage(SelectionShape::OBJECT_EMPTY, m2::PointD::Zero(), false, true)
+    : m_selected(SelectionShape::OBJECT_EMPTY)
+    , m_glbPoint(m2::PointD::Zero())
+    , m_isAnim(false)
+    , m_isDismiss(true)
   {}
 
-  SelectObjectMessage(SelectionShape::ESelectedObject selectedObject, m2::PointD const & glbPoint, bool isAnim)
-    : SelectObjectMessage(selectedObject, glbPoint, isAnim, false)
+  SelectObjectMessage(SelectionShape::ESelectedObject selectedObject, m2::PointD const & glbPoint, FeatureID const & featureID,  bool isAnim)
+    : m_selected(selectedObject)
+    , m_glbPoint(glbPoint)
+    , m_featureID(featureID)
+    , m_isAnim(isAnim)
+    , m_isDismiss(false)
   {}
 
   Type GetType() const override { return SelectObject; }
   m2::PointD const & GetPosition() const { return m_glbPoint; }
   SelectionShape::ESelectedObject GetSelectedObject() const { return m_selected; }
+  FeatureID const & GetFeatureID() const { return m_featureID; }
   bool IsAnim() const { return m_isAnim; }
   bool IsDismiss() const { return m_isDismiss; }
 
 private:
-  SelectObjectMessage(SelectionShape::ESelectedObject obj, m2::PointD const & pt, bool isAnim, bool isDismiss)
-    : m_selected(obj)
-    , m_glbPoint(pt)
-    , m_isAnim(isAnim)
-    , m_isDismiss(isDismiss)
-  {}
-
-private:
   SelectionShape::ESelectedObject m_selected;
   m2::PointD m_glbPoint;
+  FeatureID m_featureID;
   bool m_isAnim;
   bool m_isDismiss;
 };
@@ -524,10 +546,12 @@ private:
 class AddRouteMessage : public Message
 {
 public:
-  AddRouteMessage(m2::PolylineD const & routePolyline, vector<double> const & turns, df::ColorConstant color)
+  AddRouteMessage(m2::PolylineD const & routePolyline, vector<double> const & turns,
+                  df::ColorConstant color, df::RoutePattern const & pattern)
     : m_routePolyline(routePolyline)
     , m_color(color)
     , m_turns(turns)
+    , m_pattern(pattern)
   {}
 
   Type GetType() const override { return Message::AddRoute; }
@@ -535,11 +559,13 @@ public:
   m2::PolylineD const & GetRoutePolyline() { return m_routePolyline; }
   df::ColorConstant GetColor() const { return m_color; }
   vector<double> const & GetTurns() const { return m_turns; }
+  df::RoutePattern const & GetPattern() const { return m_pattern; }
 
 private:
   m2::PolylineD m_routePolyline;
   df::ColorConstant m_color;
   vector<double> m_turns;
+  df::RoutePattern m_pattern;
 };
 
 class CacheRouteSignMessage : public Message
@@ -619,24 +645,18 @@ public:
 class FollowRouteMessage : public Message
 {
 public:
-  FollowRouteMessage(int preferredZoomLevel, int preferredZoomLevelIn3d, double rotationAngle, double angleFOV)
+  FollowRouteMessage(int preferredZoomLevel, int preferredZoomLevelIn3d)
     : m_preferredZoomLevel(preferredZoomLevel)
     , m_preferredZoomLevelIn3d(preferredZoomLevelIn3d)
-    , m_rotationAngle(rotationAngle)
-    , m_angleFOV(angleFOV)
   {}
 
   Type GetType() const override { return Message::FollowRoute; }
   int GetPreferredZoomLevel() const { return m_preferredZoomLevel; }
   int GetPreferredZoomLevelIn3d() const { return m_preferredZoomLevelIn3d; }
-  double GetRotationAngle() const { return m_rotationAngle; }
-  double GetAngleFOV() const { return m_angleFOV; }
 
 private:
   int const m_preferredZoomLevel;
   int const m_preferredZoomLevelIn3d;
-  double const m_rotationAngle;
-  double const m_angleFOV;
 };
 
 class InvalidateTexturesMessage : public BaseBlockingMessage
@@ -668,24 +688,18 @@ public:
 class Allow3dModeMessage : public Message
 {
 public:
-  Allow3dModeMessage(bool allowPerspective, bool allow3dBuildings, double rotationAngle, double angleFOV)
+  Allow3dModeMessage(bool allowPerspective, bool allow3dBuildings)
     : m_allowPerspective(allowPerspective)
     , m_allow3dBuildings(allow3dBuildings)
-    , m_rotationAngle(rotationAngle)
-    , m_angleFOV(angleFOV)
   {}
 
   Type GetType() const override { return Message::Allow3dMode; }
   bool AllowPerspective() const { return m_allowPerspective; }
   bool Allow3dBuildings() const { return m_allow3dBuildings; }
-  double GetRotationAngle() const { return m_rotationAngle; }
-  double GetAngleFOV() const { return m_angleFOV; }
 
 private:
   bool const m_allowPerspective;
   bool const m_allow3dBuildings;
-  double const m_rotationAngle;
-  double const m_angleFOV;
 };
 
 class Allow3dBuildingsMessage : public Message
@@ -705,19 +719,9 @@ private:
 class EnablePerspectiveMessage : public Message
 {
 public:
-  EnablePerspectiveMessage(double rotationAngle, double angleFOV)
-    : m_rotationAngle(rotationAngle)
-    , m_angleFOV(angleFOV)
-  {}
+  EnablePerspectiveMessage() = default;
 
   Type GetType() const override { return Message::EnablePerspective; }
-
-  double GetRotationAngle() const { return m_rotationAngle; }
-  double GetAngleFOV() const { return m_angleFOV; }
-
-private:
-  double const m_rotationAngle;
-  double const m_angleFOV;
 };
 
 class CacheGpsTrackPointsMessage : public Message
@@ -767,6 +771,34 @@ class ClearGpsTrackPointsMessage : public Message
 public:
   ClearGpsTrackPointsMessage(){}
   Type GetType() const override { return Message::ClearGpsTrackPoints; }
+};
+
+class SetTimeInBackgroundMessage : public Message
+{
+public:
+  explicit SetTimeInBackgroundMessage(double time)
+    : m_time(time)
+  {}
+
+  Type GetType() const override { return Message::SetTimeInBackground; }
+  double GetTime() const { return m_time; }
+
+private:
+  double m_time;
+};
+
+class SetDisplacementModeMessage : public Message
+{
+public:
+  explicit SetDisplacementModeMessage(int mode)
+    : m_mode(mode)
+  {}
+
+  Type GetType() const override { return Message::SetDisplacementMode; }
+  int GetMode() const { return m_mode; }
+
+private:
+  int m_mode;
 };
 
 } // namespace df

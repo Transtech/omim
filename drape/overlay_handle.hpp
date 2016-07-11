@@ -14,10 +14,10 @@
 
 #include "base/buffer_vector.hpp"
 
-#include "std/chrono.hpp"
-
 namespace dp
 {
+
+//#define DEBUG_OVERLAYS_OUTPUT
 
 enum OverlayRank
 {
@@ -39,10 +39,8 @@ class OverlayHandle
 public:
   typedef vector<m2::RectF> Rects;
 
-  OverlayHandle(FeatureID const & id,
-                dp::Anchor anchor,
-                uint64_t priority,
-                bool isBillboard);
+  OverlayHandle(FeatureID const & id, dp::Anchor anchor,
+                uint64_t priority, bool isBillboard);
 
   virtual ~OverlayHandle() {}
 
@@ -56,7 +54,7 @@ public:
   virtual bool Update(ScreenBase const & /*screen*/) { return true; }
 
   virtual m2::RectD GetPixelRect(ScreenBase const & screen, bool perspective) const = 0;
-  virtual void GetPixelShape(ScreenBase const & screen, Rects & rects, bool perspective) const = 0;
+  virtual void GetPixelShape(ScreenBase const & screen, bool perspective, Rects & rects) const = 0;
 
   double GetPivotZ() const { return m_pivotZ; }
   void SetPivotZ(double pivotZ) { m_pivotZ = pivotZ; }
@@ -64,15 +62,14 @@ public:
   double GetExtendingSize() const { return m_extendingSize; }
   void SetExtendingSize(double extendingSize) { m_extendingSize = extendingSize; }
   m2::RectD GetExtendedPixelRect(ScreenBase const & screen) const;
-  void GetExtendedPixelShape(ScreenBase const & screen, Rects & rects) const;
+  Rects const & GetExtendedPixelShape(ScreenBase const & screen) const;
 
   bool IsIntersect(ScreenBase const & screen, ref_ptr<OverlayHandle> const h) const;
 
   virtual bool IndexesRequired() const { return true; }
   void * IndexStorage(uint32_t size);
   void GetElementIndexes(ref_ptr<IndexBufferMutator> mutator) const;
-  virtual void GetAttributeMutation(ref_ptr<AttributeBufferMutator> mutator,
-                                    ScreenBase const & screen) const;
+  virtual void GetAttributeMutation(ref_ptr<AttributeBufferMutator> mutator) const;
 
   bool HasDynamicAttributes() const;
   void AddDynamicAttribute(BindingInfo const & binding, uint32_t offset, uint32_t count);
@@ -90,7 +87,14 @@ public:
   int GetOverlayRank() const { return m_overlayRank; }
   void SetOverlayRank(int overlayRank) { m_overlayRank = overlayRank; }
 
-  bool IsMinVisibilityTimeUp() const;
+  void SetCachingEnable(bool enable);
+
+  int GetDisplacementMode() const { return m_displacementMode; }
+  void SetDisplacementMode(int mode) { m_displacementMode = mode; }
+
+#ifdef DEBUG_OVERLAYS_OUTPUT
+  virtual string GetOverlayDebugInfo() { return ""; }
+#endif
 
 protected:
   FeatureID const m_id;
@@ -101,8 +105,6 @@ protected:
   double m_extendingSize;
   double m_pivotZ;
 
-  steady_clock::time_point m_visibilityTimestamp;
-
   typedef pair<BindingInfo, MutateRegion> TOffsetNode;
   TOffsetNode const & GetOffsetNode(uint8_t bufferID) const;
 
@@ -112,6 +114,7 @@ protected:
 private:
   bool const m_isBillboard;
   bool m_isVisible;
+  int m_displacementMode;
 
   dp::IndexStorage m_indexes;
   struct LessOffsetNode
@@ -125,6 +128,12 @@ private:
   struct OffsetNodeFinder;
 
   set<TOffsetNode, LessOffsetNode> m_offsets;
+
+  bool m_enableCaching;
+  mutable Rects m_extendedShapeCache;
+  mutable bool m_extendedShapeDirty;
+  mutable m2::RectD m_extendedRectCache;
+  mutable bool m_extendedRectDirty;
 };
 
 class SquareHandle : public OverlayHandle
@@ -132,19 +141,26 @@ class SquareHandle : public OverlayHandle
   using TBase = OverlayHandle;
 
 public:
-  SquareHandle(FeatureID const & id,
-               dp::Anchor anchor,
-               m2::PointD const & gbPivot,
-               m2::PointD const & pxSize,
-               uint64_t priority,
+  SquareHandle(FeatureID const & id, dp::Anchor anchor, m2::PointD const & gbPivot,
+               m2::PointD const & pxSize, uint64_t priority, bool isBound, string const & debugStr,
                bool isBillboard = false);
 
-  virtual m2::RectD GetPixelRect(ScreenBase const & screen, bool perspective) const override;
-  virtual void GetPixelShape(ScreenBase const & screen, Rects & rects, bool perspective) const override;
+  m2::RectD GetPixelRect(ScreenBase const & screen, bool perspective) const override;
+  void GetPixelShape(ScreenBase const & screen, bool perspective, Rects & rects) const override;
+  bool IsBound() const override;
+
+#ifdef DEBUG_OVERLAYS_OUTPUT
+  virtual string GetOverlayDebugInfo() override;
+#endif
 
 private:
   m2::PointD m_gbPivot;
   m2::PointD m_pxHalfSize;
+  bool m_isBound;
+
+#ifdef DEBUG_OVERLAYS_OUTPUT
+  string m_debugStr;
+#endif
 };
 
 uint64_t CalculateOverlayPriority(int minZoomLevel, uint8_t rank, float depth);

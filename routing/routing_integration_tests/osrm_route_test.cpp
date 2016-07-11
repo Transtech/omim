@@ -11,8 +11,8 @@ namespace
   UNIT_TEST(StrangeCaseInAfrica)
   {
     integration::CalculateRouteAndTestRouteLength(
-        integration::GetOsrmComponents(), MercatorBounds::FromLatLon(19.207890000000002573, 30.506630000000001246), {0., 0.},
-        MercatorBounds::FromLatLon(19.172889999999998878, 30.473150000000000404), 7250.);
+        integration::GetOsrmComponents(), MercatorBounds::FromLatLon(19.20789, 30.50663), {0., 0.},
+        MercatorBounds::FromLatLon(19.17289, 30.47315), 10283.7);
   }
 
   UNIT_TEST(MoscowShortRoadUnpacking)
@@ -60,6 +60,14 @@ namespace
     integration::CalculateRouteAndTestRouteLength(
         integration::GetOsrmComponents(), MercatorBounds::FromLatLon(37.33409, -122.03458), {0., 0.},
         MercatorBounds::FromLatLon(37.33498, -122.03575), 1438.);
+  }
+
+  // Path in the last map through the other map.
+  UNIT_TEST(RussiaUfaToUstKatavTest)
+  {
+    integration::CalculateRouteAndTestRouteLength(
+        integration::GetOsrmComponents(), MercatorBounds::FromLatLon(54.7304, 55.9554), {0., 0.},
+        MercatorBounds::FromLatLon(54.9228, 58.1469), 164667.);
   }
 
   // ASSERT on pedestrian edges
@@ -113,6 +121,13 @@ namespace
                                                   {37.40993977728661, 67.644784047393685}, 14296.);
   }
 
+  UNIT_TEST(NederlandLeeuwardenToDenOeverTest)
+  {
+    integration::CalculateRouteAndTestRouteLength(integration::GetOsrmComponents(),
+                                                  MercatorBounds::FromLatLon(53.2076, 5.7082), {0., 0.},
+                                                  MercatorBounds::FromLatLon(52.9337, 5.0308), 59500.);
+  }
+
   UNIT_TEST(RussiaMoscowGerPanfilovtsev22SolodchaPravdiRouteTest)
   {
     integration::CalculateRouteAndTestRouteLength(
@@ -151,17 +166,13 @@ namespace
         MercatorBounds::FromLatLon(48.86123, 2.34129), 2840940.);
   }
 
-// TODO(gardster) repair routing to London.
-// https://trello.com/c/WPSQUu9J/1932-francepariscenternglandlondoncenterroutetest
-// OSRM routes through a OSM way with tag render:no. So we have no geometry in the
-// mwm and we can not obtain a cross section exit point.
-//  UNIT_TEST(FranceParisCenternglandLondonCenterRouteTest)
-//  {
-//    integration::CalculateRouteAndTestRouteLength(
-//        integration::GetOsrmComponents(),
-//        MercatorBounds::FromLatLon(48.86123, 2.34129), {0., 0.},
-//        MercatorBounds::FromLatLon(51.49884, -0.10438), 0./* Some unknown value*/);
-//  }
+  UNIT_TEST(EnglandToFranceRouteLeMansTest)
+  {
+    integration::CalculateRouteAndTestRouteLength(
+        integration::GetOsrmComponents(),
+        MercatorBounds::FromLatLon(51.09276, 1.11369), {0., 0.},
+        MercatorBounds::FromLatLon(50.93227, 1.82725), 60498.);
+  }
 
   // Strange map edits in Africa borders. Routing not linked now.
   /*
@@ -181,19 +192,6 @@ namespace
     integration::CalculateRouteAndTestRouteLength(
         integration::GetOsrmComponents(), MercatorBounds::FromLatLon(27.94049, -12.88800), {0., 0.},
         MercatorBounds::FromLatLon(27.15587, -13.23059), 100864);
-  }
-
-  UNIT_TEST(ArbatBaliCrimeanCrossMwmTest)
-  {
-    // Forward case.
-    integration::CalculateRouteAndTestRouteLength(
-        integration::GetOsrmComponents(), MercatorBounds::FromLatLon(45.90668,34.87221), {0., 0.},
-        MercatorBounds::FromLatLon(45.35697, 35.36971), 75000.);
-    // Backward case.
-    integration::CalculateRouteAndTestRouteLength(
-        integration::GetOsrmComponents(), MercatorBounds::FromLatLon(45.35697, 35.36971), {0., 0.},
-        MercatorBounds::FromLatLon(45.90668,34.87221), 75000.);
-
   }
 
   UNIT_TEST(AlbaniaToMontenegroCrossTest)
@@ -256,7 +254,7 @@ namespace
     IRouter::ResultCode const result = routeResult.second;
     TEST_EQUAL(result, IRouter::NoError, ());
 
-    integration::TestRouteTime(route, 17450.);
+    integration::TestRouteTime(route, 17850.);
   }
 
   UNIT_TEST(RussiaMoscowLenigradskiy39GeroevPanfilovtsev22TimeTest)

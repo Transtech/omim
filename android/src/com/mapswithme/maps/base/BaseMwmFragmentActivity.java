@@ -1,8 +1,10 @@
 package com.mapswithme.maps.base;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.media.AudioManager;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
@@ -120,6 +122,13 @@ public class BaseMwmFragmentActivity extends AppCompatActivity
     mBaseDelegate.onPause();
   }
 
+  @Override
+  protected void onActivityResult(int requestCode, int resultCode, Intent data)
+  {
+    if (!BaseActivityDelegate.onActivityResult(requestCode, resultCode, data))
+      super.onActivityResult(requestCode, resultCode, data);
+  }
+
   protected Toolbar getToolbar()
   {
     return (Toolbar) findViewById(R.id.toolbar);
@@ -149,7 +158,7 @@ public class BaseMwmFragmentActivity extends AppCompatActivity
   /**
    * Replace attached fragment with the new one.
    */
-  public void replaceFragment(Class<? extends Fragment> fragmentClass, Bundle args, @Nullable Runnable completionListener)
+  public void replaceFragment(@NonNull Class<? extends Fragment> fragmentClass, @Nullable Bundle args, @Nullable Runnable completionListener)
   {
     final int resId = getFragmentContentResId();
     if (resId <= 0 || findViewById(resId) == null)
@@ -159,7 +168,7 @@ public class BaseMwmFragmentActivity extends AppCompatActivity
     final Fragment fragment = Fragment.instantiate(this, name, args);
     getSupportFragmentManager().beginTransaction()
                                .replace(resId, fragment, name)
-                               .commit();
+                               .commitAllowingStateLoss();
     getSupportFragmentManager().executePendingTransactions();
 
     if (completionListener != null)

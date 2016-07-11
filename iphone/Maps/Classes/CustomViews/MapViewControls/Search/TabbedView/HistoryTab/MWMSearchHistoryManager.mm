@@ -1,7 +1,7 @@
 #import "Common.h"
-#import "LocationManager.h"
 #import "Macros.h"
 #import "MapsAppDelegate.h"
+#import "MWMLocationManager.h"
 #import "MWMSearchHistoryClearCell.h"
 #import "MWMSearchHistoryManager.h"
 #import "MWMSearchHistoryMyPositionCell.h"
@@ -27,9 +27,9 @@ static NSString * const kMyPositionCellIdentifier = @"MWMSearchHistoryMyPosition
 - (BOOL)isRouteSearchMode
 {
   MWMRoutingPlaneMode const m = MapsAppDelegate.theApp.routingPlaneMode;
-  return (m == MWMRoutingPlaneModeSearchSource ||
-         m == MWMRoutingPlaneModeSearchDestination) &&
-         MapsAppDelegate.theApp.m_locationManager.lastLocationIsValid;
+  CLLocation * lastLocation = [MWMLocationManager lastLocation];
+  return lastLocation &&
+         (m == MWMRoutingPlaneModeSearchSource || m == MWMRoutingPlaneModeSearchDestination);
 }
 
 - (void)attachCell:(MWMSearchTabbedCollectionViewCell *)cell
@@ -60,7 +60,7 @@ static NSString * const kMyPositionCellIdentifier = @"MWMSearchHistoryMyPosition
     }
     [tableView reloadData];
   }
-  cell.noResultsImage.image = [UIImage imageNamed:@"img_no_history_light"];
+  cell.noResultsImage.image = [UIImage imageNamed:@"img_search_history"];
   cell.noResultsTitle.text = L(@"search_history_title");
   cell.noResultsText.text = L(@"search_history_text");
 }
@@ -145,7 +145,7 @@ forRowAtIndexPath:(NSIndexPath *)indexPath
   {
     search::QuerySaver::TSearchRequest const & query = [self queryAtIndex:isRouteSearch ? indexPath.row - 1 : indexPath.row];
     NSString * queryText = @(query.second.c_str());
-    [[Statistics instance] logEvent:kStatEventName(kStatSearch, kStatSelectResult)
+    [Statistics logEvent:kStatEventName(kStatSearch, kStatSelectResult)
                      withParameters:@{kStatValue : queryText, kStatScreen : kStatHistory}];
     [self.delegate searchText:queryText forInputLocale:@(query.first.c_str())];
   }
@@ -153,12 +153,12 @@ forRowAtIndexPath:(NSIndexPath *)indexPath
   {
     if (isRouteSearch)
     {
-      [[Statistics instance] logEvent:kStatEventName(kStatSearch, kStatSelectResult)
+      [Statistics logEvent:kStatEventName(kStatSearch, kStatSelectResult)
                        withParameters:@{kStatValue : kStatMyPosition, kStatScreen : kStatHistory}];
       [self.delegate tapMyPositionFromHistory];
       return;
     }
-    [[Statistics instance] logEvent:kStatEventName(kStatSearch, kStatSelectResult)
+    [Statistics logEvent:kStatEventName(kStatSearch, kStatSelectResult)
                      withParameters:@{kStatValue : kStatClear, kStatScreen : kStatHistory}];
     f.ClearSearchHistory();
     MWMSearchTabbedCollectionViewCell * cell = self.cell;

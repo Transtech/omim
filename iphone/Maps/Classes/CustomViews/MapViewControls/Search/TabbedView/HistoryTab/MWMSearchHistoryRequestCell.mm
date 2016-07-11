@@ -14,6 +14,7 @@
 
 - (void)awakeFromNib
 {
+  [super awakeFromNib];
   if (IPAD)
     self.contentView.backgroundColor = [UIColor white];
   self.layer.shouldRasterize = YES;
@@ -24,8 +25,18 @@
 {
   self.title.text = title;
   [self.title sizeToFit];
-  if (isIOSVersionLessThan(8))
+  if (isIOS7)
     [self layoutIfNeeded];
+}
+
+- (void)layoutSubviews
+{
+  [super layoutSubviews];
+  if (isIOS7)
+  {
+    self.title.preferredMaxLayoutWidth = floor(self.title.width);
+    [super layoutSubviews];
+  }
 }
 
 + (CGFloat)defaultCellHeight

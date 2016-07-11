@@ -4,7 +4,6 @@
 @interface MWMTextToSpeech : NSObject
 
 + (instancetype)tts;
-+ (void)activateAudioSession;
 // Returns a list of available languages in the following format:
 // * name in bcp47;
 // * localized name;
@@ -30,7 +29,6 @@
 namespace tts
 {
 
-string bcp47ToTwineLanguage(NSString const * bcp47LangName);
 string translatedTwine(string const & twine);
 
 } // namespace tts

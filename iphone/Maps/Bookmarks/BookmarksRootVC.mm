@@ -92,10 +92,11 @@
   {
     // Invert visibility
     bool visible = !cat->IsVisible();
-    [[Statistics instance] logEvent:kStatEventName(kStatBookmarks, kStatToggleVisibility)
+    [Statistics logEvent:kStatEventName(kStatBookmarks, kStatToggleVisibility)
                      withParameters:@{kStatValue : visible ? kStatVisible : kStatHidden}];
     cell.imageView.image = [UIImage imageNamed:(visible ? @"ic_show" : @"ic_hide")];
-    [cell.imageView makeImageAlwaysTemplate];
+    if (isIOS7)
+      [cell.imageView makeImageAlwaysTemplate];
     cell.imageView.mwm_coloring = visible ? MWMImageColoringBlue : MWMImageColoringBlack;
     {
       BookmarkCategory::Guard guard(*cat);
@@ -129,7 +130,8 @@
     BOOL const isVisible = cat->IsVisible();
     cell.imageView.image = [UIImage imageNamed:(isVisible ? @"ic_show" : @"ic_hide")];
     cell.imageView.mwm_coloring = isVisible ? MWMImageColoringBlue : MWMImageColoringBlack;
-    [cell.imageView makeImageAlwaysTemplate];
+    if (isIOS7)
+      [cell.imageView makeImageAlwaysTemplate];
     cell.detailTextLabel.text = [NSString stringWithFormat:@"%ld", cat->GetUserMarkCount() + cat->GetTracksCount()];
   }
   cell.backgroundColor = [UIColor white];
@@ -235,7 +237,7 @@
 {
   if (editingStyle == UITableViewCellEditingStyleDelete)
   {
-    [[Statistics instance] logEvent:kStatEventName(kStatPlacePage, kStatRemove)];
+    [Statistics logEvent:kStatEventName(kStatPlacePage, kStatRemove)];
     [[NSNotificationCenter defaultCenter] postNotificationName:BOOKMARK_CATEGORY_DELETED_NOTIFICATION object:@(indexPath.row)];
     Framework & f = GetFramework();
     f.DeleteBmCategory(indexPath.row);
@@ -291,7 +293,7 @@
 // To hide keyboard and apply changes
 - (BOOL)textFieldShouldReturn:(UITextField *)textField
 {
-  [[Statistics instance] logEvent:kStatEventName(kStatBookmarks, kStatRename)];
+  [Statistics logEvent:kStatEventName(kStatBookmarks, kStatRename)];
   if (textField.text.length == 0)
     return YES;
 

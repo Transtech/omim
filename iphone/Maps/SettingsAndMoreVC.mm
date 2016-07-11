@@ -1,4 +1,6 @@
 #import "CommunityVC.h"
+#import "MWMAuthorizationCommon.h"
+#import "MWMAuthorizationLoginViewController.h"
 #import "RichTextVC.h"
 #import "SettingsAndMoreVC.h"
 #import "SettingsViewController.h"
@@ -8,7 +10,6 @@
 #import <MessageUI/MFMailComposeViewController.h>
 #import <sys/utsname.h>
 
-#import "UIColor+MapsMeColor.h"
 #import "UIImageView+Coloring.h"
 
 #import "3party/Alohalytics/src/alohalytics_objc.h"
@@ -77,11 +78,18 @@ extern NSDictionary * const deviceNames = @{@"x86_64" : @"Simulator",
                                 @{@"Id" : @"Help", @"Title" : L(@"help"), @"Icon" : @"ic_settings_help"},
                                 @{@"Id" : @"ReportBug", @"Title" : L(@"report_a_bug"), @"Icon" : @"ic_settings_feedback"}]},
                  @{@"Title" : @"",
-                   @"Items" : @[@{@"Id" : @"Community", @"Title" : L(@"maps_me_community"), @"Icon" : @"ic_settings_community"},
+                   @"Items" : @[@{@"Id" : @"Authorization", @"Title" : L(@"profile"), @"Icon" : @"ic_settings_login"},
+                                @{@"Id" : @"Community", @"Title" : L(@"maps_me_community"), @"Icon" : @"ic_settings_community"},
                                 @{@"Id" : @"RateApp", @"Title" : L(@"rate_the_app"), @"Icon" : @"ic_settings_rate"}]},
                  @{@"Title" : @"",
                    @"Items" : @[@{@"Id" : @"About", @"Title" : L(@"about_menu_title"), @"Icon" : @"IconAbout"},
                                 @{@"Id" : @"Copyright", @"Title" : L(@"copyright"), @"Icon" : @"IconCopyright"}]}];
+}
+
+- (void)viewWillAppear:(BOOL)animated
+{
+  [super viewWillAppear:animated];
+  [self.tableView reloadSections:[NSIndexSet indexSetWithIndex:1] withRowAnimation:UITableViewRowAnimationAutomatic];
 }
 
 #pragma mark - TableView
@@ -119,13 +127,10 @@ extern NSDictionary * const deviceNames = @{@"x86_64" : @"Simulator",
   if (!cell) // iOS 5
     cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:[UITableViewCell className]];
 
-  cell.backgroundColor = [UIColor white];
-  cell.textLabel.text = item[@"Title"];
+  NSString * osmUserName = osm_auth_ios::OSMUserName();
+  cell.textLabel.text = [item[@"Id"] isEqualToString:@"Authorization"] && osmUserName ? osmUserName : item[@"Title"];
   cell.imageView.image = [UIImage imageNamed:item[@"Icon"]];
   cell.imageView.mwm_coloring = MWMImageColoringBlack;
-  cell.textLabel.textColor = [UIColor blackPrimaryText];
-  cell.textLabel.backgroundColor = [UIColor clearColor];
-
   return cell;
 }
 
@@ -135,6 +140,8 @@ extern NSDictionary * const deviceNames = @{@"x86_64" : @"Simulator",
   NSString * itemId = self.items[indexPath.section][@"Items"][indexPath.row][@"Id"];
   if ([itemId isEqualToString:@"About"])
     [self about];
+  else if ([itemId isEqualToString:@"Authorization"])
+    [self authorization];
   else if ([itemId isEqualToString:@"Community"])
     [self community];
   else if ([itemId isEqualToString:@"RateApp"])
@@ -151,15 +158,22 @@ extern NSDictionary * const deviceNames = @{@"x86_64" : @"Simulator",
 
 - (void)settings
 {
-  [[Statistics instance] logEvent:kStatSettingsOpenSection withParameters:@{kStatName : kStatSettings}];
+  [Statistics logEvent:kStatSettingsOpenSection withParameters:@{kStatName : kStatSettings}];
   [Alohalytics logEvent:kAlohalyticsTapEventKey withValue:@"settingsMiles"];
   SettingsViewController * vc = [self.mainStoryboard instantiateViewControllerWithIdentifier:[SettingsViewController className]];
   [self.navigationController pushViewController:vc animated:YES];
 }
 
+- (void)authorization
+{
+  [Statistics logEvent:kStatSettingsOpenSection withParameters:@{kStatName : kStatAuthorization}];
+  UINavigationController * vc = [self.mainStoryboard instantiateViewControllerWithIdentifier:@"AuthorizationLoginViewController"];
+  [self.navigationController pushViewController:vc animated:YES];
+}
+
 - (void)community
 {
-  [[Statistics instance] logEvent:kStatSettingsOpenSection withParameters:@{kStatName : kStatSocial}];
+  [Statistics logEvent:kStatSettingsOpenSection withParameters:@{kStatName : kStatSocial}];
   [Alohalytics logEvent:kAlohalyticsTapEventKey withValue:@"community"];
   CommunityVC * vc = [[CommunityVC alloc] initWithStyle:UITableViewStyleGrouped];
   [self.navigationController pushViewController:vc animated:YES];
@@ -167,7 +181,7 @@ extern NSDictionary * const deviceNames = @{@"x86_64" : @"Simulator",
 
 - (void)help
 {
-  [[Statistics instance] logEvent:kStatSettingsOpenSection withParameters:@{kStatName : kStatHelp}];
+  [Statistics logEvent:kStatSettingsOpenSection withParameters:@{kStatName : kStatHelp}];
   [Alohalytics logEvent:kAlohalyticsTapEventKey withValue:@"help"];
   NSString * path = [[NSBundle mainBundle] pathForResource:@"faq" ofType:@"html"];
   NSString * html = [[NSString alloc] initWithContentsOfFile:path encoding:NSUTF8StringEncoding error:nil];
@@ -178,7 +192,7 @@ extern NSDictionary * const deviceNames = @{@"x86_64" : @"Simulator",
 
 - (void)about
 {
-  [[Statistics instance] logEvent:kStatSettingsOpenSection withParameters:@{kStatName : kStatAbout}];
+  [Statistics logEvent:kStatSettingsOpenSection withParameters:@{kStatName : kStatAbout}];
   [Alohalytics logEvent:kAlohalyticsTapEventKey withValue:@"about"];
   RichTextVC * vc = [[RichTextVC alloc] initWithText:L(@"about_text")];
   vc.title = L(@"about_menu_title");
@@ -187,7 +201,7 @@ extern NSDictionary * const deviceNames = @{@"x86_64" : @"Simulator",
 
 - (void)copyright
 {
-  [[Statistics instance] logEvent:kStatSettingsOpenSection withParameters:@{kStatName : kStatCopyright}];
+  [Statistics logEvent:kStatSettingsOpenSection withParameters:@{kStatName : kStatCopyright}];
   [Alohalytics logEvent:kAlohalyticsTapEventKey withValue:@"copyright"];
   string s; GetPlatform().GetReader("copyright.html")->ReadAsString(s);
   NSString * str = [NSString stringWithFormat:@"Version: %@ \n", [[NSBundle mainBundle] infoDictionary][@"CFBundleVersion"]];
@@ -199,14 +213,14 @@ extern NSDictionary * const deviceNames = @{@"x86_64" : @"Simulator",
 
 - (void)rateApp
 {
-  [[Statistics instance] logEvent:kStatSettingsOpenSection withParameters:@{kStatName : kStatRate}];
+  [Statistics logEvent:kStatSettingsOpenSection withParameters:@{kStatName : kStatRate}];
   [Alohalytics logEvent:kAlohalyticsTapEventKey withValue:@"rate"];
   [[UIApplication sharedApplication] rateVersionFrom:@"rate_menu_item"];
 }
 
 - (void)reportBug
 {
-  [[Statistics instance] logEvent:kStatSettingsOpenSection withParameters:@{kStatName : kStatReport}];
+  [Statistics logEvent:kStatSettingsOpenSection withParameters:@{kStatName : kStatReport}];
   [Alohalytics logEvent:kAlohalyticsTapEventKey withValue:@"reportABug"];
   struct utsname systemInfo;
   uname(&systemInfo);
@@ -220,6 +234,9 @@ extern NSDictionary * const deviceNames = @{@"x86_64" : @"Simulator",
   NSString * country = [[NSLocale localeWithLocaleIdentifier:kLocaleUsedInSupportEmails] displayNameForKey:NSLocaleCountryCode value:locale];
   NSString * bundleVersion = [[NSBundle mainBundle] objectForInfoDictionaryKey:(NSString *)kCFBundleVersionKey];
   NSString * text = [NSString stringWithFormat:@"\n\n\n\n- %@ (%@)\n- MAPS.ME %@\n- %@/%@", device, [UIDevice currentDevice].systemVersion, bundleVersion, language, country];
+  NSString * alohalyticsId = [Alohalytics installationId];
+  if (alohalyticsId)
+    text = [NSString stringWithFormat:@"%@\n- %@", text, alohalyticsId];
   if ([MFMailComposeViewController canSendMail])
   {
     MFMailComposeViewController * vc = [[MFMailComposeViewController alloc] init];

@@ -1,6 +1,6 @@
-#import "LocationManager.h"
 #import "Macros.h"
 #import "MapsAppDelegate.h"
+#import "MWMLocationManager.h"
 #import "MWMSearchCommonCell.h"
 #import "MWMSearchShowOnMapCell.h"
 #import "MWMSearchSuggestionCell.h"
@@ -9,7 +9,7 @@
 #import "Statistics.h"
 #import "ToastView.h"
 
-#include "std/vector.hpp"
+#include "search/params.hpp"
 
 static NSString * const kTableShowOnMapCell = @"MWMSearchShowOnMapCell";
 static NSString * const kTableSuggestionCell = @"MWMSearchSuggestionCell";
@@ -35,8 +35,7 @@ NSString * identifierForType(MWMSearchTableCellType type)
   }
 }
 
-@interface MWMSearchTableViewController () <UITableViewDataSource, UITableViewDelegate,
-LocationObserver>
+@interface MWMSearchTableViewController () <UITableViewDataSource, UITableViewDelegate, MWMLocationObserver>
 
 @property (weak, nonatomic) IBOutlet UITableView * tableView;
 
@@ -76,9 +75,15 @@ LocationObserver>
   [self setupTableView];
 }
 
-- (void)refresh
+- (void)viewDidDisappear:(BOOL)animated
 {
-  [self.view refresh];
+  [super viewDidDisappear:animated];
+  searchResults.Clear();
+}
+
+- (void)mwm_refreshUI
+{
+  [self.view mwm_refreshUI];
 }
 
 - (void)setupTableView
@@ -94,7 +99,7 @@ LocationObserver>
 - (void)setupSearchParams
 {
   __weak auto weakSelf = self;
-  searchParams.m_callback = ^(search::Results const & results)
+  searchParams.m_onResults = ^(search::Results const & results)
   {
     __strong auto self = weakSelf;
     if (!self)
@@ -249,7 +254,7 @@ forRowAtIndexPath:(NSIndexPath *)indexPath
     if (cellType == MWMSearchTableCellTypeSuggestion)
     {
       NSString * suggestionString = @(result.GetSuggestionString());
-      [[Statistics instance] logEvent:kStatEventName(kStatSearch, kStatSelectResult)
+      [Statistics logEvent:kStatEventName(kStatSearch, kStatSelectResult)
                        withParameters:@{kStatValue : suggestionString, kStatScreen : kStatSearch}];
       [self.delegate searchText:suggestionString forInputLocale:nil];
     }
@@ -286,7 +291,7 @@ forRowAtIndexPath:(NSIndexPath *)indexPath
   [self.tableView reloadData];
 }
 
-#pragma mark - LocationObserver
+#pragma mark - MWMLocationObserver
 
 - (void)onLocationUpdate:(location::GpsInfo const &)info
 {
@@ -336,7 +341,7 @@ forRowAtIndexPath:(NSIndexPath *)indexPath
         f.UpdateUserViewportChanged();
       }
       else
-        f.ShowAllSearchResults(searchResults);
+        f.ShowSearchResults(searchResults);
     }
   }
   else
@@ -354,9 +359,9 @@ forRowAtIndexPath:(NSIndexPath *)indexPath
     return;
   _watchLocationUpdates = watchLocationUpdates;
   if (watchLocationUpdates)
-    [[MapsAppDelegate theApp].m_locationManager start:self];
+    [MWMLocationManager addObserver:self];
   else
-    [[MapsAppDelegate theApp].m_locationManager stop:self];
+    [MWMLocationManager removeObserver:self];
 }
 
 @synthesize searchOnMap = _searchOnMap;

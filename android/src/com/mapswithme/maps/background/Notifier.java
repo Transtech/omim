@@ -7,7 +7,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.support.v4.app.NotificationCompat;
 
-import com.mapswithme.maps.MapStorage.Index;
 import com.mapswithme.maps.MwmActivity;
 import com.mapswithme.maps.MwmApplication;
 import com.mapswithme.maps.R;
@@ -24,37 +23,42 @@ public final class Notifier
 
   private Notifier() { }
 
-  public static void notifyUpdateAvailable(String countryName)
+  public static void notifyUpdateAvailable(String countriesName)
   {
     final String title = APP.getString(R.string.advise_update_maps);
 
     final PendingIntent pi = PendingIntent.getActivity(APP, 0, MwmActivity.createUpdateMapsIntent(),
         PendingIntent.FLAG_UPDATE_CURRENT);
 
-    placeNotification(title, countryName, pi, ID_UPDATE_AVAILABLE);
+    placeNotification(title, countriesName, pi, ID_UPDATE_AVAILABLE);
   }
 
-  public static void notifyDownloadFailed(Index idx, String countryName)
+  public static void notifyDownloadFailed(String id, String name)
   {
-    final String title = APP.getString(R.string.app_name);
-    final String content = APP.getString(R.string.download_country_failed, countryName);
+    String title = APP.getString(R.string.app_name);
+    String content = APP.getString(R.string.download_country_failed, name);
 
-    final PendingIntent pi = PendingIntent.getActivity(APP, 0,
-        MwmActivity.createShowMapIntent(APP, idx, false).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-        PendingIntent.FLAG_UPDATE_CURRENT);
+    PendingIntent pi = PendingIntent.getActivity(APP, 0, MwmActivity.createShowMapIntent(APP, id, false)
+                                                                    .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                                                 PendingIntent.FLAG_UPDATE_CURRENT);
 
     placeNotification(title, content, pi, ID_DOWNLOAD_FAILED);
     Statistics.INSTANCE.trackEvent(Statistics.EventName.DOWNLOAD_COUNTRY_NOTIFICATION_SHOWN);
   }
 
-  public static void notifyDownloadSuggest(String title, String content, Index countryIndex)
+  public static void notifyDownloadSuggest(String title, String content, String countryId)
   {
-    final PendingIntent pi = PendingIntent.getActivity(APP, 0,
-        MwmActivity.createShowMapIntent(APP, countryIndex, true).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-        PendingIntent.FLAG_UPDATE_CURRENT);
+    PendingIntent pi = PendingIntent.getActivity(APP, 0, MwmActivity.createShowMapIntent(APP, countryId, true)
+                                                                    .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                                                 PendingIntent.FLAG_UPDATE_CURRENT);
 
     placeNotification(title, content, pi, ID_DOWNLOAD_NEW_COUNTRY);
     Statistics.INSTANCE.trackEvent(Statistics.EventName.DOWNLOAD_COUNTRY_NOTIFICATION_SHOWN);
+  }
+
+  public static void cancelDownloadFailed()
+  {
+    getNotificationManager().cancel(ID_DOWNLOAD_FAILED);
   }
 
   public static void cancelDownloadSuggest()

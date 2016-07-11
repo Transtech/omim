@@ -2,23 +2,28 @@ package com.mapswithme.util.statistics;
 
 import android.app.Activity;
 import android.content.Context;
+import android.location.Location;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Build;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.facebook.appevents.AppEventsLogger;
 import com.flurry.android.FlurryAgent;
-import com.mapswithme.country.ActiveCountryTree;
 import com.mapswithme.maps.BuildConfig;
 import com.mapswithme.maps.MwmApplication;
 import com.mapswithme.maps.PrivateVariables;
 import com.mapswithme.maps.api.ParsedMwmRequest;
 import com.mapswithme.maps.bookmarks.data.MapObject;
+import com.mapswithme.maps.downloader.MapManager;
+import com.mapswithme.maps.editor.Editor;
+import com.mapswithme.maps.editor.OsmOAuth;
 import com.mapswithme.util.Config;
 import com.mapswithme.util.ConnectionState;
 import ru.mail.android.mytracker.MRMyTracker;
@@ -34,12 +39,20 @@ public enum Statistics
 
   public static class EventName
   {
-    // actions with maps
-    public static final String DOWNLOADER_MAP_DOWNLOAD = "Country download";
-    public static final String DOWNLOADER_MAP_UPDATE = "Country update";
-    public static final String DOWNLOADER_MAP_DELETE = "Country delete";
-    public static final String MAP_DOWNLOADED = "DownloadMap";
-    public static final String MAP_UPDATED = "UpdateMap";
+    // Downloader
+    public static final String DOWNLOADER_MIGRATION_DIALOG_SEEN = "Downloader_Migration_dialogue";
+    public static final String DOWNLOADER_MIGRATION_STARTED = "Downloader_Migration_started";
+    public static final String DOWNLOADER_MIGRATION_COMPLETE = "Downloader_Migration_completed";
+    public static final String DOWNLOADER_MIGRATION_ERROR = "Downloader_Migration_error";
+    public static final String DOWNLOADER_ERROR = "Downloader_Map_error";
+    public static final String DOWNLOADER_ACTION = "Downloader_Map_action";
+    public static final String DOWNLOADER_CANCEL = "Downloader_Cancel_downloading";
+
+    // First start
+    public static final String FIRST_START_SHOWN = "FirstStart_Dialog_show";
+    public static final String FIRST_START_NO_LOCATION = "FirstStart_Location_disable";
+    public static final String FIRST_START_DONT_ZOOM = "FirstStart_ZAnimation_disable";
+
     // bookmarks
     public static final String BMK_DESCRIPTION_CHANGED = "Bookmark. Description changed";
     public static final String BMK_GROUP_CREATED = "Bookmark. Group created";
@@ -57,6 +70,8 @@ public enum Statistics
     public static final String PP_SHARE = "PP. Share";
     public static final String PP_BOOKMARK = "PP. Bookmark";
     public static final String PP_ROUTE = "PP. Route";
+    public static final String PP_SPONSORED_DETAILS = "Placepage_Hotel_details";
+    public static final String PP_SPONSORED_BOOK = "Placepage_Hotel_book";
     public static final String PP_DIRECTION_ARROW = "PP. DirectionArrow";
     public static final String PP_DIRECTION_ARROW_CLOSE = "PP. DirectionArrowClose";
     public static final String PP_METADATA_COPY = "PP. CopyMetadata";
@@ -71,6 +86,7 @@ public enum Statistics
     public static final String MENU_SHARE = "Menu. Share";
     public static final String MENU_SHOWCASE = "Menu. Showcase";
     public static final String MENU_P2P = "Menu. Point to point.";
+    public static final String MENU_ADD_PLACE = "Menu. Add place.";
     // dialogs
     public static final String PLUS_DIALOG_LATER = "GPlus dialog cancelled.";
     public static final String RATE_DIALOG_LATER = "GPlay dialog cancelled.";
@@ -87,17 +103,35 @@ public enum Statistics
     public static final String DOWNLOAD_COUNTRY_NOTIFICATION_CLICKED = "Download country notification clicked";
     public static final String ACTIVE_CONNECTION = "Connection";
     public static final String STATISTICS_STATUS_CHANGED = "Statistics status changed";
+    public static final String TTS_FAILURE_LOCATION = "TTS failure location";
     // routing
     public static final String ROUTING_BUILD = "Routing. Build";
     public static final String ROUTING_START_SUGGEST_REBUILD = "Routing. Suggest rebuild";
     public static final String ROUTING_START = "Routing. Start";
     public static final String ROUTING_CLOSE = "Routing. Close";
     public static final String ROUTING_CANCEL = "Routing. Cancel";
-    public static final String ROUTING_PEDESTRIAN_SET = "Routing. Set pedestrian";
     public static final String ROUTING_VEHICLE_SET = "Routing. Set vehicle";
+    public static final String ROUTING_PEDESTRIAN_SET = "Routing. Set pedestrian";
+    public static final String ROUTING_BICYCLE_SET = "Routing. Set bicycle";
     public static final String ROUTING_SWAP_POINTS = "Routing. Swap points";
     public static final String ROUTING_TOGGLE = "Routing. Toggle";
     public static final String ROUTING_SEARCH_POINT = "Routing. Search point";
+    // editor
+    public static final String EDITOR_START_CREATE = "Editor_Add_start";
+    public static final String EDITOR_ADD_CLICK = "Editor_Add_click";
+    public static final String EDITOR_START_EDIT = "Editor_Edit_start";
+    public static final String EDITOR_SUCCESS_CREATE = "Editor_Add_success";
+    public static final String EDITOR_SUCCESS_EDIT = "Editor_Edit_success";
+    public static final String EDITOR_ERROR_CREATE = "Editor_Add_error";
+    public static final String EDITOR_ERROR_EDIT = "Editor_Edit_error";
+    public static final String EDITOR_AUTH_DECLINED = "Editor_Auth_declined_by_user";
+    public static final String EDITOR_AUTH_REQUEST = "Editor_Auth_request";
+    public static final String EDITOR_AUTH_REQUEST_RESULT = "Editor_Auth_request_result";
+    public static final String EDITOR_REG_REQUEST = "Editor_Reg_request";
+    public static final String EDITOR_LOST_PASSWORD = "Editor_Lost_password";
+    public static final String EDITOR_SHARE_SHOW = "Editor_SecondTimeShare_show";
+    public static final String EDITOR_SHARE_CLICK = "Editor_SecondTimeShare_click";
+    public static final String EDITOR_REPORT = "Editor_Problem_report";
 
     public static class Settings
     {
@@ -112,6 +146,7 @@ public enum Statistics
       public static final String TWITTER = "Settings. Go to twitter.";
       public static final String HELP = "Settings. Help.";
       public static final String ABOUT = "Settings. About.";
+      public static final String OSM_PROFILE = "Settings. Profile.";
       public static final String COPYRIGHT = "Settings. Copyright.";
       public static final String GROUP_MAP = "Settings. Group: map.";
       public static final String GROUP_ROUTE = "Settings. Group: route.";
@@ -145,7 +180,27 @@ public enum Statistics
     public static final String POINT = "point";
     public static final String LANGUAGE = "language";
     public static final String NAME = "Name";
-
+    public static final String ACTION = "action";
+    public static final String TYPE = "type";
+    public static final String IS_AUTHENTICATED = "is_authenticated";
+    public static final String IS_ONLINE = "is_online";
+    public static final String IS_SUCCESS = "is_success_message";
+    public static final String FEATURE_ID = "feature_id";
+    public static final String MWM_NAME = "mwm_name";
+    public static final String MWM_VERSION = "mwm_version";
+    public static final String ERR_TYPE = "error_type"; // (1 - No space left)
+    public static final String ERR_MSG = "error_message";
+    public static final String ERR_DATA = "err_data";
+    public static final String EDITOR_ERR_MSG = "feature_number";
+    public static final String SERVER_URL = "server_url";
+    public static final String SERVER_PARAMS = "server_params_data";
+    public static final String SERVER_RESPONSE = "server_response_data";
+    public static final String OSM = "OSM";
+    public static final String OSM_USERNAME = "osm_username";
+    public static final String FACEBOOK = "Facebook";
+    public static final String GOOGLE = "Google";
+    public static final String UID = "uid";
+    public static final String SHOWN = "shown";
     private EventParam() {}
   }
 
@@ -205,6 +260,25 @@ public enum Statistics
     {
       FlurryAgent.logEvent(name, params);
       org.alohalytics.Statistics.logEvent(name, params);
+    }
+  }
+
+  public void trackEvent(@NonNull String name, Location location, @NonNull Map<String, String> params)
+  {
+    if (mEnabled)
+    {
+      List<String> eventDictionary = new ArrayList<String>();
+      for (Map.Entry<String, String> entry : params.entrySet())
+      {
+        eventDictionary.add(entry.getKey());
+        eventDictionary.add(entry.getValue());
+      }
+
+      org.alohalytics.Statistics.logEvent(name, eventDictionary.toArray(new String[0]), location);
+
+      params.put("lat", (location == null ? "N/A" : String.valueOf(location.getLatitude())));
+      params.put("lon", (location == null ? "N/A" : String.valueOf(location.getLongitude())));
+      FlurryAgent.logEvent(name, params);
     }
   }
 
@@ -294,12 +368,13 @@ public enum Statistics
     else
       trackEvent(EventName.ACTIVE_CONNECTION, params().add(EventParam.CONNECTION_TYPE, "Not connected."));
   }
-  
+
+  // FIXME Call to track map changes to MyTracker to correctly deal with preinstalls.
   public void trackMapChanged(String event)
   {
     if (mEnabled)
     {
-      final ParameterBuilder params = params().add(EventParam.COUNT, String.valueOf(ActiveCountryTree.getTotalDownloadedCount()));
+      final ParameterBuilder params = params().add(EventParam.COUNT, String.valueOf(MapManager.nativeGetDownloadedCount()));
       MRMyTracker.trackEvent(event, params.get());
       trackEvent(event, params);
     }
@@ -311,9 +386,41 @@ public enum Statistics
                                                 .add(EventParam.TO, to));
   }
 
+  public void trackEditorLaunch(boolean newObject)
+  {
+    trackEvent(newObject ? EventName.EDITOR_START_CREATE : EventName.EDITOR_START_EDIT,
+               editorMwmParams().add(EventParam.IS_AUTHENTICATED, String.valueOf(OsmOAuth.isAuthorized()))
+                                .add(EventParam.IS_ONLINE, String.valueOf(ConnectionState.isConnected())));
+  }
+
+  public void trackEditorSuccess(boolean newObject)
+  {
+    trackEvent(newObject ? EventName.EDITOR_SUCCESS_CREATE : EventName.EDITOR_SUCCESS_EDIT,
+               editorMwmParams().add(EventParam.IS_AUTHENTICATED, String.valueOf(OsmOAuth.isAuthorized()))
+                                .add(EventParam.IS_ONLINE, String.valueOf(ConnectionState.isConnected())));
+  }
+
+  public void trackEditorError(boolean newObject)
+  {
+    trackEvent(newObject ? EventName.EDITOR_ERROR_CREATE : EventName.EDITOR_ERROR_EDIT,
+               editorMwmParams().add(EventParam.IS_AUTHENTICATED, String.valueOf(OsmOAuth.isAuthorized()))
+                                .add(EventParam.IS_ONLINE, String.valueOf(ConnectionState.isConnected())));
+  }
+
+  public void trackAuthRequest(OsmOAuth.AuthType type)
+  {
+    trackEvent(EventName.EDITOR_AUTH_REQUEST, Statistics.params().add(Statistics.EventParam.TYPE, type.name));
+  }
+
   public static ParameterBuilder params()
   {
     return new ParameterBuilder();
+  }
+
+  public static ParameterBuilder editorMwmParams()
+  {
+    return params().add(EventParam.MWM_NAME, Editor.nativeGetMwmName())
+                   .add(EventParam.MWM_VERSION, Editor.nativeGetMwmVersion());
   }
 
   public static class ParameterBuilder
@@ -326,6 +433,30 @@ public enum Statistics
       return this;
     }
 
+    public ParameterBuilder add(String key, boolean value)
+    {
+      mParams.put(key, String.valueOf(value));
+      return this;
+    }
+
+    public ParameterBuilder add(String key, int value)
+    {
+      mParams.put(key, String.valueOf(value));
+      return this;
+    }
+
+    public ParameterBuilder add(String key, float value)
+    {
+      mParams.put(key, String.valueOf(value));
+      return this;
+    }
+
+    public ParameterBuilder add(String key, double value)
+    {
+      mParams.put(key, String.valueOf(value));
+      return this;
+    }
+
     public Map<String, String> get()
     {
       return mParams;
@@ -334,6 +465,7 @@ public enum Statistics
 
   public static String getPointType(MapObject point)
   {
-    return point instanceof MapObject.MyPosition ? Statistics.EventParam.MY_POSITION : Statistics.EventParam.POINT;
+    return MapObject.isOfType(MapObject.MY_POSITION, point) ? Statistics.EventParam.MY_POSITION
+                                                            : Statistics.EventParam.POINT;
   }
 }

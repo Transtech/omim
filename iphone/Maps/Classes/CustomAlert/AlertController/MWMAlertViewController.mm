@@ -1,6 +1,8 @@
 #import "Common.h"
+#import "MapsAppDelegate.h"
 #import "MWMAlertViewController.h"
 #import "MWMDownloadTransitMapAlert.h"
+#import "MWMLocationAlert.h"
 
 static NSString * const kAlertControllerNibIdentifier = @"MWMAlertViewController";
 
@@ -22,8 +24,8 @@ static NSString * const kAlertControllerNibIdentifier = @"MWMAlertViewController
 
 - (void)willRotateToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation duration:(NSTimeInterval)duration
 {
-  MWMAlert * alert = self.view.subviews.firstObject;
-  [alert rotate:toInterfaceOrientation duration:duration];
+  for (MWMAlert * alert in self.view.subviews)
+    [alert rotate:toInterfaceOrientation duration:duration];
 }
 
 #pragma mark - Actions
@@ -35,35 +37,12 @@ static NSString * const kAlertControllerNibIdentifier = @"MWMAlertViewController
 
 - (void)presentLocationAlert
 {
-  NSString * title = L(@"location_is_disabled_long_text");
-  NSString * cancel = L(@"cancel");
-  NSString * openSettings = L(@"settings");
-  if (isIOSVersionLessThan(8))
-  {
-    UIAlertView * alertView = [[UIAlertView alloc] initWithTitle:title message:nil delegate:nil cancelButtonTitle:cancel otherButtonTitles:nil];
-    [alertView show];
-    return;
-  }
-  UIAlertController * alertController = [UIAlertController alertControllerWithTitle:title message:nil preferredStyle:UIAlertControllerStyleAlert];
-  UIAlertAction * cancelAction = [UIAlertAction actionWithTitle:cancel style:UIAlertActionStyleCancel handler:nil];
-  UIAlertAction * openSettingsAction = [UIAlertAction actionWithTitle:openSettings style:UIAlertActionStyleDefault handler:^(UIAlertAction * action)
-  {
-    [self openSettings];
-  }];
-  [alertController addAction:cancelAction];
-  [alertController addAction:openSettingsAction];
-  [self.ownerViewController presentViewController:alertController animated:YES completion:nil];
-//  dispatch_async(dispatch_get_main_queue(), ^
-//  {
-//    // @TODO Remove dispatch on LocationManager -> MWMLocationManager
-//    // Test case when location is denied by user on app launch/relaunch
-//    [self displayAlert:MWMAlert.locationAlert];
-//  });
+  [self displayAlert:[MWMAlert locationAlert]];
 }
 
-- (void)presentPoint2PointAlertWithOkBlock:(nonnull TMWMVoidBlock)block needToRebuild:(BOOL)needToRebuild
+- (void)presentPoint2PointAlertWithOkBlock:(nonnull TMWMVoidBlock)okBlock needToRebuild:(BOOL)needToRebuild
 {
-  [self displayAlert:[MWMAlert point2PointAlertWithOkBlock:block needToRebuild:needToRebuild]];
+  [self displayAlert:[MWMAlert point2PointAlertWithOkBlock:okBlock needToRebuild:needToRebuild]];
 }
 
 - (void)presentFacebookAlert
@@ -76,14 +55,34 @@ static NSString * const kAlertControllerNibIdentifier = @"MWMAlertViewController
   [self displayAlert:MWMAlert.locationServiceNotSupportedAlert];
 }
 
-- (void)presentNoConnectionAlert
+- (void)presentLocationNotFoundAlertWithOkBlock:(nonnull TMWMVoidBlock)okBlock
 {
-  [self displayAlert:MWMAlert.noConnectionAlert];
+  [self displayAlert:[MWMAlert locationNotFoundAlertWithOkBlock:okBlock]];
 }
 
-- (void)presentnoWiFiAlertWithName:(nonnull NSString *)name downloadBlock:(nullable TMWMVoidBlock)block
+- (void)presentNoConnectionAlert
 {
-  [self displayAlert:[MWMAlert noWiFiAlertWithName:name downloadBlock:block]];
+  [self displayAlert:[MWMAlert noConnectionAlert]];
+}
+
+- (void)presentMigrationProhibitedAlert
+{
+  [self displayAlert:[MWMAlert migrationProhibitedAlert]];
+}
+
+- (void)presentDeleteMapProhibitedAlert
+{
+  [self displayAlert:[MWMAlert deleteMapProhibitedAlert]];
+}
+
+- (void)presentUnsavedEditsAlertWithOkBlock:(nonnull TMWMVoidBlock)okBlock
+{
+  [self displayAlert:[MWMAlert unsavedEditsAlertWithOkBlock:okBlock]];
+}
+
+- (void)presentNoWiFiAlertWithOkBlock:(nullable TMWMVoidBlock)okBlock
+{
+  [self displayAlert:[MWMAlert noWiFiAlertWithOkBlock:okBlock]];
 }
 
 - (void)presentPedestrianToastAlert:(BOOL)isFirstLaunch
@@ -91,16 +90,52 @@ static NSString * const kAlertControllerNibIdentifier = @"MWMAlertViewController
   [self displayAlert:[MWMAlert pedestrianToastShareAlert:isFirstLaunch]];
 }
 
-- (void)presentDownloaderAlertWithCountries:(vector<storage::TIndex> const &)countries
-                                     routes:(vector<storage::TIndex> const &)routes
-                                       code:(routing::IRouter::ResultCode)code
+- (void)presentIncorrectFeauturePositionAlert
 {
-  [self displayAlert:[MWMAlert downloaderAlertWithAbsentCountries:countries routes:routes code:code]];
+  [self displayAlert:[MWMAlert incorrectFeauturePositionAlert]];
+}
+
+- (void)presentInternalErrorAlert
+{
+  [self displayAlert:[MWMAlert internalErrorAlert]];
+}
+
+- (void)presentNotEnoughSpaceAlert
+{
+  [self displayAlert:[MWMAlert notEnoughSpaceAlert]];
+}
+
+- (void)presentInvalidUserNameOrPasswordAlert
+{
+  [self displayAlert:[MWMAlert invalidUserNameOrPasswordAlert]];
+}
+
+- (void)presentRoutingMigrationAlertWithOkBlock:(TMWMVoidBlock)okBlock
+{
+  [self displayAlert:[MWMAlert routingMigrationAlertWithOkBlock:okBlock]];
+}
+
+- (void)presentDownloaderAlertWithCountries:(storage::TCountriesVec const &)countries
+                                       code:(routing::IRouter::ResultCode)code
+                                cancelBlock:(TMWMVoidBlock)cancelBlock
+                              downloadBlock:(TMWMDownloadBlock)downloadBlock
+                      downloadCompleteBlock:(TMWMVoidBlock)downloadCompleteBlock
+{
+  [self displayAlert:[MWMAlert downloaderAlertWithAbsentCountries:countries
+                                                             code:code
+                                                      cancelBlock:cancelBlock
+                                                    downloadBlock:downloadBlock
+                                            downloadCompleteBlock:downloadCompleteBlock]];
 }
 
 - (void)presentRoutingDisclaimerAlert
 {
   [self displayAlert:[MWMAlert routingDisclaimerAlertWithInitialOrientation:self.ownerViewController.interfaceOrientation]];
+}
+
+- (void)presentBicycleRoutingDisclaimerAlert
+{
+  [self displayAlert:[MWMAlert routingBicycleDisclaimerAlert]];
 }
 
 - (void)presentDisabledLocationAlert
@@ -113,50 +148,126 @@ static NSString * const kAlertControllerNibIdentifier = @"MWMAlertViewController
   [self displayAlert:[MWMAlert alert:type]];
 }
 
+- (void)presentDisableAutoDownloadAlertWithOkBlock:(nonnull TMWMVoidBlock)okBlock
+{
+  [self displayAlert:[MWMAlert disableAutoDownloadAlertWithOkBlock:okBlock]];
+}
+
+- (void)presentDownloaderNoConnectionAlertWithOkBlock:(nonnull TMWMVoidBlock)okBlock cancelBlock:(nonnull TMWMVoidBlock)cancelBlock
+{
+  [self displayAlert:[MWMAlert downloaderNoConnectionAlertWithOkBlock:okBlock cancelBlock:cancelBlock]];
+}
+
+- (void)presentDownloaderNotEnoughSpaceAlert
+{
+  [self displayAlert:[MWMAlert downloaderNotEnoughSpaceAlert]];
+}
+
+- (void)presentDownloaderInternalErrorAlertWithOkBlock:(nonnull TMWMVoidBlock)okBlock cancelBlock:(nonnull TMWMVoidBlock)cancelBlock
+{
+  [self displayAlert:[MWMAlert downloaderInternalErrorAlertWithOkBlock:okBlock cancelBlock:cancelBlock]];
+}
+
+- (void)presentDownloaderNeedUpdateAlertWithOkBlock:(nonnull TMWMVoidBlock)okBlock
+{
+  [self displayAlert:[MWMAlert downloaderNeedUpdateAlertWithOkBlock:okBlock]];
+}
+
+- (void)presentPlaceDoesntExistAlertWithBlock:(MWMStringBlock)block
+{
+  [self displayAlert:[MWMAlert placeDoesntExistAlertWithBlock:block]];
+}
+
+- (void)presentResetChangesAlertWithBlock:(TMWMVoidBlock)block
+{
+  [self displayAlert:[MWMAlert resetChangesAlertWithBlock:block]];
+}
+
+- (void)presentDeleteFeatureAlertWithBlock:(TMWMVoidBlock)block
+{
+  [self displayAlert:[MWMAlert deleteFeatureAlertWithBlock:block]];
+}
+
+- (void)presentEditorViralAlert
+{
+  [self displayAlert:[MWMAlert editorViralAlert]];
+}
+
+- (void)presentOsmAuthAlert
+{
+  [self displayAlert:[MWMAlert osmAuthAlert]];
+}
+
 - (void)displayAlert:(MWMAlert *)alert
 {
-  BOOL const iOS7 = isIOSVersionLessThan(8);
+  //TODO(igrechuhin): Remove this check on location manager refactoring.
+  //Workaround for current location manager duplicate error alerts.
+  if ([alert isKindOfClass:[MWMLocationAlert class]])
+  {
+    for (MWMAlert * view in self.view.subviews)
+    {
+      if ([view isKindOfClass:[MWMLocationAlert class]])
+        return;
+    }
+  }
+  [UIView animateWithDuration:kDefaultAnimationDuration animations:^
+  {
+    for (MWMAlert * view in self.view.subviews)
+      view.alpha = 0.0;
+  }
+  completion:^(BOOL finished)
+  {
+    for (MWMAlert * view in self.view.subviews)
+    {
+      if (view != alert)
+        view.hidden = YES;
+    }
+  }];
+
+  [self removeFromParentViewController];
   alert.alertController = self;
   [self.ownerViewController addChildViewController:self];
   self.view.alpha = 0.;
   alert.alpha = 0.;
-  if (!iOS7)
+  if (!isIOS7)
   {
     CGFloat const scale = 1.1;
     alert.transform = CGAffineTransformMakeScale(scale, scale);
   }
   [UIView animateWithDuration:kDefaultAnimationDuration animations:^
-  {
-    self.view.alpha = 1.;
-    alert.alpha = 1.;
-    if (!iOS7)
-      alert.transform = CGAffineTransformIdentity;
-  }];
+   {
+     self.view.alpha = 1.;
+     alert.alpha = 1.;
+     if (!isIOS7)
+       alert.transform = CGAffineTransformIdentity;
+   }];
+  [MapsAppDelegate.theApp.window endEditing:YES];
 }
 
-- (void)closeAlertWithCompletion:(nullable TMWMVoidBlock)completion
+- (void)closeAlert
 {
-  MWMAlert * alert = self.view.subviews.firstObject;
+  NSArray * subviews = self.view.subviews;
+  MWMAlert * closeAlert = subviews.lastObject;
+  MWMAlert * showAlert = (subviews.count >= 2 ? subviews[subviews.count - 2] : nil);
+  if (showAlert)
+    showAlert.hidden = NO;
   [UIView animateWithDuration:kDefaultAnimationDuration animations:^
   {
-    alert.alpha = 0.;
-    self.view.alpha = 0.;
+    closeAlert.alpha = 0.;
+    if (showAlert)
+      showAlert.alpha = 1.;
+    else
+      self.view.alpha = 0.;
   }
   completion:^(BOOL finished)
   {
-    if (completion)
-      completion();
-    [self.view removeFromSuperview];
-    [self removeFromParentViewController];
+    [closeAlert removeFromSuperview];
+    if (!showAlert)
+    {
+      [self.view removeFromSuperview];
+      [self removeFromParentViewController];
+    }
   }];
-}
-
-- (void)openSettings
-{
-  NSURL * url = [NSURL URLWithString:UIApplicationOpenSettingsURLString];
-  UIApplication * a = [UIApplication sharedApplication];
-  if ([a canOpenURL:url])
-    [a openURL:url];
 }
 
 @end

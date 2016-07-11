@@ -1,25 +1,38 @@
 #include "testing/testing.hpp"
 
 #include "indexer/categories_holder.hpp"
-
+#include "indexer/categories_index.hpp"
 #include "indexer/classificator.hpp"
 #include "indexer/classificator_loader.hpp"
+#include "indexer/new_feature_categories.hpp"
+
+#include "editor/editor_config.hpp"
 
 #include "coding/multilang_utf8_string.hpp"
+#include "coding/reader.hpp"
 
+#include "std/algorithm.hpp"
+#include "std/bind.hpp"
+#include "std/map.hpp"
 #include "std/sstream.hpp"
+#include "std/vector.hpp"
+#include "std/transform_iterator.hpp"
 
+#include "base/stl_helpers.hpp"
 
-char const * TEST_STRING =  "amenity-bench\n"
-                            "en:1bench|sit down|to sit\n"
-                            "de:0bank|auf die strafbank schicken\n"
-                            "zh-Hans:长凳\n"
-                            "zh-Hant:長板凳\n"
-                            "da:bænk\n"
-                            "\n"
-                            "place-village|place-hamlet\n"
-                            "en:village\n"
-                            "de:2dorf|4weiler";
+using namespace indexer;
+
+char const g_testCategoriesTxt[] =
+    "amenity-bench\n"
+    "en:1bench|sit down|to sit\n"
+    "de:0bank|auf die strafbank schicken\n"
+    "zh-Hans:长凳\n"
+    "zh-Hant:長板凳\n"
+    "da:bænk\n"
+    "\n"
+    "place-village|place-hamlet\n"
+    "en:village\n"
+    "de:2dorf|4weiler";
 
 struct Checker
 {
@@ -87,12 +100,214 @@ UNIT_TEST(LoadCategories)
 {
   classificator::Load();
 
-  CategoriesHolder h;
-  istringstream buffer(TEST_STRING);
-  h.LoadFromStream(buffer);
-
+  CategoriesHolder h(make_unique<MemReader>(g_testCategoriesTxt, sizeof(g_testCategoriesTxt) - 1));
   size_t count = 0;
   Checker f(count);
   h.ForEachCategory(f);
   TEST_EQUAL(count, 3, ());
+}
+
+UNIT_TEST(CategoriesIndex_Smoke)
+{
+  classificator::Load();
+
+  CategoriesHolder holder(
+      make_unique<MemReader>(g_testCategoriesTxt, sizeof(g_testCategoriesTxt) - 1));
+  CategoriesIndex index(holder);
+
+  uint32_t type1 = classif().GetTypeByPath({"amenity", "bench"});
+  uint32_t type2 = classif().GetTypeByPath({"place", "village"});
+  if (type1 > type2)
+    swap(type1, type2);
+  int8_t lang1 = CategoriesHolder::MapLocaleToInteger("en");
+  int8_t lang2 = CategoriesHolder::MapLocaleToInteger("de");
+
+  auto testTypes = [&](string const & query, vector<uint32_t> const & expected)
+  {
+    vector<uint32_t> result;
+    index.GetAssociatedTypes(query, result);
+    TEST_EQUAL(result, expected, (query));
+  };
+
+  index.AddCategoryByTypeAndLang(type1, lang1);
+  testTypes("bench", {type1});
+  testTypes("BENCH", {type1});
+  testTypes("down", {type1});
+  testTypes("benck", {});
+  testTypes("strafbank", {});
+  index.AddCategoryByTypeAndLang(type1, lang2);
+  testTypes("strafbank", {type1});
+  testTypes("ie strafbank sc", {type1});
+  testTypes("rafb", {type1});
+  index.AddCategoryByTypeAndLang(type2, lang1);
+  testTypes("i", {type1, type2});
+
+  CategoriesIndex fullIndex(holder);
+  fullIndex.AddCategoryByTypeAllLangs(type1);
+  fullIndex.AddCategoryByTypeAllLangs(type2);
+  vector<CategoriesHolder::Category> cats;
+
+  // The letter 'a' matches "strafbank" and "village".
+  // One language is not enough.
+  fullIndex.GetCategories("a", cats);
+
+  TEST_EQUAL(cats.size(), 2, ());
+
+  TEST_EQUAL(cats[0].m_synonyms.size(), 8, ());
+  TEST_EQUAL(cats[0].m_synonyms[4].m_locale, CategoriesHolder::MapLocaleToInteger("de"), ());
+  TEST_EQUAL(cats[0].m_synonyms[4].m_name, "auf die strafbank schicken", ());
+
+  TEST_EQUAL(cats[1].m_synonyms.size(), 3, ());
+  TEST_EQUAL(cats[1].m_synonyms[0].m_locale, CategoriesHolder::MapLocaleToInteger("en"), ());
+  TEST_EQUAL(cats[1].m_synonyms[0].m_name, "village", ());
+}
+
+UNIT_TEST(CategoriesIndex_MultipleTokens)
+{
+  char const kCategories[] =
+      "shop-bakery\n"
+      "en:shop of buns\n"
+      "\n"
+      "shop-butcher\n"
+      "en:shop of meat";
+
+  classificator::Load();
+  CategoriesHolder holder(make_unique<MemReader>(kCategories, sizeof(kCategories) - 1));
+  CategoriesIndex index(holder);
+
+  index.AddAllCategoriesInAllLangs();
+  auto testTypes = [&](string const & query, vector<uint32_t> const & expected)
+  {
+    vector<uint32_t> result;
+    index.GetAssociatedTypes(query, result);
+    TEST_EQUAL(result, expected, (query));
+  };
+
+  uint32_t type1 = classif().GetTypeByPath({"shop", "bakery"});
+  uint32_t type2 = classif().GetTypeByPath({"shop", "butcher"});
+  if (type1 > type2)
+    swap(type1, type2);
+
+  testTypes("shop", {type1, type2});
+  testTypes("shop buns", {type1});
+  testTypes("shop meat", {type2});
+}
+
+UNIT_TEST(CategoriesIndex_Groups)
+{
+  char const kCategories[] =
+      "@shop\n"
+      "en:shop\n"
+      "ru:магазин\n"
+      "\n"
+      "@meat\n"
+      "en:meat\n"
+      "\n"
+      "shop-bakery|@shop\n"
+      "en:buns\n"
+      "\n"
+      "shop-butcher|@shop|@meat\n"
+      "en:butcher\n"
+      "";
+
+  classificator::Load();
+  CategoriesHolder holder(make_unique<MemReader>(kCategories, sizeof(kCategories) - 1));
+  CategoriesIndex index(holder);
+
+  index.AddAllCategoriesInAllLangs();
+  auto testTypes = [&](string const & query, vector<uint32_t> const & expected)
+  {
+    vector<uint32_t> result;
+    index.GetAssociatedTypes(query, result);
+    TEST_EQUAL(result, expected, (query));
+  };
+
+  uint32_t type1 = classif().GetTypeByPath({"shop", "bakery"});
+  uint32_t type2 = classif().GetTypeByPath({"shop", "butcher"});
+  if (type1 > type2)
+    swap(type1, type2);
+
+  testTypes("buns", {type1});
+  testTypes("butcher", {type2});
+  testTypes("meat", {type2});
+  testTypes("shop", {type1, type2});
+  testTypes("магазин", {type1, type2});
+  testTypes("http", {});
+}
+
+#ifdef DEBUG
+// A check that this data structure is not too heavy.
+UNIT_TEST(CategoriesIndex_AllCategories)
+{
+  classificator::Load();
+
+  CategoriesIndex index;
+
+  index.AddAllCategoriesInAllLangs();
+  // Consider deprecating this method if this bound rises as high as a million.
+  TEST_LESS(index.GetNumTrieNodes(), 400000, ());
+}
+#endif
+
+#ifdef DEBUG
+// A check that this data structure is not too heavy.
+UNIT_TEST(CategoriesIndex_AllCategoriesEnglishName)
+{
+  classificator::Load();
+
+  CategoriesIndex index;
+
+  index.AddAllCategoriesInLang(CategoriesHolder::MapLocaleToInteger("en"));
+  TEST_LESS(index.GetNumTrieNodes(), 6000, ());
+}
+#endif
+
+UNIT_TEST(CategoriesIndex_UniqueNames)
+{
+  classificator::Load();
+  auto const & cl = classif();
+
+  editor::EditorConfig config;
+  osm::NewFeatureCategories categories(config);
+
+  auto const & disabled = CategoriesHolder::kDisabledLanguages;
+
+  bool noDuplicates = true;
+  for (auto const & locale : CategoriesHolder::kLocaleMapping)
+  {
+    string const lang(locale.m_name);
+    if (find(disabled.begin(), disabled.end(), lang) != disabled.end())
+      continue;
+    categories.AddLanguage(lang);
+    auto const & names = categories.GetAllCategoryNames(lang);
+
+    auto firstFn = bind(&pair<string, uint32_t>::first, _1);
+    set<string> uniqueNames(make_transform_iterator(names.begin(), firstFn),
+                            make_transform_iterator(names.end(), firstFn));
+    if (uniqueNames.size() == names.size())
+      continue;
+
+    LOG(LWARNING, ("Invalid category translations", lang));
+
+    map<string, vector<uint32_t>> typesByName;
+    for (auto const & entry : names)
+      typesByName[entry.first].push_back(entry.second);
+
+    for (auto const & entry : typesByName)
+    {
+      if (entry.second.size() <= 1)
+        continue;
+      noDuplicates = false;
+      ostringstream str;
+      str << entry.first << ":";
+      for (auto const & type : entry.second)
+        str << " " << cl.GetReadableObjectName(type);
+      LOG(LWARNING, (str.str()));
+    }
+
+    LOG(LWARNING,
+        ("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"));
+  };
+
+  TEST(noDuplicates, ());
 }

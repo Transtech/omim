@@ -1,3 +1,4 @@
+#import "Common.h"
 #import "MWMSearchManager.h"
 #import "MWMSearchTabButtonsView.h"
 #import "UIColor+MapsMeColor.h"
@@ -8,7 +9,7 @@ static CGFloat const kIconToLabelSpacing = 4.0;
 
 @property (nonatomic) IBOutlet UIView * rootView;
 
-@property (weak, nonatomic) IBOutlet UIImageView * icon;
+@property (weak, nonatomic) IBOutlet UIButton * icon;
 @property (weak, nonatomic) IBOutlet UILabel * label;
 
 @property (weak, nonatomic) IBOutlet NSLayoutConstraint * iconLeft;
@@ -36,8 +37,11 @@ static CGFloat const kIconToLabelSpacing = 4.0;
   return self;
 }
 
-- (IBAction)buttonTap:(UITapGestureRecognizer *)sender
+- (IBAction)buttonTap
 {
+  if (self.icon.selected)
+    return;
+
   [self.delegate tabButtonPressed:self];
 }
 
@@ -80,14 +84,16 @@ static CGFloat const kIconToLabelSpacing = 4.0;
 
 - (void)setSelected:(BOOL)selected
 {
-  _selected = self.icon.highlighted = selected;
+  _selected = self.icon.selected = selected;
   self.label.textColor = selected ? UIColor.linkBlue : UIColor.blackSecondaryText;
 }
 
 - (void)setIconImage:(UIImage *)iconImage
 {
-  _iconImage = self.icon.image = iconImage;
-  [self.icon makeImageAlwaysTemplate];
+  _iconImage = iconImage;
+  [self.icon setImage:iconImage forState:UIControlStateNormal];
+  if (isIOS7)
+    [self.icon.imageView makeImageAlwaysTemplate];
 }
 
 - (void)setLocalizedText:(NSString *)localizedText

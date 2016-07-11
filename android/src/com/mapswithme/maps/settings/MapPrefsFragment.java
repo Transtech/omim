@@ -1,7 +1,6 @@
 package com.mapswithme.maps.settings;
 
 import android.app.Activity;
-import android.content.Intent;
 import android.os.Bundle;
 import android.preference.ListPreference;
 import android.preference.Preference;
@@ -10,13 +9,13 @@ import android.support.v7.app.AlertDialog;
 
 import java.util.List;
 
-import com.mapswithme.country.ActiveCountryTree;
 import com.mapswithme.maps.Framework;
 import com.mapswithme.maps.R;
+import com.mapswithme.maps.downloader.MapManager;
+import com.mapswithme.maps.downloader.OnmapDownloader;
 import com.mapswithme.maps.location.TrackRecorder;
 import com.mapswithme.util.Config;
 import com.mapswithme.util.ThemeSwitcher;
-import com.mapswithme.util.Yota;
 import com.mapswithme.util.concurrency.UiThread;
 import com.mapswithme.util.statistics.AlohaHelper;
 import com.mapswithme.util.statistics.Statistics;
@@ -28,7 +27,7 @@ public class MapPrefsFragment extends BaseXmlSettingsFragment
 
   private boolean singleStorageOnly()
   {
-    return Yota.isFirstYota() || !mPathManager.hasMoreThanOneStorage();
+    return !mPathManager.hasMoreThanOneStorage();
   }
 
   private void updateStoragePrefs()
@@ -66,14 +65,14 @@ public class MapPrefsFragment extends BaseXmlSettingsFragment
       @Override
       public boolean onPreferenceClick(Preference preference)
       {
-        if (ActiveCountryTree.isDownloadingActive())
+        if (MapManager.nativeIsDownloading())
           new AlertDialog.Builder(getActivity())
               .setTitle(getString(R.string.downloading_is_active))
               .setMessage(getString(R.string.cant_change_this_setting))
               .setPositiveButton(getString(R.string.ok), null)
               .show();
         else
-          ((SettingsActivity)getActivity()).switchToFragment(StoragePathFragment.class, R.string.maps_storage);
+          getSettingsActivity().switchToFragment(StoragePathFragment.class, R.string.maps_storage);
 
         return true;
       }
@@ -136,6 +135,23 @@ public class MapPrefsFragment extends BaseXmlSettingsFragment
       }
     });
 
+    TwoStatePreference prefAutodownload = (TwoStatePreference)findPreference(getString(R.string.pref_autodownload));
+    prefAutodownload.setChecked(Config.isAutodownloadEnabled());
+    prefAutodownload.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener()
+    {
+      @Override
+      public boolean onPreferenceChange(Preference preference, Object newValue)
+      {
+        boolean value = (Boolean)newValue;
+        Config.setAutodownloadEnabled(value);
+
+        if (value)
+          OnmapDownloader.setAutodownloadLocked(false);
+
+        return true;
+      }
+    });
+
     final Framework.Params3dMode _3d = new Framework.Params3dMode();
     Framework.nativeGet3dMode(_3d);
 
@@ -151,20 +167,6 @@ public class MapPrefsFragment extends BaseXmlSettingsFragment
         return true;
       }
     });
-
-    pref = findPreference(getString(R.string.pref_yota));
-    if (Yota.isFirstYota())
-      pref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener()
-      {
-        @Override
-        public boolean onPreferenceClick(Preference preference)
-        {
-          startActivity(new Intent(Yota.ACTION_PREFERENCE));
-          return false;
-        }
-      });
-    else
-      getPreferenceScreen().removePreference(pref);
 
     final ListPreference trackPref = (ListPreference)findPreference(getString(R.string.pref_track_record));
     String value = (TrackRecorder.isEnabled() ? String.valueOf(TrackRecorder.getDuration()) : "0");

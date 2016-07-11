@@ -1,8 +1,8 @@
 # Main application in qt.
 ROOT_DIR = ..
-DEPENDENCIES = map drape_frontend routing search storage indexer drape platform geometry coding base \
-               freetype expat fribidi tomcrypt jansson protobuf osrm stats_client minizip succinct
-
+DEPENDENCIES = map drape_frontend routing search storage indexer drape platform editor geometry \
+               coding base freetype expat fribidi tomcrypt jansson protobuf osrm stats_client \
+               minizip succinct pugixml oauthcpp
 
 DEPENDENCIES += opening_hours \
 
@@ -59,7 +59,9 @@ OTHER_RES.path = $$DATADIR
 OTHER_RES.files = ../data/copyright.html ../data/eula.html ../data/welcome.html \
                   ../data/countries.txt \
                   ../data/languages.txt ../data/categories.txt \
-                  ../data/packed_polygons.bin res/logo.png
+                  ../data/packed_polygons.bin res/logo.png \
+                  ../data/editor.config \
+
 CLASSIFICATOR_RES.path = $$DATADIR
 CLASSIFICATOR_RES.files = ../data/classificator.txt \
                           ../data/types.txt \
@@ -99,30 +101,38 @@ macx-* {
 }
 
 SOURCES += \
+    about.cpp \
+    create_feature_dialog.cpp \
+    draw_widget.cpp \
+    editor_dialog.cpp \
+    info_dialog.cpp \
     main.cpp \
     mainwindow.cpp \
-    draw_widget.cpp \
-    proxystyle.cpp \
-    slider_ctrl.cpp \
-    about.cpp \
-    info_dialog.cpp \
+    osm_auth_dialog.cpp \
+    place_page_dialog.cpp \
     preferences_dialog.cpp \
-    search_panel.cpp \
-    update_dialog.cpp \
+    proxystyle.cpp \
     qtoglcontext.cpp \
     qtoglcontextfactory.cpp \
+    search_panel.cpp \
+    slider_ctrl.cpp \
+    update_dialog.cpp \
 
 HEADERS += \
-    mainwindow.hpp \
-    draw_widget.hpp \
-    proxystyle.hpp \
-    slider_ctrl.hpp \
     about.hpp \
+    create_feature_dialog.hpp \
+    draw_widget.hpp \
+    editor_dialog.hpp \
     info_dialog.hpp \
+    mainwindow.hpp \
+    osm_auth_dialog.hpp \
+    place_page_dialog.hpp \
     preferences_dialog.hpp \
-    search_panel.hpp \
-    update_dialog.hpp \
+    proxystyle.hpp \
     qtoglcontext.hpp \
     qtoglcontextfactory.hpp \
+    search_panel.hpp \
+    slider_ctrl.hpp \
+    update_dialog.hpp \
 
 RESOURCES += res/resources.qrc

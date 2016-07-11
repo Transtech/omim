@@ -57,15 +57,18 @@ UNIT_TEST(RussiaMoscowLenigradskiy39UturnTurnTest)
   IRouter::ResultCode const result = routeResult.second;
   TEST_EQUAL(result, IRouter::NoError, ());
 
-  integration::TestTurnCount(route, 3);
+  integration::TestTurnCount(route, 4);
 
   integration::GetNthTurn(route, 0)
       .TestValid()
-      .TestDirection(TurnDirection::UTurnLeft);
+      .TestDirection(TurnDirection::TurnRight);
   integration::GetNthTurn(route, 1)
       .TestValid()
+      .TestDirection(TurnDirection::UTurnLeft);
+  integration::GetNthTurn(route, 2)
+      .TestValid()
       .TestDirection(TurnDirection::TurnRight);
-  integration::GetNthTurn(route, 2).TestValid().TestDirection(TurnDirection::TurnLeft);
+  integration::GetNthTurn(route, 3).TestValid().TestDirection(TurnDirection::TurnLeft);
 
   integration::TestRouteLength(route, 2033.);
 }
@@ -156,7 +159,7 @@ UNIT_TEST(RussiaMoscowPlanetnaiTurnTest)
   integration::TestTurnCount(route, 1);
   integration::GetNthTurn(route, 0).TestValid().TestDirection(TurnDirection::TurnLeft);
 
-  integration::TestRouteLength(route, 214.);
+  integration::TestRouteLength(route, 217.);
 }
 
 UNIT_TEST(RussiaMoscowNoTurnsOnMKADTurnTest)

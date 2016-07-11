@@ -8,7 +8,6 @@ import android.support.annotation.StringRes;
 import com.mapswithme.maps.Framework;
 import com.mapswithme.maps.R;
 import com.mapswithme.maps.bookmarks.data.MapObject;
-import com.mapswithme.maps.bookmarks.data.MapObject.MapObjectType;
 import com.mapswithme.util.Utils;
 import com.mapswithme.util.statistics.Statistics;
 
@@ -46,10 +45,10 @@ public abstract class ShareOption
       super(R.string.share_by_message, new Intent(Intent.ACTION_VIEW));
     }
 
-    private void shareWithText(Activity activity, String body)
+    public void share(Activity activity, String body)
     {
       Intent smsIntent = new Intent();
-      TargetUtils.fillSmsIntent(activity, smsIntent, body);
+      TargetUtils.fillSmsIntent(smsIntent, body);
       activity.startActivity(smsIntent);
       Statistics.INSTANCE.trackPlaceShared("SMS");
     }
@@ -59,10 +58,10 @@ public abstract class ShareOption
     {
       final String ge0Url = Framework.nativeGetGe0Url(mapObject.getLat(), mapObject.getLon(), mapObject.getScale(), "");
       final String httpUrl = Framework.getHttpGe0Url(mapObject.getLat(), mapObject.getLon(), mapObject.getScale(), "");
-      final int bodyId = mapObject.getType() == MapObjectType.MY_POSITION ? R.string.my_position_share_sms : R.string.bookmark_share_sms;
+      final int bodyId = MapObject.isOfType(MapObject.MY_POSITION, mapObject) ? R.string.my_position_share_sms : R.string.bookmark_share_sms;
       final String body = activity.getString(bodyId, ge0Url, httpUrl);
 
-      shareWithText(activity, body);
+      share(activity, body);
     }
   }
 

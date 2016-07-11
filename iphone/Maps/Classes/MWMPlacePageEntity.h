@@ -1,58 +1,81 @@
-#import <Foundation/Foundation.h>
-
 #include "Framework.h"
 
-#include "map/user_mark.hpp"
+#include "indexer/feature_meta.hpp"
 
-typedef NS_ENUM (NSUInteger, MWMPlacePageMetadataType)
+#include "storage/index.hpp"
+
+typedef NS_ENUM(NSUInteger, MWMPlacePageCellType)
 {
-  MWMPlacePageMetadataTypePostcode,
-  MWMPlacePageMetadataTypePhoneNumber,
-  MWMPlacePageMetadataTypeWebsite,
-  MWMPlacePageMetadataTypeURL,
-  MWMPlacePageMetadataTypeEmail,
-  MWMPlacePageMetadataTypeOpenHours,
-  MWMPlacePageMetadataTypeCoordinate,
-  MWMPlacePageMetadataTypeWiFi,
-  MWMPlacePageMetadataTypeBookmark
+  MWMPlacePageCellTypePostcode = feature::Metadata::EType::FMD_COUNT,
+  MWMPlacePageCellTypePhoneNumber,
+  MWMPlacePageCellTypeWebsite,
+  MWMPlacePageCellTypeURL,
+  MWMPlacePageCellTypeEmail,
+  MWMPlacePageCellTypeOperator,
+  MWMPlacePageCellTypeOpenHours,
+  MWMPlacePageCellTypeWiFi,
+  MWMPlacePageCellTypeCoordinate,
+  MWMPlacePageCellTypeBookmark,
+  MWMPlacePageCellTypeEditButton,
+  MWMPlacePageCellTypeAddBusinessButton,
+  MWMPlacePageCellTypeAddPlaceButton,
+  MWMPlacePageCellTypeReportButton,
+  MWMPlacePageCellTypeCategory,
+  MWMPlacePageCellTypeName,
+  MWMPlacePageCellTypeAdditionalName,
+  MWMPlacePageCellTypeAddAdditionalName,
+  MWMPlacePageCellTypeAddAdditionalNamePlaceholder,
+  MWMPlacePageCellTypeStreet,
+  MWMPlacePageCellTypeBuilding,
+  MWMPlacePageCellTypeZipCode,
+  MWMPlacePageCellTypeBuildingLevels,
+  MWMPlacePageCellTypeCuisine,
+  MWMPlacePageCellTypeNote,
+  MWMPlacePageCellTypeBookingMore,
+  MWMPlacePageCellTypeCount
 };
 
-typedef NS_ENUM (NSUInteger, MWMPlacePageEntityType)
-{
-  MWMPlacePageEntityTypeRegular,
-  MWMPlacePageEntityTypeBookmark,
-  MWMPlacePageEntityTypeEle,
-  MWMPlacePageEntityTypeHotel,
-  MWMPlacePageEntityTypeAPI,
-  MWMPlacePageEntityTypeMyPosition
-};
+using MWMPlacePageCellTypeValueMap = map<MWMPlacePageCellType, string>;
 
 @class MWMPlacePageViewManager;
 
 @interface MWMPlacePageEntity : NSObject
 
 @property (copy, nonatomic) NSString * title;
-@property (copy, nonatomic) NSString * category;
+@property (copy, nonatomic) NSString * subtitle;
+@property (copy, nonatomic) NSString * address;
 @property (copy, nonatomic) NSString * bookmarkTitle;
 @property (copy, nonatomic) NSString * bookmarkCategory;
 @property (copy, nonatomic) NSString * bookmarkDescription;
 @property (nonatomic, readonly) BOOL isHTMLDescription;
 @property (copy, nonatomic) NSString * bookmarkColor;
-
-@property (nonatomic) MWMPlacePageEntityType type;
-
-@property (nonatomic) int typeDescriptionValue;
+@property (copy, nonatomic) NSString * bookingRating;
+@property (copy, nonatomic) NSString * bookingPrice;
+@property (copy, nonatomic) NSString * bookingOnlinePrice;
 
 @property (nonatomic) BookmarkAndCategory bac;
-@property (nonatomic) m2::PointD point;
 @property (weak, nonatomic) MWMPlacePageViewManager * manager;
 
-- (NSArray *)metadataTypes;
-- (NSArray *)metadataValues;
-- (void)insertBookmarkInTypes;
-- (void)removeBookmarkFromTypes;
+- (FeatureID const &)featureID;
+- (BOOL)isMyPosition;
+- (BOOL)isBookmark;
+- (BOOL)isApi;
+- (BOOL)isBooking;
+- (ms::LatLon)latlon;
+- (m2::PointD const &)mercator;
+- (NSString *)apiURL;
+- (NSURL *)bookingUrl;
+- (NSString * )hotelId;
+- (string)titleForNewBookmark;
 
-- (instancetype)initWithUserMark:(UserMark const *)mark;
+- (instancetype)initWithInfo:(place_page::Info const &)info;
 - (void)synchronize;
+- (void)onlinePricingWithCompletionBlock:(TMWMVoidBlock)completion failure:(TMWMVoidBlock)failure;
+
+- (void)toggleCoordinateSystem;
+
+- (NSString *)getCellValue:(MWMPlacePageCellType)cellType;
+- (place_page::Info const &)info;
+- (storage::TCountryId const &)countryId;
 
 @end

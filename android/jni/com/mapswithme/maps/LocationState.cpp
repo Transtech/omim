@@ -6,41 +6,41 @@
 
 extern "C"
 {
-  JNIEXPORT void JNICALL
-  Java_com_mapswithme_maps_LocationState_switchToNextMode(JNIEnv * env, jobject thiz)
-  {
-    g_framework->NativeFramework()->SwitchMyPositionNextMode();
-  }
 
-  JNIEXPORT jint JNICALL
-  Java_com_mapswithme_maps_LocationState_getLocationStateMode(JNIEnv * env, jobject thiz)
-  {
-    return g_framework->GetMyPositionMode();
-  }
+static void LocationStateModeChanged(location::EMyPositionMode mode, shared_ptr<jobject> const & listener)
+{
+  g_framework->OnMyPositionModeChanged(mode);
 
-  void LocationStateModeChanged(location::EMyPositionMode mode, shared_ptr<jobject> const & obj)
-  {
-    g_framework->SetMyPositionMode(mode);
-
-    JNIEnv * env = jni::GetEnv();
-    env->CallVoidMethod(*obj.get(), jni::GetJavaMethodID(env, *obj.get(), "onMyPositionModeChangedCallback", "(I)V"), static_cast<jint>(mode));
-  }
-
-  JNIEXPORT void JNICALL
-  Java_com_mapswithme_maps_LocationState_setMyPositionModeListener(JNIEnv * env, jobject thiz, jobject obj)
-  {
-    g_framework->SetMyPositionModeListener(bind(&LocationStateModeChanged, _1, jni::make_global_ref(obj)));
-  }
-
-  JNIEXPORT void JNICALL
-  Java_com_mapswithme_maps_LocationState_removeMyPositionModeListener(JNIEnv * env, jobject thiz, jint slotID)
-  {
-    g_framework->SetMyPositionModeListener(location::TMyPositionModeChanged());
-  }
-
-  JNIEXPORT void JNICALL
-  Java_com_mapswithme_maps_LocationState_invalidatePosition(JNIEnv * env, jobject thiz)
-  {
-    g_framework->NativeFramework()->InvalidateMyPosition();
-  }
+  JNIEnv * env = jni::GetEnv();
+  env->CallVoidMethod(*listener, jni::GetMethodID(env, *listener.get(), "onMyPositionModeChanged", "(I)V"), static_cast<jint>(mode));
 }
+
+//  public static void nativeSwitchToNextMode();
+JNIEXPORT void JNICALL
+Java_com_mapswithme_maps_LocationState_nativeSwitchToNextMode(JNIEnv * env, jclass clazz)
+{
+  g_framework->SwitchMyPositionNextMode();
+}
+
+// private static int nativeGetMode();
+JNIEXPORT jint JNICALL
+Java_com_mapswithme_maps_LocationState_nativeGetMode(JNIEnv * env, jclass clazz)
+{
+  return g_framework->GetMyPositionMode();
+}
+
+//  public static void nativeSetListener(ModeChangeListener listener);
+JNIEXPORT void JNICALL
+Java_com_mapswithme_maps_LocationState_nativeSetListener(JNIEnv * env, jclass clazz, jobject listener)
+{
+  g_framework->SetMyPositionModeListener(bind(&LocationStateModeChanged, _1, jni::make_global_ref(listener)));
+}
+
+//  public static void nativeRemoveListener();
+JNIEXPORT void JNICALL
+Java_com_mapswithme_maps_LocationState_nativeRemoveListener(JNIEnv * env, jclass clazz)
+{
+  g_framework->SetMyPositionModeListener(location::TMyPositionModeChanged());
+}
+
+} // extern "C"

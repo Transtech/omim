@@ -12,18 +12,23 @@ INCLUDEPATH *= $$ROOT_DIR/3party/freetype/include
 
 SOURCES += \
     $$ROOT_DIR/3party/agg/agg_curves.cpp \
+    animation/animation.cpp \
+    animation/arrow_animation.cpp \
     animation/base_interpolator.cpp \
+    animation/follow_animation.cpp \
     animation/interpolation_holder.cpp \
     animation/interpolations.cpp \
-    animation/model_view_animation.cpp \
+    animation/interpolators.cpp \
+    animation/linear_animation.cpp \
+    animation/scale_animation.cpp \
+    animation/sequence_animation.cpp \
+    animation/parallel_animation.cpp \
     animation/opacity_animation.cpp \
-    animation/perspective_animation.cpp \
     animation/show_hide_animation.cpp \
-    gui/button.cpp \
+    gui/choose_position_mark.cpp \
     gui/compass.cpp \
     gui/copyright_label.cpp \
-    gui/country_status.cpp \
-    gui/country_status_helper.cpp \
+    gui/debug_label.cpp \
     gui/drape_gui.cpp \
     gui/gui_text.cpp \
     gui/layer_render.cpp \
@@ -31,12 +36,15 @@ SOURCES += \
     gui/ruler_helper.cpp \
     gui/shape.cpp \
     gui/skin.cpp \
+    animation_system.cpp \
+    animation_utils.cpp \
     apply_feature_functors.cpp \
     area_shape.cpp \
     arrow3d.cpp \
     backend_renderer.cpp \
     base_renderer.cpp \
     batchers_pool.cpp \
+    batch_merge_helper.cpp \
     circle_shape.cpp \
     color_constants.cpp \
     drape_engine.cpp \
@@ -48,12 +56,12 @@ SOURCES += \
     line_shape.cpp \
     line_shape_helper.cpp \
     map_data_provider.cpp \
-    memory_feature_index.cpp \
     message_acceptor.cpp \
     message_queue.cpp \
     my_position.cpp \
     my_position_controller.cpp \
     navigator.cpp \
+    overlay_batcher.cpp \
     path_symbol_shape.cpp \
     path_text_shape.cpp \
     poi_symbol_shape.cpp \
@@ -66,6 +74,8 @@ SOURCES += \
     route_renderer.cpp \
     route_shape.cpp \
     rule_drawer.cpp \
+    screen_animations.cpp \
+    screen_operations.cpp \
     selection_shape.cpp \
     stylist.cpp \
     text_handle.cpp \
@@ -74,8 +84,6 @@ SOURCES += \
     threads_commutator.cpp \
     tile_info.cpp \
     tile_key.cpp \
-    tile_tree.cpp \
-    tile_tree_builder.cpp \
     tile_utils.cpp \
     transparent_layer.cpp \
     user_event_stream.cpp \
@@ -94,22 +102,26 @@ SOURCES += \
     watch/geometry_processors.cpp \
     watch/feature_processor.cpp \
     watch/default_font.cpp \
-    batch_merge_helper.cpp \
 
 HEADERS += \
+    animation/animation.hpp \
+    animation/arrow_animation.hpp \
     animation/base_interpolator.hpp \
+    animation/follow_animation.hpp \
     animation/interpolation_holder.hpp \
     animation/interpolations.hpp \
-    animation/model_view_animation.hpp \
+    animation/interpolators.hpp \
+    animation/linear_animation.hpp \
+    animation/scale_animation.hpp \
+    animation/sequence_animation.hpp \
+    animation/parallel_animation.hpp \
     animation/opacity_animation.hpp \
-    animation/perspective_animation.hpp \
     animation/show_hide_animation.hpp \
     animation/value_mapping.hpp \
-    gui/button.hpp \
+    gui/choose_position_mark.hpp \
     gui/compass.hpp \
     gui/copyright_label.hpp \
-    gui/country_status.hpp \
-    gui/country_status_helper.hpp \
+    gui/debug_label.hpp \
     gui/drape_gui.hpp \
     gui/gui_text.hpp \
     gui/layer_render.hpp \
@@ -118,12 +130,15 @@ HEADERS += \
     gui/shape.hpp \
     gui/skin.hpp \
     animation_constants.hpp \
+    animation_system.hpp \
+    animation_utils.hpp \
     apply_feature_functors.hpp \
     area_shape.hpp \
     arrow3d.hpp \
     backend_renderer.hpp \
     base_renderer.hpp \
     batchers_pool.hpp \
+    batch_merge_helper.hpp \
     circle_shape.hpp \
     color_constants.hpp \
     drape_engine.hpp \
@@ -138,7 +153,6 @@ HEADERS += \
     line_shape_helper.hpp \
     map_data_provider.hpp \
     map_shape.hpp \
-    memory_feature_index.hpp \
     message.hpp \
     message_acceptor.hpp \
     message_queue.hpp \
@@ -146,6 +160,7 @@ HEADERS += \
     my_position.hpp \
     my_position_controller.hpp \
     navigator.hpp \
+    overlay_batcher.hpp \
     path_symbol_shape.hpp \
     path_text_shape.hpp \
     poi_symbol_shape.hpp \
@@ -158,6 +173,8 @@ HEADERS += \
     route_renderer.hpp \
     route_shape.hpp \
     rule_drawer.hpp \
+    screen_animations.hpp \
+    screen_operations.hpp \
     selection_shape.hpp \
     shape_view_params.hpp \
     stylist.hpp \
@@ -167,8 +184,6 @@ HEADERS += \
     threads_commutator.hpp \
     tile_info.hpp \
     tile_key.hpp \
-    tile_tree.hpp \
-    tile_tree_builder.hpp \
     tile_utils.hpp \
     transparent_layer.hpp \
     user_event_stream.hpp \
@@ -196,4 +211,3 @@ HEADERS += \
     watch/brush_info.hpp \
     watch/geometry_processors.hpp \
     watch/feature_processor.hpp \
-    batch_merge_helper.hpp \

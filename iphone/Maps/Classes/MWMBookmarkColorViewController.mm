@@ -1,101 +1,52 @@
-#import "MWMBookmarkColorCell.h"
 #import "MWMBookmarkColorViewController.h"
-#import "MWMPlacePageEntity.h"
-#import "MWMPlacePageViewManager.h"
 #import "Statistics.h"
 #import "UIColor+MapsMeColor.h"
-#import "UIViewController+navigation.h"
+#import "UIViewController+Navigation.h"
 
-extern NSArray * const kBookmarkColorsVariant;
+#include "std/array.hpp"
 
-static NSString * const kBookmarkColorCellIdentifier = @"MWMBookmarkColorCell";
+namespace
+{
+array<NSString *, 8> const kBookmarkColorsVariant
+{{
+  @"placemark-red",
+  @"placemark-yellow",
+  @"placemark-blue",
+  @"placemark-green",
+  @"placemark-purple",
+  @"placemark-orange",
+  @"placemark-brown",
+  @"placemark-pink"
+}};
+
+} // namespace
 
 @interface MWMBookmarkColorViewController ()
 
-@property (weak, nonatomic) IBOutlet UITableView * tableView;
-@property (nonatomic) BOOL colorWasChanged;
-@property (weak, nonatomic) IBOutlet NSLayoutConstraint * tableViewHeight;
+@property (copy, nonatomic) NSString * bookmarkColor;
+@property (weak, nonatomic) id<MWMBookmarkColorDelegate> delegate;
 
-@end
-
-@interface MWMBookmarkColorViewController (TableView) <UITableViewDataSource, UITableViewDelegate>
 @end
 
 @implementation MWMBookmarkColorViewController
 
+- (instancetype)initWithColor:(NSString *)color delegate:(id<MWMBookmarkColorDelegate>)delegate
+{
+  self = [super init];
+  if (self)
+  {
+    _bookmarkColor = color;
+    _delegate = delegate;
+  }
+  return self;
+}
+
 - (void)viewDidLoad
 {
   [super viewDidLoad];
+  NSAssert(self.bookmarkColor, @"Color can't be nil!");
+  NSAssert(self.delegate, @"Delegate can't be nil!");
   self.title = L(@"bookmark_color");
-  self.tableView.separatorColor = [UIColor blackDividers];
-  self.view.backgroundColor = [UIColor pressBackground];
-  [self.tableView registerNib:[UINib nibWithNibName:kBookmarkColorCellIdentifier bundle:nil] forCellReuseIdentifier:kBookmarkColorCellIdentifier];
-  self.colorWasChanged = NO;
-}
-
-- (void)viewWillAppear:(BOOL)animated
-{
-  [super viewWillAppear:animated];
-  [self configureTableViewForOrientation:self.interfaceOrientation];
-  [self.tableView reloadData];
-  if (!self.iPadOwnerNavigationController)
-    return;
-
-  [self.iPadOwnerNavigationController setNavigationBarHidden:NO];
-  CGFloat const bottomOffset = 88.;
-  self.iPadOwnerNavigationController.view.height = self.tableView.height + bottomOffset;
-  [self showBackButton];
-}
-
-- (void)backTap
-{
-  if (self.iPadOwnerNavigationController)
-   [self.iPadOwnerNavigationController setNavigationBarHidden:YES];
-  [self.placePageManager reloadBookmark];
-  [self.navigationController popViewControllerAnimated:YES];
-}
-
-- (void)configureTableViewForOrientation:(UIInterfaceOrientation)orientation
-{
-  if (self.iPadOwnerNavigationController)
-    return;
-
-  CGSize const size = self.navigationController.view.bounds.size;
-  CGFloat const defaultHeight = 352.;
-  switch (orientation)
-  {
-    case UIInterfaceOrientationPortrait:
-    case UIInterfaceOrientationPortraitUpsideDown:
-    case UIInterfaceOrientationUnknown:
-      self.tableViewHeight.constant = defaultHeight;
-      break;
-    case UIInterfaceOrientationLandscapeLeft:
-    case UIInterfaceOrientationLandscapeRight:
-    {
-      CGFloat const topOffset = 24.;
-      CGFloat const navBarHeight = 64.;
-      self.tableViewHeight.constant = MIN(defaultHeight, MIN(size.width, size.height) - 2 * topOffset - navBarHeight);
-      break;
-    }
-  }
-  [self.tableView setNeedsLayout];
-}
-
-- (void)didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation
-{
-  [self configureTableViewForOrientation:self.interfaceOrientation];
-}
-
-- (BOOL)shouldAutorotate
-{
-  return YES;
-}
-
-- (void)viewWillDisappear:(BOOL)animated
-{
-  [super viewWillDisappear:animated];
-  if (self.colorWasChanged && !self.iPadOwnerNavigationController)
-    [self.placePageManager reloadBookmark];
 }
 
 @end
@@ -104,35 +55,27 @@ static NSString * const kBookmarkColorCellIdentifier = @"MWMBookmarkColorCell";
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-  MWMBookmarkColorCell * cell = (MWMBookmarkColorCell *)[tableView dequeueReusableCellWithIdentifier:kBookmarkColorCellIdentifier];
-  if (!cell)
-    cell = [[MWMBookmarkColorCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:kBookmarkColorCellIdentifier];
-
-  NSString * const currentColor = kBookmarkColorsVariant[indexPath.row];
-  [cell configureWithColorString:kBookmarkColorsVariant[indexPath.row]];
-
-  if ([currentColor isEqualToString:self.placePageManager.entity.bookmarkColor] && !cell.selected)
-    [tableView selectRowAtIndexPath:indexPath animated:NO scrollPosition:UITableViewScrollPositionNone];
-
+  UITableViewCell * cell = [tableView dequeueReusableCellWithIdentifier:[UITableViewCell className]];
+  NSString * currentColor = kBookmarkColorsVariant[indexPath.row];
+  cell.textLabel.text = ios_bookmark_ui_helper::LocalizedTitleForBookmarkColor(currentColor);
+  BOOL const isSelected = [currentColor isEqualToString:self.bookmarkColor];
+  cell.imageView.image = ios_bookmark_ui_helper::ImageForBookmarkColor(currentColor, isSelected);
+  cell.accessoryType = isSelected ? UITableViewCellAccessoryCheckmark : UITableViewCellAccessoryNone;
   return cell;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-  return kBookmarkColorsVariant.count;
+  return kBookmarkColorsVariant.size();
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
   NSString * bookmarkColor = kBookmarkColorsVariant[indexPath.row];
-  [[Statistics instance] logEvent:kStatEventName(kStatPlacePage, kStatChangeBookmarkColor)
+  [Statistics logEvent:kStatEventName(kStatPlacePage, kStatChangeBookmarkColor)
                    withParameters:@{kStatValue : bookmarkColor}];
-  self.colorWasChanged = YES;
-  self.placePageManager.entity.bookmarkColor = bookmarkColor;
-  if (!self.iPadOwnerNavigationController)
-    return;
-
-  [self.placePageManager.entity synchronize];
+  [self.delegate didSelectColor:bookmarkColor];
+  [self backTap];
 }
 
 @end

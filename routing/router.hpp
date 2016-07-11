@@ -19,9 +19,10 @@ class Route;
 /// Routing engine type.
 enum class RouterType
 {
-  Vehicle = 0, /// For OSRM vehicle routing
-  Pedestrian = 1,   /// For A star pedestrian routing
-  Truck = 2 /// For GraphHopper integration
+  Vehicle = 0,  /// For OSRM vehicle routing
+  Pedestrian,   /// For A star pedestrian routing
+  Bicycle,      /// For A star bicycle routing
+  Truck, /// For GraphHopper integration
 };
 
 string ToString(RouterType type);
@@ -31,7 +32,8 @@ class IRouter
 public:
   /// Routing possible statuses enumeration.
   /// \warning  this enum has JNI mirror!
-  /// \see android/src/com/mapswithme/maps/data/RoutingResultCodesProcessor.java
+  /// \see android/src/com/mapswithme/maps/routing/ResultCodesHelper.java
+  // TODO(gardster): Please check what items become obsolete now
   enum ResultCode // TODO(mgsergio) enum class
   {
     NoError = 0,

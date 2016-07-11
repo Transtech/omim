@@ -56,9 +56,9 @@ BOOL isOffsetInButton(CGFloat offset, MWMSearchTabButtonsView * button)
   [self resetSelectedTab];
 }
 
-- (void)refresh
+- (void)mwm_refreshUI
 {
-  [self.view refresh];
+  [self.view mwm_refreshUI];
 }
 
 - (void)resetSelectedTab
@@ -145,11 +145,11 @@ BOOL isOffsetInButton(CGFloat offset, MWMSearchTabButtonsView * button)
       switch (btn.tag)
       {
       case MWMSearchTabbedViewCellHistory:
-        [[Statistics instance] logEvent:kStatEventName(kStatSearch, kStatSelectTab)
+        [Statistics logEvent:kStatEventName(kStatSearch, kStatSelectTab)
                          withParameters:@{kStatValue : kStatHistory}];
         break;
       case MWMSearchTabbedViewCellCategories:
-        [[Statistics instance] logEvent:kStatEventName(kStatSearch, kStatSelectTab)
+        [Statistics logEvent:kStatEventName(kStatSearch, kStatSelectTab)
                          withParameters:@{kStatValue : kStatCategories}];
         break;
       default:

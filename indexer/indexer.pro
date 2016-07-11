@@ -11,15 +11,20 @@ include($$ROOT_DIR/common.pri)
 
 SOURCES += \
     categories_holder.cpp \
+    categories_holder_loader.cpp \
+    categories_index.cpp \
     classificator.cpp \
     classificator_loader.cpp \
     coding_params.cpp \
+    cuisines.cpp \
     data_factory.cpp \
     data_header.cpp \
     drawing_rule_def.cpp \
     drawing_rules.cpp \
     drules_selector.cpp \
     drules_selector_parser.cpp \
+    editable_map_object.cpp \
+    edits_migration.cpp \
     feature.cpp \
     feature_algo.cpp \
     feature_covering.cpp \
@@ -38,24 +43,31 @@ SOURCES += \
     geometry_serialization.cpp \
     index.cpp \
     index_builder.cpp \
+    map_object.cpp \
     map_style.cpp \
     map_style_reader.cpp \
     mwm_set.cpp \
+    new_feature_categories.cpp \  # it's in indexer because of CategoriesHolder dependency.
     old/feature_loader_101.cpp \
+    osm_editor.cpp \
     point_to_int64.cpp \
+    postcodes_matcher.cpp \  # it's in indexer due to editor wich is in indexer and depends on postcodes_marcher
+    rank_table.cpp \
     scales.cpp \
-    search_delimiters.cpp \
-    search_index_builder.cpp \
-    search_string_utils.cpp \
+    search_delimiters.cpp \    # it's in indexer because of CategoriesHolder dependency.
+    search_string_utils.cpp \  # it's in indexer because of CategoriesHolder dependency.
+    string_slice.cpp \
     types_mapping.cpp \
 
 HEADERS += \
     categories_holder.hpp \
+    categories_index.hpp \
     cell_coverer.hpp \
     cell_id.hpp \
     classificator.hpp \
     classificator_loader.hpp \
     coding_params.hpp \
+    cuisines.hpp \
     data_factory.hpp \
     data_header.hpp \
     drawing_rule_def.hpp \
@@ -63,6 +75,8 @@ HEADERS += \
     drules_include.hpp \
     drules_selector.hpp \
     drules_selector_parser.hpp \
+    editable_map_object.hpp \
+    edits_migration.hpp \
     feature.hpp \
     feature_algo.hpp \
     feature_covering.hpp \
@@ -85,25 +99,34 @@ HEADERS += \
     interval_index.hpp \
     interval_index_builder.hpp \
     interval_index_iface.hpp \
+    map_object.hpp \
     map_style.hpp \
     map_style_reader.hpp \
     mwm_set.hpp \
+    new_feature_categories.hpp \  # it's in indexer because of CategoriesHolder dependency.
     old/feature_loader_101.hpp \
     old/interval_index_101.hpp \
+    osm_editor.hpp \
     point_to_int64.hpp \
+    postcodes_matcher.hpp \   # it's in indexer due to editor wich is in indexer and depends on postcodes_marcher
+    rank_table.hpp \
     scale_index.hpp \
     scale_index_builder.hpp \
     scales.hpp \
-    search_delimiters.hpp \
-    search_index_builder.hpp \
-    search_string_utils.hpp \
-    search_trie.hpp \
-    string_file.hpp \
-    string_file_values.hpp \
+    search_delimiters.hpp \      # it's in indexer because of CategoriesHolder dependency.
+    search_string_utils.hpp \    # it's in indexer because of CategoriesHolder dependency.
+    string_set.hpp \
+    string_slice.hpp \
+    succinct_trie_builder.hpp \
+    succinct_trie_reader.hpp \
     tesselator_decl.hpp \
     tree_structure.hpp \
+    trie.hpp \
+    trie_builder.hpp \
+    trie_reader.hpp \
     types_mapping.hpp \
     unique_index.hpp \
+
 
 OTHER_FILES += drules_struct.proto
 

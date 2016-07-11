@@ -1,8 +1,11 @@
 #pragma once
-#include "result.hpp"
+
+#include "search/pre_ranking_info.hpp"
+#include "search/ranking_info.hpp"
+#include "search/ranking_utils.hpp"
+#include "search/result.hpp"
 
 #include "indexer/feature_data.hpp"
-
 
 class FeatureType;
 class CategoriesHolder;
@@ -15,43 +18,30 @@ struct CountryInfo;
 
 namespace search
 {
-namespace impl
-{
-
-template <class T> bool LessRankT(T const & r1, T const & r2);
-template <class T> bool LessDistanceT(T const & r1, T const & r2);
+class ReverseGeocoder;
 
 /// First pass results class. Objects are creating during search in trie.
 /// Works fast without feature loading and provide ranking.
 class PreResult1
 {
-  friend class PreResult2;
-  template <class T> friend bool LessRankT(T const & r1, T const & r2);
-  template <class T> friend bool LessDistanceT(T const & r1, T const & r2);
-
-  FeatureID m_id;
-  m2::PointD m_center;
-  double m_distance;
-  uint8_t m_rank;
-  int8_t m_viewportID;
-
-  void CalcParams(m2::PointD const & pivot);
-
 public:
-  PreResult1(FeatureID const & fID, uint8_t rank, m2::PointD const & center,
-             m2::PointD const & pivot, int8_t viewportID);
-  PreResult1(m2::PointD const & center, m2::PointD const & pivot);
+  PreResult1(FeatureID const & fID, PreRankingInfo const & info);
 
   static bool LessRank(PreResult1 const & r1, PreResult1 const & r2);
   static bool LessDistance(PreResult1 const & r1, PreResult1 const & r2);
-  static bool LessPointsForViewport(PreResult1 const & r1, PreResult1 const & r2);
 
-  inline FeatureID GetID() const { return m_id; }
-  inline m2::PointD GetCenter() const { return m_center; }
-  inline uint8_t GetRank() const { return m_rank; }
-  inline int8_t GetViewportID() const { return m_viewportID; }
+  inline FeatureID GetId() const { return m_id; }
+  inline double GetDistance() const { return m_info.m_distanceToPivot; }
+  inline uint8_t GetRank() const { return m_info.m_rank; }
+  inline PreRankingInfo & GetInfo() { return m_info; }
+  inline PreRankingInfo const & GetInfo() const { return m_info; }
+
+private:
+  friend class PreResult2;
+
+  FeatureID m_id;
+  PreRankingInfo m_info;
 };
-
 
 /// Second result class. Objects are creating during reading of features.
 /// Read and fill needed info for ranking and getting final results.
@@ -59,39 +49,37 @@ class PreResult2
 {
   friend class PreResult2Maker;
 
-  void CalcParams(m2::PointD const & pivot);
-
 public:
   enum ResultType
   {
     RESULT_LATLON,
     RESULT_FEATURE,
-    RESULT_BUILDING
+    RESULT_BUILDING  //!< Buildings are not filtered out in duplicates filter.
   };
 
-  /// For RESULT_FEATURE.
-  PreResult2(FeatureType const & f, PreResult1 const * p, m2::PointD const & pivot,
-             string const & displayName, string const & fileName);
+  /// For RESULT_FEATURE and RESULT_BUILDING.
+  PreResult2(FeatureType const & f, PreResult1 const * p, m2::PointD const & center,
+             m2::PointD const & pivot, string const & displayName, string const & fileName);
 
   /// For RESULT_LATLON.
   PreResult2(double lat, double lon);
 
-  /// For RESULT_BUILDING.
-  PreResult2(m2::PointD const & pt, string const & str, uint32_t type);
+  inline search::RankingInfo const & GetRankingInfo() const { return m_info; }
+
+  template <typename TInfo>
+  inline void SetRankingInfo(TInfo && info)
+  {
+    m_info = forward<TInfo>(info);
+  }
 
   /// @param[in]  infoGetter Need to get region for result.
   /// @param[in]  pCat    Categories need to display readable type string.
   /// @param[in]  pTypes  Set of preffered types that match input tokens by categories.
   /// @param[in]  lang    Current system language.
+  /// @param[in]  coder   May be nullptr - no need to calculate address.
   Result GenerateFinalResult(storage::CountryInfoGetter const & infoGetter,
                              CategoriesHolder const * pCat, set<uint32_t> const * pTypes,
-                             int8_t locale) const;
-
-  Result GeneratePointResult(CategoriesHolder const * pCat, set<uint32_t> const * pTypes,
-                             int8_t locale) const;
-
-  static bool LessRank(PreResult2 const & r1, PreResult2 const & r2);
-  static bool LessDistance(PreResult2 const & r1, PreResult2 const & r2);
+                             int8_t locale, ReverseGeocoder const * coder) const;
 
   /// Filter equal features for different mwm's.
   class StrictEqualF
@@ -122,15 +110,10 @@ public:
   inline FeatureID const & GetID() const { return m_id; }
   inline string const & GetName() const { return m_str; }
   inline feature::TypesHolder const & GetTypes() const { return m_types; }
+  inline m2::PointD GetCenter() const { return m_region.m_point; }
 
 private:
-  template <class T> friend bool LessRankT(T const & r1, T const & r2);
-  template <class T> friend bool LessDistanceT(T const & r1, T const & r2);
-
   bool IsEqualCommon(PreResult2 const & r) const;
-
-  string ReadableFeatureType(CategoriesHolder const * pCat,
-                             uint32_t type, int8_t locale) const;
 
   FeatureID m_id;
   feature::TypesHolder m_types;
@@ -156,11 +139,9 @@ private:
 
   string GetRegionName(storage::CountryInfoGetter const & infoGetter, uint32_t fType) const;
 
-  m2::PointD GetCenter() const { return m_region.m_point; }
-
   double m_distance;
   ResultType m_resultType;
-  uint8_t m_rank;
+  RankingInfo m_info;
   feature::EGeomType m_geomType;
 
   Result::Metadata m_metadata;
@@ -171,8 +152,43 @@ inline string DebugPrint(PreResult2 const & t)
   return t.DebugPrint();
 }
 
-}  // namespace search::impl
-
 void ProcessMetadata(FeatureType const & ft, Result::Metadata & meta);
 
+class IndexedValue
+{
+  /// @todo Do not use shared_ptr for optimization issues.
+  /// Need to rewrite std::unique algorithm.
+  unique_ptr<PreResult2> m_value;
+
+  double m_rank;
+  double m_distanceToPivot;
+
+  friend string DebugPrint(IndexedValue const & value)
+  {
+    ostringstream os;
+    os << "IndexedValue [";
+    if (value.m_value)
+      os << DebugPrint(*value.m_value);
+    os << "]";
+    return os.str();
+  }
+
+public:
+  explicit IndexedValue(unique_ptr<PreResult2> value)
+    : m_value(move(value)), m_rank(0.0), m_distanceToPivot(numeric_limits<double>::max())
+  {
+    if (!m_value)
+      return;
+
+    auto const & info = m_value->GetRankingInfo();
+    m_rank = info.GetLinearModelRank();
+    m_distanceToPivot = info.m_distanceToPivot;
+  }
+
+  PreResult2 const & operator*() const { return *m_value; }
+
+  inline double GetRank() const { return m_rank; }
+
+  inline double GetDistanceToPivot() const { return m_distanceToPivot; }
+};
 }  // namespace search

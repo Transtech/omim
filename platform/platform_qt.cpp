@@ -1,5 +1,5 @@
-
 #include "platform/constants.hpp"
+#include "platform/measurement_utils.hpp"
 #include "platform/platform.hpp"
 #include "platform/settings.hpp"
 
@@ -8,17 +8,19 @@
 #include "base/logging.hpp"
 
 #include "std/algorithm.hpp"
+#include "std/future.hpp"
 #include "std/regex.hpp"
 #include "std/target_os.hpp"
 
+#include <QtCore/QCoreApplication>
 #include <QtCore/QDir>
 #include <QtCore/QFileInfo>
 #include <QtCore/QLocale>
 
-ModelReader * Platform::GetReader(string const & file, string const & searchScope) const
+unique_ptr<ModelReader> Platform::GetReader(string const & file, string const & searchScope) const
 {
-  return new FileReader(ReadPathForFile(file, searchScope),
-                        READER_CHUNK_LOG_SIZE, READER_CHUNK_LOG_COUNT);
+  return make_unique<FileReader>(ReadPathForFile(file, searchScope),
+                                 READER_CHUNK_LOG_SIZE, READER_CHUNK_LOG_COUNT);
 }
 
 bool Platform::GetFileSizeByName(string const & fileName, uint64_t & size) const
@@ -72,13 +74,28 @@ Platform::EError Platform::MkDir(string const & dirName) const
 
 void Platform::SetupMeasurementSystem() const
 {
-  Settings::Units u;
-  if (Settings::Get("Units", u))
+  auto units = measurement_utils::Units::Metric;
+  if (settings::Get(settings::kMeasurementUnits, units))
     return;
   bool const isMetric = QLocale::system().measurementSystem() == QLocale::MetricSystem;
-  u = isMetric ? Settings::Metric : Settings::Foot;
-  Settings::Set("Units", u);
+  units = isMetric ? measurement_utils::Units::Metric : measurement_utils::Units::Imperial;
+  settings::Set(settings::kMeasurementUnits, units);
 }
+
+#if defined(OMIM_OS_LINUX)
+void Platform::RunOnGuiThread(TFunctor const & fn)
+{
+  // Following hack is used to post on main message loop |fn| when
+  // |source| is destroyed (at the exit of the code block).
+  QObject source;
+  QObject::connect(&source, &QObject::destroyed, QCoreApplication::instance(), fn);
+}
+
+void Platform::RunAsync(TFunctor const & fn, Priority p)
+{
+  async(fn);
+}
+#endif  // defined(OMIM_OS_LINUX)
 
 extern Platform & GetPlatform()
 {

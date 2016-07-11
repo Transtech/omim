@@ -6,6 +6,7 @@
 namespace
 {
 inline bool IsValidEdgeWeight(EdgeWeight const & w) { return w != INVALID_EDGE_WEIGHT; }
+double constexpr kMwmCrossingNodeEqualityRadiusDegrees = 0.001;
 }
 
 namespace routing
@@ -59,8 +60,8 @@ IRouter::ResultCode CrossMwmGraph::SetStartNode(CrossNode const & startNode)
       {
         if (nextCross.toNode.IsValid())
           dummyEdges.emplace_back(nextCross, weights[i]);
-      }
     }
+  }
   }
 
   m_virtualEdges.insert(make_pair(startNode, dummyEdges));
@@ -148,17 +149,22 @@ bool CrossMwmGraph::ConstructBorderCrossImpl(OutgoingCrossNode const & startNode
                                              TRoutingMappingPtr const & currentMapping,
                                              vector<BorderCross> & crosses) const
 {
+  auto const fromCross = CrossNode(startNode.m_nodeId, currentMapping->GetMwmId(), startNode.m_point);
   string const & nextMwm = currentMapping->m_crossContext.GetOutgoingMwmName(startNode);
   TRoutingMappingPtr nextMapping = m_indexManager.GetMappingByName(nextMwm);
   // If we haven't this routing file, we skip this path.
   if (!nextMapping->IsValid())
     return false;
-  crosses.clear();
+  ASSERT(crosses.empty(), ());
   nextMapping->LoadCrossContext();
   nextMapping->m_crossContext.ForEachIngoingNodeNearPoint(startNode.m_point, [&](IngoingCrossNode const & node)
-  {
-      crosses.emplace_back(CrossNode(startNode.m_nodeId, currentMapping->GetMwmId(), node.m_point),
-                           CrossNode(node.m_nodeId, nextMapping->GetMwmId(), node.m_point));
+    {
+    if (node.m_point.EqualDxDy(startNode.m_point, kMwmCrossingNodeEqualityRadiusDegrees))
+    {
+      auto const toCross = CrossNode(node.m_nodeId, nextMapping->GetMwmId(), node.m_point);
+      if (toCross.IsValid())
+        crosses.emplace_back(fromCross, toCross);
+    }
   });
   return !crosses.empty();
 }
@@ -172,7 +178,11 @@ void CrossMwmGraph::GetOutgoingEdgesList(BorderCross const & v,
   if (it != m_virtualEdges.end())
   {
     adj.insert(adj.end(), it->second.begin(), it->second.end());
-    return;
+    // For last map we need to load virtual shortcuts and real cross roads. It takes to account case
+    // when we have a path from the mwmw border to the point inside the map throuh another map.
+    // See Ust-Katav test for more.
+    if (it->second.empty() || !it->second.front().GetTarget().toNode.isVirtual)
+      return;
   }
 
   // Loading cross routing section.
@@ -187,12 +197,12 @@ void CrossMwmGraph::GetOutgoingEdgesList(BorderCross const & v,
   IngoingCrossNode ingoingNode;
   bool found = false;
   auto findingFn = [&ingoingNode, &v, &found](IngoingCrossNode const & node)
-                                             {
+  {
                                                if (node.m_nodeId == v.toNode.node)
-                                               {
+                                      {
                                                  found = true;
-                                                 ingoingNode = node;
-                                               }
+                                          ingoingNode = node;
+  }
                                              };
   CHECK(currentContext.ForEachIngoingNodeNearPoint(v.toNode.point, findingFn), ());
 
@@ -208,8 +218,8 @@ void CrossMwmGraph::GetOutgoingEdgesList(BorderCross const & v,
                                          for (auto const & target : targets)
                                          {
                                            if (target.toNode.IsValid())
-                                             adj.emplace_back(target, outWeight);
-                                         }
+                                           adj.emplace_back(target, outWeight);
+                                       }
                                        }
                                      });
 }

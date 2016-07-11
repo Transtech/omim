@@ -1,6 +1,13 @@
 package com.mapswithme.maps;
 
-import com.mapswithme.maps.MapStorage.Index;
+import android.support.annotation.IntDef;
+import android.support.annotation.NonNull;
+import android.support.annotation.Size;
+import android.support.annotation.UiThread;
+
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+
 import com.mapswithme.maps.bookmarks.data.DistanceAndAzimut;
 import com.mapswithme.maps.bookmarks.data.MapObject;
 import com.mapswithme.maps.routing.IRouter;
@@ -17,30 +24,27 @@ public class Framework
   public static final int MAP_STYLE_DARK = 1;
   public static final int MAP_STYLE_CLEAR = 2;
 
+  @Retention(RetentionPolicy.SOURCE)
+  @IntDef({ROUTER_TYPE_VEHICLE, ROUTER_TYPE_PEDESTRIAN, ROUTER_TYPE_BICYCLE})
+  public @interface RouterType {}
+
   public static final int ROUTER_TYPE_VEHICLE = 0;
   public static final int ROUTER_TYPE_PEDESTRIAN = 1;
-  public static final int ROUTER_TYPE_TRUCK = 2;
+  public static final int ROUTER_TYPE_BICYCLE = 2;
+  public static final int ROUTER_TYPE_TRUCK = 3;
 
   @SuppressWarnings("unused")
-  public interface OnBalloonListener
+  public interface MapObjectListener
   {
-    void onApiPointActivated(double lat, double lon, String name, String id);
+    void onMapObjectActivated(MapObject object);
 
-    void onPoiActivated(String name, String type, String address, double lat, double lon, int[] metaTypes, String[] metaValues);
-
-    void onBookmarkActivated(int category, int bookmarkIndex);
-
-    void onMyPositionActivated(double lat, double lon);
-
-    void onAdditionalLayerActivated(String name, String type, double lat, double lon, int[] metaTypes, String[] metaValues);
-
-    void onDismiss();
+    void onDismiss(boolean switchFullScreenMode);
   }
 
   @SuppressWarnings("unused")
   public interface RoutingListener
   {
-    void onRoutingEvent(int resultCode, Index[] missingCountries, Index[] missingRoutes);
+    void onRoutingEvent(int resultCode, String[] missingMaps);
   }
 
   @SuppressWarnings("unused")
@@ -69,76 +73,75 @@ public class Framework
 
   public static native void nativeShowTrackRect(int category, int track);
 
-  public native static int getDrawScale();
+  public static native int nativeGetDrawScale();
 
-  public native static double[] getScreenRectCenter();
+  @Size(2)
+  public static native double[] nativeGetScreenRectCenter();
 
-  public native static DistanceAndAzimut nativeGetDistanceAndAzimut(double dstMerX, double dstMerY, double srcLat, double srcLon, double north);
+  public static native DistanceAndAzimut nativeGetDistanceAndAzimuth(double dstMerX, double dstMerY, double srcLat, double srcLon, double north);
 
-  public native static DistanceAndAzimut nativeGetDistanceAndAzimutFromLatLon(double dstLat, double dstLon, double srcLat, double srcLon, double north);
+  public static native DistanceAndAzimut nativeGetDistanceAndAzimuthFromLatLon(double dstLat, double dstLon, double srcLat, double srcLon, double north);
 
-  public native static String nativeFormatLatLon(double lat, double lon, boolean useDMSFormat);
+  public static native String nativeFormatLatLon(double lat, double lon, boolean useDmsFormat);
 
-  public native static String[] nativeFormatLatLonToArr(double lat, double lon, boolean useDMSFormat);
+  @Size(2)
+  public static native String[] nativeFormatLatLonToArr(double lat, double lon, boolean useDmsFormat);
 
-  public native static String nativeFormatAltitude(double alt);
+  public static native String nativeFormatAltitude(double alt);
 
-  public native static String nativeFormatSpeed(double speed);
+  public static native String nativeFormatSpeed(double speed);
 
-  public native static String nativeGetGe0Url(double lat, double lon, double zoomLevel, String name);
+  public static native String nativeGetGe0Url(double lat, double lon, double zoomLevel, String name);
 
-  public native static String nativeGetNameAndAddress4Point(double lat, double lon);
+  public static native String nativeGetNameAndAddress(double lat, double lon);
 
-  public native static MapObject nativeGetMapObjectForPoint(double lat, double lon);
+  public static native void nativeSetMapObjectListener(MapObjectListener listener);
 
-  public native static void nativeSetBalloonListener(OnBalloonListener listener);
+  public static native void nativeRemoveMapObjectListener();
 
-  public native static void nativeRemoveBalloonListener();
+  @UiThread
+  public static native String nativeGetOutdatedCountriesString();
 
-  public native static String nativeGetOutdatedCountriesString();
+  public static native boolean nativeIsDataVersionChanged();
 
-  public native static boolean nativeIsDataVersionChanged();
+  public static native void nativeUpdateSavedDataVersion();
 
-  public native static void nativeUpdateSavedDataVersion();
+  public static native long nativeGetDataVersion();
 
-  public native static long nativeGetDataVersion();
+  public static native void nativeClearApiPoints();
 
-  public native static void nativeClearApiPoints();
+  public static native void nativeDeactivatePopup();
 
-  public native static void injectData(MapObject.SearchResult searchResult, long index);
+  public static native String[] nativeGetMovableFilesExts();
 
-  public native static void deactivatePopup();
+  public static native String nativeGetBookmarksExt();
 
-  public native static String[] nativeGetMovableFilesExts();
+  public static native String nativeGetBookmarkDir();
 
-  public native static String nativeGetBookmarksExt();
+  public static native String nativeGetSettingsDir();
 
-  public native static String nativeGetBookmarkDir();
+  public static native String nativeGetWritableDir();
 
-  public native static String nativeGetSettingsDir();
+  public static native void nativeSetWritableDir(String newPath);
 
-  public native static String nativeGetWritableDir();
-
-  public native static void nativeSetWritableDir(String newPath);
-
-  public native static void nativeLoadBookmarks();
+  public static native void nativeLoadBookmarks();
 
   // Routing.
-  public native static boolean nativeIsRoutingActive();
+  public static native boolean nativeIsRoutingActive();
 
-  public native static boolean nativeIsRouteBuilt();
+  public static native boolean nativeIsRouteBuilt();
 
-  public native static boolean nativeIsRouteBuilding();
+  public static native boolean nativeIsRouteBuilding();
 
-  public native static void nativeCloseRouting();
+  public static native void nativeCloseRouting();
 
-  public native static void nativeBuildRoute(double startLat, double startLon, double finishLat, double finishLon);
+  public static native void nativeBuildRoute(double startLat, double startLon, double finishLat, double finishLon);
 
-  public native static void nativeFollowRoute();
+  public static native void nativeFollowRoute();
 
-  public native static void nativeDisableFollowing();
+  public static native void nativeDisableFollowing();
 
-  public native static RoutingInfo nativeGetRouteFollowingInfo();
+  public static native RoutingInfo nativeGetRouteFollowingInfo();
 
   // When an end user is going to a turn he gets sound turn instructions.
   // If C++ part wants the client to pronounce an instruction nativeGenerateTurnNotifications returns
@@ -146,55 +149,43 @@ public class Framework
   // For example if C++ part wants the client to pronounce "Make a right turn." this method returns
   // an array with one string "Make a right turn.". The next call of the method returns nothing.
   // nativeGenerateTurnNotifications shall be called by the client when a new position is available.
-  public native static String[] nativeGenerateTurnNotifications();
+  public static native String[] nativeGenerateTurnNotifications();
 
-  public native static void nativeSetRoutingListener(RoutingListener listener);
+  public static native void nativeSetRoutingListener(RoutingListener listener);
 
-  public native static void nativeSetRouteProgressListener(RoutingProgressListener listener);
+  public static native void nativeSetRouteProgressListener(RoutingProgressListener listener);
 
-  public native static String nativeGetCountryNameIfAbsent(double lat, double lon);
+  public static native void nativeShowCountry(String countryId, boolean zoomToDownloadButton);
 
-  public native static Index nativeGetCountryIndex(double lat, double lon);
+  public static native double[] nativePredictLocation(double lat, double lon, double accuracy, double bearing, double speed, double elapsedSeconds);
 
-  public native static String nativeGetViewportCountryNameIfAbsent();
-
-  public native static void nativeShowCountry(Index idx, boolean zoomToDownloadButton);
-
-  // TODO consider removal of that methods
-  public native static void downloadCountry(Index idx);
-
-  public native static double[] predictLocation(double lat, double lon, double accuracy, double bearing, double speed, double elapsedSeconds);
-
-  public native static void nativeSetMapStyle(int mapStyle);
+  public static native void nativeSetMapStyle(int mapStyle);
 
   /**
    * This method allows to set new map style without immediate applying. It can be used before
    * engine recreation instead of nativeSetMapStyle to avoid huge flow of OpenGL invocations.
    * @param mapStyle style index
    */
-  public native static void nativeMarkMapStyle(int mapStyle);
+  public static native void nativeMarkMapStyle(int mapStyle);
 
-  public native static void nativeSetRouter(int routerType);
+  public static native void nativeSetRouter(@RouterType int routerType);
+  @RouterType
+  public static native int nativeGetRouter();
+  @RouterType
+  public static native int nativeGetLastUsedRouter();
+  @RouterType
+  public static native int nativeGetBestRouter(double srcLat, double srcLon, double dstLat, double dstLon);
 
-  public native static int nativeGetRouter();
+  public static native void nativeSetRouteStartPoint(double lat, double lon, boolean valid);
 
-  public native static int nativeGetLastUsedRouter();
-
-  /**
-   * @return {@link Framework#ROUTER_TYPE_VEHICLE} or {@link Framework#ROUTER_TYPE_PEDESTRIAN} or {@link Framework#ROUTER_TYPE_TRUCK}
-   */
-  public native static int nativeGetBestRouter(double srcLat, double srcLon, double dstLat, double dstLon);
-
-  public native static void nativeSetRouteStartPoint(double lat, double lon, boolean valid);
-
-  public native static void nativeSetRouteEndPoint(double lat, double lon, boolean valid);
+  public static native void nativeSetRouteEndPoint(double lat, double lon, boolean valid);
 
   /**
    * Registers all maps(.mwms). Adds them to the models, generates indexes and does all necessary stuff.
    */
-  public native static void nativeRegisterMaps();
+  public static native void nativeRegisterMaps();
 
-  public native static void nativeDeregisterMaps();
+  public static native void nativeDeregisterMaps();
 
   /**
    * Determines if currently is day or night at the given location. Used to switch day/night styles.
@@ -205,9 +196,27 @@ public class Framework
    */
   public static native boolean nativeIsDayTime(long utcTimeSeconds, double lat, double lon);
 
-  public native static void nativeGet3dMode(Params3dMode result);
+  public static native void nativeGet3dMode(Params3dMode result);
 
   public native static void nativeSet3dMode(boolean allow3d, boolean allow3dBuildings);
 
   public native static void nativeSetExternalRouter(IRouter router, int routerType);
+
+  @NonNull
+  public static native MapObject nativeDeleteBookmarkFromMapObject();
+
+  // TODO remove that hack after bookmarks will be refactored completely
+  public static native void nativeOnBookmarkCategoryChanged(int cat, int bmk);
+
+  public static native void nativeZoomToPoint(double lat, double lon, int zoom, boolean animate);
+
+  /**
+   * @param isBusiness selection area will be bounded by building borders, if its true(eg. true for businesses in buildings).
+   * @param applyPosition if true, map'll be animated to currently selected object.
+   */
+  public static native void nativeTurnOnChoosePositionMode(boolean isBusiness, boolean applyPosition);
+  public static native void nativeTurnOffChoosePositionMode();
+  public static native boolean nativeIsInChoosePositionMode();
+  public static native boolean nativeIsDownloadedMapAtScreenCenter();
+  public static native String nativeGetActiveObjectFormattedCuisine();
 }

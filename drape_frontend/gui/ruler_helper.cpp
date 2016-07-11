@@ -153,6 +153,11 @@ bool RulerHelper::IsVisible(ScreenBase const & screen) const
   return !gui.IsCopyrightActive() && df::GetDrawTileScale(screen) >= VISIBLE_RULER_BOTTOM_SCALE;
 }
 
+void RulerHelper::Invalidate()
+{
+  SetTextDirty();
+}
+
 float RulerHelper::GetRulerHalfHeight() const
 {
   float const kRulerHalfHeight = 1.0f;
@@ -224,14 +229,14 @@ double RulerHelper::CalcMetresDiff(double value)
   typedef double (*ConversionFn)(double);
   ConversionFn conversionFn = &identity;
 
-  Settings::Units units = Settings::Metric;
-  Settings::Get("Units", units);
+  auto units = measurement_utils::Units::Metric;
+  UNUSED_VALUE(settings::Get(settings::kMeasurementUnits, units));
 
-  if (units == Settings::Foot)
+  if (units == measurement_utils::Units::Imperial)
   {
     arrU = g_arrFeets;
     count = ARRAY_SIZE(g_arrFeets);
-    conversionFn = &MeasurementUtils::MetersToFeet;
+    conversionFn = &measurement_utils::MetersToFeet;
   }
 
   int prevUnitRange = m_rangeIndex;

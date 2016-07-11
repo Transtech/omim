@@ -50,12 +50,11 @@ void CircleShape::Draw(ref_ptr<dp::Batcher> batcher, ref_ptr<dp::TextureManager>
   dp::GLState state(gpu::TEXTURING_PROGRAM, dp::GLState::OverlayLayer);
   state.SetColorTexture(region.GetTexture());
 
-  double handleSize = 2 * m_params.m_radius;
+  double const handleSize = 2 * m_params.m_radius;
 
-  drape_ptr<dp::OverlayHandle> overlay = make_unique_dp<dp::SquareHandle>(m_params.m_id,
-                                                                          dp::Center, m_pt,
+  drape_ptr<dp::OverlayHandle> overlay = make_unique_dp<dp::SquareHandle>(m_params.m_id, dp::Center, m_pt,
                                                                           m2::PointD(handleSize, handleSize),
-                                                                          GetOverlayPriority());
+                                                                          GetOverlayPriority(), false /* isBound */, "");
 
   dp::AttributeProvider provider(1, TriangleCount + 2);
   provider.InitStream(0, gpu::SolidTexturingVertex::GetBindingInfo(), make_ref(vertexes.data()));
@@ -64,6 +63,14 @@ void CircleShape::Draw(ref_ptr<dp::Batcher> batcher, ref_ptr<dp::TextureManager>
 
 uint64_t CircleShape::GetOverlayPriority() const
 {
+  // Set up maximum priority for shapes which created by user in the editor.
+  if (m_params.m_createdByEditor)
+    return dp::kPriorityMaskAll;
+  
+  // Set up minimal priority for shapes which belong to areas.
+  if (m_params.m_hasArea)
+    return 0;
+
   return dp::CalculateOverlayPriority(m_params.m_minVisibleScale, m_params.m_rank, m_params.m_depth);
 }
 

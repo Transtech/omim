@@ -1,16 +1,22 @@
+#include "generator/booking_dataset.hpp"
 #include "generator/coastlines_generator.hpp"
 #include "generator/feature_generator.hpp"
 #include "generator/intermediate_data.hpp"
 #include "generator/intermediate_elements.hpp"
-#include "generator/osm_translator.hpp"
-#include "generator/osm_o5m_source.hpp"
-#include "generator/osm_xml_source.hpp"
-#include "generator/osm_source.hpp"
-#include "generator/polygonizer.hpp"
-#include "generator/world_map_generator.hpp"
 #include "generator/osm_element.hpp"
+#include "generator/osm_o5m_source.hpp"
+#include "generator/osm_source.hpp"
+#include "generator/osm_translator.hpp"
+#include "generator/osm_xml_source.hpp"
+#include "generator/polygonizer.hpp"
+#include "generator/tag_admixer.hpp"
+#include "generator/towns_dumper.hpp"
+#include "generator/world_map_generator.hpp"
 
 #include "indexer/classificator.hpp"
+
+#include "platform/platform.hpp"
+
 #include "geometry/mercator.hpp"
 
 #include "coding/parse_xml.hpp"
@@ -127,7 +133,8 @@ public:
   void AddRelation(TKey id, RelationElement const & e)
   {
     string const & relationType = e.GetType();
-    if (!(relationType == "multipolygon" || relationType == "route" || relationType == "boundary"))
+    if (!(relationType == "multipolygon" || relationType == "route" ||
+          relationType == "boundary" || relationType == "associatedStreet"))
       return;
 
     m_relations.Write(id, e);
@@ -392,20 +399,24 @@ void AddElementToCache(TCache & cache, TElement const & em)
 }
 
 template <typename TCache>
-void BuildIntermediateDataFromXML(SourceReader & stream, TCache & cache)
+void BuildIntermediateDataFromXML(SourceReader & stream, TCache & cache, TownsDumper & towns)
 {
-  XMLSource parser([&](OsmElement * e) { AddElementToCache(cache, *e); });
+  XMLSource parser([&](OsmElement * e)
+    {
+      towns.CheckElement(*e);
+      AddElementToCache(cache, *e);
+    });
   ParseXMLSequence(stream, parser);
 }
 
-void BuildFeaturesFromXML(SourceReader & stream, function<void(OsmElement *)> processor)
+void ProcessOsmElementsFromXML(SourceReader & stream, function<void(OsmElement *)> processor)
 {
   XMLSource parser([&](OsmElement * e) { processor(e); });
   ParseXMLSequence(stream, parser);
 }
 
 template <typename TCache>
-void BuildIntermediateDataFromO5M(SourceReader & stream, TCache & cache)
+void BuildIntermediateDataFromO5M(SourceReader & stream, TCache & cache, TownsDumper & towns)
 {
   using TType = osm::O5MSource::EntityType;
 
@@ -415,10 +426,13 @@ void BuildIntermediateDataFromO5M(SourceReader & stream, TCache & cache)
   });
 
   for (auto const & e : dataset)
+  {
+    towns.CheckElement(e);
     AddElementToCache(cache, e);
+  }
 }
 
-void BuildFeaturesFromO5M(SourceReader & stream, function<void(OsmElement *)> processor)
+void ProcessOsmElementsFromO5M(SourceReader & stream, function<void(OsmElement *)> processor)
 {
   using TType = osm::O5MSource::EntityType;
 
@@ -496,21 +510,61 @@ bool GenerateFeaturesImpl(feature::GenerateInfo & info)
         bucketer, cache, info.m_makeCoasts ? classif().GetCoastType() : 0,
         info.GetAddressesFileName());
 
-    auto fn = [&parser](OsmElement * e) { parser.EmitElement(e); };
+    TagAdmixer tagAdmixer(info.GetIntermediateFileName("ways", ".csv"),
+                          info.GetIntermediateFileName("towns", ".csv"));
+    TagReplacer tagReplacer(GetPlatform().ResourcesDir() + REPLACED_TAGS_FILE);
+
+    // If info.m_bookingDatafileName is empty then no data will be loaded.
+    generator::BookingDataset bookingDataset(info.m_bookingDatafileName,
+                                             info.m_bookingReferenceDir);
+
+    stringstream skippedElements;
+    
+    // Here we can add new tags to element!!!
+    auto const fn = [&](OsmElement * e)
+    {
+      tagReplacer(e);
+      tagAdmixer(e);
+
+      if (bookingDataset.BookingFilter(*e))
+      {
+        skippedElements << e->id << endl;
+        return;
+      }
+      
+      parser.EmitElement(e);
+    };
 
     SourceReader reader = info.m_osmFileName.empty() ? SourceReader() : SourceReader(info.m_osmFileName);
     switch (info.m_osmFileType)
     {
       case feature::GenerateInfo::OsmSourceType::XML:
-        BuildFeaturesFromXML(reader, fn);
+        ProcessOsmElementsFromXML(reader, fn);
         break;
       case feature::GenerateInfo::OsmSourceType::O5M:
-        BuildFeaturesFromO5M(reader, fn);
+        ProcessOsmElementsFromO5M(reader, fn);
         break;
     }
 
     LOG(LINFO, ("Processing", info.m_osmFileName, "done."));
 
+    if (!info.m_bookingDatafileName.empty())
+    {
+      bookingDataset.BuildFeatures([&](OsmElement * e) { parser.EmitElement(e); });
+      LOG(LINFO, ("Processing booking data from", info.m_bookingDatafileName, "done."));
+      string skippedElementsPath = info.GetIntermediateFileName("skipped_elements", ".lst");
+      ofstream file(skippedElementsPath);
+      if (file.is_open())
+      {
+        file << skippedElements.str();
+        LOG(LINFO, ("Saving skipped elements to", skippedElementsPath, "done."));
+      }
+      else
+      {
+        LOG(LERROR, ("Can't output into", skippedElementsPath));
+      }
+    }
+    
     parser.Finish();
 
     // Stop if coasts are not merged and FLAG_fail_on_coasts is set
@@ -519,9 +573,9 @@ bool GenerateFeaturesImpl(feature::GenerateInfo & info)
 
     bucketer.GetNames(info.m_bucketNames);
   }
-  catch (Reader::Exception const & e)
+  catch (Reader::Exception const & ex)
   {
-    LOG(LCRITICAL, ("Error with file ", e.what()));
+    LOG(LCRITICAL, ("Error with file", ex.Msg()));
   }
 
   return true;
@@ -535,6 +589,7 @@ bool GenerateIntermediateDataImpl(feature::GenerateInfo & info)
     TNodesHolder nodes(info.GetIntermediateFileName(NODES_FILE, ""));
     using TDataCache = IntermediateData<TNodesHolder, cache::EMode::Write>;
     TDataCache cache(nodes, info);
+    TownsDumper towns;
 
     SourceReader reader = info.m_osmFileName.empty() ? SourceReader() : SourceReader(info.m_osmFileName);
 
@@ -543,14 +598,15 @@ bool GenerateIntermediateDataImpl(feature::GenerateInfo & info)
     switch (info.m_osmFileType)
     {
       case feature::GenerateInfo::OsmSourceType::XML:
-        BuildIntermediateDataFromXML(reader, cache);
+        BuildIntermediateDataFromXML(reader, cache, towns);
         break;
       case feature::GenerateInfo::OsmSourceType::O5M:
-        BuildIntermediateDataFromO5M(reader, cache);
+        BuildIntermediateDataFromO5M(reader, cache, towns);
         break;
     }
 
     cache.SaveIndex();
+    towns.Dump(info.GetIntermediateFileName(TOWNS_FILE, ""));
     LOG(LINFO, ("Added points count = ", nodes.GetProcessedPoint()));
   }
   catch (Writer::Exception const & e)

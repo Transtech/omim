@@ -1,9 +1,13 @@
 #pragma once
 
+#include "routing/loaded_path_segment.hpp"
 #include "routing/osrm2feature_map.hpp"
 #include "routing/osrm_engine.hpp"
+#include "routing/routing_result_graph.hpp"
 #include "routing/route.hpp"
+#include "routing/router.hpp"
 #include "routing/turns.hpp"
+#include "routing/turn_candidate.hpp"
 
 #include "std/function.hpp"
 #include "std/utility.hpp"
@@ -29,37 +33,19 @@ namespace turns
 using TGetIndexFunction = function<size_t(pair<size_t, size_t>)>;
 
 /*!
- * \brief The LoadedPathSegment struct is a representation of a single osrm node path.
- * It unpacks and stores information about path and road type flags.
- * Postprocessing must read information from the structure and does not initiate disk readings.
+ * \brief Compute turn and time estimation structs for the abstract route result.
+ * \param routingResult abstract routing result to annotate.
+ * \param delegate Routing callbacks delegate.
+ * \param points Storage for unpacked points of the path.
+ * \param turnsDir output turns annotation storage.
+ * \param times output times annotation storage.
+ * \param streets output street names along the path.
+ * \return routing operation result code.
  */
-struct LoadedPathSegment
-{
-  vector<m2::PointD> m_path;
-  ftypes::HighwayClass m_highwayClass;
-  bool m_onRoundabout;
-  bool m_isLink;
-  EdgeWeight m_weight;
-  string m_name;
-  NodeID m_nodeId;
-  vector<SingleLaneInfo> m_lanes;
-
-  // General constructor.
-  LoadedPathSegment(RoutingMapping & mapping, Index const & index,
-                    RawPathData const & osrmPathSegment);
-  // Special constructor for side nodes. Splits OSRM node by information from the FeatureGraphNode.
-  LoadedPathSegment(RoutingMapping & mapping, Index const & index,
-                    RawPathData const & osrmPathSegment, FeatureGraphNode const & startGraphNode,
-                    FeatureGraphNode const & endGraphNode, bool isStartNode, bool isEndNode);
-
-private:
-  // Load information about road, that described as the sequence of FtSegs and start/end indexes in
-  // in it. For the side case, it has information about start/end graph nodes.
-  void LoadPathGeometry(buffer_vector<OsrmMappingTypes::FtSeg, 8> const & buffer, size_t startIndex,
-                        size_t endIndex, Index const & index, RoutingMapping & mapping,
-                        FeatureGraphNode const & startGraphNode,
-                        FeatureGraphNode const & endGraphNode, bool isStartNode, bool isEndNode);
-};
+IRouter::ResultCode MakeTurnAnnotation(turns::IRoutingResult const & result,
+                                       RouterDelegate const & delegate, vector<m2::PointD> & points,
+                                       Route::TTurns & turnsDir, Route::TTimes & times,
+                                       Route::TStreets & streets);
 
 /*!
  * \brief The TurnInfo struct is a representation of a junction.
@@ -141,14 +127,14 @@ TurnDirection GetRoundaboutDirection(bool isIngoingEdgeRoundabout, bool isOutgoi
  * \param turnInfo is used for cashing some information while turn calculation.
  * \param turn is used for keeping the result of turn calculation.
  */
-void GetTurnDirection(Index const & index, RoutingMapping & mapping, turns::TurnInfo & turnInfo,
-                      TurnItem & turn);
+void GetTurnDirection(IRoutingResult const & result, turns::TurnInfo & turnInfo, TurnItem & turn);
 
 /*!
  * \brief Finds an UTurn that starts from current segment and returns how many segments it lasts.
  * Returns 0 if there is no UTurn.
  * Warning! currentSegment must be greater than 0.
  */
-size_t CheckUTurnOnRoute(vector<LoadedPathSegment> const & segments, size_t currentSegment, TurnItem & turn);
+size_t CheckUTurnOnRoute(TUnpackedPathSegments const & segments,
+                         size_t currentSegment, TurnItem & turn);
 }  // namespace routing
 }  // namespace turns

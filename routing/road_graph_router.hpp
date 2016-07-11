@@ -23,8 +23,8 @@ namespace routing
 class RoadGraphRouter : public IRouter
 {
 public:
-  RoadGraphRouter(string const & name, Index & index,
-                  TCountryFileFn const & countryFileFn,
+  RoadGraphRouter(string const & name, Index const & index, TCountryFileFn const & countryFileFn,
+                  IRoadGraph::Mode mode,
                   unique_ptr<IVehicleModelFactory> && vehicleModelFactory,
                   unique_ptr<IRoutingAlgorithm> && algorithm,
                   unique_ptr<IDirectionsEngine> && directionsEngine);
@@ -47,13 +47,13 @@ private:
 
   string const m_name;
   TCountryFileFn const m_countryFileFn;
-  Index & m_index;
+  Index const & m_index;
   unique_ptr<IRoutingAlgorithm> const m_algorithm;
   unique_ptr<IRoadGraph> const m_roadGraph;
   unique_ptr<IDirectionsEngine> const m_directionsEngine;
 };
 
 unique_ptr<IRouter> CreatePedestrianAStarRouter(Index & index, TCountryFileFn const & countryFileFn);
-
 unique_ptr<IRouter> CreatePedestrianAStarBidirectionalRouter(Index & index, TCountryFileFn const & countryFileFn);
+unique_ptr<IRouter> CreateBicycleAStarBidirectionalRouter(Index & index, TCountryFileFn const & countryFileFn);
 }  // namespace routing

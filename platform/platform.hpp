@@ -32,6 +32,10 @@ public:
     ERR_ACCESS_FAILED,
     ERR_DIRECTORY_NOT_EMPTY,
     ERR_FILE_ALREADY_EXISTS,
+    ERR_NAME_TOO_LONG,
+    ERR_NOT_A_DIRECTORY,
+    ERR_SYMLINK_LOOP,
+    ERR_IO_ERROR,
     ERR_UNKNOWN
   };
 
@@ -111,8 +115,6 @@ public:
   /// @note If function fails, directory can be partially removed.
   static bool RmDirRecursively(string const & dirName);
 
-  /// @TODO create join method for string concatenation
-
   /// @return path for directory with temporary files with slash at the end
   string TmpDir() const { return m_tmpDir; }
   /// @return full path to file in the temporary directory
@@ -124,15 +126,18 @@ public:
   /// @return path for directory in the persistent memory, can be the same
   /// as WritableDir, but on some platforms it's different
   string SettingsDir() const { return m_settingsDir; }
+  /// Set settings dir — use for testing.
+  void SetSettingsDirForTests(string const & path);
   /// @return full path to file in the settings directory
   string SettingsPathForFile(string const & file) const { return SettingsDir() + file; }
 
   /// @return reader for file decriptor.
   /// @throws FileAbsentException
-  /// @param[in] file name or full path which we want to read, don't forget to free memory or wrap it to ReaderPtr
+  /// @param[in] file name or full path which we want to read
   /// @param[in] searchScope looks for file in dirs in given order: \n
-  ///  [w]ritable, [r]esources, [s]ettings, by [f]ull path, [e]xternal resources,
-  ModelReader * GetReader(string const & file, string const & searchScope = string()) const;
+  /// [w]ritable, [r]esources, [s]ettings, by [f]ull path, [e]xternal resources,
+  unique_ptr<ModelReader>
+  GetReader(string const & file, string const & searchScope = string()) const;
 
   /// @name File operations
   //@{
@@ -168,6 +173,7 @@ public:
     NOT_ENOUGH_SPACE
   };
   TStorageStatus GetWritableStorageStatus(uint64_t neededSize) const;
+  uint64_t GetWritableStorageSpace() const;
 
   /// @name Functions for concurrent tasks.
   //@{
@@ -223,3 +229,5 @@ private:
 };
 
 extern Platform & GetPlatform();
+
+string DebugPrint(Platform::EError err);

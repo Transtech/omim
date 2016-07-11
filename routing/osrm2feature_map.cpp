@@ -153,6 +153,8 @@ void OsrmFtSegMapping::Load(FilesMappingContainer & cont, platform::LocalCountry
   {
     ReaderSource<FileReader> src(cont.GetReader(ROUTING_NODEIND_TO_FTSEGIND_FILE_TAG));
     uint32_t const count = ReadVarUint<uint32_t>(src);
+    if (count == 0)
+      return;
     m_offsets.resize(count);
     for (uint32_t i = 0; i < count; ++i)
     {
@@ -415,7 +417,7 @@ void OsrmFtSegBackwardIndex::Construct(OsrmFtSegMapping & mapping, uint32_t maxN
   Clear();
 
   feature::DataHeader header(localFile.GetPath(MapOptions::Map));
-  m_oldFormat = header.GetFormat() < version::v5;
+  m_oldFormat = header.GetFormat() < version::Format::v5;
   if (m_oldFormat)
     LOG(LINFO, ("Using old format index for", localFile.GetCountryName()));
 

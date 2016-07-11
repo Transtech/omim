@@ -7,6 +7,7 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.widget.TextView;
 
 import com.mapswithme.maps.Framework;
@@ -15,12 +16,15 @@ import com.mapswithme.maps.base.BaseMwmDialogFragment;
 import com.mapswithme.maps.bookmarks.data.DistanceAndAzimut;
 import com.mapswithme.maps.bookmarks.data.MapObject;
 import com.mapswithme.maps.location.LocationHelper;
+import com.mapswithme.maps.location.LocationListener;
 import com.mapswithme.maps.widget.ArrowView;
 import com.mapswithme.util.LocationUtils;
+import com.mapswithme.util.UiUtils;
 import com.mapswithme.util.statistics.AlohaHelper;
 import com.mapswithme.util.statistics.Statistics;
 
-public class DirectionFragment extends BaseMwmDialogFragment implements LocationHelper.LocationListener
+public class DirectionFragment extends BaseMwmDialogFragment
+                            implements LocationListener
 {
   private static final String EXTRA_MAP_OBJECT = "MapObject";
 
@@ -72,6 +76,16 @@ public class DirectionFragment extends BaseMwmDialogFragment implements Location
     mTvTitle = (TextView) root.findViewById(R.id.tv__title);
     mTvSubtitle = (TextView) root.findViewById(R.id.tv__subtitle);
     mTvDistance = (TextView) root.findViewById(R.id.tv__straight_distance);
+
+    UiUtils.waitLayout(mTvTitle, new ViewTreeObserver.OnGlobalLayoutListener() {
+      @Override
+      public void onGlobalLayout()
+      {
+        final int height = mTvTitle.getHeight();
+        final int lineHeight = mTvTitle.getLineHeight();
+        mTvTitle.setMaxLines(height / lineHeight);
+      }
+    });
   }
 
   public void setMapObject(MapObject object)
@@ -84,8 +98,8 @@ public class DirectionFragment extends BaseMwmDialogFragment implements Location
   {
     if (mMapObject != null && isResumed())
     {
-      mTvTitle.setText(mMapObject.getName());
-      mTvSubtitle.setText(mMapObject.getPoiTypeName());
+      mTvTitle.setText(mMapObject.getTitle());
+      mTvSubtitle.setText(mMapObject.getSubtitle());
     }
   }
 
@@ -94,7 +108,7 @@ public class DirectionFragment extends BaseMwmDialogFragment implements Location
   public void onResume()
   {
     super.onResume();
-    LocationHelper.INSTANCE.addLocationListener(this, true);
+    LocationHelper.INSTANCE.addListener(this, true);
     refreshViews();
   }
 
@@ -102,7 +116,7 @@ public class DirectionFragment extends BaseMwmDialogFragment implements Location
   public void onPause()
   {
     super.onPause();
-    LocationHelper.INSTANCE.removeLocationListener(this);
+    LocationHelper.INSTANCE.removeListener(this);
   }
 
   @Override
@@ -110,8 +124,9 @@ public class DirectionFragment extends BaseMwmDialogFragment implements Location
   {
     if (mMapObject != null)
     {
-      final DistanceAndAzimut distanceAndAzimuth = Framework.nativeGetDistanceAndAzimutFromLatLon(mMapObject.getLat(),
-          mMapObject.getLon(), location.getLatitude(), location.getLongitude(), 0.0);
+      final DistanceAndAzimut distanceAndAzimuth =
+          Framework.nativeGetDistanceAndAzimuthFromLatLon(mMapObject.getLat(), mMapObject.getLon(),
+                                                          location.getLatitude(), location.getLongitude(), 0.0);
       mTvDistance.setText(distanceAndAzimuth.getDistance());
     }
   }
@@ -119,7 +134,7 @@ public class DirectionFragment extends BaseMwmDialogFragment implements Location
   @Override
   public void onCompassUpdated(long time, double magneticNorth, double trueNorth, double accuracy)
   {
-    final Location last = LocationHelper.INSTANCE.getLastLocation();
+    final Location last = LocationHelper.INSTANCE.getSavedLocation();
     if (last == null || mMapObject == null)
       return;
 
@@ -128,7 +143,7 @@ public class DirectionFragment extends BaseMwmDialogFragment implements Location
     trueNorth = LocationUtils.correctCompassAngle(rotation, trueNorth);
     final double north = (trueNorth >= 0.0) ? trueNorth : magneticNorth;
 
-    final DistanceAndAzimut da = Framework.nativeGetDistanceAndAzimutFromLatLon(
+    final DistanceAndAzimut da = Framework.nativeGetDistanceAndAzimuthFromLatLon(
         mMapObject.getLat(), mMapObject.getLon(),
         last.getLatitude(), last.getLongitude(), north);
 

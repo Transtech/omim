@@ -27,7 +27,7 @@ static NSString * const kStatisticsEvent = @"Pedestrian Share Alert";
 
 + (MWMPedestrianShareAlert *)alert:(BOOL)isFirstLaunch
 {
-  [[Statistics instance] logEvent:kStatisticsEvent withParameters:@{kStatAction : kStatOpen}];
+  [Statistics logEvent:kStatisticsEvent withParameters:@{kStatAction : kStatOpen}];
   MWMPedestrianShareAlert * view = [NSBundle.mainBundle loadNibNamed:NSStringFromClass(self.class) owner:self
                                                              options:nil].firstObject;
   view.isFirstLaunch = isFirstLaunch;
@@ -50,10 +50,10 @@ static NSString * const kStatisticsEvent = @"Pedestrian Share Alert";
 
 - (IBAction)shareButtonTap
 {
-  [[Statistics instance] logEvent:kStatisticsEvent withParameters:@{kStatAction : kStatApply}];
+  [Statistics logEvent:kStatisticsEvent withParameters:@{kStatAction : kStatApply}];
   [Alohalytics logEvent:kStatisticsEvent withValue:@"shareTap"];
   MWMActivityViewController * shareVC = [MWMActivityViewController shareControllerForPedestrianRoutesToast];
-  if (IPAD && !isIOSVersionLessThan(8))
+  if (IPAD && !isIOS7)
   {
     shareVC.completionWithItemsHandler = ^(NSString * activityType, BOOL completed, NSArray * returnedItems,
                                            NSError * activityError)
@@ -70,19 +70,19 @@ static NSString * const kStatisticsEvent = @"Pedestrian Share Alert";
 
 - (IBAction)doneButtonTap
 {
-  [[Statistics instance] logEvent:kStatisticsEvent withParameters:@{kStatAction : kStatClose}];
+  [Statistics logEvent:kStatisticsEvent withParameters:@{kStatAction : kStatClose}];
   [Alohalytics logEvent:kStatisticsEvent withValue:@"doneTap"];
   [self close];
 }
 
 - (void)rotate:(UIInterfaceOrientation)toInterfaceOrientation duration:(NSTimeInterval)duration
 {
-  // Overriden implemantation left empty since this view is added to the view controller handling device rotation
+  // Overridden implemantation left empty since this view is added to the view controller handling device rotation
 }
 
 - (void)addControllerViewToWindow
 {
-  // Overriden implemantation left empty to let sharing view appear above
+  // Overridden implemantation left empty to let sharing view appear above
 }
 
 @end

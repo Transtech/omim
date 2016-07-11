@@ -1,5 +1,6 @@
 #include "generator/osm_element.hpp"
 
+#include "base/string_utils.hpp"
 #include "coding/parse_xml.hpp"
 
 #include "std/cstdio.hpp"
@@ -32,6 +33,10 @@ string DebugPrint(OsmElement::EntityType e)
 
 void OsmElement::AddTag(string const & k, string const & v)
 {
+  // Seems like source osm data has empty values. They are useless for us.
+  if (k.empty() || v.empty())
+    return;
+
 #define SKIP_KEY(key) if (strncmp(k.data(), key, sizeof(key)-1) == 0) return;
   // OSM technical info tags
   SKIP_KEY("created_by");
@@ -59,9 +64,10 @@ void OsmElement::AddTag(string const & k, string const & v)
   SKIP_KEY("official_name");
 #undef SKIP_KEY
 
-  m_tags.emplace_back(k, v);
+  string value = v;
+  strings::Trim(value);
+  m_tags.emplace_back(k, value);
 }
-
 
 string OsmElement::ToString(string const & shift) const
 {

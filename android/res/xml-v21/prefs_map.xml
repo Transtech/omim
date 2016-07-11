@@ -31,16 +31,17 @@
     android:order="4"/>
 
   <SwitchPreference
-    android:key="@string/pref_3d_buildings"
-    android:title="@string/pref_map_3d_buildings_title"
+    android:key="@string/pref_autodownload"
+    android:title="@string/autodownload"
     android:switchTextOn=""
     android:switchTextOff=""
     android:order="5"/>
 
-  <Preference
-    android:key="@string/pref_yota"
-    android:title="@string/yopme_pref_title"
-    android:summary="@string/yopme_pref_summary"
+  <SwitchPreference
+    android:key="@string/pref_3d_buildings"
+    android:title="@string/pref_map_3d_buildings_title"
+    android:switchTextOn=""
+    android:switchTextOff=""
     android:order="6"/>
 
   <ListPreference

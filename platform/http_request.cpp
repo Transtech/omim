@@ -1,6 +1,7 @@
-#include "platform/http_request.hpp"
 #include "platform/chunks_download_strategy.hpp"
+#include "platform/http_request.hpp"
 #include "platform/http_thread_callback.hpp"
+#include "platform/platform.hpp"
 
 #include "defines.hpp"
 
@@ -12,9 +13,11 @@
 #include "coding/file_writer.hpp"
 
 #include "base/logging.hpp"
+#include "base/string_utils.hpp"
 
 #include "std/unique_ptr.hpp"
 
+#include "3party/Alohalytics/src/alohalytics.h"
 
 #ifdef OMIM_OS_IPHONE
 
@@ -83,6 +86,7 @@ class MemoryHttpRequest : public HttpRequest, public IHttpThreadCallback
 {
   HttpThread * m_thread;
 
+  string m_requestUrl;
   string m_downloadedData;
   MemWriter<string> m_writer;
 
@@ -102,6 +106,9 @@ class MemoryHttpRequest : public HttpRequest, public IHttpThreadCallback
     else
     {
       LOG(LWARNING, ("HttpRequest error:", httpCode));
+      alohalytics::LogEvent(
+          "$httpRequestError",
+          {{"url", m_requestUrl}, {"code", strings::to_string(httpCode)}, {"servers", "1"}});
       m_status = EFailed;
     }
 
@@ -110,7 +117,7 @@ class MemoryHttpRequest : public HttpRequest, public IHttpThreadCallback
 
 public:
   MemoryHttpRequest(string const & url, CallbackT const & onFinish, CallbackT const & onProgress)
-    : HttpRequest(onFinish, onProgress), m_writer(m_downloadedData)
+    : HttpRequest(onFinish, onProgress), m_requestUrl(url), m_writer(m_downloadedData)
   {
     m_thread = CreateNativeHttpThread(url, *this);
     ASSERT ( m_thread, () );
@@ -232,7 +239,7 @@ class FileHttpRequest : public HttpRequest, public IHttpThreadCallback
 #endif
 
     bool const isChunkOk = (httpCode == 200);
-    m_strategy.ChunkFinished(isChunkOk, make_pair(begRange, endRange));
+    string const urlError = m_strategy.ChunkFinished(isChunkOk, make_pair(begRange, endRange));
 
     // remove completed chunk from the list, beg is the key
     RemoveHttpThreadByKey(begRange);
@@ -245,7 +252,13 @@ class FileHttpRequest : public HttpRequest, public IHttpThreadCallback
         m_onProgress(*this);
     }
     else
+    {
       LOG(LWARNING, (m_filePath, "HttpRequest error:", httpCode));
+      alohalytics::LogEvent("$httpRequestError",
+                            {{"url", urlError},
+                             {"code", strings::to_string(httpCode)},
+                             {"servers", strings::to_string(m_strategy.ActiveServersCount())}});
+    }
 
     ChunksDownloadStrategy::ResultT const result = StartThreads();
 
@@ -277,8 +290,10 @@ class FileHttpRequest : public HttpRequest, public IHttpThreadCallback
         (void)my::DeleteFileX(m_filePath + RESUME_FILE_EXTENSION);
 
         // Rename finished file to it's original name.
-        (void)my::DeleteFileX(m_filePath);
-        CHECK(my::RenameFileX(m_filePath + DOWNLOADING_FILE_EXTENSION, m_filePath), ());
+        if (Platform::IsFileExistsByFullPath(m_filePath))
+          (void)my::DeleteFileX(m_filePath);
+        CHECK(my::RenameFileX(m_filePath + DOWNLOADING_FILE_EXTENSION, m_filePath),
+              (m_filePath, strerror(errno)));
 
         DisableBackupForFile(m_filePath);
       }
@@ -394,22 +409,6 @@ HttpRequest * HttpRequest::PostJson(string const & url, string const & postData,
   return new MemoryHttpRequest(url, postData, onFinish, onProgress);
 }
 
-namespace
-{
-  class ErrorHttpRequest : public HttpRequest
-  {
-    string m_filePath;
-  public:
-    ErrorHttpRequest(string const & filePath)
-      : HttpRequest(CallbackT(), CallbackT()), m_filePath(filePath)
-    {
-      m_status = EFailed;
-    }
-
-    virtual string const & Data() const { return m_filePath; }
-  };
-}
-
 HttpRequest * HttpRequest::GetFile(vector<string> const & urls,
                                    string const & filePath, int64_t fileSize,
                                    CallbackT const & onFinish, CallbackT const & onProgress,
@@ -423,13 +422,8 @@ HttpRequest * HttpRequest::GetFile(vector<string> const & urls,
   {
     // Can't create or open file for writing.
     LOG(LWARNING, ("Can't create file", filePath, "with size", fileSize, e.Msg()));
-
-    // Mark the end of download with error.
-    ErrorHttpRequest error(filePath);
-    onFinish(error);
-
-    return 0;
   }
+  return nullptr;
 }
 
 } // namespace downloader

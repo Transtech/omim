@@ -56,7 +56,7 @@ NSString * httpGe0Url(NSString * shortUrl)
          itemForActivityType:(NSString *)activityType
 {
   NSString * event = @"MWMShareLocationActivityItem:activityViewController:itemForActivityType:";
-  [[Statistics instance] logEvent:kStatEventName(kStatShare, kStatLocation) withParameters:@{kStatAction : activityType}];
+  [Statistics logEvent:kStatEventName(kStatShare, kStatLocation) withParameters:@{kStatAction : activityType}];
   [Alohalytics logEvent:event withValue:activityType];
   if ([UIActivityTypeMessage isEqualToString:activityType])
     return [self itemForMessageApp];
@@ -85,9 +85,10 @@ NSString * httpGe0Url(NSString * shortUrl)
   NSString * url = [self url:NO];
   if (!self.myPosition)
     return [NSString stringWithFormat:L(@"bookmark_share_email"), self.title, url, httpGe0Url(url)];
-  search::AddressInfo info;
-  GetFramework().GetAddressInfoForGlobalPoint(m2::PointD(MercatorBounds::LonToX(self.location.longitude),
-                                                         MercatorBounds::LatToY(self.location.latitude)), info);
+
+  search::AddressInfo const info = GetFramework().GetAddressInfoAtPoint(
+                                              MercatorBounds::FromLatLon(self.location.latitude, self.location.longitude));
+
   NSString * nameAndAddress = @(info.FormatNameAndAddress().c_str());
   return [NSString stringWithFormat:L(@"my_position_share_email"), nameAndAddress, url, httpGe0Url(url)];
 }

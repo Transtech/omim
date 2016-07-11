@@ -1,32 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
-  <style name="PlacePagePreview">
-    <item name="android:layout_width">match_parent</item>
-    <item name="android:layout_height">56dp</item>
-    <item name="android:gravity">center_vertical</item>
-    <item name="android:orientation">horizontal</item>
-    <item name="android:paddingBottom">@dimen/margin_half_plus</item>
-    <item name="android:paddingLeft">@dimen/margin_base_plus</item>
-    <item name="android:paddingRight">@dimen/margin_base_plus</item>
-    <item name="android:paddingTop">@dimen/margin_base_plus</item>
-  </style>
-
   <style name="PlacePageButtonText">
     <item name="android:layout_width">wrap_content</item>
     <item name="android:layout_height">wrap_content</item>
     <item name="android:gravity">center</item>
     <item name="android:textAllCaps" tools:targetApi="ice_cream_sandwich">true</item>
-    <item name="android:textColor">?android:textColorSecondary</item>
     <item name="android:textSize">10sp</item>
-  </style>
-
-  <style name="PlacePageButtonText.Route">
-    <item name="android:layout_width">0dp</item>
-    <item name="android:layout_height">match_parent</item>
-    <item name="android:layout_weight">1</item>
-    <item name="android:layout_marginTop">@dimen/margin_eighth</item>
-    <item name="android:textSize">16sp</item>
-    <item name="android:background">?attr/clickableBackground</item>
   </style>
 
   <style name="PlacePageButtonImage">
@@ -37,19 +16,18 @@
     <item name="android:paddingTop">@dimen/margin_base</item>
     <item name="android:paddingBottom">@dimen/margin_base</item>
     <item name="android:scaleType">center</item>
-    <item name="android:tint">?iconTint</item>
   </style>
 
   <style name="PlacePageButton">
     <item name="android:layout_width">0dp</item>
-    <item name="android:layout_height">match_parent</item>
+    <item name="android:layout_height">@dimen/place_page_buttons_height</item>
     <item name="android:layout_gravity">center_horizontal</item>
     <item name="android:layout_weight">1</item>
     <item name="android:orientation">vertical</item>
-    <item name="android:paddingTop">@dimen/margin_half</item>
-    <item name="android:paddingBottom">@dimen/margin_half</item>
+    <item name="android:paddingTop">@dimen/margin_quarter</item>
+    <item name="android:paddingBottom">@dimen/margin_quarter</item>
     <item name="android:gravity">center_horizontal</item>
-    <item name="android:background">?attr/clickableBackground</item>
+    <item name="android:background">?clickableBackground</item>
   </style>
 
   <style name="PlacePageItemFrame">
@@ -57,10 +35,33 @@
     <item name="android:layout_height">wrap_content</item>
     <item name="android:orientation">horizontal</item>
     <item name="android:paddingBottom">@dimen/margin_half</item>
+    <item name="android:paddingLeft">@dimen/margin_base</item>
+    <item name="android:paddingStart" tools:targetApi="jelly_bean_mr1">@dimen/margin_base</item>
+    <item name="android:paddingRight">@dimen/margin_base</item>
+    <item name="android:paddingEnd" tools:targetApi="jelly_bean_mr1">@dimen/margin_base</item>
     <item name="android:paddingTop">@dimen/margin_half</item>
     <item name="android:gravity">center_vertical</item>
     <item name="android:background">?clickableBackground</item>
     <item name="android:clickable">true</item>
     <item name="android:visibility">gone</item>
+  </style>
+
+  <style name="PlacePageMetadataText">
+    <item name="android:layout_width">match_parent</item>
+    <item name="android:layout_height">wrap_content</item>
+    <item name="android:textAppearance">@style/MwmTextAppearance.PlacePage</item>
+  </style>
+
+  <style name="PlacePageMetadataText.Button">
+    <item name="android:textAllCaps">true</item>
+    <item name="android:textAppearance">@style/MwmTextAppearance.PlacePage.Accent</item>
+  </style>
+
+  <style name="PlacePageMetadataIcon">
+    <item name="android:layout_width">wrap_content</item>
+    <item name="android:layout_height">wrap_content</item>
+    <item name="android:tint">?iconTint</item>
+    <item name="android:layout_marginEnd" tools:targetApi="jelly_bean_mr1">@dimen/margin_base</item>
+    <item name="android:layout_marginRight">@dimen/margin_base</item>
   </style>
 </resources>

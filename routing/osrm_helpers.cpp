@@ -11,14 +11,15 @@ namespace helpers
 {
 // static
 void Point2PhantomNode::FindNearestSegment(FeatureType const & ft, m2::PointD const & point,
-                                           Candidate & res)
+                                           Candidate & res, size_t startIdx, size_t stopIdx)
 {
   ft.ParseGeometry(FeatureType::BEST_GEOMETRY);
+  ASSERT_GREATER(ft.GetPointsCount(), 1, ());
+  size_t const lastIdx = min(ft.GetPointsCount() - 1, stopIdx);
+  ASSERT_GREATER_OR_EQUAL(lastIdx, startIdx + 1, ());
 
-  size_t const count = ft.GetPointsCount();
   uint32_t const featureId = ft.GetID().m_index;
-  ASSERT_GREATER(count, 1, ());
-  for (size_t i = 1; i < count; ++i)
+  for (size_t i = startIdx + 1; i <= lastIdx; ++i)
   {
     m2::ProjectionToSection<m2::PointD> segProj;
     segProj.SetBounds(ft.GetPoint(i - 1), ft.GetPoint(i));
@@ -100,7 +101,8 @@ void Point2PhantomNode::CalculateWeight(OsrmMappingTypes::FtSeg const & seg,
       continue;
 
     FeatureType ft;
-    loader.GetFeatureByIndex(segment.m_fid, ft);
+    if (!loader.GetFeatureByIndex(segment.m_fid, ft))
+      continue;
     ft.ParseGeometry(FeatureType::BEST_GEOMETRY);
 
     // Find whole edge weight by node outgoing point.
@@ -229,7 +231,9 @@ void Point2PhantomNode::MakeResult(vector<FeatureGraphNode> & res, size_t maxCou
       OsrmMappingTypes::FtSeg const & node_seg = segments[j];
       FeatureType feature;
       Index::FeaturesLoaderGuard loader(m_index, m_routingMapping.GetMwmId());
-      loader.GetFeatureByIndex(node_seg.m_fid, feature);
+      if (!loader.GetFeatureByIndex(node_seg.m_fid, feature))
+        continue;
+
       feature.ParseGeometry(FeatureType::BEST_GEOMETRY);
       m2::PointD const featureDirection = feature.GetPoint(node_seg.m_pointEnd) - feature.GetPoint(node_seg.m_pointStart);
       bool const sameDirection = (m2::DotProduct(featureDirection, m_direction) > 0);

@@ -1,9 +1,11 @@
 #import "Common.h"
-#import "LocationManager.h"
 #import "MapsAppDelegate.h"
+#import "MWMLocationManager.h"
 #import "MWMSearchCommonCell.h"
 #import "UIColor+MapsMeColor.h"
 #import "UIFont+MapsMeFonts.h"
+
+#include "Framework.h"
 
 #include "geometry/mercator.hpp"
 #include "platform/measurement_utils.hpp"
@@ -26,14 +28,14 @@
 - (void)config:(search::Result &)result forHeight:(BOOL)forHeight
 {
   [super config:result];
-  self.typeLabel.text = @(result.GetFeatureType()).capitalizedString;
-  self.locationLabel.text = @(result.GetRegionString());
+  self.typeLabel.text = @(result.GetFeatureType().c_str()).capitalizedString;
+  self.locationLabel.text = @(result.GetAddress().c_str());
   [self.locationLabel sizeToFit];
 
   if (!forHeight)
   {
     NSUInteger const starsCount = result.GetStarsCount();
-    NSString * cuisine = @(result.GetCuisine());
+    NSString * cuisine = @(result.GetCuisine().c_str());
     if (starsCount > 0)
       [self setInfoRating:starsCount];
     else if (cuisine.length > 0)
@@ -41,23 +43,44 @@
     else
       [self clearInfo];
 
-    self.closedView.hidden = !result.IsClosed();
+    switch (result.IsOpenNow())
+    {
+      case osm::Unknown:
+      // TODO: Correctly handle Open Now = YES value (show "OPEN" mark).
+      case osm::Yes:
+        self.closedView.hidden = YES;
+        break;
+      case osm::No:
+        self.closedView.hidden = NO;
+        break;
+    }
     if (result.HasPoint())
     {
       string distanceStr;
-      double lat, lon;
-      LocationManager * locationManager = MapsAppDelegate.theApp.m_locationManager;
-      if ([locationManager getLat:lat Lon:lon])
+      CLLocation * lastLocation = [MWMLocationManager lastLocation];
+      if (lastLocation)
       {
-        m2::PointD const mercLoc = MercatorBounds::FromLatLon(lat, lon);
-        double const dist = MercatorBounds::DistanceOnEarth(mercLoc, result.GetFeatureCenter());
-        MeasurementUtils::FormatDistance(dist, distanceStr);
+        double const dist = MercatorBounds::DistanceOnEarth(lastLocation.mercator, result.GetFeatureCenter());
+        measurement_utils::FormatDistance(dist, distanceStr);
       }
       self.distanceLabel.text = @(distanceStr.c_str());
     }
   }
-  if (isIOSVersionLessThan(8))
+  if (isIOS7)
     [self layoutIfNeeded];
+}
+
+- (void)layoutSubviews
+{
+  [super layoutSubviews];
+  if (isIOS7)
+  {
+    self.typeLabel.preferredMaxLayoutWidth = floor(self.typeLabel.width);
+    self.infoLabel.preferredMaxLayoutWidth = floor(self.infoLabel.width);
+    self.locationLabel.preferredMaxLayoutWidth = floor(self.locationLabel.width);
+    self.distanceLabel.preferredMaxLayoutWidth = floor(self.distanceLabel.width);
+    [super layoutSubviews];
+  }
 }
 
 - (void)setInfoText:(NSString *)infoText

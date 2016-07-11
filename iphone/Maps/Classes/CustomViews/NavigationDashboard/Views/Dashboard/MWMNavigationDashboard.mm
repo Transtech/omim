@@ -13,7 +13,7 @@
 - (void)setCenter:(CGPoint)center
 {
 //TODO(Vlad): There is hack for "cut" iOS7.
-  if (isIOSVersionLessThan(8))
+  if (isIOS7)
     return;
   [super setCenter:center];
 }
@@ -38,7 +38,8 @@
 - (void)configureWithEntity:(MWMNavigationDashboardEntity *)entity
 {
   self.direction.image = entity.turnImage;
-  [self.direction makeImageAlwaysTemplate];
+  if (isIOS7)
+    [self.direction makeImageAlwaysTemplate];
   if (!entity.isPedestrian)
     self.direction.transform = CGAffineTransformIdentity;
   self.distanceToNextAction.text = entity.distanceToTurn;

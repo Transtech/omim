@@ -12,6 +12,12 @@
 -dontwarn okio.**
 -dontwarn com.facebook.**
 
+# pushwoosh
+-keep class com.pushwoosh.** { *; }
+-keep class com.arellomobile.** { *; }
+-dontwarn com.pushwoosh.**
+-dontwarn com.arellomobile.**
+
 # myTarget
 -dontwarn ru.mail.android.mytarget.**
 -dontwarn com.mopub.**
@@ -34,3 +40,7 @@
 -keepclassmembers class * implements com.mapswithme.util.Gsonable {
   <init>(...);
 }
+
+# HockeyApp
+-dontwarn net.hockeyapp.android.UpdateActivity
+-dontwarn net.hockeyapp.android.UpdateFragment

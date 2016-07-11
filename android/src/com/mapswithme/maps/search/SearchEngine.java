@@ -1,14 +1,15 @@
 package com.mapswithme.maps.search;
 
+import java.io.UnsupportedEncodingException;
+
 import com.mapswithme.maps.Framework;
 import com.mapswithme.maps.api.ParsedMwmRequest;
+import com.mapswithme.util.Language;
+import com.mapswithme.util.Listeners;
 import com.mapswithme.util.concurrency.UiThread;
 
-import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
-import java.util.List;
-
-public enum SearchEngine implements NativeSearchListener
+public enum SearchEngine implements NativeSearchListener,
+                                    NativeMapSearchListener
 {
   INSTANCE;
 
@@ -25,6 +26,7 @@ public enum SearchEngine implements NativeSearchListener
       {
         for (NativeSearchListener listener : mListeners)
           listener.onResultsUpdate(results, timestamp);
+        mListeners.finishIterate();
       }
     });
   }
@@ -39,20 +41,47 @@ public enum SearchEngine implements NativeSearchListener
       {
         for (NativeSearchListener listener : mListeners)
           listener.onResultsEnd(timestamp);
+        mListeners.finishIterate();
       }
     });
   }
 
-  private List<NativeSearchListener> mListeners = new ArrayList<>();
+  @Override
+  public void onMapSearchResults(final NativeMapSearchListener.Result[] results, final long timestamp, final boolean isLast)
+  {
+    UiThread.run(new Runnable()
+    {
+      @Override
+      public void run()
+      {
+        for (NativeMapSearchListener listener : mMapListeners)
+          listener.onMapSearchResults(results, timestamp, isLast);
+        mMapListeners.finishIterate();
+      }
+    });
+  }
+
+  private final Listeners<NativeSearchListener> mListeners = new Listeners<>();
+  private final Listeners<NativeMapSearchListener> mMapListeners = new Listeners<>();
 
   public void addListener(NativeSearchListener listener)
   {
-    mListeners.add(listener);
+    mListeners.register(listener);
   }
 
-  public boolean removeListener(NativeSearchListener listener)
+  public void removeListener(NativeSearchListener listener)
   {
-    return mListeners.remove(listener);
+    mListeners.unregister(listener);
+  }
+
+  public void addMapListener(NativeMapSearchListener listener)
+  {
+    mMapListeners.register(listener);
+  }
+
+  public void removeMapListener(NativeMapSearchListener listener)
+  {
+    mMapListeners.unregister(listener);
   }
 
   SearchEngine()
@@ -67,21 +96,29 @@ public enum SearchEngine implements NativeSearchListener
    * @param force     Should be false for repeating requests with the same query.
    * @return whether search was actually started.
    */
-  public static boolean runSearch(String query, String language, long timestamp, boolean force, boolean hasLocation, double lat, double lon)
+  public static boolean search(String query, long timestamp, boolean force, boolean hasLocation, double lat, double lon)
   {
     try
     {
-      return nativeRunSearch(query.getBytes("utf-8"), language, timestamp, force, hasLocation, lat, lon);
+      return nativeRunSearch(query.getBytes("utf-8"), Language.getKeyboardLocale(), timestamp, force, hasLocation, lat, lon);
     } catch (UnsupportedEncodingException ignored) { }
 
     return false;
   }
 
-  public static void runInteractiveSearch(String query, String language, long timestamp, boolean isMapAndTable)
+  public static void searchInteractive(String query, long timestamp, boolean isMapAndTable)
   {
     try
     {
-      nativeRunInteractiveSearch(query.getBytes("utf-8"), language, timestamp, isMapAndTable);
+      nativeRunInteractiveSearch(query.getBytes("utf-8"), Language.getKeyboardLocale(), timestamp, isMapAndTable);
+    } catch (UnsupportedEncodingException ignored) { }
+  }
+
+  public static void searchMaps(String query, long timestamp)
+  {
+    try
+    {
+      nativeRunSearchMaps(query.getBytes("utf-8"), Language.getKeyboardLocale(), timestamp);
     } catch (UnsupportedEncodingException ignored) { }
   }
 
@@ -124,6 +161,11 @@ public enum SearchEngine implements NativeSearchListener
    * @param bytes utf-8 formatted query bytes
    */
   private static native void nativeRunInteractiveSearch(byte[] bytes, String language, long timestamp, boolean isMapAndTable);
+
+  /**
+   * @param bytes utf-8 formatted query bytes
+   */
+  private static native void nativeRunSearchMaps(byte[] bytes, String language, long timestamp);
 
   private static native void nativeShowResult(int index);
 

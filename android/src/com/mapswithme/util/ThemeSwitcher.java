@@ -5,7 +5,9 @@ import android.location.Location;
 
 import com.mapswithme.maps.Framework;
 import com.mapswithme.maps.MwmApplication;
+import com.mapswithme.maps.downloader.DownloaderStatusIcon;
 import com.mapswithme.maps.location.LocationHelper;
+import com.mapswithme.maps.location.LocationListener;
 import com.mapswithme.maps.routing.RoutingController;
 import com.mapswithme.util.concurrency.UiThread;
 
@@ -15,24 +17,20 @@ public final class ThemeSwitcher
 
   private static final Runnable sCheckProc = new Runnable()
   {
-    private final LocationHelper.LocationListener mLocationListener = new LocationHelper.LocationListener()
+    private final LocationListener mLocationListener = new LocationListener.Simple()
     {
       @Override
-      public void onLocationUpdated(Location l)
+      public void onLocationUpdated(Location location)
       {
-        LocationHelper.INSTANCE.removeLocationListener(this);
+        LocationHelper.INSTANCE.removeListener(this);
         run();
       }
 
       @Override
       public void onLocationError(int errorCode)
       {
-        LocationHelper.INSTANCE.removeLocationListener(this);
+        LocationHelper.INSTANCE.removeListener(this);
       }
-
-      @Override
-      public void onCompassUpdated(long time, double magneticNorth, double trueNorth, double accuracy)
-      {}
     };
 
     @Override
@@ -42,15 +40,15 @@ public final class ThemeSwitcher
 
       if (RoutingController.get().isNavigating())
       {
-        Location last = LocationHelper.INSTANCE.getLastLocation();
+        Location last = LocationHelper.INSTANCE.getSavedLocation();
         if (last == null)
         {
-          LocationHelper.INSTANCE.addLocationListener(mLocationListener, true);
+          LocationHelper.INSTANCE.addListener(mLocationListener, true);
           theme = Config.getCurrentUiTheme();
         }
         else
         {
-          LocationHelper.INSTANCE.removeLocationListener(mLocationListener);
+          LocationHelper.INSTANCE.removeListener(mLocationListener);
 
           boolean day = Framework.nativeIsDayTime(System.currentTimeMillis() / 1000, last.getLatitude(), last.getLongitude());
           theme = (day ? ThemeUtils.THEME_DEFAULT : ThemeUtils.THEME_NIGHT);
@@ -91,6 +89,8 @@ public final class ThemeSwitcher
     // Activity and drape engine will be recreated so we have to mark new map style.
     // Changes will be applied in process of recreation.
     Framework.nativeMarkMapStyle(style);
+
+    DownloaderStatusIcon.clearCache();
 
     Activity a = MwmApplication.backgroundTracker().getTopActivity();
     if (a != null && !a.isFinishing())

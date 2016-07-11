@@ -19,11 +19,11 @@ import com.mapswithme.maps.bookmarks.data.BookmarkCategory;
 import com.mapswithme.maps.bookmarks.data.DistanceAndAzimut;
 import com.mapswithme.maps.bookmarks.data.Track;
 import com.mapswithme.maps.location.LocationHelper;
+import com.mapswithme.maps.location.LocationListener;
 import com.mapswithme.util.Graphics;
 
 
 public class BookmarkListAdapter extends BaseAdapter
-    implements LocationHelper.LocationListener
 {
   private final Activity mActivity;
   private final BookmarkCategory mCategory;
@@ -36,6 +36,15 @@ public class BookmarkListAdapter extends BaseAdapter
   private static final int SECTION_TRACKS = 0;
   private static final int SECTION_BMKS = 1;
 
+  private final LocationListener mLocationListener = new LocationListener.Simple()
+  {
+    @Override
+    public void onLocationUpdated(Location location)
+    {
+      notifyDataSetChanged();
+    }
+  };
+
   public BookmarkListAdapter(Activity activity, BookmarkCategory cat)
   {
     mActivity = activity;
@@ -44,12 +53,12 @@ public class BookmarkListAdapter extends BaseAdapter
 
   public void startLocationUpdate()
   {
-    LocationHelper.INSTANCE.addLocationListener(this, true);
+    LocationHelper.INSTANCE.addListener(mLocationListener, true);
   }
 
   public void stopLocationUpdate()
   {
-    LocationHelper.INSTANCE.removeLocationListener(this);
+    LocationHelper.INSTANCE.removeListener(mLocationListener);
   }
 
   @Override
@@ -128,7 +137,7 @@ public class BookmarkListAdapter extends BaseAdapter
   public Object getItem(int position)
   {
     if (getItemViewType(position) == TYPE_TRACK)
-      return mCategory.getTrack(position - 1);
+      return mCategory.nativeGetTrack(position - 1);
     else
       return mCategory.getBookmark(position - 1
           - (isSectionEmpty(SECTION_TRACKS) ? 0 : mCategory.getTracksCount() + 1));
@@ -138,23 +147,6 @@ public class BookmarkListAdapter extends BaseAdapter
   public long getItemId(int position)
   {
     return position;
-  }
-
-  @Override
-  public void onLocationUpdated(final Location l)
-  {
-    notifyDataSetChanged();
-  }
-
-  @Override
-  public void onCompassUpdated(long time, double magneticNorth, double trueNorth, double accuracy)
-  {
-    // We don't show any arrows for bookmarks any more.
-  }
-
-  @Override
-  public void onLocationError(int errorCode)
-  {
   }
 
   private class PinHolder
@@ -172,7 +164,7 @@ public class BookmarkListAdapter extends BaseAdapter
 
     void setName(Bookmark bmk)
     {
-      name.setText(bmk.getName());
+      name.setText(bmk.getTitle());
     }
 
     void setName(Track trk)
@@ -182,7 +174,7 @@ public class BookmarkListAdapter extends BaseAdapter
 
     void setDistance(Bookmark bmk)
     {
-      final Location loc = LocationHelper.INSTANCE.getLastLocation();
+      final Location loc = LocationHelper.INSTANCE.getSavedLocation();
       if (loc != null)
       {
         final DistanceAndAzimut daa = bmk.getDistanceAndAzimuth(loc.getLatitude(), loc.getLongitude(), 0.0);

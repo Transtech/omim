@@ -6,10 +6,10 @@ ROOT_DIR = ../..
 
 include($$ROOT_DIR/common.pri)
 
-INCLUDEPATH *= $$ROOT_DIR/3party/expat/lib
+SOURCES += \
+    test_feature.cpp \
+    test_mwm_builder.cpp \
 
 HEADERS += \
+    test_feature.hpp \
     test_mwm_builder.hpp \
-
-SOURCES += \
-    test_mwm_builder.cpp \

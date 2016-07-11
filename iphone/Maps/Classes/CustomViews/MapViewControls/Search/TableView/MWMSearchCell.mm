@@ -1,7 +1,11 @@
+#import "Common.h"
 #import "MWMSearchCell.h"
+#import "Statistics.h"
 #import "UIColor+MapsMeColor.h"
 
 #include "Framework.h"
+
+#include "base/logging.hpp"
 
 @interface MWMSearchCell ()
 
@@ -13,6 +17,7 @@
 
 - (void)awakeFromNib
 {
+  [super awakeFromNib];
   if (IPAD)
     self.contentView.backgroundColor = [UIColor white];
   CALayer * sl = self.layer;
@@ -25,7 +30,7 @@
   if (result.GetResultType() == search::Result::RESULT_FEATURE)
     GetFramework().LoadSearchResultMetadata(result);
 
-  NSString * title = @(result.GetString());
+  NSString * title = @(result.GetString().c_str());
   if (!title)
   {
     self.titleLabel.text = @"";
@@ -44,12 +49,32 @@
   size_t const rangesCount = result.GetHighlightRangesCount();
   for (size_t i = 0; i < rangesCount; ++i)
   {
-    pair<uint16_t, uint16_t> const range = result.GetHighlightRange(i);
-    [attributedTitle addAttributes:selectedTitleAttributes
-                             range:NSMakeRange(range.first, range.second)];
+    pair<uint16_t, uint16_t> const & range = result.GetHighlightRange(i);
+
+    if (range.first + range.second <= title.length)
+    {
+      [attributedTitle addAttributes:selectedTitleAttributes range:NSMakeRange(range.first, range.second)];
+    }
+    else
+    {
+      [Statistics logEvent:@"Incorrect_highlight_range" withParameters:@{@"range.first" : @(range.first),
+                                                                        @"range.second" : @(range.second),
+                                                                        @"string" : title}];
+      LOG(LERROR, ("Incorrect range: ", range, " for string: ", result.GetString()));
+    }
   }
   self.titleLabel.attributedText = attributedTitle;
   [self.titleLabel sizeToFit];
+}
+
+- (void)layoutSubviews
+{
+  [super layoutSubviews];
+  if (isIOS7)
+  {
+    self.titleLabel.preferredMaxLayoutWidth = floor(self.titleLabel.width);
+    [super layoutSubviews];
+  }
 }
 
 - (NSDictionary *)selectedTitleAttributes

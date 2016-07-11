@@ -1,3 +1,5 @@
+#import "MWMAlertViewController.h"
+#import "MWMMapDownloaderTypes.h"
 #import "MWMSearchTextField.h"
 #import "MWMSearchView.h"
 
@@ -11,8 +13,10 @@ typedef NS_ENUM(NSUInteger, MWMSearchManagerState)
 
 @protocol MWMSearchManagerProtocol <NSObject>
 
+@property (nonnull, nonatomic, readonly) MWMAlertViewController * alertController;
+
 - (void)searchViewDidEnterState:(MWMSearchManagerState)state;
-- (void)actionDownloadMaps;
+- (void)actionDownloadMaps:(mwm::DownloaderMode)mode;
 
 @end
 
@@ -20,8 +24,8 @@ typedef NS_ENUM(NSUInteger, MWMSearchManagerState)
 
 @interface MWMSearchManager : NSObject
 
-@property (weak, nonatomic) id <MWMSearchManagerProtocol, MWMRoutingProtocol> delegate;
-@property (weak, nonatomic) IBOutlet MWMSearchTextField * searchTextField;
+@property (nullable, weak, nonatomic) id <MWMSearchManagerProtocol, MWMRoutingProtocol> delegate;
+@property (nullable, weak, nonatomic) IBOutlet MWMSearchTextField * searchTextField;
 
 @property (nonatomic) MWMSearchManagerState state;
 
@@ -31,7 +35,9 @@ typedef NS_ENUM(NSUInteger, MWMSearchManagerState)
 - (nullable instancetype)initWithParentView:(nonnull UIView *)view
                                    delegate:(nonnull id<MWMSearchManagerProtocol, MWMSearchViewProtocol, MWMRoutingProtocol>)delegate;
 
-- (void)refresh;
+- (void)mwm_refreshUI;
+
+- (void)searchText:(nonnull NSString *)text forInputLocale:(nullable NSString *)locale;
 
 #pragma mark - Layout
 

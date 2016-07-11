@@ -17,8 +17,7 @@ class UserEventStreamTest : df::UserEventStream::Listener
 {
 public:
   UserEventStreamTest(bool filtrateTouches)
-    : m_stream([](m2::PointD const &) { return true; })
-    , m_filtrate(filtrateTouches)
+    : m_filtrate(filtrateTouches)
   {
     m_stream.SetTestBridge(bind(&UserEventStreamTest::TestBridge, this, _1));
   }
@@ -37,7 +36,9 @@ public:
   void CorrectScalePoint(m2::PointD & pt1, m2::PointD & pt2) const override {}
   void CorrectGlobalScalePoint(m2::PointD & pt) const override {}
   void OnScaleEnded() override {}
-  void OnAnimationStarted(ref_ptr<df::BaseModelViewAnimation> /* anim */) override {}
+  void OnAnimationStarted(ref_ptr<df::Animation> /* anim */) override {}
+  void OnTouchMapAction() override {}
+  void OnAnimatedScaleEnded() override {}
 
   void AddUserEvent(df::TouchEvent const & event)
   {

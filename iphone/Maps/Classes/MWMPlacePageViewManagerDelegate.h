@@ -1,15 +1,14 @@
 #import "MWMRoutingProtocol.h"
 
-#include "platform/location.hpp"
+#include "geometry/point2d.hpp"
 
 @protocol MWMPlacePageViewManagerProtocol <MWMRoutingProtocol>
-
-@property (nonatomic, readonly) location::EMyPositionMode myPositionMode;
 
 - (void)dragPlacePage:(CGRect)frame;
 - (void)addPlacePageViews:(NSArray *)views;
 - (void)updateStatusBarStyle;
 - (void)apiBack;
 - (void)placePageDidClose;
+- (void)addPlace:(BOOL)isBusiness hasPoint:(BOOL)hasPoint point:(m2::PointD const &)point;
 
 @end

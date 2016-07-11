@@ -2,7 +2,6 @@
 
 #include "map/user_mark.hpp"
 #include "map/user_mark_container.hpp"
-#include "map/styled_point.hpp"
 
 #include "coding/reader.hpp"
 
@@ -82,7 +81,6 @@ public:
   string GetSymbolName() const override;
 
   Type GetMarkType() const override;
-  void FillLogEvent(TEventContainer & details) const override;
   bool RunCreationAnim() const override;
 
   string const & GetName() const;
@@ -101,8 +99,6 @@ public:
 
   double GetScale() const;
   void SetScale(double scale);
-
-  unique_ptr<UserMarkCopy> Copy() const override;
 
 private:
   BookmarkData m_data;

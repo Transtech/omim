@@ -7,6 +7,7 @@
 #include "routing/turns_notification_manager.hpp"
 
 #include "platform/location.hpp"
+#include "platform/measurement_utils.hpp"
 
 #include "geometry/point2d.hpp"
 #include "geometry/polyline2d.hpp"
@@ -45,13 +46,16 @@ public:
     OnRoute,           // user follows the route
     RouteNeedRebuild,  // user left the route
     RouteFinished,     // destination point is reached but the session isn't closed
-    RouteNoFollowing   // route is built but following mode has been disabled
+    RouteNoFollowing,  // route is built but following mode has been disabled
+    RouteRebuilding,   // we requested a route rebuild and wait when it will be rebuilded
   };
 
   /*
    * RoutingNotActive -> RouteBuilding    // start route building
-   * RouteBuilding -> RouteNotReady       // waiting for route
-   * RouteBuilding -> RouteNotStarted     // route is builded
+   * RouteBuilding -> RouteNotReady       // waiting for route in case of building a new route
+   * RouteBuilding -> RouteNotStarted     // route is builded in case of building a new route
+   * RouteRebuilding -> RouteNotReady     // waiting for route in case of rebuilding
+   * RouteRebuilding -> RouteNotStarted   // route is builded in case of rebuilding
    * RouteNotStarted -> OnRoute           // user started following the route
    * RouteNotStarted -> RouteNeedRebuild  // user doesn't like the route.
    * OnRoute -> RouteNeedRebuild          // user moves away from route - need to rebuild
@@ -79,16 +83,26 @@ public:
                   TReadyCallback const & readyCallback,
                   TProgressCallback const & progressCallback, uint32_t timeoutSec);
   void RebuildRoute(m2::PointD const & startPoint, TReadyCallback const & readyCallback,
-                    TProgressCallback const & progressCallback, uint32_t timeoutSec);
+                    TProgressCallback const & progressCallback, uint32_t timeoutSec,
+                    State routeRebuildingState);
 
   m2::PointD GetEndPoint() const { return m_endPoint; }
   bool IsActive() const { return (m_state != RoutingNotActive); }
   bool IsNavigable() const { return (m_state == RouteNotStarted || m_state == OnRoute || m_state == RouteFinished); }
-  bool IsBuilt() const { return (IsNavigable() || m_state == RouteNeedRebuild || m_state == RouteFinished); }
-  bool IsBuilding() const { return (m_state == RouteBuilding); }
+  bool IsBuilt() const { return (IsNavigable() || m_state == RouteNeedRebuild); }
+  /// \returns true if a new route is in process of building rebuilding or
+  /// if a route is being rebuilt in case the user left the route, and false otherwise.
+  bool IsBuilding() const { return (m_state == RouteBuilding || m_state == RouteRebuilding); }
+  bool IsBuildingOnly() const { return m_state == RouteBuilding; }
+  bool IsRebuildingOnly() const { return m_state == RouteRebuilding; }
+  bool IsNotReady() const { return m_state == RouteNotReady; }
+  bool IsFinished() const { return m_state == RouteFinished; }
+  bool IsNoFollowing() const { return m_state == RouteNoFollowing; }
   bool IsOnRoute() const { return (m_state == OnRoute); }
   bool IsFollowing() const { return m_isFollowing; }
   void Reset();
+
+  inline void SetState(State state) { m_state = state; }
 
   Route const & GetRoute() const { return m_route; }
 
@@ -117,11 +131,13 @@ public:
   // Sound notifications for turn instructions.
   void EnableTurnNotifications(bool enable);
   bool AreTurnNotificationsEnabled() const;
-  void SetTurnNotificationsUnits(Settings::Units const units);
+  void SetTurnNotificationsUnits(measurement_utils::Units const units);
   void SetTurnNotificationsLocale(string const & locale);
   string GetTurnNotificationsLocale() const;
   void GenerateTurnNotifications(vector<string> & turnNotifications);
   double GetCompletionPercent() const;
+
+  void EmitCloseRoutingEvent() const;
 
 private:
   struct DoReadyCallback
@@ -185,4 +201,6 @@ private:
   int m_routingRebuildCount;
   mutable double m_lastCompletionPercent;
 };
+
+string DebugPrint(RoutingSession::State state);
 }  // namespace routing

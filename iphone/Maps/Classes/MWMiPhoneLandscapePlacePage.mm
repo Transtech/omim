@@ -33,7 +33,7 @@ typedef NS_ENUM(NSUInteger, MWMiPhoneLandscapePlacePageState)
   [super configure];
   self.anchorImageView.backgroundColor = [UIColor white];
   self.anchorImageView.image = nil;
-  [self configureContentInset];
+  [self refresh];
   [self addPlacePageShadowToView:self.extendedPlacePageView offset:CGSizeMake(2.0, 4.0)];
   [self.extendedPlacePageView addSubview:self.actionBar];
   [self.manager addSubviews:@[self.extendedPlacePageView] withNavigationController:nil];
@@ -66,7 +66,7 @@ typedef NS_ENUM(NSUInteger, MWMiPhoneLandscapePlacePageState)
   CGFloat const actionBarHeight = self.actionBar.height;
   UITableView * featureTable = self.basePlacePageView.featureTable;
   CGFloat const tableContentHeight = featureTable.contentSize.height;
-  CGFloat const headerViewHeight = self.basePlacePageView.separatorView.maxY;
+  CGFloat const headerViewHeight = self.basePlacePageView.ppPreview.height;
   CGFloat const availableTableHeight = height - headerViewHeight - actionBarHeight;
   CGFloat const externalHeight = tableContentHeight - availableTableHeight;
   if (externalHeight > 0)
@@ -84,18 +84,23 @@ typedef NS_ENUM(NSUInteger, MWMiPhoneLandscapePlacePageState)
 - (void)addBookmark
 {
   [super addBookmark];
-  [self configureContentInset];
+  [self refresh];
 }
 
 - (void)removeBookmark
 {
   [super removeBookmark];
-  [self configureContentInset];
+  [self refresh];
 }
 
 - (void)reloadBookmark
 {
   [super reloadBookmark];
+  [self refresh];
+}
+
+- (void)refresh
+{
   [self configureContentInset];
 }
 
@@ -132,32 +137,6 @@ typedef NS_ENUM(NSUInteger, MWMiPhoneLandscapePlacePageState)
   }
 }
 
-- (void)willStartEditingBookmarkTitle
-{
-  [super willStartEditingBookmarkTitle];
-  CGFloat const statusBarHeight = [[UIApplication sharedApplication] statusBarFrame].size.height;
-  MWMBasePlacePageView const * basePlacePageView = self.basePlacePageView;
-  UITableView const * tableView = basePlacePageView.featureTable;
-  CGFloat const baseViewHeight = basePlacePageView.height;
-  CGFloat const tableHeight = tableView.contentSize.height;
-  CGFloat const headerViewHeight = baseViewHeight - tableHeight;
-  CGFloat const titleOriginY = tableHeight - kBookmarkCellHeight - tableView.contentOffset.y;
-
-  [UIView animateWithDuration:kDefaultAnimationDuration animations:^
-  {
-    self.basePlacePageView.transform = CGAffineTransformMakeTranslation(0., statusBarHeight - headerViewHeight - titleOriginY);
-  }];
-}
-
-- (void)willFinishEditingBookmarkTitle:(NSString *)title
-{
-  [super willFinishEditingBookmarkTitle:title];
-  [UIView animateWithDuration:kDefaultAnimationDuration animations:^
-  {
-    self.basePlacePageView.transform = CGAffineTransformMakeTranslation(0., 0.);
-  }];
-}
-
 #pragma mark - Properties
 
 - (void)setState:(MWMiPhoneLandscapePlacePageState)state
@@ -180,7 +159,7 @@ typedef NS_ENUM(NSUInteger, MWMiPhoneLandscapePlacePageState)
   self.actionBar.frame = {{0, height - actionBarHeight}, {width, actionBarHeight}};
   if (self.state == MWMiPhoneLandscapePlacePageStateOpen)
     [self updateTargetPoint];
-  [self configureContentInset];
+  [self refresh];
 }
 
 - (void)setTargetPoint:(CGPoint)targetPoint
@@ -189,7 +168,7 @@ typedef NS_ENUM(NSUInteger, MWMiPhoneLandscapePlacePageState)
   __weak MWMiPhoneLandscapePlacePage * weakSelf = self;
   BOOL const stateClosed = self.state == MWMiPhoneLandscapePlacePageStateClosed;
   if (stateClosed)
-    GetFramework().DeactivateUserMark();
+    GetFramework().DeactivateMapSelection(false);
   
   self.panRecognizer.enabled = !stateClosed;
   [self startAnimatingPlacePage:self initialVelocity:CGPointMake(self.panVelocity, 0.0) completion:^

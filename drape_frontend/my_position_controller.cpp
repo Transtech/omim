@@ -1,9 +1,11 @@
-#include "my_position_controller.hpp"
-#include "animation_constants.hpp"
-#include "visual_params.hpp"
-#include "animation/base_interpolator.hpp"
-#include "animation/interpolations.hpp"
-#include "animation/model_view_animation.hpp"
+#include "drape_frontend/my_position_controller.hpp"
+#include "drape_frontend/animation_system.hpp"
+#include "drape_frontend/animation_utils.hpp"
+#include "drape_frontend/visual_params.hpp"
+#include "drape_frontend/user_event_stream.hpp"
+#include "drape_frontend/animation/arrow_animation.hpp"
+
+#include "indexer/scales.hpp"
 
 #include "geometry/mercator.hpp"
 
@@ -17,110 +19,101 @@ namespace df
 namespace
 {
 
-int const POSITION_Y_OFFSET = 75;
-int const POSITION_Y_OFFSET_3D = 80;
-double const GPS_BEARING_LIFETIME_S = 5.0;
-double const MIN_SPEED_THRESHOLD_MPS = 1.0;
+int const kPositionOffsetY = 75;
+int const kPositionOffsetYIn3D = 80;
+double const kGpsBearingLifetimeSec = 5.0;
+double const kMinSpeedThresholdMps = 1.0;
 
-uint16_t SetModeBit(uint32_t mode, uint32_t bit)
+double const kMaxPendingLocationTimeSec = 60.0;
+double const kMaxTimeInBackgroundSec = 60.0 * 60;
+double const kMaxNotFollowRoutingTimeSec = 10.0;
+double const kMaxUpdateLocationInvervalSec = 30.0;
+
+int const kZoomThreshold = 10;
+int const kMaxScaleZoomLevel = 16;
+
+string LocationModeStatisticsName(location::EMyPositionMode mode)
 {
-  return mode | bit;
+  switch (mode)
+  {
+  case location::PendingPosition:
+    return "@PendingPosition";
+  case location::NotFollowNoPosition:
+    return "@NotFollowNoPosition";
+  case location::NotFollow:
+    return "@NotFollow";
+  case location::Follow:
+    return "@Follow";
+  case location::FollowAndRotate:
+    return "@FollowAndRotate";
+  }
+  return "@UnknownMode";
 }
 
-uint16_t ResetModeBit(uint32_t mode, uint32_t bit)
+int GetZoomLevel(ScreenBase const & screen)
 {
-  return mode & (~bit);
+  return df::GetZoomLevel(screen.GetScale());
 }
 
-location::EMyPositionMode ResetAllModeBits(uint32_t mode)
+int GetZoomLevel(ScreenBase const & screen, m2::PointD const & position, double errorRadius)
 {
-  return (location::EMyPositionMode)(mode & 0xF);
+  ScreenBase s = screen;
+  m2::PointD const size(errorRadius, errorRadius);
+  s.SetFromRect(m2::AnyRectD(position, screen.GetAngle(), m2::RectD(position - size, position + size)));
+  return GetZoomLevel(s);
 }
 
-uint16_t ChangeMode(uint32_t mode, location::EMyPositionMode newMode)
-{
-  return (mode & 0xF0) | newMode;
-}
 
-bool TestModeBit(uint32_t mode, uint32_t bit)
-{
-  return (mode & bit) != 0;
-}
 
 } // namespace
 
-class MyPositionController::MyPositionAnim : public BaseInterpolator
-{
-  using TBase = BaseInterpolator;
-public:
-  MyPositionAnim(m2::PointD const & startPt, m2::PointD const & endPt, double moveDuration,
-                 double startAzimut, double endAzimut, double rotationDuration)
-    : TBase(max(moveDuration, rotationDuration))
-    , m_startPt(startPt)
-    , m_endPt(endPt)
-    , m_moveDuration(moveDuration)
-    , m_angleInterpolator(startAzimut, endAzimut)
-    , m_rotateDuration(rotationDuration)
-  {
-  }
-
-  m2::PointD GetCurrentPosition() const
-  {
-    return InterpolatePoint(m_startPt, m_endPt,
-                            my::clamp(GetElapsedTime() / m_moveDuration, 0.0, 1.0));
-  }
-
-  bool IsMovingActive() const { return m_moveDuration > 0.0; }
-
-  double GetCurrentAzimut() const
-  {
-    return m_angleInterpolator.Interpolate(my::clamp(GetElapsedTime() / m_rotateDuration, 0.0, 1.0));
-  }
-
-  bool IsRotatingActive() const { return m_rotateDuration > 0.0; }
-
-private:
-  m2::PointD m_startPt;
-  m2::PointD m_endPt;
-  double m_moveDuration;
-
-  InerpolateAngle m_angleInterpolator;
-  double m_rotateDuration;
-};
-
-MyPositionController::MyPositionController(location::EMyPositionMode initMode)
-  : m_modeInfo(location::MODE_PENDING_POSITION)
-  , m_afterPendingMode(location::MODE_FOLLOW)
+MyPositionController::MyPositionController(location::EMyPositionMode initMode, double timeInBackground,
+                                           bool isFirstLaunch, bool isRoutingActive)
+  : m_mode(location::PendingPosition)
+  , m_desiredInitMode(initMode)
+  , m_isFirstLaunch(isFirstLaunch)
+  , m_isInRouting(isRoutingActive)
+  , m_needBlockAnimation(false)
+  , m_wasRotationInScaling(false)
   , m_errorRadius(0.0)
   , m_position(m2::PointD::Zero())
   , m_drawDirection(0.0)
+  , m_oldPosition(m2::PointD::Zero())
+  , m_oldDrawDirection(0.0)
   , m_lastGPSBearing(false)
-  , m_positionYOffset(POSITION_Y_OFFSET)
+  , m_lastLocationTimestamp(0.0)
+  , m_positionYOffset(kPositionOffsetY)
   , m_isVisible(false)
   , m_isDirtyViewport(false)
+  , m_isPendingAnimation(false)
+  , m_isPositionAssigned(false)
+  , m_isDirectionAssigned(false)
+  , m_notFollowAfterPending(false)
 {
-  if (initMode > location::MODE_UNKNOWN_POSITION)
-    m_afterPendingMode = initMode;
-  else
-    m_modeInfo = location::MODE_UNKNOWN_POSITION;
+  if (m_isFirstLaunch)
+  {
+    m_mode = location::NotFollowNoPosition;
+    m_desiredInitMode = location::NotFollowNoPosition;
+  }
+  else if (timeInBackground >= kMaxTimeInBackgroundSec)
+  {
+    m_desiredInitMode = location::Follow;
+  }
 }
 
 MyPositionController::~MyPositionController()
 {
-  m_anim.reset();
 }
 
-void MyPositionController::OnNewPixelRect()
+void MyPositionController::OnNewViewportRect()
 {
-  Follow();
+  UpdateViewport(kDoNotChangeZoom);
 }
 
 void MyPositionController::UpdatePixelPosition(ScreenBase const & screen)
 {
   m_pixelRect = screen.isPerspective() ? screen.PixelRectIn3d() : screen.PixelRect();
-  m_positionYOffset = screen.isPerspective() ? POSITION_Y_OFFSET_3D : POSITION_Y_OFFSET;
-  m_pixelPositionRaF = screen.P3dtoP(GetRaFPixelBinding());
-  m_pixelPositionF = screen.P3dtoP(m_pixelRect.Center());
+  m_positionYOffset = screen.isPerspective() ? kPositionOffsetYIn3D : kPositionOffsetY;
 }
 
 void MyPositionController::SetListener(ref_ptr<MyPositionController::Listener> listener)
@@ -140,44 +133,62 @@ double MyPositionController::GetErrorRadius() const
 
 bool MyPositionController::IsModeChangeViewport() const
 {
-  return GetMode() >= location::MODE_FOLLOW;
+  return m_mode == location::Follow || m_mode == location::FollowAndRotate;
 }
 
 bool MyPositionController::IsModeHasPosition() const
 {
-  return GetMode() >= location::MODE_NOT_FOLLOW;
+  return m_mode != location::PendingPosition && m_mode != location::NotFollowNoPosition;
 }
 
 void MyPositionController::DragStarted()
 {
-  SetModeInfo(SetModeBit(m_modeInfo, BlockAnimation));
+  m_needBlockAnimation = true;
 }
 
 void MyPositionController::DragEnded(m2::PointD const & distance)
 {
-  SetModeInfo(ResetModeBit(m_modeInfo, BlockAnimation));
-  if (distance.Length() > 0.2 * min(m_pixelRect.SizeX(), m_pixelRect.SizeY()))
+  float const kBindingDistance = 0.1;
+  m_needBlockAnimation = false;
+  if (distance.Length() > kBindingDistance * min(m_pixelRect.SizeX(), m_pixelRect.SizeY()))
     StopLocationFollow();
 
-  Follow();
+  UpdateViewport(kDoNotChangeZoom);
 }
 
 void MyPositionController::ScaleStarted()
 {
-  SetModeInfo(SetModeBit(m_modeInfo, BlockAnimation));
+  m_needBlockAnimation = true;
+}
+
+void MyPositionController::ScaleEnded()
+{
+  m_needBlockAnimation = false;
+  if (m_wasRotationInScaling)
+  {
+    m_wasRotationInScaling = false;
+    StopLocationFollow();
+  }
+
+  UpdateViewport(kDoNotChangeZoom);
 }
 
 void MyPositionController::Rotated()
 {
-  location::EMyPositionMode mode = GetMode();
-  if (mode == location::MODE_ROTATE_AND_FOLLOW)
-    SetModeInfo(SetModeBit(m_modeInfo, StopFollowOnActionEnd));
+  if (m_mode == location::FollowAndRotate)
+    m_wasRotationInScaling = true;
+}
+
+void MyPositionController::ResetRoutingNotFollowTimer()
+{
+  if (m_isInRouting)
+    m_routingNotFollowTimer.Reset();
 }
 
 void MyPositionController::CorrectScalePoint(m2::PointD & pt) const
 {
   if (IsModeChangeViewport())
-    pt = GetCurrentPixelBinding();
+    pt = GetRotationPixelCenter();
 }
 
 void MyPositionController::CorrectScalePoint(m2::PointD & pt1, m2::PointD & pt2) const
@@ -185,7 +196,7 @@ void MyPositionController::CorrectScalePoint(m2::PointD & pt1, m2::PointD & pt2)
   if (IsModeChangeViewport())
   {
     m2::PointD const oldPt1(pt1);
-    pt1 = GetCurrentPixelBinding();
+    pt1 = GetRotationPixelCenter();
     pt2 = pt2 - oldPt1 + pt1;
   }
 }
@@ -196,208 +207,86 @@ void MyPositionController::CorrectGlobalScalePoint(m2::PointD & pt) const
     pt = m_position;
 }
 
-void MyPositionController::ScaleEnded()
-{
-  SetModeInfo(ResetModeBit(m_modeInfo, BlockAnimation));
-  if (TestModeBit(m_modeInfo, StopFollowOnActionEnd))
-  {
-    SetModeInfo(ResetModeBit(m_modeInfo, StopFollowOnActionEnd));
-    StopLocationFollow();
-  }
-
-  Follow();
-}
-
 void MyPositionController::SetRenderShape(drape_ptr<MyPosition> && shape)
 {
   m_shape = move(shape);
 }
 
-void MyPositionController::SetFixedZoom()
-{
-  SetModeInfo(SetModeBit(m_modeInfo, FixedZoomBit));
-}
-
-void MyPositionController::NextMode(int preferredZoomLevel)
+void MyPositionController::NextMode(ScreenBase const & screen)
 {
   string const kAlohalyticsClickEvent = "$onClick";
-  location::EMyPositionMode currentMode = GetMode();
-  location::EMyPositionMode newMode = currentMode;
 
-  if (!IsInRouting())
+  // Skip switching to next mode while we are waiting for position.
+  if (IsWaitingForLocation())
   {
-    switch (currentMode)
+    alohalytics::LogEvent(kAlohalyticsClickEvent,
+                          LocationModeStatisticsName(location::PendingPosition));
+    return;
+  }
+
+  alohalytics::LogEvent(kAlohalyticsClickEvent, LocationModeStatisticsName(m_mode));
+
+  // Start looking for location.
+  if (m_mode == location::NotFollowNoPosition)
+  {
+    m_pendingTimer.Reset();
+    ChangeMode(location::PendingPosition);
+    return;
+  }
+
+  // Calculate preferred zoom level.
+  int const currentZoom = GetZoomLevel(screen);
+  int preferredZoomLevel = kDoNotChangeZoom;
+  if (currentZoom < kZoomThreshold)
+    preferredZoomLevel = min(GetZoomLevel(screen, m_position, m_errorRadius), kMaxScaleZoomLevel);
+
+  // In routing not-follow -> follow-and-rotate, otherwise not-follow -> follow.
+  if (m_mode == location::NotFollow)
+  {
+    ChangeMode(m_isInRouting ? location::FollowAndRotate : location::Follow);
+    UpdateViewport(preferredZoomLevel);
+    return;
+  }
+
+  // From follow mode we transit to follow-and-rotate if compass is available or
+  // routing is enabled.
+  if (m_mode == location::Follow)
+  {
+    if (IsRotationAvailable() || m_isInRouting)
     {
-    case location::MODE_UNKNOWN_POSITION:
-      alohalytics::LogEvent(kAlohalyticsClickEvent, "@UnknownPosition");
-      newMode = location::MODE_PENDING_POSITION;
-      break;
-    case location::MODE_PENDING_POSITION:
-      alohalytics::LogEvent(kAlohalyticsClickEvent, "@PendingPosition");
-      newMode = location::MODE_UNKNOWN_POSITION;
-      m_afterPendingMode = location::MODE_FOLLOW;
-      break;
-    case location::MODE_NOT_FOLLOW:
-      alohalytics::LogEvent(kAlohalyticsClickEvent, "@NotFollow");
-      newMode = location::MODE_FOLLOW;
-      break;
-    case location::MODE_FOLLOW:
-      alohalytics::LogEvent(kAlohalyticsClickEvent, "@Follow");
-      if (IsRotationActive())
-        newMode = location::MODE_ROTATE_AND_FOLLOW;
-      else
-      {
-        newMode = location::MODE_UNKNOWN_POSITION;
-        m_afterPendingMode = location::MODE_FOLLOW;
-      }
-      break;
-    case location::MODE_ROTATE_AND_FOLLOW:
-      alohalytics::LogEvent(kAlohalyticsClickEvent, "@RotateAndFollow");
-      newMode = location::MODE_UNKNOWN_POSITION;
-      m_afterPendingMode = location::MODE_FOLLOW;
-      break;
+      ChangeMode(location::FollowAndRotate);
+      UpdateViewport(preferredZoomLevel);
     }
-  }
-  else
-  {
-    newMode = IsRotationActive() ? location::MODE_ROTATE_AND_FOLLOW : location::MODE_FOLLOW;
+    return;
   }
 
-  SetModeInfo(ChangeMode(m_modeInfo, newMode), IsInRouting());
-  Follow(preferredZoomLevel);
-}
-
-void MyPositionController::TurnOff()
-{
-  StopLocationFollow();
-  SetModeInfo(location::MODE_UNKNOWN_POSITION);
-  SetIsVisible(false);
-}
-
-void MyPositionController::Invalidate()
-{
-  location::EMyPositionMode currentMode = GetMode();
-  if (currentMode > location::MODE_PENDING_POSITION)
+  // From follow-and-rotate mode we can transit to follow mode if routing is disabled.
+  if (m_mode == location::FollowAndRotate)
   {
-    SetModeInfo(ChangeMode(m_modeInfo, location::MODE_UNKNOWN_POSITION));
-    SetModeInfo(ChangeMode(m_modeInfo, location::MODE_PENDING_POSITION));
-    m_afterPendingMode = currentMode;
-    SetIsVisible(true);
-  }
-  else if (currentMode == location::MODE_UNKNOWN_POSITION)
-  {
-    m_afterPendingMode = location::MODE_FOLLOW;
-    SetIsVisible(false);
+    if (!m_isInRouting)
+    {
+      ChangeMode(location::Follow);
+      ChangeModelView(m_position, 0.0, m_pixelRect.Center(), preferredZoomLevel);
+    }
   }
 }
 
 void MyPositionController::OnLocationUpdate(location::GpsInfo const & info, bool isNavigable,
                                             ScreenBase const & screen)
 {
-  Assign(info, isNavigable, screen);
+  m2::PointD const oldPos = GetDrawablePosition();
+  double const oldAzimut = GetDrawableAzimut();
 
-  SetIsVisible(true);
-
-  if (GetMode() == location::MODE_PENDING_POSITION)
-  {
-    SetModeInfo(ChangeMode(m_modeInfo, m_afterPendingMode));
-    m_afterPendingMode = location::MODE_FOLLOW;
-  }
-}
-
-void MyPositionController::OnCompassUpdate(location::CompassInfo const & info,
-                                           ScreenBase const & screen)
-{
-  Assign(info, screen);
-}
-
-void MyPositionController::SetModeListener(location::TMyPositionModeChanged const & fn)
-{
-  m_modeChangeCallback = fn;
-  CallModeListener(m_modeInfo);
-}
-
-void MyPositionController::Render(uint32_t renderMode, ScreenBase const & screen, ref_ptr<dp::GpuProgramManager> mng,
-                                  dp::UniformValuesStorage const  & commonUniforms)
-{
-  location::EMyPositionMode currentMode = GetMode();
-  if (m_shape != nullptr && IsVisible() && currentMode > location::MODE_PENDING_POSITION)
-  {
-    if (m_isDirtyViewport && !TestModeBit(m_modeInfo, BlockAnimation))
-    {
-      Follow();
-      m_isDirtyViewport = false;
-    }
-
-    if (!IsModeChangeViewport())
-      m_isPendingAnimation = false;
-
-    m_shape->SetPosition(GetDrawablePosition());
-    m_shape->SetAzimuth(GetDrawableAzimut());
-    m_shape->SetIsValidAzimuth(IsRotationActive());
-    m_shape->SetAccuracy(m_errorRadius);
-    m_shape->SetRoutingMode(IsInRouting());
-
-    if ((renderMode & RenderAccuracy) != 0)
-      m_shape->RenderAccuracy(screen, mng, commonUniforms);
-
-    if ((renderMode & RenderMyPosition) != 0)
-      m_shape->RenderMyPosition(screen, mng, commonUniforms);
-  }
-
-  CheckAnimFinished();
-}
-
-bool MyPositionController::IsFollowingActive() const
-{
-  return IsInRouting() && GetMode() == location::MODE_ROTATE_AND_FOLLOW;
-}
-
-void MyPositionController::AnimateStateTransition(location::EMyPositionMode oldMode, location::EMyPositionMode newMode)
-{
-  if (oldMode == location::MODE_PENDING_POSITION && newMode == location::MODE_FOLLOW)
-  {
-    if (!TestModeBit(m_modeInfo, FixedZoomBit))
-    {
-      m2::PointD const size(m_errorRadius, m_errorRadius);
-      ChangeModelView(m2::RectD(m_position - size, m_position + size));
-    }
-  }
-  else if (oldMode == location::MODE_ROTATE_AND_FOLLOW &&
-           (newMode == location::MODE_FOLLOW || newMode == location::MODE_UNKNOWN_POSITION))
-  {
-    ChangeModelView(m_position, 0.0, m_pixelPositionF, -1);
-  }
-}
-
-bool MyPositionController::AlmostCurrentPosition(const m2::PointD & pos) const
-{
-  double const kPositionEqualityDelta = 1e-5;
-
-  return pos.EqualDxDy(m_position, kPositionEqualityDelta);
-}
-
-bool MyPositionController::AlmostCurrentAzimut(double azimut) const
-{
-  double const kDirectionEqualityDelta = 1e-5;
-
-  return my::AlmostEqualAbs(azimut, m_drawDirection, kDirectionEqualityDelta);
-}
-
-void MyPositionController::Assign(location::GpsInfo const & info, bool isNavigable, ScreenBase const & screen)
-{
-  m2::PointD oldPos = GetDrawablePosition();
-  double oldAzimut = GetDrawableAzimut();
-
-  m2::RectD rect = MercatorBounds::MetresToXY(info.m_longitude,
-                                              info.m_latitude,
-                                              info.m_horizontalAccuracy);
-  m_position = rect.Center();
-  m_errorRadius = rect.SizeX() / 2;
+  m2::RectD const rect = MercatorBounds::MetresToXY(info.m_longitude, info.m_latitude,
+                                                    info.m_horizontalAccuracy);
+  // Use FromLatLon instead of rect.Center() since in case of large info.m_horizontalAccuracy
+  // there is significant difference between the real location and the estimated one.
+  m_position = MercatorBounds::FromLatLon(info.m_latitude, info.m_longitude);
+  m_errorRadius = rect.SizeX() * 0.5;
 
   bool const hasBearing = info.HasBearing();
   if ((isNavigable && hasBearing) ||
-      (!isNavigable && hasBearing && info.HasSpeed() && info.m_speed > MIN_SPEED_THRESHOLD_MPS))
+      (!isNavigable && hasBearing && info.HasSpeed() && info.m_speed > kMinSpeedThresholdMps))
   {
     SetDirection(my::DegToRad(info.m_bearing));
     m_lastGPSBearing.Reset();
@@ -406,96 +295,248 @@ void MyPositionController::Assign(location::GpsInfo const & info, bool isNavigab
   if (m_listener)
     m_listener->PositionChanged(Position());
 
-  if (!AlmostCurrentPosition(oldPos) || !AlmostCurrentAzimut(oldAzimut))
+  if (m_isPositionAssigned && (!AlmostCurrentPosition(oldPos) || !AlmostCurrentAzimut(oldAzimut)))
   {
     CreateAnim(oldPos, oldAzimut, screen);
     m_isDirtyViewport = true;
   }
+
+  if (m_notFollowAfterPending && m_mode == location::PendingPosition)
+  {
+    ChangeMode(location::NotFollow);
+    if (m_isInRouting)
+      m_routingNotFollowTimer.Reset();
+    m_notFollowAfterPending = false;
+  }
+  else if (!m_isPositionAssigned)
+  {
+    ChangeMode(m_isFirstLaunch ? location::Follow : m_desiredInitMode);
+    if (!m_isFirstLaunch || !AnimationSystem::Instance().AnimationExists(Animation::MapPlane))
+    {
+      if (m_mode == location::Follow)
+        ChangeModelView(m_position, kDoNotChangeZoom);
+      else if (m_mode == location::FollowAndRotate)
+        ChangeModelView(m_position, m_drawDirection,
+                        m_isInRouting ? GetRoutingRotationPixelCenter() : m_pixelRect.Center(), kDoNotChangeZoom);
+    }
+  }
+  else if (m_mode == location::PendingPosition || m_mode == location::NotFollowNoPosition)
+  {
+    if (m_isInRouting)
+    {
+      ChangeMode(location::FollowAndRotate);
+      UpdateViewport(kMaxScaleZoomLevel);
+    }
+    else
+    {
+      ChangeMode(location::Follow);
+      if (!m_isFirstLaunch)
+      {
+        if (GetZoomLevel(screen, m_position, m_errorRadius) <= kMaxScaleZoomLevel)
+        {
+          m2::PointD const size(m_errorRadius, m_errorRadius);
+          ChangeModelView(m2::RectD(m_position - size, m_position + size));
+        }
+        else
+        {
+          ChangeModelView(m_position, kMaxScaleZoomLevel);
+        }
+      }
+      else
+      {
+        if (!AnimationSystem::Instance().AnimationExists(Animation::MapPlane))
+          ChangeModelView(m_position, kDoNotChangeZoom);
+      }
+    }
+  }
+
+  m_isPositionAssigned = true;
+  SetIsVisible(true);
+
+  double const kEps = 1e-5;
+  if (fabs(m_lastLocationTimestamp - info.m_timestamp) > kEps)
+  {
+    m_lastLocationTimestamp = info.m_timestamp;
+    m_updateLocationTimer.Reset();
+  }
 }
 
-void MyPositionController::Assign(location::CompassInfo const & info, ScreenBase const & screen)
+void MyPositionController::LoseLocation()
 {
-  double oldAzimut = GetDrawableAzimut();
-
-  if ((IsInRouting() && GetMode() >= location::MODE_FOLLOW) ||
-      (m_lastGPSBearing.ElapsedSeconds() < GPS_BEARING_LIFETIME_S))
+  if (m_mode != location::NotFollowNoPosition)
   {
-    return;
+    ChangeMode(location::NotFollowNoPosition);
+    SetIsVisible(false);
   }
+}
+
+void MyPositionController::OnCompassUpdate(location::CompassInfo const & info, ScreenBase const & screen)
+{
+  double const oldAzimut = GetDrawableAzimut();
+
+  if ((IsInRouting() && m_mode == location::FollowAndRotate) ||
+      m_lastGPSBearing.ElapsedSeconds() < kGpsBearingLifetimeSec)
+    return;
 
   SetDirection(info.m_bearing);
 
-  if (!AlmostCurrentAzimut(oldAzimut) &&
-      GetMode() == location::MODE_ROTATE_AND_FOLLOW)
+  if (m_isPositionAssigned && !AlmostCurrentAzimut(oldAzimut) && m_mode == location::FollowAndRotate)
   {
     CreateAnim(GetDrawablePosition(), oldAzimut, screen);
     m_isDirtyViewport = true;
   }
 }
 
-void MyPositionController::SetDirection(double bearing)
+void MyPositionController::SetModeListener(location::TMyPositionModeChanged const & fn)
 {
-  m_drawDirection = bearing;
-  SetModeInfo(SetModeBit(m_modeInfo, KnownDirectionBit));
+  m_modeChangeCallback = fn;
+
+  location::EMyPositionMode mode = m_mode;
+  if (m_isFirstLaunch)
+    mode = location::NotFollowNoPosition;
+
+  if (m_modeChangeCallback != nullptr)
+    m_modeChangeCallback(mode, m_isInRouting);
 }
 
-void MyPositionController::SetModeInfo(uint32_t modeInfo, bool force)
+bool MyPositionController::IsInStateWithPosition() const
 {
-  location::EMyPositionMode const newMode = ResetAllModeBits(modeInfo);
-  location::EMyPositionMode const oldMode = GetMode();
-  m_modeInfo = modeInfo;
-  if (newMode != oldMode || force)
+  return m_mode == location::NotFollow || m_mode == location::Follow ||
+         m_mode == location::FollowAndRotate;
+}
+
+void MyPositionController::Render(uint32_t renderMode, ScreenBase const & screen,
+                                  ref_ptr<dp::GpuProgramManager> mng,
+                                  dp::UniformValuesStorage const & commonUniforms)
+{
+  if (IsWaitingForLocation())
   {
-    AnimateStateTransition(oldMode, newMode);
-    CallModeListener(newMode);
+    if (m_pendingTimer.ElapsedSeconds() >= kMaxPendingLocationTimeSec)
+      ChangeMode(location::NotFollowNoPosition);
+  }
+
+  if (IsInRouting() && m_mode == location::NotFollow &&
+      m_routingNotFollowTimer.ElapsedSeconds() >= kMaxNotFollowRoutingTimeSec)
+  {
+    ChangeMode(location::FollowAndRotate);
+    UpdateViewport(kDoNotChangeZoom);
+  }
+
+  if (m_shape != nullptr && IsVisible() && IsModeHasPosition())
+  {
+    if (m_isDirtyViewport && !m_needBlockAnimation)
+    {
+      UpdateViewport(kDoNotChangeZoom);
+      m_isDirtyViewport = false;
+    }
+
+    if (!IsModeChangeViewport())
+      m_isPendingAnimation = false;
+
+    m_shape->SetPosition(GetDrawablePosition());
+    m_shape->SetAzimuth(GetDrawableAzimut());
+    m_shape->SetIsValidAzimuth(IsRotationAvailable());
+    m_shape->SetAccuracy(m_errorRadius);
+    m_shape->SetRoutingMode(IsInRouting());
+
+    double const updateInterval = m_updateLocationTimer.ElapsedSeconds();
+    m_shape->SetPositionObsolete(updateInterval >= kMaxUpdateLocationInvervalSec);
+
+    if ((renderMode & RenderAccuracy) != 0)
+      m_shape->RenderAccuracy(screen, mng, commonUniforms);
+
+    if ((renderMode & RenderMyPosition) != 0)
+      m_shape->RenderMyPosition(screen, mng, commonUniforms);
   }
 }
 
-location::EMyPositionMode MyPositionController::GetMode() const
+bool MyPositionController::IsRouteFollowingActive() const
 {
-  return ResetAllModeBits(m_modeInfo);
+  return IsInRouting() && m_mode == location::FollowAndRotate;
 }
 
-void MyPositionController::CallModeListener(uint32_t mode)
+bool MyPositionController::AlmostCurrentPosition(m2::PointD const & pos) const
 {
+  double const kPositionEqualityDelta = 1e-5;
+  return pos.EqualDxDy(m_position, kPositionEqualityDelta);
+}
+
+bool MyPositionController::AlmostCurrentAzimut(double azimut) const
+{
+  double const kDirectionEqualityDelta = 1e-5;
+  return my::AlmostEqualAbs(azimut, m_drawDirection, kDirectionEqualityDelta);
+}
+
+void MyPositionController::SetDirection(double bearing)
+{
+  m_drawDirection = bearing;
+  m_isDirectionAssigned = true;
+}
+
+void MyPositionController::ChangeMode(location::EMyPositionMode newMode)
+{
+  m_mode = newMode;
   if (m_modeChangeCallback != nullptr)
-    m_modeChangeCallback(ResetAllModeBits(mode));
+    m_modeChangeCallback(m_mode, m_isInRouting);
 }
 
-bool MyPositionController::IsInRouting() const
+bool MyPositionController::IsWaitingForLocation() const
 {
-  return TestModeBit(m_modeInfo, RoutingSessionBit);
+  if (m_mode == location::NotFollowNoPosition)
+    return false;
+  
+  if (!m_isPositionAssigned)
+    return true;
+
+  return m_mode == location::PendingPosition;
 }
 
-bool MyPositionController::IsRotationActive() const
+bool MyPositionController::IsWaitingForTimers() const
 {
-  return TestModeBit(m_modeInfo, KnownDirectionBit);
+  return IsWaitingForLocation() || (IsInRouting() && m_mode == location::NotFollow);
 }
 
 void MyPositionController::StopLocationFollow()
 {
-  location::EMyPositionMode currentMode = GetMode();
-  if (currentMode > location::MODE_NOT_FOLLOW)
-    SetModeInfo(ChangeMode(m_modeInfo, location::MODE_NOT_FOLLOW));
-  else if (currentMode == location::MODE_PENDING_POSITION)
-    m_afterPendingMode = location::MODE_NOT_FOLLOW;
+  if (m_mode == location::Follow || m_mode == location::FollowAndRotate)
+    ChangeMode(location::NotFollow);
+  m_desiredInitMode = location::NotFollow;
+
+  if (m_mode == location::PendingPosition)
+    m_notFollowAfterPending = true;
+  
+  if (m_isInRouting)
+    m_routingNotFollowTimer.Reset();
 }
 
-bool MyPositionController::StopCompassFollow()
+void MyPositionController::SetTimeInBackground(double time)
 {
-  if (GetMode() != location::MODE_ROTATE_AND_FOLLOW)
-    return false;
-
-  SetModeInfo(ChangeMode(m_modeInfo, location::MODE_FOLLOW));
-  Follow();
-
-  return true;
+  if (time >= kMaxTimeInBackgroundSec && m_mode == location::NotFollow)
+  {
+    ChangeMode(m_isInRouting ? location::FollowAndRotate : location::Follow);
+    UpdateViewport(kDoNotChangeZoom);
+  }
 }
 
-void MyPositionController::ChangeModelView(m2::PointD const & center)
+void MyPositionController::OnCompassTapped()
+{
+  alohalytics::LogEvent("$compassClicked", {{"mode", LocationModeStatisticsName(m_mode)},
+                                            {"routing", strings::to_string(IsInRouting())}});
+  if (m_mode == location::FollowAndRotate)
+  {
+    ChangeMode(location::Follow);
+    ChangeModelView(m_position, 0.0, m_pixelRect.Center(), kDoNotChangeZoom);
+  }
+  else
+  {
+    ChangeModelView(0.0);
+  }
+}
+
+void MyPositionController::ChangeModelView(m2::PointD const & center, int zoomLevel)
 {
   if (m_listener)
-    m_listener->ChangeModelView(center);
+    m_listener->ChangeModelView(center, zoomLevel);
 }
 
 void MyPositionController::ChangeModelView(double azimuth)
@@ -511,44 +552,46 @@ void MyPositionController::ChangeModelView(m2::RectD const & rect)
 }
 
 void MyPositionController::ChangeModelView(m2::PointD const & userPos, double azimuth,
-                                           m2::PointD const & pxZero, int preferredZoomLevel)
+                                           m2::PointD const & pxZero, int zoomLevel)
 {
   if (m_listener)
-    m_listener->ChangeModelView(userPos, azimuth, pxZero, preferredZoomLevel);
+    m_listener->ChangeModelView(userPos, azimuth, pxZero, zoomLevel);
 }
 
-void MyPositionController::Follow(int preferredZoomLevel)
+void MyPositionController::UpdateViewport(int zoomLevel)
 {
-  location::EMyPositionMode currentMode = GetMode();
-  if (currentMode == location::MODE_FOLLOW)
-    ChangeModelView(m_position);
-  else if (currentMode == location::MODE_ROTATE_AND_FOLLOW)
-    ChangeModelView(m_position, m_drawDirection, m_pixelPositionRaF, preferredZoomLevel);
+  if (IsWaitingForLocation())
+    return;
+  
+  if (m_mode == location::Follow)
+    ChangeModelView(m_position, zoomLevel);
+  else if (m_mode == location::FollowAndRotate)
+    ChangeModelView(m_position, m_drawDirection,
+                    m_isInRouting ? GetRoutingRotationPixelCenter() : m_pixelRect.Center(), zoomLevel);
 }
 
-m2::PointD MyPositionController::GetRaFPixelBinding() const
+m2::PointD MyPositionController::GetRotationPixelCenter() const
+{
+  if (m_mode == location::Follow)
+    return m_pixelRect.Center();
+  
+  if (m_mode == location::FollowAndRotate)
+    return m_isInRouting ? GetRoutingRotationPixelCenter() : m_pixelRect.Center();
+
+  return m2::PointD::Zero();
+}
+
+m2::PointD MyPositionController::GetRoutingRotationPixelCenter() const
 {
   return m2::PointD(m_pixelRect.Center().x,
                     m_pixelRect.maxY() - m_positionYOffset * VisualParams::Instance().GetVisualScale());
 }
 
-m2::PointD MyPositionController::GetCurrentPixelBinding() const
-{
-  location::EMyPositionMode mode = GetMode();
-  if (mode == location::MODE_FOLLOW)
-    return m_pixelRect.Center();
-  else if (mode == location::MODE_ROTATE_AND_FOLLOW)
-    return GetRaFPixelBinding();
-  else
-    ASSERT(false, ());
-
-  return m2::PointD::Zero();
-}
-
 m2::PointD MyPositionController::GetDrawablePosition() const
 {
-  if (m_anim && m_anim->IsMovingActive())
-    return m_anim->GetCurrentPosition();
+  m2::PointD position;
+  if (AnimationSystem::Instance().GetArrowPosition(position))
+    return position;
 
   if (m_isPendingAnimation)
     return m_oldPosition;
@@ -558,8 +601,9 @@ m2::PointD MyPositionController::GetDrawablePosition() const
 
 double MyPositionController::GetDrawableAzimut() const
 {
-  if (m_anim && m_anim->IsRotatingActive())
-    return m_anim->GetCurrentAzimut();
+  double angle;
+  if (AnimationSystem::Instance().GetArrowAngle(angle))
+    return angle;
 
   if (m_isPendingAnimation)
     return m_oldDrawDirection;
@@ -567,35 +611,30 @@ double MyPositionController::GetDrawableAzimut() const
   return m_drawDirection;
 }
 
-void MyPositionController::CheckAnimFinished() const
-{
-  if (m_anim && m_anim->IsFinished())
-    m_anim.reset();
-}
-
-void MyPositionController::AnimationStarted(ref_ptr<BaseModelViewAnimation> anim)
+void MyPositionController::AnimationStarted(ref_ptr<Animation> anim)
 {
   if (m_isPendingAnimation && m_animCreator != nullptr && anim != nullptr &&
-      (anim->GetType() == ModelViewAnimationType::FollowAndRotate ||
-       anim->GetType() == ModelViewAnimationType::Default))
+      (anim->GetType() == Animation::MapFollow ||
+       anim->GetType() == Animation::MapLinear))
   {
     m_isPendingAnimation = false;
-    m_animCreator();
+    double const kDoNotChangeDuration = -1.0;
+    m_animCreator(anim->GetType() == Animation::MapFollow ? anim->GetDuration() : kDoNotChangeDuration);
   }
 }
 
 void MyPositionController::CreateAnim(m2::PointD const & oldPos, double oldAzimut, ScreenBase const & screen)
 {
-  double moveDuration = ModelViewAnimation::GetMoveDuration(oldPos, m_position, screen);
-  double rotateDuration = ModelViewAnimation::GetRotateDuration(oldAzimut, m_drawDirection);
-  double maxDuration = max(moveDuration, rotateDuration);
-  if (maxDuration > 0.0 && maxDuration < kMaxAnimationTimeSec)
+  double const moveDuration = PositionInterpolator::GetMoveDuration(oldPos, m_position, screen);
+  double const rotateDuration = AngleInterpolator::GetRotateDuration(oldAzimut, m_drawDirection);
+  if (df::IsAnimationAllowed(max(moveDuration, rotateDuration), screen))
   {
     if (IsModeChangeViewport())
     {
-      m_animCreator = [this, oldPos, moveDuration, oldAzimut, rotateDuration]()
+      m_animCreator = [this, oldPos, oldAzimut, moveDuration](double correctedDuration)
       {
-        m_anim = make_unique_dp<MyPositionAnim>(oldPos, m_position, moveDuration, oldAzimut, m_drawDirection, rotateDuration);
+        AnimationSystem::Instance().CombineAnimation(make_unique_dp<ArrowAnimation>(oldPos, m_position,
+            correctedDuration > 0.0 ? correctedDuration : moveDuration, oldAzimut, m_drawDirection));
       };
       m_oldPosition = oldPos;
       m_oldDrawDirection = oldAzimut;
@@ -603,34 +642,40 @@ void MyPositionController::CreateAnim(m2::PointD const & oldPos, double oldAzimu
     }
     else
     {
-      m_anim = make_unique_dp<MyPositionAnim>(oldPos, m_position, moveDuration, oldAzimut, m_drawDirection, rotateDuration);
+      AnimationSystem::Instance().CombineAnimation(make_unique_dp<ArrowAnimation>(oldPos, m_position, moveDuration,
+                                                                                  oldAzimut, m_drawDirection));
     }
   }
 }
 
-void MyPositionController::ActivateRouting()
+void MyPositionController::ActivateRouting(int zoomLevel)
 {
-  if (!IsInRouting())
+  if (!m_isInRouting)
   {
-    location::EMyPositionMode newMode = GetMode();
-    if (IsModeHasPosition())
-      newMode = location::MODE_NOT_FOLLOW;
+    m_isInRouting = true;
+    m_routingNotFollowTimer.Reset();
 
-    SetModeInfo(ChangeMode(SetModeBit(m_modeInfo, RoutingSessionBit), newMode));
+    if (IsRotationAvailable())
+    {
+      ChangeMode(location::FollowAndRotate);
+      ChangeModelView(m_position, m_drawDirection, GetRoutingRotationPixelCenter(), zoomLevel);
+    }
+    else
+    {
+      ChangeMode(location::Follow);
+      ChangeModelView(m_position, zoomLevel);
+    }
   }
 }
 
 void MyPositionController::DeactivateRouting()
 {
-  if (IsInRouting())
+  if (m_isInRouting)
   {
-    SetModeInfo(ResetModeBit(m_modeInfo, RoutingSessionBit));
+    m_isInRouting = false;
 
-    location::EMyPositionMode currentMode = GetMode();
-    if (currentMode == location::MODE_ROTATE_AND_FOLLOW)
-      SetModeInfo(ChangeMode(m_modeInfo, location::MODE_FOLLOW));
-    else
-      ChangeModelView(0.0);
+    ChangeMode(location::Follow);
+    ChangeModelView(m_position, 0.0, m_pixelRect.Center(), kDoNotChangeZoom);
   }
 }
 

@@ -1,10 +1,11 @@
 #import "Common.h"
 #import "EAGLView.h"
 #import "MapsAppDelegate.h"
-#import "LocationManager.h"
 #import "MWMDirectionView.h"
 
 #import "../Platform/opengl/iosOGLContextFactory.h"
+
+#import "3party/Alohalytics/src/alohalytics_objc.h"
 
 #include "Framework.h"
 #include "indexer/classificator_loader.hpp"
@@ -26,7 +27,7 @@ double correctContentScale()
 {
   UIScreen * uiScreen = [UIScreen mainScreen];
   
-  if (isIOSVersionLessThan(8))
+  if (isIOS7)
     return [uiScreen respondsToSelector:@selector(scale)] ? [uiScreen scale] : 1.f;
   else
     return [uiScreen respondsToSelector:@selector(nativeScale)] ? [uiScreen nativeScale] : 1.f;
@@ -60,10 +61,9 @@ double getExactDPI(double contentScaleFactor)
 // The GL view is stored in the nib file. When it's unarchived it's sent -initWithCoder:
 - (id)initWithCoder:(NSCoder *)coder
 {
-  BOOL const isDaemon = MapsAppDelegate.theApp.m_locationManager.isDaemonMode;
   NSLog(@"EAGLView initWithCoder Started");
   self = [super initWithCoder:coder];
-  if (self && !isDaemon)
+  if (self)
     [self initialize];
 
   NSLog(@"EAGLView initWithCoder Ended");
@@ -73,7 +73,6 @@ double getExactDPI(double contentScaleFactor)
 - (void)initialize
 {
   lastViewSize = CGRectZero;
-  _widgetsManager = [[MWMMapWidgets alloc] init];
 
   // Setup Layer Properties
   CAEAGLLayer * eaglLayer = (CAEAGLLayer *)self.layer;
@@ -90,21 +89,20 @@ double getExactDPI(double contentScaleFactor)
 
 - (void)createDrapeEngineWithWidth:(int)width height:(int)height
 {
-  NSLog(@"EAGLView createDrapeEngine Started");
-  if (MapsAppDelegate.theApp.m_locationManager.isDaemonMode)
-    return;
-
+  LOG(LINFO, ("EAGLView createDrapeEngine Started"));
+  
   Framework::DrapeCreationParams p;
   p.m_surfaceWidth = width;
   p.m_surfaceHeight = height;
   p.m_visualScale = dp::VisualScale(getExactDPI(self.contentScaleFactor));
+  p.m_isFirstLaunch = [Alohalytics isFirstSession];
 
   [self.widgetsManager setupWidgets:p];
-  GetFramework().CreateDrapeEngine(make_ref<dp::OGLContextFactory>(m_factory), move(p));
+  GetFramework().CreateDrapeEngine(make_ref(m_factory), move(p));
 
   _drapeEngineCreated = YES;
 
-  NSLog(@"EAGLView createDrapeEngine Ended");
+  LOG(LINFO, ("EAGLView createDrapeEngine Ended"));
 }
 
 - (void)addSubview:(UIView *)view
@@ -137,7 +135,6 @@ double getExactDPI(double contentScaleFactor)
   if (GetFramework().GetDrapeEngine() == nullptr)
   {
     [self createDrapeEngineWithWidth:w height:h];
-    GetFramework().LoadState();
     return;
   }
 
@@ -152,6 +149,7 @@ double getExactDPI(double contentScaleFactor)
     CGSize const s = self.bounds.size;
     [self onSize:s.width withHeight:s.height];
   }
+  [super layoutSubviews];
 }
 
 - (void)deallocateNative
@@ -172,6 +170,18 @@ double getExactDPI(double contentScaleFactor)
   CGFloat const scaleFactor = self.contentScaleFactor;
   m2::PointD const ptP = GetFramework().GtoP(m2::PointD(pt.x, pt.y));
   return CGPointMake(ptP.x / scaleFactor, ptP.y / scaleFactor);
+}
+
+- (void)setPresentAvailable:(BOOL)available
+{
+  m_factory->CastFactory<iosOGLContextFactory>()->setPresentAvailable(available);
+}
+
+- (MWMMapWidgets *)widgetsManager
+{
+  if (!_widgetsManager)
+    _widgetsManager = [[MWMMapWidgets alloc] init];
+  return _widgetsManager;
 }
 
 @end

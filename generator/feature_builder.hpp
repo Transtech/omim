@@ -31,6 +31,16 @@ public:
   /// Set center (origin) point of feature and set that feature is point.
   void SetCenter(m2::PointD const & p);
 
+  void SetRank(uint8_t rank);
+
+  void SetTestId(uint64_t id);
+
+  void AddHouseNumber(string const & houseNumber);
+
+  void AddStreet(string const & streetName);
+
+  void AddPostcode(string const & postcode);
+
   /// Add point to geometry.
   void AddPoint(m2::PointD const & p);
 
@@ -81,7 +91,7 @@ public:
   /// @name Serialization.
   //@{
   void Serialize(TBuffer & data) const;
-  void SerializeBase(TBuffer & data, serial::CodingParams const & params, bool needSearializeAdditionalInfo = true) const;
+  void SerializeBase(TBuffer & data, serial::CodingParams const & params, bool saveAddInfo) const;
 
   void Deserialize(TBuffer & data);
   //@}
@@ -170,7 +180,7 @@ public:
   inline bool IsCoastCell() const { return (m_coastCell != -1); }
 
   bool AddName(string const & lang, string const & name);
-  string GetName(int8_t lang = StringUtf8Multilang::DEFAULT_CODE) const;
+  string GetName(int8_t lang = StringUtf8Multilang::kDefaultCode) const;
 
   uint8_t GetRank() const { return m_params.rank; }
 
@@ -212,8 +222,10 @@ class FeatureBuilder2 : public FeatureBuilder1
 
   static void SerializeOffsets(uint32_t mask, TOffsets const & offsets, TBuffer & buffer);
 
-public:
+  /// For debugging
+  friend string DebugPrint(FeatureBuilder2 const & f);
 
+public:
   struct SupportingData
   {
     /// @name input
@@ -240,6 +252,8 @@ public:
   bool PreSerialize(SupportingData const & data);
   void Serialize(SupportingData & data, serial::CodingParams const & params);
   //@}
+
+  feature::AddressData const & GetAddressData() const { return m_params.GetAddressData(); }
 };
 
 namespace feature

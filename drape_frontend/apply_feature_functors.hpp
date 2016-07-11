@@ -36,16 +36,28 @@ public:
 
   virtual ~BaseApplyFeature() {}
 
+  struct HotelData
+  {
+    bool m_isHotel = false;
+    string m_rating;
+    int m_stars = 0;
+    int m_priceCategory = 0;
+  };
+
+  void SetHotelData(HotelData && hotelData);
+
 protected:
   void ExtractCaptionParams(CaptionDefProto const * primaryProto,
                             CaptionDefProto const * secondaryProto,
                             double depth, TextViewParams & params) const;
+  string ExtractHotelInfo() const;
 
   TInsertShapeFn m_insertShape;
   FeatureID m_id;
   CaptionDescription const & m_captions;
   int m_minVisibleScale;
   uint8_t m_rank;
+  HotelData m_hotelData;
 };
 
 class ApplyPointFeature : public BaseApplyFeature
@@ -57,7 +69,7 @@ public:
                     int minVisibleScale, uint8_t rank, CaptionDescription const & captions,
                     float posZ);
 
-  void operator()(m2::PointD const & point);
+  void operator()(m2::PointD const & point, bool hasArea);
   void ProcessRule(Stylist::TRuleWrapper const & rule);
   void Finish();
 
@@ -66,6 +78,9 @@ protected:
 
 private:
   bool m_hasPoint;
+  bool m_hasArea;
+  bool m_createdByEditor;
+  bool m_obsoleteInEditor;
   double m_symbolDepth;
   double m_circleDepth;
   SymbolRuleProto const * m_symbolRule;
@@ -78,8 +93,8 @@ class ApplyAreaFeature : public ApplyPointFeature
   using TBase = ApplyPointFeature;
 
 public:
-  ApplyAreaFeature(TInsertShapeFn const & insertShape, FeatureID const & id, float minPosZ, float posZ,
-                   int minVisibleScale, uint8_t rank, CaptionDescription const & captions);
+  ApplyAreaFeature(TInsertShapeFn const & insertShape, FeatureID const & id, m2::RectD tileRect, float minPosZ,
+                   float posZ, int minVisibleScale, uint8_t rank, CaptionDescription const & captions);
 
   using TBase::operator ();
 
@@ -103,6 +118,7 @@ private:
   vector<pair<TEdge, int>> m_edges;
   float const m_minPosZ;
   bool const m_isBuilding;
+  m2::RectD m_tileRect;
 };
 
 class ApplyLineFeature : public BaseApplyFeature
@@ -110,7 +126,7 @@ class ApplyLineFeature : public BaseApplyFeature
   using TBase = BaseApplyFeature;
 
 public:
-  ApplyLineFeature(TInsertShapeFn const & insertShape, FeatureID const & id,
+  ApplyLineFeature(TInsertShapeFn const & insertShape, FeatureID const & id, m2::RectD tileRect,
                    int minVisibleScale, uint8_t rank, CaptionDescription const & captions,
                    double currentScaleGtoP, bool simplify, size_t pointsCount);
 
@@ -121,6 +137,7 @@ public:
 
 private:
   m2::SharedSpline m_spline;
+  vector<m2::SharedSpline> m_clippedSplines;
   double m_currentScaleGtoP;
   double m_sqrScale;
   m2::PointD m_lastAddedPoint;
@@ -128,6 +145,7 @@ private:
   size_t m_initialPointsCount;
   double m_shieldDepth;
   ShieldRuleProto const * m_shieldRule;
+  m2::RectD m_tileRect;
 
 #ifdef CALC_FILTERED_POINTS
   int m_readedCount;

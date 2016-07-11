@@ -1,11 +1,12 @@
 #pragma once
 #include "base/string_utils.hpp"
 
-#include "std/vector.hpp"
-#include "std/map.hpp"
-#include "std/string.hpp"
 #include "std/iostream.hpp"
+#include "std/map.hpp"
 #include "std/shared_ptr.hpp"
+#include "std/string.hpp"
+#include "std/unique_ptr.hpp"
+#include "std/vector.hpp"
 
 
 class Reader;
@@ -15,7 +16,7 @@ class CategoriesHolder
 public:
   struct Category
   {
-    static const uint8_t EMPTY_PREFIX_LENGTH = 10;
+    static constexpr uint8_t kEmptyPrefixLength = 10;
 
     struct Name
     {
@@ -34,6 +35,12 @@ public:
     }
   };
 
+  struct Mapping
+  {
+    char const * m_name;
+    int8_t m_code;
+  };
+
 private:
   typedef strings::UniString StringT;
   typedef multimap<uint32_t, shared_ptr<Category> > Type2CategoryContT;
@@ -44,21 +51,33 @@ private:
   Name2CatContT m_name2type;
 
 public:
-  CategoriesHolder() {}
-  /// Takes ownership of reader.
-  explicit CategoriesHolder(Reader * reader);
+  static int8_t const kEnglishCode;
+  static int8_t const kUnsupportedLocaleCode;
+  static vector<Mapping> const kLocaleMapping;
 
+  // List of languages that are currently disabled in the application
+  // because their translations are not yet complete.
+  static vector<string> kDisabledLanguages;
+
+  explicit CategoriesHolder(unique_ptr<Reader> && reader);
   void LoadFromStream(istream & s);
 
   template <class ToDo>
-  void ForEachCategory(ToDo toDo) const
+  void ForEachCategory(ToDo && toDo) const
   {
     for (IteratorT i = m_type2cat.begin(); i != m_type2cat.end(); ++i)
       toDo(*i->second);
   }
 
   template <class ToDo>
-  void ForEachName(ToDo toDo) const
+  void ForEachTypeAndCategory(ToDo && toDo) const
+  {
+    for (auto const it : m_type2cat)
+      toDo(it.first, *it.second);
+  }
+
+  template <class ToDo>
+  void ForEachName(ToDo && toDo) const
   {
     for (IteratorT i = m_type2cat.begin(); i != m_type2cat.end(); ++i)
       for (size_t j = 0; j < i->second->m_synonyms.size(); ++j)
@@ -66,7 +85,17 @@ public:
   }
 
   template <class ToDo>
-  void ForEachTypeByName(int8_t locale, StringT const & name, ToDo toDo) const
+  void ForEachNameByType(uint32_t type, ToDo && toDo) const
+  {
+    auto it = m_type2cat.find(type);
+    if (it == m_type2cat.end())
+      return;
+    for (auto const & name : it->second->m_synonyms)
+      toDo(name);
+  }
+
+  template <class ToDo>
+  void ForEachTypeByName(int8_t locale, StringT const & name, ToDo && toDo) const
   {
     typedef typename Name2CatContT::const_iterator IterT;
 
@@ -83,6 +112,9 @@ public:
   /// @return false if no categories for type.
   bool GetNameByType(uint32_t type, int8_t locale, string & name) const;
 
+  /// @returns raw classificator type if it's not localized in categories.txt.
+  string GetReadableFeatureType(uint32_t type, int8_t locale) const;
+
   bool IsTypeExist(uint32_t type) const;
 
   inline void Swap(CategoriesHolder & r)
@@ -93,7 +125,6 @@ public:
 
   /// Converts any language locale from UI to internal integer code
   static int8_t MapLocaleToInteger(string const & locale);
-  static int8_t const UNSUPPORTED_LOCALE_CODE = -1;
 
 private:
   void AddCategory(Category & cat, vector<uint32_t> & types);
@@ -104,3 +135,6 @@ inline void swap(CategoriesHolder & a, CategoriesHolder & b)
 {
   return a.Swap(b);
 }
+
+// Defined in categories_holder_loader.cpp.
+CategoriesHolder const & GetDefaultCategories();

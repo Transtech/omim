@@ -1,4 +1,5 @@
 #include "platform/constants.hpp"
+#include "platform/measurement_utils.hpp"
 #include "platform/platform.hpp"
 #include "platform/platform_unix_impl.hpp"
 #include "platform/settings.hpp"
@@ -134,10 +135,10 @@ bool Platform::GetFileSizeByName(string const & fileName, uint64_t & size) const
   }
 }
 
-ModelReader * Platform::GetReader(string const & file, string const & searchScope) const
+unique_ptr<ModelReader> Platform::GetReader(string const & file, string const & searchScope) const
 {
-  return new FileReader(ReadPathForFile(file, searchScope),
-                        READER_CHUNK_LOG_SIZE, READER_CHUNK_LOG_COUNT);
+  return make_unique<FileReader>(ReadPathForFile(file, searchScope),
+                                 READER_CHUNK_LOG_SIZE, READER_CHUNK_LOG_COUNT);
 }
 
 int Platform::VideoMemoryLimit() const
@@ -262,12 +263,12 @@ Platform::EConnectionType Platform::ConnectionStatus()
 
 void Platform::SetupMeasurementSystem() const
 {
-  Settings::Units u;
-  if (Settings::Get("Units", u))
+  auto units = measurement_utils::Units::Metric;
+  if (settings::Get(settings::kMeasurementUnits, units))
     return;
   BOOL const isMetric = [[[NSLocale autoupdatingCurrentLocale] objectForKey:NSLocaleUsesMetricSystem] boolValue];
-  u = isMetric ? Settings::Metric : Settings::Foot;
-  Settings::Set("Units", u);
+  units = isMetric ? measurement_utils::Units::Metric : measurement_utils::Units::Imperial;
+  settings::Set(settings::kMeasurementUnits, units);
 }
 
 ////////////////////////////////////////////////////////////////////////

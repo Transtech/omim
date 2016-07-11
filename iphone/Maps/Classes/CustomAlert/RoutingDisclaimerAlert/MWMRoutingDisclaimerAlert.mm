@@ -19,7 +19,7 @@ static NSString * const kStatisticsEvent = @"Routing Disclaimer Alert";
 
 + (instancetype)alertWithInitialOrientation:(UIInterfaceOrientation)orientation
 {
-  [[Statistics instance] logEvent:kStatisticsEvent withParameters:@{kStatAction : kStatOpen}];
+  [Statistics logEvent:kStatisticsEvent withParameters:@{kStatAction : kStatOpen}];
   MWMRoutingDisclaimerAlert * alert = [[[NSBundle mainBundle] loadNibNamed:[MWMRoutingDisclaimerAlert className]
                                                                      owner:nil
                                                                    options:nil] firstObject];
@@ -36,7 +36,7 @@ static NSString * const kStatisticsEvent = @"Routing Disclaimer Alert";
   [alert.textView sizeToFit];
   UIWindow * window = UIApplication.sharedApplication.keyWindow;
   CGFloat height;
-  if (isIOSVersionLessThan(8))
+  if (isIOS7)
     height = UIInterfaceOrientationIsLandscape(orientation) ? window.width : window.height;
   else
     height = window.height;
@@ -46,7 +46,7 @@ static NSString * const kStatisticsEvent = @"Routing Disclaimer Alert";
 
 - (IBAction)okTap
 {
-  [[Statistics instance] logEvent:kStatisticsEvent withParameters:@{kStatAction : kStatApply}];
+  [Statistics logEvent:kStatisticsEvent withParameters:@{kStatAction : kStatApply}];
   [self close];
 }
 
@@ -67,7 +67,7 @@ static NSString * const kStatisticsEvent = @"Routing Disclaimer Alert";
 - (CGFloat)bounded:(CGFloat)f withHeight:(CGFloat)h
 {
   CGFloat const currentHeight = [self.subviews.firstObject height];
-  CGFloat const maximumHeight = h - (isIOSVersionLessThan(8) ? 4. : 2.) * kMinimumOffset;
+  CGFloat const maximumHeight = h - (isIOS7 ? 4. : 2.) * kMinimumOffset;
   CGFloat const availableHeight = maximumHeight - currentHeight;
   return MIN(f, availableHeight + self.textViewHeight.constant);
 }

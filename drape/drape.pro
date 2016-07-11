@@ -16,8 +16,6 @@ OTHER_FILES += \
     shaders/area_vertex_shader.vsh \
     shaders/arrow3d_fragment_shader.fsh \
     shaders/arrow3d_vertex_shader.vsh \
-    shaders/button_fragment_shader.fsh \
-    shaders/button_vertex_shader.vsh \
     shaders/circle_shader.fsh \
     shaders/circle_shader.vsh \
     shaders/compass_vertex_shader.vsh \
@@ -27,10 +25,14 @@ OTHER_FILES += \
     shaders/debug_rect_vertex_shader.vsh \
     shaders/line_fragment_shader.fsh \
     shaders/line_vertex_shader.vsh \
+    shaders/masked_texturing_billboard_vertex_shader.vsh \
+    shaders/masked_texturing_fragment_shader.fsh \
+    shaders/masked_texturing_vertex_shader.vsh \
     shaders/my_position_shader.vsh \
     shaders/path_symbol_vertex_shader.vsh \
     shaders/position_accuracy3d_shader.vsh \
     shaders/route_arrow_fragment_shader.fsh \
+    shaders/route_dash_fragment_shader.fsh \
     shaders/route_fragment_shader.fsh \
     shaders/route_vertex_shader.vsh \
     shaders/ruler_vertex_shader.vsh \

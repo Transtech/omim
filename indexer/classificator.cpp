@@ -2,11 +2,12 @@
 #include "indexer/map_style_reader.hpp"
 #include "indexer/tree_structure.hpp"
 
-#include "base/macros.hpp"
 #include "base/logging.hpp"
+#include "base/macros.hpp"
+#include "base/string_utils.hpp"
 
-#include "std/bind.hpp"
 #include "std/algorithm.hpp"
+#include "std/bind.hpp"
 #include "std/iterator.hpp"
 
 namespace
@@ -120,13 +121,14 @@ void ClassifObject::ConcatChildNames(string & s) const
 // Classificator implementation
 /////////////////////////////////////////////////////////////////////////////////////////
 
+namespace
+{
 Classificator & classif(MapStyle mapStyle)
 {
-  size_t const index = static_cast<size_t>(mapStyle);
-  ASSERT_LESS(index, MapStyleCount, ());
   static Classificator c[MapStyleCount];
-  return c[index];
+  return c[mapStyle];
 }
+} // namespace
 
 Classificator & classif()
 {
@@ -237,7 +239,7 @@ namespace ftype
   {
     return get_control_level(type);
   }
-}
+} // namespace ftype
 
 namespace
 {
@@ -279,7 +281,7 @@ namespace
         add_rule(ft, i++);
     }
   };
-}
+} // namespace
 
 void ClassifObject::GetSuitable(int scale, feature::EGeomType ft, drule::KeysT & keys) const
 {
@@ -414,6 +416,14 @@ uint32_t Classificator::GetTypeByPath(initializer_list<char const *> const & lst
   return type;
 }
 
+uint32_t Classificator::GetTypeByReadableObjectName(string const & name) const
+{
+  ASSERT(!name.empty(), ());
+  vector<string> v;
+  strings::Tokenize(name, "-", [&v] (string const & s) { v.push_back(s); } );
+  return GetTypeByPathSafe(v);
+}
+
 void Classificator::ReadTypesMapping(istream & s)
 {
   m_mapping.Load(s);
@@ -427,13 +437,11 @@ void Classificator::Clear()
 
 string Classificator::GetReadableObjectName(uint32_t type) const
 {
-  string s = classif().GetFullObjectName(type);
-
-  // remove ending dummy symbol
+  string s = GetFullObjectName(type);
+  // Remove ending dummy symbol.
   ASSERT ( !s.empty(), () );
-  s.resize(s.size()-1);
-
-  // replace separator
+  s.pop_back();
+  // Replace separator.
   replace(s.begin(), s.end(), '|', '-');
   return s;
 }

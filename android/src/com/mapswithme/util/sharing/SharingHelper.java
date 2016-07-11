@@ -8,16 +8,9 @@ import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.support.annotation.DrawableRes;
 import android.support.annotation.StringRes;
 import android.text.TextUtils;
-
-import com.cocosw.bottomsheet.BottomSheet;
-import com.mapswithme.maps.MwmApplication;
-import com.mapswithme.maps.R;
-import com.mapswithme.maps.bookmarks.data.BookmarkManager;
-import com.mapswithme.util.BottomSheetHelper;
-import com.mapswithme.util.concurrency.ThreadPool;
-import com.mapswithme.util.concurrency.UiThread;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -28,7 +21,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static com.mapswithme.maps.MwmApplication.gson;
+import com.cocosw.bottomsheet.BottomSheet;
+import com.google.gson.Gson;
+import com.mapswithme.maps.MwmApplication;
+import com.mapswithme.maps.R;
+import com.mapswithme.maps.bookmarks.data.BookmarkManager;
+import com.mapswithme.util.BottomSheetHelper;
+import com.mapswithme.util.concurrency.ThreadPool;
+import com.mapswithme.util.concurrency.UiThread;
 
 public final class SharingHelper
 {
@@ -38,10 +38,8 @@ public final class SharingHelper
   private static boolean sInitialized;
   private static final SharingHelper sInstance = new SharingHelper();
 
-
   private final SharedPreferences mPrefs = MwmApplication.get().getSharedPreferences(PREFS_STORAGE, Context.MODE_PRIVATE);
   private final Map<String, SharingTarget> mItems = new HashMap<>();
-
 
   private SharingHelper()
   {}
@@ -76,7 +74,7 @@ public final class SharingHelper
 
     try
     {
-      return gson().fromJson(json, SharingTarget[].class);
+      return new Gson().fromJson(json, SharingTarget[].class);
     } catch (Exception e)
     {
       return null;
@@ -85,10 +83,9 @@ public final class SharingHelper
 
   private void save()
   {
-    String json = gson().toJson(mItems.values());
+    String json = new Gson().toJson(mItems.values());
     mPrefs.edit().putString(PREFS_KEY_ITEMS, json).apply();
   }
-
 
   private static String guessAppName(PackageManager pm, ResolveInfo ri)
   {
@@ -112,7 +109,6 @@ public final class SharingHelper
     Intent it = data.getTargetIntent(null);
     PackageManager pm = MwmApplication.get().getPackageManager();
     List<ResolveInfo> rlist = pm.queryIntentActivities(it, 0);
-
 
     final List<SharingTarget> res = new ArrayList<>(rlist.size());
     for (ResolveInfo ri : rlist)
@@ -220,16 +216,21 @@ public final class SharingHelper
   public static void shareBookmarksCategory(Activity context, int id)
   {
     String path = MwmApplication.get().getTempPath();
-    String name = BookmarkManager.INSTANCE.saveToKmzFile(id, path);
+    String name = BookmarkManager.INSTANCE.nativeSaveToKmzFile(id, path);
     if (name == null)
-      // some error occurred
       return;
 
-    path += name + ".kmz";
-
-    // FIXME bug with "%s.kmz"
-    shareOutside(new LocalFileShareable(context, path, "application/vnd.google-earth.kmz")
-        .setText(R.string.share_bookmarks_email_body)
-        .setSubject(R.string.share_bookmarks_email_subject));
+    shareOutside(new LocalFileShareable(context, path + name + ".kmz", "application/vnd.google-earth.kmz")
+                              // TODO fix translation for some languages, that doesn't contain holder for filename
+                     .setText(context.getString(R.string.share_bookmarks_email_body, name))
+                     .setSubject(R.string.share_bookmarks_email_subject));
   }
+
+  public static void shareViralEditor(Activity context, @DrawableRes int imageId, @StringRes int subject, @StringRes int text)
+  {
+    shareOutside(new ViralEditorShareable(context, imageId)
+                     .setText(text)
+                     .setSubject(subject));
+  }
+
 }

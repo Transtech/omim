@@ -1,8 +1,8 @@
-#include "platform/http_thread_callback.hpp"
-
+#include "Platform.hpp"
 #include "../core/jni_helper.hpp"
 
-#include "Platform.hpp"
+#include "base/logging.hpp"
+#include "platform/http_thread_callback.hpp"
 
 class HttpThread
 {
@@ -17,50 +17,38 @@ public:
              int64_t expectedFileSize,
              string const & pb)
   {
-    /// should create java object here.
     JNIEnv * env = jni::GetEnv();
-    ASSERT ( env, () );
 
-    jclass klass = env->FindClass("com/mapswithme/maps/downloader/DownloadChunkTask");
-    ASSERT ( klass, () );
-
-    static jmethodID initMethodId = env->GetMethodID(klass, "<init>", "(JLjava/lang/String;JJJ[BLjava/lang/String;)V");
-    ASSERT ( initMethodId, () );
+    static jclass const klass = jni::GetGlobalClassRef(env, "com/mapswithme/maps/downloader/ChunkTask");
+    // public ChunkTask(long httpCallbackID, String url, long beg, long end,
+    //                  long expectedFileSize, byte[] postBody, String userAgent)
+    static jmethodID const initMethodId = jni::GetConstructorID(env, klass, "(JLjava/lang/String;JJJ[BLjava/lang/String;)V");
+    static jmethodID const startMethodId = env->GetMethodID(klass, "start", "()V");
 
     // User id is always the same, so do not waste time on every chunk call
-    static string uniqueUserId = GetPlatform().UniqueClientId();
+    static string const uniqueUserId = GetPlatform().UniqueClientId();
 
-    jbyteArray postBody = 0;
+    jni::TScopedLocalByteArrayRef postBody(env, nullptr);
     size_t const postBodySize = pb.size();
     if (postBodySize)
     {
-      postBody = env->NewByteArray(postBodySize);
-      env->SetByteArrayRegion(postBody, 0, postBodySize, reinterpret_cast<jbyte const *>(pb.c_str()));
+      postBody.reset(env->NewByteArray(postBodySize));
+      env->SetByteArrayRegion(postBody.get(), 0, postBodySize, reinterpret_cast<jbyte const *>(pb.c_str()));
     }
 
-    jstring jUrl = env->NewStringUTF(url.c_str());
-    jstring jUserId = env->NewStringUTF(uniqueUserId.c_str());
-    jobject const localSelf = env->NewObject(klass,
-                                             initMethodId,
-                                             reinterpret_cast<jlong>(&cb),
-                                             jUrl,
-                                             static_cast<jlong>(beg),
-                                             static_cast<jlong>(end),
-                                             static_cast<jlong>(expectedFileSize),
-                                             postBody,
-                                             jUserId);
-    m_self = env->NewGlobalRef(localSelf);
-    ASSERT ( m_self, () );
-
-    env->DeleteLocalRef(localSelf);
-    env->DeleteLocalRef(postBody);
-    env->DeleteLocalRef(jUrl);
-    env->DeleteLocalRef(jUserId);
-
-    static jmethodID startMethodId = env->GetMethodID(klass, "start", "()V");
-    ASSERT ( startMethodId, () );
-
-    env->DeleteLocalRef(klass);
+    jni::TScopedLocalRef jUrl(env, jni::ToJavaString(env, url.c_str()));
+    jni::TScopedLocalRef jUserId(env, jni::ToJavaString(env, uniqueUserId.c_str()));
+    jni::TScopedLocalRef localSelf(env, env->NewObject(klass,
+                                                       initMethodId,
+                                                       reinterpret_cast<jlong>(&cb),
+                                                       jUrl.get(),
+                                                       static_cast<jlong>(beg),
+                                                       static_cast<jlong>(end),
+                                                       static_cast<jlong>(expectedFileSize),
+                                                       postBody.get(),
+                                                       jUserId.get()));
+    m_self = env->NewGlobalRef(localSelf.get());
+    ASSERT(m_self, ());
 
     env->CallVoidMethod(m_self, startMethodId);
   }
@@ -68,13 +56,8 @@ public:
   ~HttpThread()
   {
     JNIEnv * env = jni::GetEnv();
-    ASSERT ( env, () );
-
-    jmethodID methodId = jni::GetJavaMethodID(env, m_self, "cancel", "(Z)Z");
-    ASSERT ( methodId, () );
-
+    jmethodID methodId = jni::GetMethodID(env, m_self, "cancel", "(Z)Z");
     env->CallBooleanMethod(m_self, methodId, false);
-
     env->DeleteGlobalRef(m_self);
   }
 };
@@ -96,28 +79,35 @@ namespace downloader
     delete request;
   }
 
-} // namespace downloader
+}  // namespace downloader
 
 extern "C"
 {
-  JNIEXPORT jboolean JNICALL
-  Java_com_mapswithme_maps_downloader_DownloadChunkTask_onWrite(JNIEnv * env, jobject thiz,
-      jlong httpCallbackID, jlong beg, jbyteArray data, jlong size)
-  {
-    downloader::IHttpThreadCallback * cb = reinterpret_cast<downloader::IHttpThreadCallback*>(httpCallbackID);
-    jbyte * buf = env->GetByteArrayElements(data, 0);
-    ASSERT ( buf, () );
+JNIEXPORT jboolean JNICALL
+Java_com_mapswithme_maps_downloader_ChunkTask_nativeOnWrite(JNIEnv * env, jclass clazz, jlong httpCallbackID, jlong beg, jbyteArray data, jlong size)
+{
+  downloader::IHttpThreadCallback * cb = reinterpret_cast<downloader::IHttpThreadCallback*>(httpCallbackID);
+  jbyte * buf = env->GetByteArrayElements(data, 0);
+  ASSERT(buf, ());
 
-    bool const ret = cb->OnWrite(beg, buf, size);
-    env->ReleaseByteArrayElements(data, buf, 0);
-    return ret;
+  bool ret = false;
+  try
+  {
+    ret = cb->OnWrite(beg, buf, size);
+  }
+  catch (exception const & ex)
+  {
+    LOG(LERROR, ("Failed to write chunk:", ex.what()));
   }
 
-  JNIEXPORT void JNICALL
-  Java_com_mapswithme_maps_downloader_DownloadChunkTask_onFinish(JNIEnv * env, jobject thiz,
-      jlong httpCallbackID, jlong httpCode, jlong beg, jlong end)
-  {
-    downloader::IHttpThreadCallback * cb = reinterpret_cast<downloader::IHttpThreadCallback*>(httpCallbackID);
-    cb->OnFinish(httpCode, beg, end);
-  }
+  env->ReleaseByteArrayElements(data, buf, 0);
+  return ret;
 }
+
+JNIEXPORT void JNICALL
+Java_com_mapswithme_maps_downloader_ChunkTask_nativeOnFinish(JNIEnv * env, jclass clazz, jlong httpCallbackID, jlong httpCode, jlong beg, jlong end)
+{
+  downloader::IHttpThreadCallback * cb = reinterpret_cast<downloader::IHttpThreadCallback*>(httpCallbackID);
+  cb->OnFinish(httpCode, beg, end);
+}
+} // extern "C"

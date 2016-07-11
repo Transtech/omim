@@ -3,9 +3,12 @@
 #import "MWMAlertViewController.h"
 #import "MWMDefaultAlert.h"
 #import "MWMDownloadTransitMapAlert.h"
+#import "MWMEditorViralAlert.h"
 #import "MWMFacebookAlert.h"
 #import "MWMLocationAlert.h"
+#import "MWMOsmAuthAlert.h"
 #import "MWMPedestrianShareAlert.h"
+#import "MWMPlaceDoesntExistAlert.h"
 #import "MWMRateAlert.h"
 #import "MWMRoutingDisclaimerAlert.h"
 
@@ -36,14 +39,19 @@
   return [MWMRoutingDisclaimerAlert alertWithInitialOrientation:orientation];
 }
 
++ (MWMAlert *)routingBicycleDisclaimerAlert
+{
+  return [MWMDefaultAlert routingBicycleDisclaimerAlert];
+}
+
 + (MWMAlert *)disabledLocationAlert
 {
   return [MWMDefaultAlert disabledLocationAlert];
 }
 
-+ (MWMAlert *)noWiFiAlertWithName:(NSString *)name downloadBlock:(TMWMVoidBlock)block
++ (MWMAlert *)noWiFiAlertWithOkBlock:(TMWMVoidBlock)okBlock
 {
-  return [MWMDefaultAlert noWiFiAlertWithName:name downloadBlock:block];
+  return [MWMDefaultAlert noWiFiAlertWithOkBlock:okBlock];
 }
 
 + (MWMAlert *)noConnectionAlert
@@ -51,16 +59,47 @@
   return [MWMDefaultAlert noConnectionAlert];
 }
 
++ (MWMAlert *)migrationProhibitedAlert
+{
+  return [MWMDefaultAlert migrationProhibitedAlert];
+}
+
++ (MWMAlert *)deleteMapProhibitedAlert
+{
+  return [MWMDefaultAlert deleteMapProhibitedAlert];
+}
+
++ (MWMAlert *)unsavedEditsAlertWithOkBlock:(TMWMVoidBlock)okBlock
+{
+  return [MWMDefaultAlert unsavedEditsAlertWithOkBlock:okBlock];
+}
+
 + (MWMAlert *)locationServiceNotSupportedAlert
 {
   return [MWMDefaultAlert locationServiceNotSupportedAlert];
 }
 
-+ (MWMAlert *)downloaderAlertWithAbsentCountries:(vector<storage::TIndex> const &)countries
-                                          routes:(vector<storage::TIndex> const &)routes
-                                            code:(routing::IRouter::ResultCode)code
++ (MWMAlert *)locationNotFoundAlertWithOkBlock:(TMWMVoidBlock)okBlock
 {
-  return [MWMDownloadTransitMapAlert downloaderAlertWithMaps:countries routes:routes code:code];
+  return [MWMDefaultAlert locationNotFoundAlertWithOkBlock:okBlock];
+}
+
++ (MWMAlert *)routingMigrationAlertWithOkBlock:(TMWMVoidBlock)okBlock
+{
+  return [MWMDefaultAlert routingMigrationAlertWithOkBlock:okBlock];
+}
+
++ (MWMAlert *)downloaderAlertWithAbsentCountries:(storage::TCountriesVec const &)countries
+                                            code:(routing::IRouter::ResultCode)code
+                                     cancelBlock:(TMWMVoidBlock)cancelBlock
+                                   downloadBlock:(TMWMDownloadBlock)downloadBlock
+                           downloadCompleteBlock:(TMWMVoidBlock)downloadCompleteBlock
+{
+  return [MWMDownloadTransitMapAlert downloaderAlertWithMaps:countries
+                                                        code:code
+                                                 cancelBlock:cancelBlock
+                                               downloadBlock:downloadBlock
+                                       downloadCompleteBlock:downloadCompleteBlock];
 }
 
 + (MWMAlert *)alert:(routing::IRouter::ResultCode)type
@@ -82,7 +121,7 @@
     case routing::IRouter::FileTooOld:
       return [MWMDefaultAlert routeFileNotExistAlert];
     case routing::IRouter::InternalError:
-      return [MWMDefaultAlert internalErrorAlert];
+      return [MWMDefaultAlert internalRoutingErrorAlert];
     case routing::IRouter::Cancelled:
     case routing::IRouter::NoError:
     case routing::IRouter::NeedMoreMaps:
@@ -95,6 +134,76 @@
   return [MWMPedestrianShareAlert alert:isFirstLaunch];
 }
 
++ (MWMAlert *)incorrectFeauturePositionAlert
+{
+  return [MWMDefaultAlert incorrectFeauturePositionAlert];
+}
+
++ (MWMAlert *)internalErrorAlert
+{
+  return [MWMDefaultAlert internalErrorAlert];
+}
+
++ (MWMAlert *)notEnoughSpaceAlert
+{
+  return [MWMDefaultAlert notEnoughSpaceAlert];
+}
+
++ (MWMAlert *)invalidUserNameOrPasswordAlert
+{
+  return [MWMDefaultAlert invalidUserNameOrPasswordAlert];
+}
+
++ (MWMAlert *)disableAutoDownloadAlertWithOkBlock:(TMWMVoidBlock)okBlock
+{
+  return [MWMDefaultAlert disableAutoDownloadAlertWithOkBlock:okBlock];
+}
+
++ (MWMAlert *)downloaderNoConnectionAlertWithOkBlock:(TMWMVoidBlock)okBlock cancelBlock:(TMWMVoidBlock)cancelBlock
+{
+  return [MWMDefaultAlert downloaderNoConnectionAlertWithOkBlock:okBlock cancelBlock:cancelBlock];
+}
+
++ (MWMAlert *)downloaderNotEnoughSpaceAlert
+{
+  return [MWMDefaultAlert downloaderNotEnoughSpaceAlert];
+}
+
++ (MWMAlert *)downloaderInternalErrorAlertWithOkBlock:(TMWMVoidBlock)okBlock cancelBlock:(TMWMVoidBlock)cancelBlock
+{
+  return [MWMDefaultAlert downloaderInternalErrorAlertWithOkBlock:okBlock cancelBlock:cancelBlock];
+}
+
++ (MWMAlert *)downloaderNeedUpdateAlertWithOkBlock:(TMWMVoidBlock)okBlock
+{
+  return [MWMDefaultAlert downloaderNeedUpdateAlertWithOkBlock:okBlock];
+}
+
++ (MWMAlert *)placeDoesntExistAlertWithBlock:(MWMStringBlock)block
+{
+  return [MWMPlaceDoesntExistAlert alertWithBlock:block];
+}
+
++ (MWMAlert *)resetChangesAlertWithBlock:(TMWMVoidBlock)block
+{
+  return [MWMDefaultAlert resetChangesAlertWithBlock:block];
+}
+
++ (MWMAlert *)deleteFeatureAlertWithBlock:(TMWMVoidBlock)block
+{
+  return [MWMDefaultAlert deleteFeatureAlertWithBlock:block];
+}
+
++ (MWMAlert *)editorViralAlert
+{
+  return [MWMEditorViralAlert alert];
+}
+
++ (MWMAlert *)osmAuthAlert
+{
+  return [MWMOsmAuthAlert alert];
+}
+
 - (void)willRotateToInterfaceOrientation:(UIInterfaceOrientation)orientation
 {
 // Should override this method if you want custom relayout after rotation.
@@ -102,10 +211,7 @@
 
 - (void)close
 {
-  [self.alertController closeAlertWithCompletion:^
-  {
-    [self removeFromSuperview];
-  }];
+  [self.alertController closeAlert];
 }
 
 - (void)setNeedsCloseAlertAfterEnterBackground
@@ -126,7 +232,7 @@
 
 - (void)rotate:(UIInterfaceOrientation)toInterfaceOrientation duration:(NSTimeInterval)duration
 {
-  if (isIOSVersionLessThan(8) && [self respondsToSelector:@selector(setTransform:)])
+  if (isIOS7 && [self respondsToSelector:@selector(setTransform:)])
   {
     [UIView animateWithDuration:duration animations:^
     {

@@ -29,9 +29,9 @@ class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.BaseViewHolder>
 
   private final SearchFragment mSearchFragment;
   private SearchResult[] mResults;
-  private Drawable mClosedMarkerBackground;
+  private final Drawable mClosedMarkerBackground;
 
-  protected static abstract class BaseViewHolder extends RecyclerView.ViewHolder
+  static abstract class BaseViewHolder extends RecyclerView.ViewHolder
   {
     SearchResult mResult;
     // Position within search results
@@ -207,7 +207,8 @@ class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.BaseViewHolder>
     {
       super.bind(result, order);
 
-      UiUtils.showIf(result.description.closedNow, mClosedMarker);
+      // TODO: Support also "Open Now" mark.
+      UiUtils.showIf(result.description.openNow == SearchResult.OPEN_NOW_NO, mClosedMarker);
       UiUtils.setTextAndHideIfEmpty(mDescription, formatDescription(result));
       UiUtils.setTextAndHideIfEmpty(mRegion, result.description.region);
       UiUtils.setTextAndHideIfEmpty(mDistance, result.description.distance);
@@ -220,7 +221,7 @@ class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.BaseViewHolder>
     }
   }
 
-  public SearchAdapter(SearchFragment fragment)
+  SearchAdapter(SearchFragment fragment)
   {
     mSearchFragment = fragment;
     mClosedMarkerBackground = fragment.getResources().getDrawable(ThemeUtils.isNightTheme() ? R.drawable.search_closed_marker_night
@@ -319,7 +320,7 @@ class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.BaseViewHolder>
     refreshData(null);
   }
 
-  public void refreshData(SearchResult[] results)
+  void refreshData(SearchResult[] results)
   {
     mResults = results;
     notifyDataSetChanged();

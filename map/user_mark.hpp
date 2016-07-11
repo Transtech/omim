@@ -1,11 +1,10 @@
 #pragma once
 
-#include "search/result.hpp"
-
 #include "drape_frontend/user_marks_provider.hpp"
 
-#include "indexer/feature.hpp"
+#include "indexer/feature_decl.hpp"
 
+#include "geometry/latlon.hpp"
 #include "geometry/point2d.hpp"
 
 #include "base/macros.hpp"
@@ -33,69 +32,46 @@ public:
   };
 
   UserMark(m2::PointD const & ptOrg, UserMarkContainer * container);
-
   virtual ~UserMark() {}
 
-  ///////////////////////////////////////////////////////
-  /// df::UserPointMark
+  // df::UserPointMark overrides.
   m2::PointD const & GetPivot() const override;
-  m2::PointD const & GetPixelOffset() const override;
+  m2::PointD GetPixelOffset() const override;
   dp::Anchor GetAnchor() const override;
   float GetDepth() const override;
   bool RunCreationAnim() const override;
-  ///////////////////////////////////////////////////////
 
   UserMarkContainer const * GetContainer() const;
-  void GetLatLon(double & lat, double & lon) const;
+  ms::LatLon GetLatLon() const;
   virtual Type GetMarkType() const = 0;
-  virtual unique_ptr<UserMarkCopy> Copy() const = 0;
-  // Need it to calculate POI rank from all taps to features via statistics.
-  using TEventContainer = map<string, string>;
-  virtual void FillLogEvent(TEventContainer & details) const;
 
 protected:
   m2::PointD m_ptOrg;
   mutable UserMarkContainer * m_container;
 };
 
-class UserMarkCopy
-{
-public:
-  UserMarkCopy(UserMark const * srcMark, bool needDestroy = true);
-  ~UserMarkCopy();
-
-  UserMark const * GetUserMark() const;
-
-private:
-  UserMark const * m_srcMark;
-  bool m_needDestroy;
-};
-
 class SearchMarkPoint : public UserMark
 {
 public:
-  SearchMarkPoint(search::AddressInfo const & info,
-           m2::PointD const & ptOrg,
-           UserMarkContainer * container);
-
   SearchMarkPoint(m2::PointD const & ptOrg, UserMarkContainer * container);
 
   string GetSymbolName() const override;
   UserMark::Type GetMarkType() const override;
 
-  search::AddressInfo const & GetInfo() const;
-  void SetInfo(search::AddressInfo const & info);
+  FeatureID const & GetFoundFeature() const { return m_foundFeatureID; }
+  void SetFoundFeature(FeatureID const & feature) { m_foundFeatureID = feature; }
 
-  feature::Metadata const & GetMetadata() const;
-  void SetMetadata(feature::Metadata && metadata);
+  string const & GetMatchedName() const { return m_matchedName; }
+  void SetMatchedName(string const & name) { m_matchedName = name; }
 
-  unique_ptr<UserMarkCopy> Copy() const override;
-
-  virtual void FillLogEvent(TEventContainer & details) const override;
+  string const & GetCustomSymbol() const { return m_customSymbol; }
+  void SetCustomSymbol(string const & symbol) { m_customSymbol = symbol; }
 
 protected:
-  search::AddressInfo m_info;
-  feature::Metadata m_metadata;
+  FeatureID m_foundFeatureID;
+  // Used to pass exact search result matched string into a place page.
+  string m_matchedName;
+  string m_customSymbol;
 };
 
 class PoiMarkPoint : public SearchMarkPoint
@@ -103,10 +79,8 @@ class PoiMarkPoint : public SearchMarkPoint
 public:
   PoiMarkPoint(UserMarkContainer * container);
   UserMark::Type GetMarkType() const override;
-  unique_ptr<UserMarkCopy> Copy() const override;
 
   void SetPtOrg(m2::PointD const & ptOrg);
-  void SetName(string const & name);
 };
 
 class MyPositionMarkPoint : public PoiMarkPoint
@@ -135,5 +109,6 @@ public:
   string GetSymbolName() const override;
 
   Type GetMarkType() const override { return UserMark::Type::DEBUG_MARK; }
-  unique_ptr<UserMarkCopy> Copy() const override;
 };
+
+string DebugPrint(UserMark::Type type);

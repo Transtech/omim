@@ -48,12 +48,21 @@
 		675340861A3F2A7400A0A8C3 /* tesselator.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 675340531A3F2A7400A0A8C3 /* tesselator.hpp */; };
 		675340871A3F2A7400A0A8C3 /* unpack_mwm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 675340541A3F2A7400A0A8C3 /* unpack_mwm.cpp */; };
 		675340881A3F2A7400A0A8C3 /* unpack_mwm.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 675340551A3F2A7400A0A8C3 /* unpack_mwm.hpp */; };
-		675340891A3F2A7400A0A8C3 /* update_generator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 675340561A3F2A7400A0A8C3 /* update_generator.cpp */; };
-		6753408A1A3F2A7400A0A8C3 /* update_generator.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 675340571A3F2A7400A0A8C3 /* update_generator.hpp */; };
 		6753408B1A3F2A7400A0A8C3 /* ways_merger.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 675340581A3F2A7400A0A8C3 /* ways_merger.hpp */; };
 		6753408C1A3F2A7400A0A8C3 /* world_map_generator.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 675340591A3F2A7400A0A8C3 /* world_map_generator.hpp */; };
 		6753408D1A3F2A7400A0A8C3 /* osm_element.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6753405A1A3F2A7400A0A8C3 /* osm_element.cpp */; };
 		6753408E1A3F2A7400A0A8C3 /* osm_element.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 6753405B1A3F2A7400A0A8C3 /* osm_element.hpp */; };
+		675340931C5231BA002CF0D9 /* search_index_builder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 675340911C5231BA002CF0D9 /* search_index_builder.cpp */; };
+		675340941C5231BA002CF0D9 /* search_index_builder.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 675340921C5231BA002CF0D9 /* search_index_builder.hpp */; };
+		677E2A161CAACC5F001DC42A /* tag_admixer.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 677E2A111CAACC5F001DC42A /* tag_admixer.hpp */; };
+		677E2A171CAACC5F001DC42A /* towns_dumper.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 677E2A121CAACC5F001DC42A /* towns_dumper.cpp */; };
+		677E2A181CAACC5F001DC42A /* towns_dumper.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 677E2A131CAACC5F001DC42A /* towns_dumper.hpp */; };
+		67A0FEBE1CEB467F008F2A61 /* booking_dataset.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 67A0FEBC1CEB467F008F2A61 /* booking_dataset.cpp */; };
+		67A0FEBF1CEB467F008F2A61 /* booking_dataset.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 67A0FEBD1CEB467F008F2A61 /* booking_dataset.hpp */; };
+		67BC92E21D1A9ED800A4A378 /* test_feature.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 67BC92D81D1A9E9800A4A378 /* test_feature.cpp */; };
+		67BC92E31D1A9ED800A4A378 /* test_feature.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 67BC92D91D1A9E9800A4A378 /* test_feature.hpp */; };
+		67BC92E41D1A9ED800A4A378 /* test_mwm_builder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 67BC92DA1D1A9E9800A4A378 /* test_mwm_builder.cpp */; };
+		67BC92E51D1A9ED800A4A378 /* test_mwm_builder.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 67BC92DB1D1A9E9800A4A378 /* test_mwm_builder.hpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -100,18 +109,35 @@
 		675340531A3F2A7400A0A8C3 /* tesselator.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = tesselator.hpp; sourceTree = "<group>"; };
 		675340541A3F2A7400A0A8C3 /* unpack_mwm.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = unpack_mwm.cpp; sourceTree = "<group>"; };
 		675340551A3F2A7400A0A8C3 /* unpack_mwm.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = unpack_mwm.hpp; sourceTree = "<group>"; };
-		675340561A3F2A7400A0A8C3 /* update_generator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = update_generator.cpp; sourceTree = "<group>"; };
-		675340571A3F2A7400A0A8C3 /* update_generator.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = update_generator.hpp; sourceTree = "<group>"; };
 		675340581A3F2A7400A0A8C3 /* ways_merger.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = ways_merger.hpp; sourceTree = "<group>"; };
 		675340591A3F2A7400A0A8C3 /* world_map_generator.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = world_map_generator.hpp; sourceTree = "<group>"; };
 		6753405A1A3F2A7400A0A8C3 /* osm_element.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = osm_element.cpp; sourceTree = "<group>"; };
 		6753405B1A3F2A7400A0A8C3 /* osm_element.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = osm_element.hpp; sourceTree = "<group>"; };
+		675340911C5231BA002CF0D9 /* search_index_builder.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = search_index_builder.cpp; sourceTree = "<group>"; };
+		675340921C5231BA002CF0D9 /* search_index_builder.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = search_index_builder.hpp; sourceTree = "<group>"; };
 		6764B8921ADD6A3300DD8B15 /* osm_o5m_source.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = osm_o5m_source.hpp; sourceTree = "<group>"; };
+		677E2A111CAACC5F001DC42A /* tag_admixer.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = tag_admixer.hpp; sourceTree = "<group>"; };
+		677E2A121CAACC5F001DC42A /* towns_dumper.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = towns_dumper.cpp; sourceTree = "<group>"; };
+		677E2A131CAACC5F001DC42A /* towns_dumper.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = towns_dumper.hpp; sourceTree = "<group>"; };
+		67A0FEBC1CEB467F008F2A61 /* booking_dataset.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = booking_dataset.cpp; sourceTree = "<group>"; };
+		67A0FEBD1CEB467F008F2A61 /* booking_dataset.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = booking_dataset.hpp; sourceTree = "<group>"; };
+		67BC92CC1D1A9E5F00A4A378 /* libgenerator_tests_support.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libgenerator_tests_support.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		67BC92D81D1A9E9800A4A378 /* test_feature.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = test_feature.cpp; sourceTree = "<group>"; };
+		67BC92D91D1A9E9800A4A378 /* test_feature.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = test_feature.hpp; sourceTree = "<group>"; };
+		67BC92DA1D1A9E9800A4A378 /* test_mwm_builder.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = test_mwm_builder.cpp; sourceTree = "<group>"; };
+		67BC92DB1D1A9E9800A4A378 /* test_mwm_builder.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = test_mwm_builder.hpp; sourceTree = "<group>"; };
 		67F0F6761B8C9DCE003F52FF /* osm_xml_source.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = osm_xml_source.hpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		675340181A3F2A1B00A0A8C3 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		67BC92C91D1A9E5F00A4A378 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -126,6 +152,7 @@
 			children = (
 				670D05AC1B0E07C30013A7AC /* defaults.xcconfig */,
 				6753401D1A3F2A1B00A0A8C3 /* generator */,
+				67BC92D71D1A9E6A00A4A378 /* generator_tests_support */,
 				6753401C1A3F2A1B00A0A8C3 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -134,6 +161,7 @@
 			isa = PBXGroup;
 			children = (
 				6753401B1A3F2A1B00A0A8C3 /* libgenerator.a */,
+				67BC92CC1D1A9E5F00A4A378 /* libgenerator_tests_support.a */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -141,6 +169,11 @@
 		6753401D1A3F2A1B00A0A8C3 /* generator */ = {
 			isa = PBXGroup;
 			children = (
+				677E2A111CAACC5F001DC42A /* tag_admixer.hpp */,
+				677E2A121CAACC5F001DC42A /* towns_dumper.cpp */,
+				677E2A131CAACC5F001DC42A /* towns_dumper.hpp */,
+				675340911C5231BA002CF0D9 /* search_index_builder.cpp */,
+				675340921C5231BA002CF0D9 /* search_index_builder.hpp */,
 				675340291A3F2A7400A0A8C3 /* borders_generator.cpp */,
 				6753402A1A3F2A7400A0A8C3 /* borders_generator.hpp */,
 				6753402B1A3F2A7400A0A8C3 /* borders_loader.cpp */,
@@ -180,8 +213,6 @@
 				675340531A3F2A7400A0A8C3 /* tesselator.hpp */,
 				675340541A3F2A7400A0A8C3 /* unpack_mwm.cpp */,
 				675340551A3F2A7400A0A8C3 /* unpack_mwm.hpp */,
-				675340561A3F2A7400A0A8C3 /* update_generator.cpp */,
-				675340571A3F2A7400A0A8C3 /* update_generator.hpp */,
 				675340581A3F2A7400A0A8C3 /* ways_merger.hpp */,
 				675340591A3F2A7400A0A8C3 /* world_map_generator.hpp */,
 				6753405A1A3F2A7400A0A8C3 /* osm_element.cpp */,
@@ -190,10 +221,24 @@
 				670B84BB1A8CDB0000CE4492 /* osm_source.hpp */,
 				6764B8921ADD6A3300DD8B15 /* osm_o5m_source.hpp */,
 				67F0F6761B8C9DCE003F52FF /* osm_xml_source.hpp */,
+				67A0FEBC1CEB467F008F2A61 /* booking_dataset.cpp */,
+				67A0FEBD1CEB467F008F2A61 /* booking_dataset.hpp */,
 			);
 			name = generator;
 			path = ../../generator;
 			sourceTree = SOURCE_ROOT;
+		};
+		67BC92D71D1A9E6A00A4A378 /* generator_tests_support */ = {
+			isa = PBXGroup;
+			children = (
+				67BC92D81D1A9E9800A4A378 /* test_feature.cpp */,
+				67BC92D91D1A9E9800A4A378 /* test_feature.hpp */,
+				67BC92DA1D1A9E9800A4A378 /* test_mwm_builder.cpp */,
+				67BC92DB1D1A9E9800A4A378 /* test_mwm_builder.hpp */,
+			);
+			name = generator_tests_support;
+			path = ../../generator/generator_tests_support;
+			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
 
@@ -216,10 +261,13 @@
 				6753406F1A3F2A7400A0A8C3 /* feature_merger.hpp in Headers */,
 				6753406A1A3F2A7400A0A8C3 /* feature_builder.hpp in Headers */,
 				675340741A3F2A7400A0A8C3 /* generate_info.hpp in Headers */,
+				677E2A161CAACC5F001DC42A /* tag_admixer.hpp in Headers */,
 				675340861A3F2A7400A0A8C3 /* tesselator.hpp in Headers */,
+				67A0FEBF1CEB467F008F2A61 /* booking_dataset.hpp in Headers */,
 				6753405F1A3F2A7400A0A8C3 /* borders_loader.hpp in Headers */,
 				675340801A3F2A7400A0A8C3 /* polygonizer.hpp in Headers */,
-				6753408A1A3F2A7400A0A8C3 /* update_generator.hpp in Headers */,
+				675340941C5231BA002CF0D9 /* search_index_builder.hpp in Headers */,
+				677E2A181CAACC5F001DC42A /* towns_dumper.hpp in Headers */,
 				675340821A3F2A7400A0A8C3 /* routing_generator.hpp in Headers */,
 				675340841A3F2A7400A0A8C3 /* statistics.hpp in Headers */,
 				6753406D1A3F2A7400A0A8C3 /* feature_generator.hpp in Headers */,
@@ -230,6 +278,15 @@
 				6726C1D61A4AFEF4005EEA39 /* osm2meta.hpp in Headers */,
 				6753407B1A3F2A7400A0A8C3 /* osm_id.hpp in Headers */,
 				675340731A3F2A7400A0A8C3 /* gen_mwm_info.hpp in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		67BC92CA1D1A9E5F00A4A378 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				67BC92E51D1A9ED800A4A378 /* test_mwm_builder.hpp in Headers */,
+				67BC92E31D1A9ED800A4A378 /* test_feature.hpp in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -253,6 +310,23 @@
 			productReference = 6753401B1A3F2A1B00A0A8C3 /* libgenerator.a */;
 			productType = "com.apple.product-type.library.static";
 		};
+		67BC92CB1D1A9E5F00A4A378 /* generator_tests_support */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 67BC92D61D1A9E5F00A4A378 /* Build configuration list for PBXNativeTarget "generator_tests_support" */;
+			buildPhases = (
+				67BC92C81D1A9E5F00A4A378 /* Sources */,
+				67BC92C91D1A9E5F00A4A378 /* Frameworks */,
+				67BC92CA1D1A9E5F00A4A378 /* Headers */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = generator_tests_support;
+			productName = generator_tests_support;
+			productReference = 67BC92CC1D1A9E5F00A4A378 /* libgenerator_tests_support.a */;
+			productType = "com.apple.product-type.library.static";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -264,6 +338,9 @@
 				TargetAttributes = {
 					6753401A1A3F2A1B00A0A8C3 = {
 						CreatedOnToolsVersion = 6.1;
+					};
+					67BC92CB1D1A9E5F00A4A378 = {
+						CreatedOnToolsVersion = 7.3.1;
 					};
 				};
 			};
@@ -280,6 +357,7 @@
 			projectRoot = "";
 			targets = (
 				6753401A1A3F2A1B00A0A8C3 /* generator */,
+				67BC92CB1D1A9E5F00A4A378 /* generator_tests_support */,
 			);
 		};
 /* End PBXProject section */
@@ -291,23 +369,34 @@
 			files = (
 				6753406C1A3F2A7400A0A8C3 /* feature_generator.cpp in Sources */,
 				6753407A1A3F2A7400A0A8C3 /* osm_id.cpp in Sources */,
-				675340891A3F2A7400A0A8C3 /* update_generator.cpp in Sources */,
 				675340871A3F2A7400A0A8C3 /* unpack_mwm.cpp in Sources */,
 				670B84BC1A8CDB0000CE4492 /* osm_source.cpp in Sources */,
 				675340701A3F2A7400A0A8C3 /* feature_sorter.cpp in Sources */,
 				675340621A3F2A7400A0A8C3 /* coastlines_generator.cpp in Sources */,
 				675340811A3F2A7400A0A8C3 /* routing_generator.cpp in Sources */,
+				675340931C5231BA002CF0D9 /* search_index_builder.cpp in Sources */,
 				6753406E1A3F2A7400A0A8C3 /* feature_merger.cpp in Sources */,
+				67A0FEBE1CEB467F008F2A61 /* booking_dataset.cpp in Sources */,
 				6753408D1A3F2A7400A0A8C3 /* osm_element.cpp in Sources */,
 				6726C1D51A4AFEF4005EEA39 /* osm2meta.cpp in Sources */,
 				6753405E1A3F2A7400A0A8C3 /* borders_loader.cpp in Sources */,
 				675340691A3F2A7400A0A8C3 /* feature_builder.cpp in Sources */,
+				677E2A171CAACC5F001DC42A /* towns_dumper.cpp in Sources */,
 				6753405C1A3F2A7400A0A8C3 /* borders_generator.cpp in Sources */,
 				675340671A3F2A7400A0A8C3 /* dumper.cpp in Sources */,
 				675340831A3F2A7400A0A8C3 /* statistics.cpp in Sources */,
 				6753407E1A3F2A7400A0A8C3 /* osm2type.cpp in Sources */,
 				675340601A3F2A7400A0A8C3 /* check_model.cpp in Sources */,
 				675340851A3F2A7400A0A8C3 /* tesselator.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		67BC92C81D1A9E5F00A4A378 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				67BC92E21D1A9ED800A4A378 /* test_feature.cpp in Sources */,
+				67BC92E41D1A9ED800A4A378 /* test_mwm_builder.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -353,6 +442,7 @@
 					"$(OMIM_ROOT)/3party/gflags/src",
 					"$(OMIM_ROOT)/3party/osrm/osrm-backend/include",
 					"$(QT_PATH)/include",
+					"$(OMIM_ROOT)/3party/glm",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.10;
 				MTL_ENABLE_DEBUG_INFO = YES;
@@ -395,6 +485,7 @@
 					"$(OMIM_ROOT)/3party/gflags/src",
 					"$(OMIM_ROOT)/3party/osrm/osrm-backend/include",
 					"$(QT_PATH)/include",
+					"$(OMIM_ROOT)/3party/glm",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.10;
 				MTL_ENABLE_DEBUG_INFO = NO;
@@ -431,6 +522,37 @@
 			};
 			name = Release;
 		};
+		67BC92D41D1A9E5F00A4A378 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ANALYZER_NONNULL = YES;
+				CODE_SIGN_IDENTITY = "-";
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_TESTABILITY = YES;
+				EXECUTABLE_PREFIX = lib;
+				GCC_ENABLE_CPP_EXCEPTIONS = YES;
+				GCC_ENABLE_CPP_RTTI = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.11;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		67BC92D51D1A9E5F00A4A378 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ANALYZER_NONNULL = YES;
+				CODE_SIGN_IDENTITY = "-";
+				COPY_PHASE_STRIP = NO;
+				EXECUTABLE_PREFIX = lib;
+				GCC_ENABLE_CPP_EXCEPTIONS = YES;
+				GCC_ENABLE_CPP_RTTI = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.11;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -451,6 +573,14 @@
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
+		};
+		67BC92D61D1A9E5F00A4A378 /* Build configuration list for PBXNativeTarget "generator_tests_support" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				67BC92D41D1A9E5F00A4A378 /* Debug */,
+				67BC92D51D1A9E5F00A4A378 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
 		};
 /* End XCConfigurationList section */
 	};

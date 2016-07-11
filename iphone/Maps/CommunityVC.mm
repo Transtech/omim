@@ -1,7 +1,6 @@
 #import "CommunityVC.h"
 #import <MessageUI/MFMailComposeViewController.h>
 #import "Statistics.h"
-#import "UIColor+MapsMeColor.h"
 #import "UIImageView+Coloring.h"
 #import "UIViewController+Navigation.h"
 
@@ -61,25 +60,23 @@ extern NSString * const kAlohalyticsTapEventKey;
   cell.textLabel.text = item[@"Title"];
   cell.imageView.image = [UIImage imageNamed:item[@"Icon"]];
   cell.imageView.mwm_coloring = MWMImageColoringBlack;
-  cell.backgroundColor = [UIColor white];
-  cell.textLabel.textColor = [UIColor blackPrimaryText];
   return cell;
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
   NSString * itemId = self.items[indexPath.section][@"Items"][indexPath.row][@"Id"];
-  [[Statistics instance] logEvent:kStatEventName(kStatSocial, kStatToggleCompassCalibration)
+  [Statistics logEvent:kStatEventName(kStatSocial, kStatToggleCompassCalibration)
                    withParameters:@{kStatValue : itemId}];
   if ([itemId isEqualToString:@"Facebook"])
   {
     [Alohalytics logEvent:kAlohalyticsTapEventKey withValue:@"likeOnFb"];
-    [[UIApplication sharedApplication] openURL:[NSURL URLWithString:@"https://facebook.com/MapsWithMe"]];
+    [self openUrl:[NSURL URLWithString:@"https://facebook.com/MapsWithMe"]];
   }
   else if ([itemId isEqualToString:@"Twitter"])
   {
     [Alohalytics logEvent:kAlohalyticsTapEventKey withValue:@"followOnTwitter"];
-    [[UIApplication sharedApplication] openURL:[NSURL URLWithString:@"https://twitter.com/MAPS_ME"]];
+    [self openUrl:[NSURL URLWithString:@"https://twitter.com/MAPS_ME"]];
   }
   else if ([itemId isEqualToString:@"Contact"])
   {

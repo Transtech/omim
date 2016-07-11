@@ -12,8 +12,11 @@ public:
     TileReadStarted,
     TileReadEnded,
     FinishReading,
+    FinishTileRead,
     FlushTile,
+    FlushOverlays,
     MapShapeReaded,
+    OverlayMapShapeReaded,
     UpdateReadManager,
     InvalidateRect,
     InvalidateReadManagerRect,
@@ -23,10 +26,7 @@ public:
     GuiLayerRecached,
     GuiRecache,
     GuiLayerLayout,
-    MyPositionShape,
-    CountryInfoUpdate,
-    CountryStatusRecache,
-    StopRendering,
+    MapShapes,
     ChangeMyPostitionMode,
     CompassInfo,
     GpsInfo,
@@ -50,7 +50,13 @@ public:
     CacheGpsTrackPoints,
     FlushGpsTrackPoints,
     UpdateGpsTrackPoints,
-    ClearGpsTrackPoints
+    ClearGpsTrackPoints,
+    ShowChoosePositionMark,
+    SetKineticScrollEnabled,
+    BlockTapEvents,
+    SetTimeInBackground,
+    SetAddNewPlaceMode,
+    SetDisplacementMode
   };
 
   virtual ~Message() {}

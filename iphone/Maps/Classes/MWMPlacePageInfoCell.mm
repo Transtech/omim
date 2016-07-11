@@ -1,4 +1,6 @@
 #import "Common.h"
+#import "MapsAppDelegate.h"
+#import "MapViewController.h"
 #import "MWMPlacePageEntity.h"
 #import "MWMPlacePageInfoCell.h"
 #import "Statistics.h"
@@ -8,114 +10,131 @@
 #include "platform/settings.hpp"
 #include "platform/measurement_utils.hpp"
 
-extern NSString * const kUserDefaultsLatLonAsDMSKey;
-
 @interface MWMPlacePageInfoCell () <UITextViewDelegate>
 
 @property (weak, nonatomic, readwrite) IBOutlet UIImageView * icon;
 @property (weak, nonatomic, readwrite) IBOutlet id textContainer;
+@property (weak, nonatomic) IBOutlet NSLayoutConstraint * textContainerHeight;
 
 @property (weak, nonatomic) IBOutlet UIButton * upperButton;
-@property (nonatomic) MWMPlacePageMetadataType type;
+@property (weak, nonatomic) IBOutlet UIImageView * toggleImage;
+
+@property (nonatomic) MWMPlacePageCellType type;
 
 @end
 
 @implementation MWMPlacePageInfoCell
 
-- (void)configureWithType:(MWMPlacePageMetadataType)type info:(NSString *)info;
+- (void)awakeFromNib
 {
-  NSString * typeName = nil;
+  [super awakeFromNib];
+  if ([self.textContainer isKindOfClass:[UITextView class]])
+    [(UITextView *)self.textContainer setTextContainerInset:{.top = 12}];
+}
+
+- (void)configureWithType:(MWMPlacePageCellType)type info:(NSString *)info;
+{
+  NSString * typeName;
   switch (type)
   {
-    case MWMPlacePageMetadataTypeURL:
-    case MWMPlacePageMetadataTypeWebsite:
+    case MWMPlacePageCellTypeURL:
+    case MWMPlacePageCellTypeWebsite:
+      self.toggleImage.hidden = YES;
       typeName = @"website";
       break;
-    case MWMPlacePageMetadataTypeEmail:
+    case MWMPlacePageCellTypeEmail:
+      self.toggleImage.hidden = YES;
       typeName = @"email";
       break;
-    case MWMPlacePageMetadataTypePhoneNumber:
+    case MWMPlacePageCellTypePhoneNumber:
+      self.toggleImage.hidden = YES;
       typeName = @"phone_number";
       break;
-    case MWMPlacePageMetadataTypeCoordinate:
+    case MWMPlacePageCellTypeCoordinate:
+      self.toggleImage.hidden = NO;
       typeName = @"coordinate";
       break;
-    case MWMPlacePageMetadataTypePostcode:
+    case MWMPlacePageCellTypePostcode:
+      self.toggleImage.hidden = YES;
       typeName = @"postcode";
       break;
-    case MWMPlacePageMetadataTypeOpenHours:
-      typeName = @"open_hours";
-      break;
-    case MWMPlacePageMetadataTypeWiFi:
+    case MWMPlacePageCellTypeWiFi:
+      self.toggleImage.hidden = YES;
       typeName = @"wifi";
       break;
-    case MWMPlacePageMetadataTypeBookmark:
+    default:
       NSAssert(false, @"Incorrect type!");
       break;
   }
-  
-  UIImage * image = [UIImage imageNamed:[NSString stringWithFormat:@"%@%@", @"ic_placepage_", typeName]];
+
+  UIImage * image =
+      [UIImage imageNamed:[NSString stringWithFormat:@"%@%@", @"ic_placepage_", typeName]];
   self.type = type;
   self.icon.image = image;
-
-  if ([self.textContainer isKindOfClass:[UITextView class]])
-  {
-    [self.textContainer setAttributedText:[[NSAttributedString alloc] initWithString:info attributes:@{NSFontAttributeName : [UIFont light16]}]];
-    self.icon.mwm_coloring = MWMImageColoringBlue;
-  }
-  else
-  {
-    [self.textContainer setText:info];
-    self.icon.mwm_coloring = MWMImageColoringBlack;
-  }
-
-  UILongPressGestureRecognizer * longTap = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(longTap:)];
+  self.icon.mwm_coloring = [self.textContainer isKindOfClass:[UITextView class]] ? MWMImageColoringBlue : MWMImageColoringBlack;
+  [self changeText:info];
+  UILongPressGestureRecognizer * longTap =
+      [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(longTap:)];
   longTap.minimumPressDuration = 0.3;
   [self.upperButton addGestureRecognizer:longTap];
 }
 
-- (BOOL)textView:(UITextView *)textView shouldInteractWithURL:(NSURL *)URL inRange:(NSRange)characterRange
+- (void)changeText:(NSString *)text
 {
-  return YES;
+  if ([self.textContainer isKindOfClass:[UITextView class]])
+  {
+    UITextView * tv = (UITextView *)self.textContainer;
+    [tv setAttributedText:[[NSAttributedString alloc]
+                              initWithString:text
+                                  attributes:@{NSFontAttributeName : [UIFont regular16]}]];
+    [tv sizeToIntegralFit];
+    CGFloat const minTextContainerHeight = 42.0;
+    CGFloat const bottomOffset = 8.0;
+    self.textContainerHeight.constant = MAX(ceil(tv.contentSize.height) + bottomOffset, minTextContainerHeight);
+  }
+  else
+  {
+    UILabel * lb = (UILabel *)self.textContainer;
+    [lb setText:text];
+    [lb sizeToIntegralFit];
+    CGFloat const trailingOffset = self.width - lb.maxX;
+    lb.font = trailingOffset < 32 ? [UIFont regular15] : [UIFont regular16];
+  }
 }
 
-- (void)layoutSubviews
+- (BOOL)textView:(UITextView *)textView shouldInteractWithURL:(NSURL *)URL inRange:(NSRange)characterRange
 {
-  CGFloat const leftOffset = 16.;
-  CGFloat const topOffset = 8.;
-  CGFloat const textOffset= 60.;
-  self.icon.origin = {leftOffset, topOffset};
-  [self.textContainer setMinX:textOffset];
+  NSString * scheme = URL.scheme;
+  if ([scheme isEqualToString:@"http"] || [scheme isEqualToString:@"https"])
+  {
+    [MapsAppDelegate.theApp.mapViewController openUrl:URL];
+    return NO;
+  }
+  return YES;
 }
 
 - (IBAction)cellTap
 {
   switch (self.type)
   {
-    case MWMPlacePageMetadataTypeURL:
-    case MWMPlacePageMetadataTypeWebsite:
-      [[Statistics instance] logEvent:kStatEventName(kStatPlacePage, kStatOpenSite)];
+    case MWMPlacePageCellTypeURL:
+    case MWMPlacePageCellTypeWebsite:
+      [Statistics logEvent:kStatEventName(kStatPlacePage, kStatOpenSite)];
       break;
-    case MWMPlacePageMetadataTypeEmail:
-      [[Statistics instance] logEvent:kStatEventName(kStatPlacePage, kStatSendEmail)];
+    case MWMPlacePageCellTypeEmail:
+      [Statistics logEvent:kStatEventName(kStatPlacePage, kStatSendEmail)];
       break;
-    case MWMPlacePageMetadataTypePhoneNumber:
-      [[Statistics instance] logEvent:kStatEventName(kStatPlacePage, kStatCallPhoneNumber)];
+    case MWMPlacePageCellTypePhoneNumber:
+      [Statistics logEvent:kStatEventName(kStatPlacePage, kStatCallPhoneNumber)];
       break;
-    case MWMPlacePageMetadataTypeCoordinate:
-      [[Statistics instance] logEvent:kStatEventName(kStatPlacePage, kStatToggleCoordinates)];
+    case MWMPlacePageCellTypeCoordinate:
+      [Statistics logEvent:kStatEventName(kStatPlacePage, kStatToggleCoordinates)];
+      [self.currentEntity toggleCoordinateSystem];
+      [self changeText:[self.currentEntity getCellValue:MWMPlacePageCellTypeCoordinate]];
       break;
     default:
       break;
   }
-  if (self.type != MWMPlacePageMetadataTypeCoordinate)
-    return;
-  NSUserDefaults * defaults = [NSUserDefaults standardUserDefaults];
-  BOOL const showLatLonAsDMS = [defaults boolForKey:kUserDefaultsLatLonAsDMSKey];
-  m2::PointD const point = self.currentEntity.point;
-  [self.textContainer setText:@((showLatLonAsDMS ? MeasurementUtils::FormatLatLon(point.x, point.y).c_str() : MeasurementUtils::FormatLatLonAsDMS(point.x, point.y, 2).c_str()))];
-  [defaults setBool:!showLatLonAsDMS forKey:kUserDefaultsLatLonAsDMSKey];
-  [defaults synchronize];
 }
 
 - (void)longTap:(UILongPressGestureRecognizer *)sender

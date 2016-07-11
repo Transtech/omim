@@ -10,14 +10,13 @@
 
 + (void)setup
 {
-  Settings::Units u;
-  string const units = "Units";
-  if (!Settings::Get(units, u))
+  auto units = measurement_utils::Units::Metric;
+  if (!settings::Get(settings::kMeasurementUnits, units))
   {
     // get system locale preferences
     BOOL const isMetric = [[[NSLocale autoupdatingCurrentLocale] objectForKey:NSLocaleUsesMetricSystem] boolValue];
-    u = isMetric ? Settings::Metric : Settings::Foot;
-    Settings::Set(units, u);
+    units = isMetric ? measurement_utils::Units::Metric : measurement_utils::Units::Imperial;
+    settings::Set(settings::kMeasurementUnits, units);
   }
   GetFramework().SetupMeasurementSystem();
 }

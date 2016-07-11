@@ -88,12 +88,12 @@ string GetDistanceTextId(Notification const & notification)
 
   switch (notification.m_lengthUnits)
   {
-    case ::Settings::Metric:
-      return DistToTextId(GetAllSoundedDistMeters().cbegin(), GetAllSoundedDistMeters().cend(),
-                          notification.m_distanceUnits);
-    case ::Settings::Foot:
-      return DistToTextId(GetAllSoundedDistFeet().cbegin(), GetAllSoundedDistFeet().cend(),
-                          notification.m_distanceUnits);
+  case measurement_utils::Units::Metric:
+    return DistToTextId(GetAllSoundedDistMeters().cbegin(), GetAllSoundedDistMeters().cend(),
+                        notification.m_distanceUnits);
+  case measurement_utils::Units::Imperial:
+    return DistToTextId(GetAllSoundedDistFeet().cbegin(), GetAllSoundedDistFeet().cend(),
+                        notification.m_distanceUnits);
   }
   ASSERT(false, ());
   return string();

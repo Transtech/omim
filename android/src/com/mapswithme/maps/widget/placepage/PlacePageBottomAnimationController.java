@@ -59,7 +59,7 @@ class PlacePageBottomAnimationController extends BasePlacePageAnimationControlle
         @Override
         public void onClick(View v)
         {
-          mPlacePage.setState(State.HIDDEN);
+          mPlacePage.hide();
         }
       });
     }
@@ -118,7 +118,7 @@ class PlacePageBottomAnimationController extends BasePlacePageAnimationControlle
           if (!mIsGestureHandled)
           {
             if (distanceY < 0f)
-              mPlacePage.setState(State.HIDDEN);
+              mPlacePage.hide();
             else
               mPlacePage.setState(State.DETAILS);
 
@@ -351,5 +351,13 @@ class PlacePageBottomAnimationController extends BasePlacePageAnimationControlle
     animator.setDuration(DURATION);
     animator.setInterpolator(new AccelerateInterpolator());
     animator.start();
+  }
+
+  @Override
+  protected void alignDetailsFrame()
+  {
+    final ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) mFrame.getLayoutParams();
+    params.topMargin = mPreview.getHeight();
+    mFrame.setLayoutParams(params);
   }
 }

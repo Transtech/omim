@@ -11,28 +11,22 @@ import com.mapswithme.util.log.SimpleLogger;
 
 abstract class BaseLocationProvider implements LocationListener
 {
+  static final Logger sLogger = SimpleLogger.get(BaseLocationProvider.class.getName());
   private static final double DEFAULT_SPEED_MPS = 5;
-
-  protected static final Logger sLogger = SimpleLogger.get(BaseLocationProvider.class.getName());
-  protected static final long UPDATE_INTERVAL_MS = 500;
-
-  protected abstract void startUpdates();
-
-  protected abstract void stopUpdates();
 
   protected boolean isLocationBetterThanLast(Location newLocation, Location lastLocation)
   {
     double speed = Math.max(DEFAULT_SPEED_MPS, (newLocation.getSpeed() + lastLocation.getSpeed()) / 2.0);
-    double lastAccuracy = (lastLocation.getAccuracy() + speed * LocationUtils.getDiffWithLastLocation(lastLocation, newLocation));
+    double lastAccuracy = (lastLocation.getAccuracy() + speed * LocationUtils.getDiff(lastLocation, newLocation));
     return (newLocation.getAccuracy() < lastAccuracy);
   }
 
-  protected final boolean isLocationBetterThanLast(Location newLocation)
+  final boolean isLocationBetterThanLast(Location newLocation)
   {
     if (newLocation == null)
       return false;
 
-    final Location lastLocation = LocationHelper.INSTANCE.getLastLocation();
+    final Location lastLocation = LocationHelper.INSTANCE.getSavedLocation();
     return (lastLocation == null || isLocationBetterThanLast(newLocation, lastLocation));
   }
 
@@ -45,8 +39,8 @@ abstract class BaseLocationProvider implements LocationListener
 
     if (isLocationBetterThanLast(location))
     {
-      LocationHelper.INSTANCE.initMagneticField(location);
-      LocationHelper.INSTANCE.setLastLocation(location);
+      LocationHelper.INSTANCE.resetMagneticField(location);
+      LocationHelper.INSTANCE.onLocationUpdated(location);
     }
   }
 
@@ -67,4 +61,7 @@ abstract class BaseLocationProvider implements LocationListener
   {
     sLogger.d("Status changed for location provider: ", provider, status);
   }
+
+  protected abstract boolean start();
+  protected abstract void stop();
 }

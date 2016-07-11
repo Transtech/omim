@@ -97,7 +97,7 @@ UNIT_TEST(AustriaWein_AvoidTrunk)
   integration::CalculateRouteAndTestRouteLength(
       integration::GetPedestrianComponents(),
       MercatorBounds::FromLatLon(48.233, 16.3562), {0., 0.},
-      MercatorBounds::FromLatLon(48.2458, 16.3704), 2145.);
+      MercatorBounds::FromLatLon(48.2458, 16.3704), 2301.);
 }
 
 UNIT_TEST(FranceParis_AvoidBridleway)
@@ -121,7 +121,7 @@ UNIT_TEST(PolandWarshaw_AvoidCycleway)
   integration::CalculateRouteAndTestRouteLength(
       integration::GetPedestrianComponents(),
       MercatorBounds::FromLatLon(52.2487, 21.0173), {0., 0.},
-      MercatorBounds::FromLatLon(52.25, 21.0164), 372.);
+      MercatorBounds::FromLatLon(52.25, 21.0164), 182.);
 }
 
 UNIT_TEST(SwedenStockholmSlussenHiltonToMaritimeMuseum)
@@ -137,7 +137,7 @@ UNIT_TEST(SwedenStockholmSlussenHiltonToAfChapmanHostel)
   integration::CalculateRouteAndTestRouteLength(
       integration::GetPedestrianComponents(),
       MercatorBounds::FromLatLon(59.32045, 18.06928), {0., 0.},
-      MercatorBounds::FromLatLon(59.3254, 18.08022), 2155.);
+      MercatorBounds::FromLatLon(59.3254, 18.08022), 2410.);
 }
 
 UNIT_TEST(EstoniaTallinnRadissonHiltonToCatherdalChurch)
@@ -209,7 +209,7 @@ UNIT_TEST(RussiaTaganrogSyzranov10k3ToLazo5k2)
   integration::CalculateRouteAndTestRouteLength(
       integration::GetPedestrianComponents(),
       MercatorBounds::FromLatLon(47.2183, 38.8634), {0., 0.},
-      MercatorBounds::FromLatLon(47.2584, 38.9128), 8520.);
+      MercatorBounds::FromLatLon(47.2584, 38.9128), 9200.);
 }
 
 UNIT_TEST(RussiaTaganrogJukova2ToBolBulvarnaya8)
@@ -225,7 +225,7 @@ UNIT_TEST(RussiaTaganrogCheckhova267k2ToKotlostroy33)
   integration::CalculateRouteAndTestRouteLength(
       integration::GetPedestrianComponents(),
       MercatorBounds::FromLatLon(47.2198, 38.8906), {0., 0.},
-      MercatorBounds::FromLatLon(47.2459, 38.8937), 3798.);
+      MercatorBounds::FromLatLon(47.2459, 38.8937), 3485.);
 }
 
 UNIT_TEST(RussiaTaganrogCheckhova267k2ToBolBulvarnaya8)
@@ -514,4 +514,25 @@ UNIT_TEST(MoscowChistiePrudiSelectPointsInConnectedGraph)
       integration::GetPedestrianComponents(),
       MercatorBounds::FromLatLon(55.76613, 37.63769), {0., 0.},
       MercatorBounds::FromLatLon(55.76593, 37.63893), 134.02);
+}
+
+UNIT_TEST(RussiaMoscowSevTushinoParkPedestrianOnePointTurnTest)
+{
+  m2::PointD const point = MercatorBounds::FromLatLon(55.8719, 37.4464);
+  TRouteResult const routeResult =
+      integration::CalculateRoute(integration::GetPedestrianComponents(), point, {0.0, 0.0}, point);
+
+  Route const & route = *routeResult.first;
+  IRouter::ResultCode const result = routeResult.second;
+  TEST_EQUAL(result, IRouter::NoError, ());
+  integration::TestTurnCount(route, 0);
+  integration::TestRouteLength(route, 0.0);
+}
+
+UNIT_TEST(MoscowKashirskoe16ToVorobeviGori)
+{
+  integration::CalculateRouteAndTestRouteLength(
+      integration::GetPedestrianComponents(),
+      MercatorBounds::FromLatLon(55.66230, 37.63214), {0., 0.},
+      MercatorBounds::FromLatLon(55.70934, 37.54232), 9553.0);
 }

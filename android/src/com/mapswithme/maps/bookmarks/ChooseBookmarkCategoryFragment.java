@@ -16,9 +16,9 @@ import com.mapswithme.maps.bookmarks.data.BookmarkManager;
 import com.mapswithme.maps.dialog.EditTextDialogFragment;
 import com.mapswithme.util.statistics.Statistics;
 
-import static com.mapswithme.maps.dialog.EditTextDialogFragment.OnTextSaveListener;
-
-public class ChooseBookmarkCategoryFragment extends BaseMwmDialogFragment implements OnTextSaveListener, ChooseBookmarkCategoryAdapter.CategoryListener
+public class ChooseBookmarkCategoryFragment extends BaseMwmDialogFragment
+                                         implements EditTextDialogFragment.OnTextSaveListener,
+                                                    ChooseBookmarkCategoryAdapter.CategoryListener
 {
   public static final String CATEGORY_ID = "ExtraCategoryId";
   public static final String BOOKMARK_ID = "ExtraBookmarkId";
@@ -26,7 +26,6 @@ public class ChooseBookmarkCategoryFragment extends BaseMwmDialogFragment implem
   private Bookmark mBookmark;
   private ChooseBookmarkCategoryAdapter mAdapter;
   private RecyclerView mRecycler;
-
 
   public interface Listener
   {
@@ -86,7 +85,7 @@ public class ChooseBookmarkCategoryFragment extends BaseMwmDialogFragment implem
 
   private void createCategory(String name)
   {
-    final int category = BookmarkManager.INSTANCE.createCategory(name);
+    final int category = BookmarkManager.INSTANCE.nativeCreateCategory(name);
     mBookmark.setCategoryId(category);
     mAdapter.chooseItem(category);
 

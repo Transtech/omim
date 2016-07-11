@@ -11,10 +11,15 @@
 
 namespace routing
 {
+using TNodeId = uint32_t;
+using TEdgeWeight = double;
+
 namespace turns
 {
 /// @todo(vbykoianko) It's a good idea to gather all the turns information into one entity.
 /// For the time being several separate entities reflect the turn information. Like Route::TTurns
+
+double constexpr kFeaturesNearTurnMeters = 3.0;
 
 /*!
  * \warning The order of values below shall not be changed.
@@ -199,5 +204,13 @@ bool IsLaneWayConformedTurnDirectionApproximately(LaneWay l, TurnDirection t);
 bool ParseLanes(string lanesString, vector<SingleLaneInfo> & lanes);
 void SplitLanes(string const & lanesString, char delimiter, vector<string> & lanes);
 bool ParseSingleLane(string const & laneString, char delimiter, TSingleLane & lane);
+
+/*!
+ * \returns pi minus angle from vector [junctionPoint, ingoingPoint]
+ * to vector [junctionPoint, outgoingPoint]. A counterclockwise rotation.
+ * Angle is in range [-pi, pi].
+*/
+double PiMinusTwoVectorsAngle(m2::PointD const & junctionPoint, m2::PointD const & ingoingPoint,
+                              m2::PointD const & outgoingPoint);
 }  // namespace turns
 }  // namespace routing

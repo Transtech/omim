@@ -2,30 +2,39 @@ package com.mapswithme.maps.settings;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
-import android.content.*;
+import android.content.BroadcastReceiver;
+import android.content.ContentResolver;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Build;
 import android.os.Environment;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AlertDialog;
 import android.util.Log;
 
+import java.io.File;
+import java.io.FileFilter;
+import java.io.FilenameFilter;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import com.mapswithme.maps.BuildConfig;
 import com.mapswithme.maps.Framework;
-import com.mapswithme.maps.MapStorage;
 import com.mapswithme.maps.R;
+import com.mapswithme.maps.downloader.MapManager;
 import com.mapswithme.util.Config;
 import com.mapswithme.util.UiUtils;
 import com.mapswithme.util.concurrency.ThreadPool;
 import com.mapswithme.util.concurrency.UiThread;
 
-import java.io.File;
-import java.io.FilenameFilter;
-import java.io.IOException;
-import java.util.*;
-
 public class StoragePathManager
 {
-  static final String[] MOVABLE_EXTS = Framework.nativeGetMovableFilesExts();
+  private static final String[] MOVABLE_EXTS = Framework.nativeGetMovableFilesExts();
   static final FilenameFilter MOVABLE_FILES_FILTER = new FilenameFilter()
   {
     @Override
@@ -39,14 +48,14 @@ public class StoragePathManager
     }
   };
 
-  public interface MoveFilesListener
+  interface MoveFilesListener
   {
     void moveFilesFinished(String newPath);
 
     void moveFilesFailed(int errorCode);
   }
 
-  public interface OnStorageListChangedListener
+  interface OnStorageListChangedListener
   {
     void onStorageListChanged(List<StorageItem> storageItems, int currentStorageIndex);
   }
@@ -65,13 +74,13 @@ public class StoragePathManager
 
   private BroadcastReceiver mInternalReceiver;
   private Activity mActivity;
-  private List<StorageItem> mItems;
+  private final List<StorageItem> mItems = new ArrayList<>();
   private int mCurrentStorageIndex = -1;
 
   /**
    * Observes status of connected media and retrieves list of available external storages.
    */
-  public void startExternalStorageWatching(Activity activity, final @Nullable OnStorageListChangedListener storagesChangedListener, @Nullable MoveFilesListener moveFilesListener)
+  void startExternalStorageWatching(Activity activity, final @Nullable OnStorageListChangedListener storagesChangedListener, @Nullable MoveFilesListener moveFilesListener)
   {
     mActivity = activity;
     mStoragesChangedListener = storagesChangedListener;
@@ -92,7 +101,7 @@ public class StoragePathManager
     updateExternalStorages();
   }
 
-  public static IntentFilter getMediaChangesIntentFilter()
+  private static IntentFilter getMediaChangesIntentFilter()
   {
     final IntentFilter filter = new IntentFilter();
     filter.addAction(Intent.ACTION_MEDIA_MOUNTED);
@@ -109,7 +118,7 @@ public class StoragePathManager
     return filter;
   }
 
-  public void stopExternalStorageWatching()
+  void stopExternalStorageWatching()
   {
     if (mInternalReceiver != null)
     {
@@ -119,33 +128,38 @@ public class StoragePathManager
     }
   }
 
-  public boolean hasMoreThanOneStorage()
+  boolean hasMoreThanOneStorage()
   {
     return mItems.size() > 1;
   }
 
-  public List<StorageItem> getStorageItems()
+  List<StorageItem> getStorageItems()
   {
     return mItems;
   }
 
-  public int getCurrentStorageIndex()
+  int getCurrentStorageIndex()
   {
     return mCurrentStorageIndex;
   }
 
-  public void updateExternalStorages()
+  private void updateExternalStorages()
   {
-    List<String> pathsFromConfig = new ArrayList<>();
+    updateExternalStorages(StorageUtils.getWritableDirRoot());
+  }
+
+  private void updateExternalStorages(String writableDir)
+  {
+    Set<String> pathsFromConfig = new HashSet<>();
 
     if (Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.KITKAT)
       StorageUtils.parseKitkatStorages(pathsFromConfig);
     else
       StorageUtils.parseStorages(pathsFromConfig);
 
-    mItems = new ArrayList<>();
+    mItems.clear();
 
-    final StorageItem currentStorage = buildStorageItem(StorageUtils.getWritableDirRoot());
+    final StorageItem currentStorage = buildStorageItem(writableDir);
     addStorageItem(currentStorage);
     addStorageItem(buildStorageItem(Environment.getExternalStorageDirectory().getAbsolutePath()));
     for (String path : pathsFromConfig)
@@ -168,7 +182,7 @@ public class StoragePathManager
       mItems.add(item);
   }
 
-  private StorageItem buildStorageItem(String path)
+  private static StorageItem buildStorageItem(String path)
   {
     try
     {
@@ -190,7 +204,7 @@ public class StoragePathManager
     return null;
   }
 
-  protected void changeStorage(int newIndex)
+  void changeStorage(int newIndex)
   {
     final StorageItem oldItem = (mCurrentStorageIndex != -1) ? mItems.get(mCurrentStorageIndex) : null;
     final StorageItem item = mItems.get(newIndex);
@@ -229,11 +243,8 @@ public class StoragePathManager
                   mMoveFilesListener.moveFilesFailed(errorCode);
               }
             }, item, oldItem, R.string.wait_several_minutes);
-
-            dlg.dismiss();
           }
-        })
-        .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener()
+        }).setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener()
         {
           @Override
           public void onClick(DialogInterface dlg, int which)
@@ -273,6 +284,60 @@ public class StoragePathManager
         UiUtils.showAlertDialog(activity, R.string.kitkat_migrate_failed);
       }
     });
+  }
+
+  /**
+   * Dumb way to determine whether the storage contains Maps.me data.
+   * <p>The algorithm is quite simple:
+   * <ul>
+   *   <li>Find all writable storages;</li>
+   *   <li>For each storage list sub-dirs under "MapsWithMe" dir;</li>
+   *   <li>If there is a directory with version-like name (e.g. "160602")…</li>
+   *   <li>…and it is not empty…</li>
+   *   <li>…we got it!</li>
+   * </ul>
+   */
+  private static boolean containsMapData(String storagePath)
+  {
+    File path = new File(storagePath);
+    File[] candidates = path.listFiles(new FileFilter()
+    {
+      @Override
+      public boolean accept(File pathname)
+      {
+        if (!pathname.isDirectory())
+          return false;
+
+        try
+        {
+          String name = pathname.getName();
+          if (name.length() != 6)
+            return false;
+
+          int version = Integer.valueOf(name);
+          return (version > 120000 && version <= 999999);
+        } catch (NumberFormatException ignored) {}
+
+        return false;
+      }
+    });
+
+    return (candidates != null && candidates.length > 0 &&
+            candidates[0].list().length > 0);
+  }
+
+  public String findMapsMeStorage(String settingsPath)
+  {
+    updateExternalStorages(settingsPath);
+    List<StorageItem> items = getStorageItems();
+
+    for (StorageItem item : items)
+    {
+      if (containsMapData(item.mPath))
+        return item.mPath;
+    }
+
+    return settingsPath;
   }
 
   private void checkExternalStoragePathOnKitkat(Context context, MoveFilesListener listener)
@@ -336,7 +401,7 @@ public class StoragePathManager
   }
 
   @SuppressWarnings("ResultOfMethodCallIgnored")
-  private int changeStorage(StorageItem newStorage, StorageItem oldStorage)
+  private static int changeStorage(StorageItem newStorage, StorageItem oldStorage)
   {
     final String fullNewPath = newStorage.getFullPath();
 
@@ -377,17 +442,16 @@ public class StoragePathManager
     {
       for (int i = 0; i < oldFiles.length; ++i)
       {
-        if (!MapStorage.nativeMoveFile(oldFiles[i].getAbsolutePath(), newFiles[i].getAbsolutePath()))
+        if (MapManager.nativeMoveFile(oldFiles[i].getAbsolutePath(), newFiles[i].getAbsolutePath()))
+        {
+          // No need to delete oldFiles[i] because it was moved to newFiles[i].
+          oldFiles[i] = null;
+        } else
         {
           File parent = newFiles[i].getParentFile();
           if (parent != null)
             parent.mkdirs();
           StorageUtils.copyFile(oldFiles[i], newFiles[i]);
-        }
-        else
-        {
-          // No need to delete oldFiles[i] because it was moved to newFiles[i].
-          oldFiles[i] = null;
         }
       }
     } catch (IOException e)

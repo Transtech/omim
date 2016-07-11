@@ -165,12 +165,20 @@ UNIT_TEST(to_double)
 
   s = "123.456 we don't parse it.";
   TEST(!strings::to_double(s, d), ());
+
+  TEST(!strings::to_double("INF", d), ());
+  TEST(!strings::to_double("NAN", d), ());
+  TEST(!strings::to_double("1.18973e+4932", d), ());
 }
 
 UNIT_TEST(to_int)
 {
   int i;
   string s;
+
+  s = "AF";
+  TEST(strings::to_int(s, i, 16), ());
+  TEST_EQUAL(175, i, ());
 
   s = "-2";
   TEST(strings::to_int(s, i), ());
@@ -186,16 +194,52 @@ UNIT_TEST(to_int)
 
   s = "labuda";
   TEST(!strings::to_int(s, i), ());
+}
 
+UNIT_TEST(to_uint)
+{
+  unsigned int i;
+  string s;
+
+  s = "";
+  TEST(!strings::to_uint(s, i), ());
+
+  s = "-2";
+  TEST(!strings::to_uint(s, i), ());
+  
+  s = "0";
+  TEST(strings::to_uint(s, i), ());
+  TEST_EQUAL(0, i, ());
+  
+  s = "123456789123456789123456789";
+  TEST(!strings::to_uint(s, i), ());
+  
+  s = "labuda";
+  TEST(!strings::to_uint(s, i), ());
+  
   s = "AF";
-  TEST(strings::to_int(s, i, 16), ());
+  TEST(strings::to_uint(s, i, 16), ());
   TEST_EQUAL(175, i, ());
+
+  s = "100";
+  TEST(strings::to_uint(s, i), ());
+  TEST_EQUAL(100, i, ());
+
+  s = "4294967295";
+  TEST(strings::to_uint(s, i), ());
+  TEST_EQUAL(0xFFFFFFFF, i, ());
+
+  s = "4294967296";
+  TEST(!strings::to_uint(s, i), ());
 }
 
 UNIT_TEST(to_uint64)
 {
   uint64_t i;
   string s;
+
+  s = "";
+  TEST(!strings::to_uint64(s, i), ());
 
   s = "0";
   TEST(strings::to_uint64(s, i), ());
@@ -249,6 +293,9 @@ UNIT_TEST(to_string)
 
   TEST_EQUAL(strings::to_string(123456789123456789ULL), "123456789123456789", ());
   TEST_EQUAL(strings::to_string(-987654321987654321LL), "-987654321987654321", ());
+
+  uint64_t const n = numeric_limits<uint64_t>::max();
+  TEST_EQUAL(strings::to_string(n), "18446744073709551615", ());
 }
 
 UNIT_TEST(to_string_dac)
@@ -285,30 +332,45 @@ struct FunctorTester
   size_t & m_index;
   vector<string> const & m_tokens;
 
-  explicit FunctorTester(size_t & counter, vector<string> const & tokens)
-    : m_index(counter), m_tokens(tokens) {}
+  FunctorTester(size_t & counter, vector<string> const & tokens)
+    : m_index(counter), m_tokens(tokens)
+  {
+  }
+
   void operator()(string const & s)
   {
     TEST_EQUAL(s, m_tokens[m_index++], ());
   }
 };
 
-void TestIter(string const & str, char const * delims, vector<string> const & tokens)
+void TestIter(string const & s, char const * delims, vector<string> const & tokens)
 {
-  strings::SimpleTokenizer it(str, delims);
+  strings::SimpleTokenizer it(s, delims);
   for (size_t i = 0; i < tokens.size(); ++i)
   {
-    TEST_EQUAL(true, it, (str, delims, i));
-    TEST_EQUAL(i == tokens.size() - 1, it.IsLast(), ());
-    TEST_EQUAL(*it, tokens[i], (str, delims, i));
+    TEST(it, (s, delims, i));
+    TEST_EQUAL(*it, tokens[i], (s, delims, i));
     ++it;
   }
-  TEST_EQUAL(false, it, (str, delims));
+  TEST(!it, (s, delims));
 
   size_t counter = 0;
-  FunctorTester f = FunctorTester(counter, tokens);
-  strings::Tokenize(str, delims, f);
+  FunctorTester f(counter, tokens);
+  strings::Tokenize(s, delims, f);
   TEST_EQUAL(counter, tokens.size(), ());
+}
+
+void TestIterWithEmptyTokens(string const & s, char const * delims, vector<string> const & tokens)
+{
+  strings::SimpleTokenizerWithEmptyTokens it(s, delims);
+
+  for (size_t i = 0; i < tokens.size(); ++i)
+  {
+    TEST(it, (s, delims, i));
+    TEST_EQUAL(*it, tokens[i], (s, delims, i));
+    ++it;
+  }
+  TEST(!it, (s, delims));
 }
 
 UNIT_TEST(SimpleTokenizer)
@@ -348,6 +410,42 @@ UNIT_TEST(SimpleTokenizer)
     char const * s[] = {"1", "2"};
     tokens.assign(&s[0], &s[0] + ARRAY_SIZE(s));
     TestIter("/1/2/", "/", tokens);
+  }
+
+  {
+    string const s = "";
+    vector<string> const tokens = {""};
+    TestIterWithEmptyTokens(s, ",", tokens);
+  }
+
+  {
+    string const s = ";";
+    vector<string> const tokens = {"", ""};
+    TestIterWithEmptyTokens(s, ";", tokens);
+  }
+
+  {
+    string const s = ";;";
+    vector<string> const tokens = {"", "", ""};
+    TestIterWithEmptyTokens(s, ";", tokens);
+  }
+
+  {
+    string const s = "Hello, World!";
+    vector<string> const tokens = {s};
+    TestIterWithEmptyTokens(s, "", tokens);
+  }
+
+  {
+    string const s = "Hello, World!";
+    vector<string> const tokens = {"Hello", " World", ""};
+    TestIterWithEmptyTokens(s, ",!", tokens);
+  }
+
+  {
+    string const s = ";a;b;;c;d;";
+    vector<string> const tokens = {"", "a", "b", "", "c", "d", ""};
+    TestIterWithEmptyTokens(s, ";", tokens);
   }
 }
 
@@ -569,6 +667,11 @@ UNIT_TEST(AlmostEqual)
   TEST(!AlmostEqual("MKAD, 600 km", "MKAD, 599 km", 2), ());
   TEST(!AlmostEqual("MKAD, 45-y kilometre", "MKAD, 46", 2), ());
   TEST(!AlmostEqual("ул. Героев Панфиловцев", "ул. Планерная", 2), ());
+
+  string small(10, '\0');
+  string large(1000, '\0');
+  TEST(AlmostEqual(small, large, large.length()), ());
+  TEST(AlmostEqual(large, small, large.length()), ());
 }
 
 UNIT_TEST(EditDistance)
@@ -598,4 +701,45 @@ UNIT_TEST(EditDistance)
 
   testUniStringEditDistance("ll", "l1", 1);
   testUniStringEditDistance("\u0132ij", "\u0133IJ", 3);
+}
+
+UNIT_TEST(NormalizeDigits)
+{
+  auto const nd = [](string str) -> string
+  {
+    strings::NormalizeDigits(str);
+    return str;
+  };
+  TEST_EQUAL(nd(""), "", ());
+  TEST_EQUAL(nd("z12345／／"), "z12345／／", ());
+  TEST_EQUAL(nd("a０１9２ "), "a0192 ", ());
+  TEST_EQUAL(nd("３４５６７８９"), "3456789", ());
+}
+
+UNIT_TEST(NormalizeDigits_UniString)
+{
+  auto const nd = [](string const & utf8) -> string
+  {
+    strings::UniString us = strings::MakeUniString(utf8);
+    strings::NormalizeDigits(us);
+    return strings::ToUtf8(us);
+  };
+  TEST_EQUAL(nd(""), "", ());
+  TEST_EQUAL(nd("z12345／／"), "z12345／／", ());
+  TEST_EQUAL(nd("a０１9２ "), "a0192 ", ());
+  TEST_EQUAL(nd("３４５６７８９"), "3456789", ());
+}
+
+UNIT_TEST(CSV)
+{
+  vector<string> target;
+  strings::ParseCSVRow(",Test\\,проверка,0,", ',', target);
+  vector<string> expected({"", "Test\\", "проверка", "0", ""});
+  TEST_EQUAL(target, expected, ());
+  strings::ParseCSVRow("and there  was none", ' ', target);
+  vector<string> expected2({"and", "there", "", "was", "none"});
+  TEST_EQUAL(target, expected2, ());
+  strings::ParseCSVRow("", 'q', target);
+  vector<string> expected3;
+  TEST_EQUAL(target, expected3, ());
 }

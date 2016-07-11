@@ -41,6 +41,7 @@ public:
   bool CanReceiveMessages();
 
   void SetRenderingEnabled(bool const isEnabled);
+  bool IsRenderingEnabled() const;
 
 protected:
   ref_ptr<ThreadsCommutator> m_commutator;
@@ -51,7 +52,6 @@ protected:
   void StopThread();
 
   void CheckRenderingEnabled();
-  void ProcessStopRenderingMessage();
 
   virtual unique_ptr<threads::IRoutine> CreateRoutine() = 0;
 

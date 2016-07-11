@@ -86,10 +86,10 @@ public class NavigationController
   private void updatePedestrian(RoutingInfo info)
   {
     Location next = info.pedestrianNextDirection;
-    Location location = LocationHelper.INSTANCE.getLastLocation();
-    DistanceAndAzimut da = Framework.nativeGetDistanceAndAzimutFromLatLon(next.getLatitude(), next.getLongitude(),
-                                                                          location.getLatitude(), location.getLongitude(),
-                                                                          mNorth);
+    Location location = LocationHelper.INSTANCE.getSavedLocation();
+    DistanceAndAzimut da = Framework.nativeGetDistanceAndAzimuthFromLatLon(next.getLatitude(), next.getLongitude(),
+                                                                           location.getLatitude(), location.getLongitude(),
+                                                                           mNorth);
     String[] splitDistance = da.getDistance().split(" ");
     mDistanceTurn.setText(Utils.formatUnitsText(R.dimen.text_size_display_1, R.dimen.text_size_toolbar,
                                                 splitDistance[0], splitDistance[1]));
@@ -111,11 +111,10 @@ public class NavigationController
     if (info == null)
       return;
 
-    int rt = Framework.nativeGetRouter();
-    if (rt == Framework.ROUTER_TYPE_VEHICLE || rt == Framework.ROUTER_TYPE_TRUCK)
-      updateVehicle(info);
-    else
+    if (Framework.nativeGetRouter() == Framework.ROUTER_TYPE_PEDESTRIAN)
       updatePedestrian(info);
+    else
+      updateVehicle(info);
 
     mTimeTotal.setText(RoutingController.formatRoutingTime(info.totalTimeInSeconds, R.dimen.text_size_routing_dimension));
     mDistanceTotal.setText(Utils.formatUnitsText(R.dimen.text_size_routing_number, R.dimen.text_size_routing_dimension,

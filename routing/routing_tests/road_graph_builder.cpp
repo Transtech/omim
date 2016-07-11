@@ -43,7 +43,7 @@ private:
     unique_ptr<MwmInfo> info(new MwmInfo());
     info->m_maxScale = 1;
     info->m_limitRect = m2::RectD(0, 0, 1, 1);
-    info->m_version.format = version::lastFormat;
+    info->m_version.SetFormat(version::Format::lastFormat);
     return info;
   }
   unique_ptr<MwmValueBase> CreateValue(MwmInfo &) const override
@@ -84,7 +84,7 @@ double RoadGraphMockSource::GetMaxSpeedKMPH() const
 }
 
 void RoadGraphMockSource::ForEachFeatureClosestToCross(m2::PointD const & /* cross */,
-                                                       CrossEdgesLoader & edgesLoader) const
+                                                       ICrossEdgesLoader & edgesLoader) const
 {
   for (size_t roadId = 0; roadId < m_roads.size(); ++roadId)
     edgesLoader(MakeTestFeatureID(roadId), m_roads[roadId]);
@@ -108,6 +108,11 @@ void RoadGraphMockSource::GetJunctionTypes(Junction const & junction, feature::T
 {
   UNUSED_VALUE(junction);
   UNUSED_VALUE(types);
+}
+
+IRoadGraph::Mode RoadGraphMockSource::GetMode() const
+{
+  return IRoadGraph::Mode::IgnoreOnewayTag;
 }
 
 FeatureID MakeTestFeatureID(uint32_t offset)

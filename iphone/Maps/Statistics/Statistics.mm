@@ -48,7 +48,7 @@ char const * kStatisticsEnabledSettingsKey = "StatisticsEnabled";
     // in application:didFinishLaunchingWithOptions:).
     // The (only) drawback of this approach is that to actually disable or enable 3party engines,
     // the app should be restarted.
-    (void)Settings::Get(kStatisticsEnabledSettingsKey, _enabled);
+    (void)settings::Get(kStatisticsEnabledSettingsKey, _enabled);
 
     if (_enabled)
       [Alohalytics enable];
@@ -58,10 +58,15 @@ char const * kStatisticsEnabledSettingsKey = "StatisticsEnabled";
   return self;
 }
 
+- (bool)isStatisticsEnabled
+{
+  return _enabled;
+}
+
 - (void)enableOnNextAppLaunch
 {
   // This setting will be checked and applied on the next launch.
-  Settings::Set(kStatisticsEnabledSettingsKey, true);
+  settings::Set(kStatisticsEnabledSettingsKey, true);
   // It does not make sense to log statisticsEnabled with Alohalytics here,
   // as it will not be stored and logged anyway.
 }
@@ -69,7 +74,7 @@ char const * kStatisticsEnabledSettingsKey = "StatisticsEnabled";
 - (void)disableOnNextAppLaunch
 {
   // This setting will be checked and applied on the next launch.
-  Settings::Set(kStatisticsEnabledSettingsKey, false);
+  settings::Set(kStatisticsEnabledSettingsKey, false);
   [Alohalytics logEvent:@"statisticsDisabled"];
 }
 
@@ -110,6 +115,25 @@ char const * kStatisticsEnabledSettingsKey = "StatisticsEnabled";
 {
   if (!_enabled)
     return;
+  NSMutableDictionary * params = [self addDefaultAttributesToParameters:parameters];
+  [Flurry logEvent:eventName withParameters:params];
+  [Alohalytics logEvent:eventName withDictionary:params];
+}
+
+- (void)logEvent:(NSString *)eventName withParameters:(NSDictionary *)parameters atLocation:(CLLocation *)location
+{
+  if (!_enabled)
+    return;
+  NSMutableDictionary * params = [self addDefaultAttributesToParameters:parameters];
+  [Alohalytics logEvent:eventName withDictionary:params atLocation:location];
+  auto const & coordinate = location ? location.coordinate : kCLLocationCoordinate2DInvalid;
+  params[kStatLat] = @(coordinate.latitude);
+  params[kStatLon] = @(coordinate.longitude);
+  [Flurry logEvent:eventName withParameters:params];
+}
+
+- (NSMutableDictionary *)addDefaultAttributesToParameters:(NSDictionary *)parameters
+{
   NSMutableDictionary * params = [parameters mutableCopy];
   params[kStatDeviceType] = IPAD ? kStatiPad : kStatiPhone;
   BOOL isLandscape = UIDeviceOrientationIsLandscape([UIDevice currentDevice].orientation);
@@ -118,8 +142,7 @@ char const * kStatisticsEnabledSettingsKey = "StatisticsEnabled";
   params[kStatCountry] = info.countryCode;
   if (info.languageId)
     params[kStatLanguage] = info.languageId;
-  [Flurry logEvent:eventName withParameters:parameters];
-  [Alohalytics logEvent:eventName withDictionary:parameters];
+  return params;
 }
 
 - (void)logEvent:(NSString *)eventName
@@ -155,6 +178,21 @@ char const * kStatisticsEnabledSettingsKey = "StatisticsEnabled";
     instance = [[Statistics alloc] init];
   });
   return instance;
+}
+
++ (void)logEvent:(NSString *)eventName
+{
+  [[self instance] logEvent:eventName];
+}
+
++ (void)logEvent:(NSString *)eventName withParameters:(NSDictionary *)parameters
+{
+  [[self instance] logEvent:eventName withParameters:parameters];
+}
+
++ (void)logEvent:(NSString *)eventName withParameters:(NSDictionary *)parameters atLocation:(CLLocation *)location
+{
+  [[self instance] logEvent:eventName withParameters:parameters atLocation:location];
 }
 
 @end

@@ -2,14 +2,15 @@
 #import "LinkCell.h"
 #import "MapsAppDelegate.h"
 #import "MapViewController.h"
+#import "MWMMapDownloadDialog.h"
 #import "MWMMapViewControlsManager.h"
 #import "MWMTextToSpeech.h"
 #import "SelectableCell.h"
 #import "SettingsViewController.h"
 #import "Statistics.h"
 #import "SwitchCell.h"
-#import "WebViewController.h"
 #import "UIColor+MapsMeColor.h"
+#import "WebViewController.h"
 
 #include "Framework.h"
 
@@ -20,6 +21,7 @@
 extern char const * kStatisticsEnabledSettingsKey;
 char const * kAdForbiddenSettingsKey = "AdForbidden";
 char const * kAdServerForbiddenKey = "AdServerForbidden";
+char const * kAutoDownloadEnabledKey = "AutoDownloadEnabled";
 extern NSString * const kTTSStatusWasChangedNotification = @"TTFStatusWasChangedFromSettingsNotification";
 
 typedef NS_ENUM(NSUInteger, Section)
@@ -47,8 +49,8 @@ typedef NS_ENUM(NSUInteger, Section)
   self.title = L(@"settings");
   self.tableView.backgroundView = nil;
   bool adServerForbidden = false;
-  (void)Settings::Get(kAdServerForbiddenKey, adServerForbidden);
-  if (isIOSVersionLessThan(8) || adServerForbidden)
+  (void)settings::Get(kAdServerForbiddenKey, adServerForbidden);
+  if (isIOS7 || adServerForbidden)
     sections = {SectionMetrics, SectionMap, SectionRouting, SectionCalibration, SectionStatistics};
   else
     sections = {SectionMetrics, SectionMap, SectionRouting, SectionCalibration, SectionAd, SectionStatistics};
@@ -74,7 +76,7 @@ typedef NS_ENUM(NSUInteger, Section)
   case SectionRouting:
     return 3;
   case SectionMap:
-    return 4;
+    return 5;
   }
 }
 
@@ -86,8 +88,8 @@ typedef NS_ENUM(NSUInteger, Section)
   case SectionMetrics:
   {
     cell = [tableView dequeueReusableCellWithIdentifier:[SelectableCell className]];
-    Settings::Units units = Settings::Metric;
-    (void)Settings::Get("Units", units);
+    auto units = measurement_utils::Units::Metric;
+    UNUSED_VALUE(settings::Get(settings::kMeasurementUnits, units));
     BOOL const selected = units == unitsForIndex(indexPath.row);
     SelectableCell * customCell = (SelectableCell *)cell;
     customCell.accessoryType = selected ? UITableViewCellAccessoryCheckmark : UITableViewCellAccessoryNone;
@@ -99,7 +101,7 @@ typedef NS_ENUM(NSUInteger, Section)
     cell = [tableView dequeueReusableCellWithIdentifier:[SwitchCell className]];
     SwitchCell * customCell = (SwitchCell *)cell;
     bool forbidden = false;
-    (void)Settings::Get(kAdForbiddenSettingsKey, forbidden);
+    (void)settings::Get(kAdForbiddenSettingsKey, forbidden);
     customCell.switchButton.on = !forbidden;
     customCell.titleLabel.text = L(@"showcase_settings_title");
     customCell.delegate = self;
@@ -110,7 +112,7 @@ typedef NS_ENUM(NSUInteger, Section)
     cell = [tableView dequeueReusableCellWithIdentifier:[SwitchCell className]];
     SwitchCell * customCell = (SwitchCell *)cell;
     bool on = [Statistics isStatisticsEnabledByDefault];
-    (void)Settings::Get(kStatisticsEnabledSettingsKey, on);
+    (void)settings::Get(kStatisticsEnabledSettingsKey, on);
     customCell.switchButton.on = on;
     customCell.titleLabel.text = L(@"allow_statistics");
     customCell.delegate = self;
@@ -130,8 +132,20 @@ typedef NS_ENUM(NSUInteger, Section)
       customCell.titleLabel.text = indexPath.row == 0 ? L(@"pref_map_style_title") : L(@"pref_track_record_title");
       break;
     }
-    // 3D buildings
+    // Auto download
     case 2:
+    {
+      bool autoDownloadEnabled = true;
+      (void)settings::Get(kAutoDownloadEnabledKey, autoDownloadEnabled);
+      cell = [tableView dequeueReusableCellWithIdentifier:[SwitchCell className]];
+      SwitchCell * customCell = static_cast<SwitchCell *>(cell);
+      customCell.titleLabel.text = L(@"autodownload");
+      customCell.switchButton.on = autoDownloadEnabled;
+      customCell.delegate = self;
+      break;
+    }
+    // 3D buildings
+    case 3:
     {
       cell = [tableView dequeueReusableCellWithIdentifier:[SwitchCell className]];
       SwitchCell * customCell = static_cast<SwitchCell *>(cell);
@@ -143,12 +157,12 @@ typedef NS_ENUM(NSUInteger, Section)
       break;
     }
     // Zoom buttons
-    case 3:
+    case 4:
     {
       cell = [tableView dequeueReusableCellWithIdentifier:[SwitchCell className]];
       SwitchCell * customCell = static_cast<SwitchCell *>(cell);
       bool on = true;
-      (void)Settings::Get("ZoomButtonsEnabled", on);
+      (void)settings::Get("ZoomButtonsEnabled", on);
       customCell.titleLabel.text = L(@"pref_zoom_title");
       customCell.switchButton.on = on;
       customCell.delegate = self;
@@ -202,7 +216,7 @@ typedef NS_ENUM(NSUInteger, Section)
     cell = [tableView dequeueReusableCellWithIdentifier:[SwitchCell className]];
     SwitchCell * customCell = (SwitchCell *)cell;
     bool on = false;
-    (void)Settings::Get("CompassCalibrationEnabled", on);
+    (void)settings::Get("CompassCalibrationEnabled", on);
     customCell.switchButton.on = on;
     customCell.titleLabel.text = L(@"pref_calibration_title");
     customCell.delegate = self;
@@ -226,13 +240,13 @@ typedef NS_ENUM(NSUInteger, Section)
   switch (sections[indexPath.section])
   {
   case SectionAd:
-    [stat logEvent:kStatSettings
+    [Statistics logEvent:kStatSettings
       withParameters:@{kStatAction : kStatMoreApps, kStatValue : (value ? kStatOn : kStatOff)}];
-    Settings::Set(kAdForbiddenSettingsKey, (bool)!value);
+    settings::Set(kAdForbiddenSettingsKey, static_cast<bool>(!value));
     break;
 
   case SectionStatistics:
-    [stat logEvent:kStatEventName(kStatSettings, kStatToggleStatistics)
+    [Statistics logEvent:kStatEventName(kStatSettings, kStatToggleStatistics)
         withParameters: @{kStatAction : kStatToggleStatistics, kStatValue : (value ? kStatOn : kStatOff)}];
     if (value)
       [stat enableOnNextAppLaunch];
@@ -248,10 +262,18 @@ typedef NS_ENUM(NSUInteger, Section)
       case 0:
       case 1:
         break;
-      // 3D buildings
+      // Auto download
       case 2:
       {
-        [[Statistics instance] logEvent:kStatEventName(kStatSettings, kStat3DBuildings)
+        [Statistics logEvent:kStatEventName(kStatSettings, kStatAutoDownload)
+              withParameters:@{kStatValue : (value ? kStatOn : kStatOff)}];
+        settings::Set(kAutoDownloadEnabledKey, static_cast<bool>(value));
+        break;
+      }
+      // 3D buildings
+      case 3:
+      {
+        [Statistics logEvent:kStatEventName(kStatSettings, kStat3DBuildings)
                          withParameters:@{kStatValue : (value ? kStatOn : kStatOff)}];
         auto & f = GetFramework();
         bool _ = true, is3dBuildings = true;
@@ -262,11 +284,11 @@ typedef NS_ENUM(NSUInteger, Section)
         break;
       }
       // Zoom buttons
-      case 3:
+      case 4:
       {
-        [stat logEvent:kStatEventName(kStatSettings, kStatToggleZoomButtonsVisibility)
+        [Statistics logEvent:kStatEventName(kStatSettings, kStatToggleZoomButtonsVisibility)
             withParameters:@{kStatValue : (value ? kStatVisible : kStatHidden)}];
-        Settings::Set("ZoomButtonsEnabled", (bool)value);
+        settings::Set("ZoomButtonsEnabled", static_cast<bool>(value));
         [MapsAppDelegate theApp].mapViewController.controlsManager.zoomHidden = !value;
         break;
       }
@@ -274,16 +296,16 @@ typedef NS_ENUM(NSUInteger, Section)
     break;
 
   case SectionCalibration:
-    [stat logEvent:kStatEventName(kStatSettings, kStatToggleCompassCalibration)
+    [Statistics logEvent:kStatEventName(kStatSettings, kStatToggleCompassCalibration)
         withParameters:@{kStatValue : (value ? kStatOn : kStatOff)}];
-    Settings::Set("CompassCalibrationEnabled", (bool)value);
+    settings::Set("CompassCalibrationEnabled", static_cast<bool>(value));
     break;
 
   case SectionRouting:
     // 3D mode
     if (indexPath.row == 0)
     {
-      [[Statistics instance] logEvent:kStatEventName(kStatSettings, kStat3D)
+      [Statistics logEvent:kStatEventName(kStatSettings, kStat3D)
                        withParameters:@{kStatValue : (value ? kStatOn : kStatOff)}];
       auto & f = GetFramework();
       bool _ = true, is3d = true;
@@ -295,7 +317,7 @@ typedef NS_ENUM(NSUInteger, Section)
     // Enable TTS
     else if (indexPath.row == 1)
     {
-      [[Statistics instance] logEvent:kStatEventName(kStatSettings, kStatTTS)
+      [Statistics logEvent:kStatEventName(kStatSettings, kStatTTS)
                        withParameters:@{kStatValue : value ? kStatOn : kStatOff}];
       [[MWMTextToSpeech tts] setNeedToEnable:value];
       [[NSNotificationCenter defaultCenter] postNotificationName:kTTSStatusWasChangedNotification
@@ -308,9 +330,9 @@ typedef NS_ENUM(NSUInteger, Section)
   }
 }
 
-Settings::Units unitsForIndex(NSInteger index)
+measurement_utils::Units unitsForIndex(NSInteger index)
 {
-  return index == 0 ? Settings::Metric : Settings::Foot;
+  return index == 0 ? measurement_utils::Units::Metric : measurement_utils::Units::Imperial;
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
@@ -319,10 +341,12 @@ Settings::Units unitsForIndex(NSInteger index)
   {
   case SectionMetrics:
   {
-    Settings::Units units = unitsForIndex(indexPath.row);
-    [[Statistics instance] logEvent:kStatEventName(kStatSettings, kStatChangeMeasureUnits)
-        withParameters:@{kStatValue : (units == Settings::Units::Metric ? kStatKilometers : kStatMiles)}];
-    Settings::Set("Units", units);
+    auto const units = unitsForIndex(indexPath.row);
+    [Statistics logEvent:kStatEventName(kStatSettings, kStatChangeMeasureUnits)
+          withParameters:@{
+            kStatValue : (units == measurement_utils::Units::Metric ? kStatKilometers : kStatMiles)
+          }];
+    settings::Set(settings::kMeasurementUnits, units);
     [tableView reloadSections:[NSIndexSet indexSetWithIndex:SectionMetrics] withRowAnimation:UITableViewRowAnimationFade];
     GetFramework().SetupMeasurementSystem();
     break;
@@ -331,7 +355,7 @@ Settings::Units unitsForIndex(NSInteger index)
     // Change TTS language
     if (indexPath.row == 2)
     {
-      [[Statistics instance] logEvent:kStatEventName(kStatSettings, kStatTTS)
+      [Statistics logEvent:kStatEventName(kStatSettings, kStatTTS)
                      withParameters:@{kStatAction : kStatChangeLanguage}];
       [self performSegueWithIdentifier:@"SettingsToTTSSegue" sender:nil];
     }
@@ -340,13 +364,13 @@ Settings::Units unitsForIndex(NSInteger index)
     // Change night mode
     if (indexPath.row == 0)
     {
-      [[Statistics instance] logEvent:kStatEventName(kStatSettings, kStatNightMode)
+      [Statistics logEvent:kStatEventName(kStatSettings, kStatNightMode)
                        withParameters:@{kStatAction : kStatChangeNightMode}];
       [self performSegueWithIdentifier:@"SettingsToNightMode" sender:nil];
     }
     else if (indexPath.row == 1)
     {
-      [[Statistics instance] logEvent:kStatEventName(kStatSettings, kStatRecentTrack)
+      [Statistics logEvent:kStatEventName(kStatSettings, kStatRecentTrack)
                        withParameters:@{kStatAction : kStatChangeRecentTrack}];
       [self performSegueWithIdentifier:@"SettingsToRecentTrackSegue" sender:nil];
     }

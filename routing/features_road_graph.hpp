@@ -31,6 +31,7 @@ private:
     double GetSpeed(FeatureType const & f) const override;
     double GetMaxSpeed() const override;
     bool IsOneWay(FeatureType const & f) const override;
+    bool IsRoad(FeatureType const & f) const override;
 
     void Clear();
 
@@ -56,7 +57,8 @@ private:
   };
 
 public:
-  FeaturesRoadGraph(Index & index, unique_ptr<IVehicleModelFactory> && vehicleModelFactory);
+  FeaturesRoadGraph(Index const & index, IRoadGraph::Mode mode,
+                    unique_ptr<IVehicleModelFactory> && vehicleModelFactory);
 
   static uint32_t GetStreetReadScale();
 
@@ -65,16 +67,18 @@ public:
   double GetSpeedKMPH(FeatureID const & featureId) const override;
   double GetMaxSpeedKMPH() const override;
   void ForEachFeatureClosestToCross(m2::PointD const & cross,
-                                    CrossEdgesLoader & edgesLoader) const override;
+                                    ICrossEdgesLoader & edgesLoader) const override;
   void FindClosestEdges(m2::PointD const & point, uint32_t count,
                         vector<pair<Edge, m2::PointD>> & vicinities) const override;
   void GetFeatureTypes(FeatureID const & featureId, feature::TypesHolder & types) const override;
   void GetJunctionTypes(Junction const & junction, feature::TypesHolder & types) const override;
+  IRoadGraph::Mode GetMode() const override;
   void ClearState() override;
 
 private:
   friend class CrossFeaturesLoader;
 
+  bool IsRoad(FeatureType const & ft) const;
   bool IsOneWay(FeatureType const & ft) const;
   double GetSpeedKMPHFromFt(FeatureType const & ft) const;
 
@@ -89,7 +93,8 @@ private:
 
   void LockFeatureMwm(FeatureID const & featureId) const;
 
-  Index & m_index;
+  Index const & m_index;
+  IRoadGraph::Mode const m_mode;
   mutable RoadInfoCache m_cache;
   mutable CrossCountryVehicleModel m_vehicleModel;
   mutable map<MwmSet::MwmId, MwmSet::MwmHandle> m_mwmLocks;

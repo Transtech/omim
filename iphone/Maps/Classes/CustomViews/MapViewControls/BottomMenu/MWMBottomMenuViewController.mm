@@ -7,18 +7,23 @@
 #import "MWMBottomMenuLayout.h"
 #import "MWMBottomMenuView.h"
 #import "MWMBottomMenuViewController.h"
+#import "MWMButton.h"
+#import "MWMFrameworkListener.h"
+#import "MWMFrameworkObservers.h"
+#import "MWMLocationManager.h"
 #import "MWMMapViewControlsManager.h"
 #import "MWMSearchManager.h"
 #import "SettingsAndMoreVC.h"
 #import "Statistics.h"
-#import "UIButton+Coloring.h"
-#import "UIImageView+Coloring.h"
 #import "UIColor+MapsMeColor.h"
+#import "UIImageView+Coloring.h"
 #import "UIKitCategories.h"
 
 #import "3party/Alohalytics/src/alohalytics_objc.h"
 
 #include "Framework.h"
+
+#include "platform/mwm_version.hpp"
 
 extern NSString * const kAlohalyticsTapEventKey;
 extern NSString * const kSearchStateWillChangeNotification;
@@ -31,6 +36,7 @@ static CGFloat const kLayoutThreshold = 420.0;
 
 typedef NS_ENUM(NSUInteger, MWMBottomMenuViewCell)
 {
+  MWMBottomMenuViewCellAddPlace,
   MWMBottomMenuViewCellDownload,
   MWMBottomMenuViewCellSettings,
   MWMBottomMenuViewCellShare,
@@ -38,12 +44,11 @@ typedef NS_ENUM(NSUInteger, MWMBottomMenuViewCell)
   MWMBottomMenuViewCellCount
 };
 
-@interface MWMBottomMenuViewController ()<UICollectionViewDataSource, UICollectionViewDelegate>
+@interface MWMBottomMenuViewController () <UICollectionViewDataSource, UICollectionViewDelegate>
 
 @property (weak, nonatomic) MapViewController * controller;
 @property (weak, nonatomic) IBOutlet UICollectionView * buttonsCollectionView;
 
-@property (weak, nonatomic) IBOutlet UIButton * locationButton;
 @property (weak, nonatomic) IBOutlet UICollectionView * additionalButtons;
 @property (weak, nonatomic) IBOutlet UILabel * streetLabel;
 
@@ -105,9 +110,9 @@ typedef NS_ENUM(NSUInteger, MWMBottomMenuViewCell)
   [self refreshLayout];
 }
 
-- (void)refresh
+- (void)mwm_refreshUI
 {
-  [self.view refresh];
+  [self.view mwm_refreshUI];
 }
 
 #pragma mark - Refresh Collection View layout
@@ -163,89 +168,6 @@ typedef NS_ENUM(NSUInteger, MWMBottomMenuViewCell)
   self.state = MWMBottomMenuStateGo;
 }
 
-#pragma mark - Location button
-
-- (void)onLocationStateModeChanged:(location::EMyPositionMode)state
-{
-  UIButton * locBtn = self.locationButton;
-  [locBtn.imageView stopAnimating];
-  [locBtn.imageView.layer removeAllAnimations];
-  switch (state)
-  {
-    case location::MODE_UNKNOWN_POSITION:
-    case location::MODE_NOT_FOLLOW:
-    case location::MODE_FOLLOW:
-      break;
-    case location::MODE_PENDING_POSITION:
-    {
-      [locBtn setImage:[UIImage imageNamed:@"ic_menu_location_pending"]
-              forState:UIControlStateNormal];
-      CABasicAnimation * rotation;
-      rotation = [CABasicAnimation animationWithKeyPath:@"transform.rotation.z"];
-      rotation.duration = kDefaultAnimationDuration;
-      rotation.toValue = @(M_PI * 2.0 * rotation.duration);
-      rotation.cumulative = YES;
-      rotation.repeatCount = MAXFLOAT;
-      [locBtn.imageView.layer addAnimation:rotation forKey:@"locationImage"];
-      break;
-    }
-    case location::MODE_ROTATE_AND_FOLLOW:
-    {
-      NSUInteger const morphImagesCount = 6;
-      NSUInteger const endValue = morphImagesCount + 1;
-      NSMutableArray * morphImages = [NSMutableArray arrayWithCapacity:morphImagesCount];
-      for (NSUInteger i = 1, j = 0; i != endValue; i++, j++)
-      {
-        morphImages[j] = [UIImage imageNamed:[NSString stringWithFormat:@"ic_follow_mode_%@_%@", @(i).stringValue,
-                                              [UIColor isNightMode] ? @"dark" : @"light"]];
-      }
-      locBtn.imageView.animationImages = morphImages;
-      locBtn.imageView.animationRepeatCount = 1;
-      locBtn.imageView.image = morphImages.lastObject;
-      [locBtn.imageView startAnimating];
-      break;
-    }
-  }
-  [self refreshLocationButtonState:state];
-}
-
-- (void)refreshLocationButtonState:(location::EMyPositionMode)state
-{
-  dispatch_async(dispatch_get_main_queue(), ^
-  {
-    if (self.locationButton.imageView.isAnimating)
-    {
-      [self refreshLocationButtonState:state];
-    }
-    else
-    {
-      UIButton * locBtn = self.locationButton;
-      switch (state)
-      {
-        case location::MODE_PENDING_POSITION:
-          locBtn.mwm_coloring = MWMButtonColoringBlue;
-          break;
-        case location::MODE_UNKNOWN_POSITION:
-          [locBtn setImage:[UIImage imageNamed:@"ic_menu_location_follow"] forState:UIControlStateNormal];
-          locBtn.mwm_coloring = MWMButtonColoringGray;
-          break;
-        case location::MODE_NOT_FOLLOW:
-          [locBtn setImage:[UIImage imageNamed:@"ic_menu_location_get_position"] forState:UIControlStateNormal];
-          locBtn.mwm_coloring = MWMButtonColoringBlack;
-          break;
-        case location::MODE_FOLLOW:
-          [locBtn setImage:[UIImage imageNamed:@"ic_menu_location_follow"] forState:UIControlStateNormal];
-          locBtn.mwm_coloring = MWMButtonColoringBlue;
-          break;
-        case location::MODE_ROTATE_AND_FOLLOW:
-          [locBtn setImage:[UIImage imageNamed:@"ic_menu_location_follow_and_rotate"] forState:UIControlStateNormal];
-          locBtn.mwm_coloring = MWMButtonColoringBlue;
-          break;
-      }
-    }
-  });
-}
-
 #pragma mark - Notifications
 
 - (void)searchStateWillChange:(NSNotification *)notification
@@ -273,26 +195,38 @@ typedef NS_ENUM(NSUInteger, MWMBottomMenuViewCell)
                                                 forIndexPath:indexPath];
   switch (indexPath.item)
   {
+  case MWMBottomMenuViewCellAddPlace:
+  {
+    BOOL const isEnabled = self.controller.controlsManager.navigationState == MWMNavigationDashboardStateHidden &&
+                           GetFramework().CanEditMap();
+    [cell configureWithImageName:@"ic_add_place"
+                           label:L(@"placepage_add_place_button")
+                      badgeCount:0
+                       isEnabled:isEnabled];
+    break;
+  }
   case MWMBottomMenuViewCellDownload:
   {
-    NSUInteger const badgeCount =
-        GetFramework().GetCountryTree().GetActiveMapLayout().GetOutOfDateCount();
+    auto & s = GetFramework().Storage();
+    storage::Storage::UpdateInfo updateInfo{};
+    s.GetUpdateInfo(s.GetRootId(), updateInfo);
     [cell configureWithImageName:@"ic_menu_download"
                            label:L(@"download_maps")
-                      badgeCount:badgeCount];
+                      badgeCount:updateInfo.m_numberOfMwmFilesToUpdate
+                       isEnabled:YES];
   }
   break;
   case MWMBottomMenuViewCellSettings:
-    [cell configureWithImageName:@"ic_menu_settings" label:L(@"settings") badgeCount:0];
+    [cell configureWithImageName:@"ic_menu_settings" label:L(@"settings") badgeCount:0 isEnabled:YES];
     break;
   case MWMBottomMenuViewCellShare:
-    [cell configureWithImageName:@"ic_menu_share" label:L(@"share_my_location") badgeCount:0];
+    [cell configureWithImageName:@"ic_menu_share" label:L(@"share_my_location") badgeCount:0 isEnabled:YES];
     break;
   case MWMBottomMenuViewCellAd:
   {
     MTRGNativeAppwallBanner * banner = [self.controller.appWallAd.banners firstObject];
     [self.controller.appWallAd handleShow:banner];
-    [cell configureWithImageName:@"ic_menu_showcase" label:L(@"showcase_more_apps") badgeCount:0];
+    [cell configureWithImageName:@"ic_menu_showcase" label:L(@"showcase_more_apps") badgeCount:0 isEnabled:YES];
   }
     break;
   case MWMBottomMenuViewCellCount:
@@ -306,8 +240,14 @@ typedef NS_ENUM(NSUInteger, MWMBottomMenuViewCell)
 - (void)collectionView:(nonnull UICollectionView *)collectionView
     didSelectItemAtIndexPath:(nonnull NSIndexPath *)indexPath
 {
+  MWMBottomMenuCollectionViewCell * cell = static_cast<MWMBottomMenuCollectionViewCell *>([collectionView cellForItemAtIndexPath:indexPath]);
+  if (!cell.isEnabled)
+    return;
   switch (indexPath.item)
   {
+  case MWMBottomMenuViewCellAddPlace:
+    [self menuActionAddPlace];
+    break;
   case MWMBottomMenuViewCellDownload:
     [self menuActionDownloadMaps];
     break;
@@ -327,16 +267,23 @@ typedef NS_ENUM(NSUInteger, MWMBottomMenuViewCell)
 
 #pragma mark - Buttons actions
 
+- (void)menuActionAddPlace
+{
+  [Statistics logEvent:kStatEditorAddClick withParameters:@{kStatValue : kStatMenu}];
+  self.state = self.restoreState;
+  [self.delegate addPlace:NO hasPoint:NO point:m2::PointD()];
+}
+
 - (void)menuActionDownloadMaps
 {
-  [[Statistics instance] logEvent:kStatMenu withParameters:@{kStatButton : kStatDownloadMaps}];
+  [Statistics logEvent:kStatMenu withParameters:@{kStatButton : kStatDownloadMaps}];
   self.state = self.restoreState;
-  [self.delegate actionDownloadMaps];
+  [self.delegate actionDownloadMaps:mwm::DownloaderMode::Downloaded];
 }
 
 - (void)menuActionOpenSettings
 {
-  [[Statistics instance] logEvent:kStatMenu withParameters:@{kStatButton : kStatSettings}];
+  [Statistics logEvent:kStatMenu withParameters:@{kStatButton : kStatSettings}];
   self.state = self.restoreState;
   [Alohalytics logEvent:kAlohalyticsTapEventKey withValue:@"settingsAndMore"];
   SettingsAndMoreVC * const vc = [[SettingsAndMoreVC alloc] initWithStyle:UITableViewStyleGrouped];
@@ -345,10 +292,10 @@ typedef NS_ENUM(NSUInteger, MWMBottomMenuViewCell)
 
 - (void)menuActionShareLocation
 {
-  [[Statistics instance] logEvent:kStatMenu withParameters:@{kStatButton : kStatShare}];
+  [Statistics logEvent:kStatMenu withParameters:@{kStatButton : kStatShare}];
   [Alohalytics logEvent:kAlohalyticsTapEventKey withValue:@"share@"];
-  CLLocation * location = [MapsAppDelegate theApp].m_locationManager.lastLocation;
-  if (!location)
+  CLLocation * lastLocation = [MWMLocationManager lastLocation];
+  if (!lastLocation)
   {
     [[[UIAlertView alloc] initWithTitle:L(@"unknown_current_position")
                                 message:nil
@@ -357,7 +304,7 @@ typedef NS_ENUM(NSUInteger, MWMBottomMenuViewCell)
                       otherButtonTitles:nil] show];
     return;
   }
-  CLLocationCoordinate2D const coord = location.coordinate;
+  CLLocationCoordinate2D const coord = lastLocation.coordinate;
   NSIndexPath * cellIndex = [NSIndexPath indexPathForItem:MWMBottomMenuViewCellShare inSection:0];
   MWMBottomMenuCollectionViewCell * cell =
       (MWMBottomMenuCollectionViewCell *)[self.additionalButtons cellForItemAtIndexPath:cellIndex];
@@ -370,15 +317,15 @@ typedef NS_ENUM(NSUInteger, MWMBottomMenuViewCell)
 {
   NSArray<MTRGNativeAppwallBanner *> * banners = self.controller.appWallAd.banners;
   NSAssert(banners.count != 0, @"Banners collection can not be empty!");
-  [[Statistics instance] logEvent:kStatMenu withParameters:@{kStatButton : kStatMoreApps}];
+  [Statistics logEvent:kStatMenu withParameters:@{kStatButton : kStatMoreApps}];
   self.state = self.restoreState;
   [self.controller.appWallAd showWithController:self.controller onComplete:^
   {
-    [[Statistics instance] logEvent:kStatMyTargetAppsDisplayed withParameters:@{kStatCount : @(banners.count)}];
+    [Statistics logEvent:kStatMyTargetAppsDisplayed withParameters:@{kStatCount : @(banners.count)}];
     NSMutableArray<NSString *> * appNames = [@[] mutableCopy];
     for (MTRGNativeAppwallBanner * banner in banners)
     {
-      [[Statistics instance] logEvent:kStatMyTargetAppsDisplayed withParameters:@{kStatName : banner.title}];
+      [Statistics logEvent:kStatMyTargetAppsDisplayed withParameters:@{kStatName : banner.title}];
       [appNames addObject:banner.title];
     }
     NSString * appNamesString = [appNames componentsJoinedByString:@";"];
@@ -394,7 +341,7 @@ typedef NS_ENUM(NSUInteger, MWMBottomMenuViewCell)
     for (MTRGNativeAppwallBanner * banner in banners)
       [appNames addObject:banner.title];
     NSString * appNamesString = [appNames componentsJoinedByString:@";"];
-    [[Statistics instance] logEvent:kStatMyTargetAppsDisplayed
+    [Statistics logEvent:kStatMyTargetAppsDisplayed
                      withParameters:@{
                        kStatError : error,
                        kStatCount : @(banners.count),
@@ -405,13 +352,13 @@ typedef NS_ENUM(NSUInteger, MWMBottomMenuViewCell)
 
 - (IBAction)locationButtonTouchUpInside:(UIButton *)sender
 {
-  [[Statistics instance] logEvent:kStatMenu withParameters:@{kStatButton : kStatLocation}];
+  [Statistics logEvent:kStatMenu withParameters:@{kStatButton : kStatLocation}];
   GetFramework().SwitchMyPositionNextMode();
 }
 
 - (IBAction)point2PointButtonTouchUpInside:(UIButton *)sender
 {
-  [[Statistics instance] logEvent:kStatMenu withParameters:@{kStatButton : kStatPointToPoint}];
+  [Statistics logEvent:kStatMenu withParameters:@{kStatButton : kStatPointToPoint}];
   self.state = self.restoreState;
   BOOL const isSelected = !sender.isSelected;
   sender.selected = isSelected;
@@ -431,7 +378,7 @@ typedef NS_ENUM(NSUInteger, MWMBottomMenuViewCell)
 
 - (IBAction)searchButtonTouchUpInside:(UIButton *)sender
 {
-  [[Statistics instance] logEvent:kStatMenu withParameters:@{kStatButton : kStatSearch}];
+  [Statistics logEvent:kStatMenu withParameters:@{kStatButton : kStatSearch}];
   [Alohalytics logEvent:kAlohalyticsTapEventKey withValue:@"search"];
   self.state = self.restoreState;
   self.controller.controlsManager.searchHidden = self.searchIsActive;
@@ -439,7 +386,7 @@ typedef NS_ENUM(NSUInteger, MWMBottomMenuViewCell)
 
 - (IBAction)bookmarksButtonTouchUpInside:(UIButton *)sender
 {
-  [[Statistics instance] logEvent:kStatMenu withParameters:@{kStatButton : kStatBookmarks}];
+  [Statistics logEvent:kStatMenu withParameters:@{kStatButton : kStatBookmarks}];
   [Alohalytics logEvent:kAlohalyticsTapEventKey withValue:@"bookmarks"];
   self.state = self.restoreState;
   [self.controller openBookmarks];
@@ -456,15 +403,15 @@ typedef NS_ENUM(NSUInteger, MWMBottomMenuViewCell)
   case MWMBottomMenuStatePlanning:
   case MWMBottomMenuStateGo:
   case MWMBottomMenuStateText:
-    [[Statistics instance] logEvent:kStatMenu withParameters:@{kStatButton : kStatExpand}];
+    [Statistics logEvent:kStatMenu withParameters:@{kStatButton : kStatExpand}];
     self.state = MWMBottomMenuStateActive;
     break;
   case MWMBottomMenuStateActive:
-    [[Statistics instance] logEvent:kStatMenu withParameters:@{kStatButton : kStatCollapse}];
+    [Statistics logEvent:kStatMenu withParameters:@{kStatButton : kStatCollapse}];
     self.state = self.restoreState;
     break;
   case MWMBottomMenuStateCompact:
-    [[Statistics instance] logEvent:kStatMenu withParameters:@{kStatButton : kStatRegular}];
+    [Statistics logEvent:kStatMenu withParameters:@{kStatButton : kStatRegular}];
     [self.delegate closeInfoScreens];
     break;
   }
@@ -521,8 +468,11 @@ typedef NS_ENUM(NSUInteger, MWMBottomMenuViewCell)
 
 - (void)setState:(MWMBottomMenuState)state
 {
-  [self toggleDimBackgroundVisible:state == MWMBottomMenuStateActive];
   MWMBottomMenuView * view = (MWMBottomMenuView *)self.view;
+  BOOL const menuActive = (state == MWMBottomMenuStateActive);
+  if (menuActive)
+    [self.controller.view bringSubviewToFront:view];
+  [self toggleDimBackgroundVisible:menuActive];
   if (view.state == MWMBottomMenuStateCompact &&
       (state == MWMBottomMenuStatePlanning || state == MWMBottomMenuStateGo ||
        state == MWMBottomMenuStateText))

@@ -34,10 +34,12 @@ NSDictionary<NSString *, UIColor *> * night =
   @"pressBackground" : [UIColor colorWithRed:scaled(50.) green:scaled(54.) blue:scaled(58.) alpha:alpha100],
   // Red color (use for status closed in place page)
   @"red" : [UIColor colorWithRed:scaled(230.) green:scaled(70.) blue:scaled(60.) alpha:alpha100],
+  @"errorPink" : [UIColor colorWithRed:scaled(246.) green:scaled(60.) blue:scaled(51.) alpha:alpha26],
   // Orange color (use for status 15 min in place page)
   @"orange" : [UIColor colorWithRed:250. green:scaled(190.) blue:scaled(10.) alpha:alpha100],
   // Blue color (use for links and phone numbers)
   @"linkBlue" : [UIColor colorWithRed:scaled(255.) green:scaled(230.) blue:scaled(140.) alpha:alpha100],
+  @"linkBlueHighlighted" : [UIColor colorWithRed:scaled(255.) green:scaled(230.) blue:scaled(140.) alpha:alpha30],
   @"linkBlueDark" : [UIColor colorWithRed:scaled(200.) green:scaled(180.) blue:scaled(110.) alpha:alpha100],
   @"blackPrimaryText" : [UIColor colorWithWhite:1. alpha:alpha90],
   @"blackSecondaryText" : [UIColor colorWithWhite:1. alpha:alpha70],
@@ -45,6 +47,7 @@ NSDictionary<NSString *, UIColor *> * night =
   @"blackDividers" : [UIColor colorWithWhite:1. alpha:alpha12],
   @"white" : [UIColor colorWithRed:scaled(60.) green:scaled(64.) blue:scaled(68.) alpha:alpha100],
   @"whiteSecondaryText" : [UIColor colorWithWhite:0. alpha:alpha70],
+  @"whiteHintText" : [UIColor colorWithWhite:0. alpha:alpha26],
   @"buttonDisabledBlueText" : [UIColor colorWithRed:scaled(255.) green:scaled(230.) blue:scaled(140.) alpha:alpha30],
   @"alertBackground" : [UIColor colorWithRed:scaled(60.) green:scaled(64.) blue:scaled(68.) alpha:alpha90],
   @"blackOpaque" : [UIColor colorWithWhite:1. alpha:alpha04]
@@ -62,10 +65,12 @@ NSDictionary<NSString *, UIColor *> * day =
   @"pressBackground" : [UIColor colorWithRed:scaled(245.) green:scaled(245.) blue:scaled(245.) alpha:alpha100],
   // Red color (use for status closed in place page)
   @"red" : [UIColor colorWithRed:scaled(230.) green:scaled(15.) blue:scaled(35.) alpha:alpha100],
+  @"errorPink" : [UIColor colorWithRed:scaled(246.) green:scaled(60.) blue:scaled(51.) alpha:alpha12],
   // Orange color (use for status 15 min in place page)
   @"orange" : [UIColor colorWithRed:1. green:scaled(120.) blue:scaled(5.) alpha:alpha100],
   // Blue color (use for links and phone numbers)
   @"linkBlue" : [UIColor colorWithRed:scaled(30.) green:scaled(150.) blue:scaled(240.) alpha:alpha100],
+  @"linkBlueHighlighted" : [UIColor colorWithRed:scaled(30.) green:scaled(150.) blue:scaled(240.) alpha:alpha30],
   @"linkBlueDark" : [UIColor colorWithRed:scaled(25.) green:scaled(135.) blue:scaled(215.) alpha:alpha100],
   @"blackPrimaryText" : [UIColor colorWithWhite:0. alpha:alpha87],
   @"blackSecondaryText" : [UIColor colorWithWhite:0. alpha:alpha54],
@@ -73,6 +78,7 @@ NSDictionary<NSString *, UIColor *> * day =
   @"blackDividers" : [UIColor colorWithWhite:0. alpha:alpha12],
   @"white" : [UIColor colorWithWhite:1. alpha:alpha100],
   @"whiteSecondaryText" : [UIColor colorWithWhite:1. alpha:alpha54],
+  @"whiteHintText" : [UIColor colorWithWhite:1. alpha:alpha30],
   @"buttonDisabledBlueText" :[UIColor colorWithRed:scaled(3.) green:scaled(122.) blue:scaled(255.) alpha:alpha26],
   @"alertBackground" : [UIColor colorWithWhite:1. alpha:alpha90],
   @"blackOpaque" : [UIColor colorWithWhite:0. alpha:alpha04]
@@ -146,6 +152,21 @@ UIColor * color(SEL cmd)
 {
   return color(_cmd);
 }
+// Yellow color (use for hotel's stars)
++ (UIColor *)yellow
+{
+  return [UIColor colorWithRed:scaled(255.) green:scaled(200.) blue:scaled(40.) alpha:alpha100];
+}
+// Green color (use for booking rating)
++ (UIColor *)green
+{
+  return [UIColor colorWithRed:scaled(85.) green:scaled(139.) blue:scaled(47.) alpha:alpha100];
+}
+// Pink background for invalid fields
++ (UIColor *)errorPink
+{
+  return color(_cmd);
+}
 // Orange color (use for status 15 min in place page)
 + (UIColor *)orange
 {
@@ -154,6 +175,11 @@ UIColor * color(SEL cmd)
 
 // Blue color (use for links and phone numbers)
 + (UIColor *)linkBlue
+{
+  return color(_cmd);
+}
+
++ (UIColor *)linkBlueHighlighted
 {
   return color(_cmd);
 }
@@ -198,7 +224,18 @@ UIColor * color(SEL cmd)
   return [UIColor colorWithWhite:1. alpha:alpha87];
 }
 
++ (UIColor *)whitePrimaryTextHighlighted
+{
+  // use only for highlighted colors!
+  return [UIColor colorWithWhite:1. alpha:alpha30];
+}
+
 + (UIColor *)whiteSecondaryText
+{
+  return color(_cmd);
+}
+
++ (UIColor *)whiteHintText
 {
   return color(_cmd);
 }
@@ -206,11 +243,6 @@ UIColor * color(SEL cmd)
 + (UIColor *)whiteDividers
 {
   return [UIColor colorWithWhite:1. alpha:alpha12];
-}
-
-+ (UIColor *)buttonEnabledBlueText
-{
-  return [UIColor colorWithRed:scaled(3.) green:scaled(122.) blue:scaled(255.) alpha:alpha100];
 }
 
 + (UIColor *)buttonDisabledBlueText
@@ -231,6 +263,11 @@ UIColor * color(SEL cmd)
 + (UIColor *)blackOpaque
 {
   return color(_cmd);
+}
+
++ (UIColor *)bookingBackground
+{
+  return [UIColor colorWithRed:scaled(25.) green:scaled(69.) blue:scaled(125.) alpha:alpha100];
 }
 
 + (UIColor *)colorWithName:(NSString *)colorName

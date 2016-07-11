@@ -1,17 +1,17 @@
 #import "MapsAppDelegate.h"
+#import "MapViewController.h"
 #import "MWMBasePlacePageView.h"
-#import "MWMBookmarkColorViewController.h"
-#import "MWMBookmarkDescriptionViewController.h"
 #import "MWMDirectionView.h"
 #import "MWMPlacePage.h"
 #import "MWMPlacePageActionBar.h"
 #import "MWMPlacePageEntity.h"
 #import "MWMPlacePageViewManager.h"
-#import "SelectSetVC.h"
 #import "Statistics.h"
 
 static NSString * const kPlacePageNibIdentifier = @"PlacePageView";
 static NSString * const kPlacePageViewCenterKeyPath = @"center";
+extern NSString * const kPP2BookmarkEditingSegue = @"PP2BookmarkEditing";
+extern NSString * const kPP2BookmarkEditingIPADSegue = @"PP2BookmarkEditingIPAD";
 
 @interface MWMPlacePage ()
 
@@ -29,21 +29,10 @@ static NSString * const kPlacePageViewCenterKeyPath = @"center";
     [[NSBundle mainBundle] loadNibNamed:kPlacePageNibIdentifier owner:self options:nil];
     self.manager = manager;
     if (!IPAD)
-    {
       [self.extendedPlacePageView addObserver:self
                                    forKeyPath:kPlacePageViewCenterKeyPath
                                       options:NSKeyValueObservingOptionNew
                                       context:nullptr];
-    }
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(keyboardWillShow:)
-                                                 name:UIKeyboardWillShowNotification
-                                               object:nil];
-
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(keyboardWillHide)
-                                                 name:UIKeyboardWillHideNotification
-                                               object:nil];
   }
   return self;
 }
@@ -51,21 +40,7 @@ static NSString * const kPlacePageViewCenterKeyPath = @"center";
 - (void)dealloc
 {
   if (!IPAD)
-  {
     [self.extendedPlacePageView removeObserver:self forKeyPath:kPlacePageViewCenterKeyPath];
-  }
-  [[NSNotificationCenter defaultCenter] removeObserver:self];
-}
-
-- (void)keyboardWillShow:(NSNotification *)aNotification
-{
-  NSDictionary * info = [aNotification userInfo];
-  self.keyboardHeight = [info[UIKeyboardFrameEndUserInfoKey] CGRectValue].size.height;
-}
-
-- (void)keyboardWillHide
-{
-  self.keyboardHeight = 0.0;
 }
 
 - (void)observeValueForKeyPath:(NSString *)keyPath
@@ -73,8 +48,7 @@ static NSString * const kPlacePageViewCenterKeyPath = @"center";
                         change:(NSDictionary *)change
                        context:(void *)context
 {
-  if ([self.extendedPlacePageView isEqual:object] &&
-      [keyPath isEqualToString:kPlacePageViewCenterKeyPath])
+  if ([self.extendedPlacePageView isEqual:object] && [keyPath isEqualToString:kPlacePageViewCenterKeyPath])
     [self.manager dragPlacePage:self.extendedPlacePageView.frame];
 }
 
@@ -85,12 +59,12 @@ static NSString * const kPlacePageViewCenterKeyPath = @"center";
   BOOL const isPrepareRouteMode = MapsAppDelegate.theApp.routingPlaneMode != MWMRoutingPlaneModeNone;
   if (self.actionBar.isPrepareRouteMode == isPrepareRouteMode)
   {
-    [self.actionBar configureWithPlacePage:self];
+    [self.actionBar configureWithPlacePageManager:self.manager];
   }
   else
   {
     [self.actionBar removeFromSuperview];
-    self.actionBar = [MWMPlacePageActionBar actionBarForPlacePage:self];
+    self.actionBar = [MWMPlacePageActionBar actionBarForPlacePageManager:self.manager];
   }
 }
 
@@ -112,31 +86,17 @@ static NSString * const kPlacePageViewCenterKeyPath = @"center";
 }
 
 #pragma mark - Actions
-- (void)apiBack
-{
-  [self.manager apiBack];
-}
 
 - (void)addBookmark
 {
   [self.basePlacePageView addBookmark];
-  [self.manager addBookmark];
+  self.actionBar.isBookmark = YES;
 }
 
 - (void)removeBookmark
 {
   [self.basePlacePageView removeBookmark];
-  [self.manager removeBookmark];
-}
-
-- (void)share
-{
-  [self.manager share];
-}
-
-- (void)route
-{
-  [self.manager buildRoute];
+  self.actionBar.isBookmark = NO;
 }
 
 - (void)addPlacePageShadowToView:(UIView *)view offset:(CGSize)offset
@@ -158,7 +118,7 @@ static NSString * const kPlacePageViewCenterKeyPath = @"center";
 
 - (void)setDistance:(NSString *)distance
 {
-  self.basePlacePageView.distanceLabel.text = distance;
+  self.basePlacePageView.distance = distance;
 }
 
 - (void)updateMyPositionStatus:(NSString *)status
@@ -166,24 +126,10 @@ static NSString * const kPlacePageViewCenterKeyPath = @"center";
   [self.basePlacePageView updateAndLayoutMyPositionSpeedAndAltitude:status];
 }
 
-- (void)changeBookmarkCategory
+- (void)editBookmark
 {
-  MWMPlacePageViewManager * manager = self.manager;
-  SelectSetVC * vc = [[SelectSetVC alloc] initWithPlacePageManager:manager];
-  [manager.ownerViewController.navigationController pushViewController:vc animated:YES];
-}
-
-- (void)changeBookmarkColor
-{
-  MWMBookmarkColorViewController * controller = [[MWMBookmarkColorViewController alloc] initWithNibName:[MWMBookmarkColorViewController className] bundle:nil];
-  controller.placePageManager = self.manager;
-  [self.manager.ownerViewController.navigationController pushViewController:controller animated:YES];
-}
-
-- (void)changeBookmarkDescription
-{
-  MWMBookmarkDescriptionViewController * viewController = [[MWMBookmarkDescriptionViewController alloc] initWithPlacePageManager:self.manager];
-  [self.manager.ownerViewController.navigationController pushViewController:viewController animated:YES];
+  [self.manager.ownerViewController performSegueWithIdentifier:IPAD ? kPP2BookmarkEditingIPADSegue :
+                                                              kPP2BookmarkEditingSegue sender:self.manager];
 }
 
 - (void)reloadBookmark
@@ -191,26 +137,19 @@ static NSString * const kPlacePageViewCenterKeyPath = @"center";
   [self.basePlacePageView reloadBookmarkCell];
 }
 
-- (void)willStartEditingBookmarkTitle
-{
-  [[Statistics instance] logEvent:kStatEventName(kStatPlacePage, kStatRename)];
-// This method should be ovverriden.
-}
-
-- (void)willFinishEditingBookmarkTitle:(NSString *)title
-{
-  self.basePlacePageView.titleLabel.text = title;
-  [self.basePlacePageView layoutIfNeeded];
-}
-
 - (IBAction)didTap:(UITapGestureRecognizer *)sender
 {
-// This method should be ovverriden if you want to process custom tap.
+// This method should be оverridden if you want to process custom tap.
 }
 
 - (IBAction)didPan:(UIPanGestureRecognizer *)sender
 {
-  // This method should be ovverriden if you want to process custom pan.
+  // This method should be оverridden if you want to process custom pan.
+}
+
+- (void)refresh
+{
+  // This method should be оverridden.
 }
 
 #pragma mark - Properties
@@ -218,7 +157,7 @@ static NSString * const kPlacePageViewCenterKeyPath = @"center";
 - (MWMPlacePageActionBar *)actionBar
 {
   if (!_actionBar)
-    _actionBar = [MWMPlacePageActionBar actionBarForPlacePage:self];
+    _actionBar = [MWMPlacePageActionBar actionBarForPlacePageManager:self.manager];
   return _actionBar;
 }
 

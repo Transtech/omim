@@ -1,14 +1,15 @@
-#include "test_mwm_builder.hpp"
-
-#include "indexer/classificator.hpp"
-#include "indexer/data_header.hpp"
-#include "indexer/features_offsets_table.hpp"
-#include "indexer/index_builder.hpp"
-#include "indexer/search_index_builder.hpp"
+#include "generator/generator_tests_support/test_mwm_builder.hpp"
 
 #include "generator/feature_builder.hpp"
 #include "generator/feature_generator.hpp"
 #include "generator/feature_sorter.hpp"
+#include "generator/generator_tests_support/test_feature.hpp"
+#include "generator/search_index_builder.hpp"
+
+#include "indexer/data_header.hpp"
+#include "indexer/features_offsets_table.hpp"
+#include "indexer/index_builder.hpp"
+#include "indexer/rank_table.hpp"
 
 #include "platform/local_country_file.hpp"
 
@@ -18,12 +19,15 @@
 
 #include "defines.hpp"
 
-
-TestMwmBuilder::TestMwmBuilder(platform::LocalCountryFile & file)
+namespace generator
+{
+namespace tests_support
+{
+TestMwmBuilder::TestMwmBuilder(platform::LocalCountryFile & file, feature::DataHeader::MapType type)
     : m_file(file),
+      m_type(type),
       m_collector(
-          make_unique<feature::FeaturesCollector>(file.GetPath(MapOptions::Map) + EXTENSION_TMP)),
-      m_classificator(classif())
+          make_unique<feature::FeaturesCollector>(m_file.GetPath(MapOptions::Map) + EXTENSION_TMP))
 {
 }
 
@@ -33,13 +37,10 @@ TestMwmBuilder::~TestMwmBuilder()
     Finish();
 }
 
-void TestMwmBuilder::AddPOI(m2::PointD const & p, string const & name, string const & lang)
+void TestMwmBuilder::Add(TestFeature const & feature)
 {
   FeatureBuilder1 fb;
-  fb.SetCenter(p);
-  fb.SetType(m_classificator.GetTypeByPath({"railway", "station"}));
-  CHECK(fb.AddName(lang, name), ("Can't set feature name:", name, "(", lang, ")"));
-
+  feature.Serialize(fb);
   CHECK(Add(fb), (fb));
 }
 
@@ -47,12 +48,20 @@ bool TestMwmBuilder::Add(FeatureBuilder1 & fb)
 {
   CHECK(m_collector, ("It's not possible to add features after call to Finish()."));
 
-  if (fb.PreSerialize() && fb.RemoveInvalidTypes())
+  if (!fb.PreSerialize())
   {
-    (*m_collector)(fb);
-    return true;
+    LOG(LWARNING, ("Can't pre-serialize feature."));
+    return false;
   }
-  return false;
+
+  if (!fb.RemoveInvalidTypes())
+  {
+    LOG(LWARNING, ("No types."));
+    return false;
+  }
+
+  (*m_collector)(fb);
+  return true;
 }
 
 void TestMwmBuilder::Finish()
@@ -65,19 +74,24 @@ void TestMwmBuilder::Finish()
   feature::GenerateInfo info;
   info.m_targetDir = m_file.GetDirectory();
   info.m_tmpDir = m_file.GetDirectory();
-  CHECK(GenerateFinalFeatures(info, m_file.GetCountryFile().GetNameWithoutExt(),
-                              feature::DataHeader::country),
+  CHECK(GenerateFinalFeatures(info, m_file.GetCountryFile().GetName(), m_type),
         ("Can't sort features."));
 
   CHECK(my::DeleteFileX(tmpFilePath), ());
 
-  string const mapFilePath = m_file.GetPath(MapOptions::Map);
-  CHECK(feature::BuildOffsetsTable(mapFilePath), ("Can't build feature offsets table."));
+  string const path = m_file.GetPath(MapOptions::Map);
+  (void)my::DeleteFileX(path + OSM2FEATURE_FILE_EXTENSION);
 
-  CHECK(indexer::BuildIndexFromDatFile(mapFilePath, mapFilePath), ("Can't build geometry index."));
+  CHECK(feature::BuildOffsetsTable(path), ("Can't build feature offsets table."));
 
-  CHECK(indexer::BuildSearchIndexFromDatFile(mapFilePath, true /* forceRebuild */),
+  CHECK(indexer::BuildIndexFromDataFile(path, path), ("Can't build geometry index."));
+
+  CHECK(indexer::BuildSearchIndexFromDataFile(path, true /* forceRebuild */),
         ("Can't build search index."));
+
+  CHECK(search::RankTableBuilder::CreateIfNotExists(path), ());
 
   m_file.SyncWithDisk();
 }
+}  // namespace tests_support
+}  // namespace generator

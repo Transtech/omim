@@ -58,7 +58,7 @@ public class AboutFragment extends BaseSettingsFragment
         .setText(getString(R.string.version, BuildConfig.VERSION_NAME));
 
     ((TextView) mFrame.findViewById(R.id.data_version))
-      .setText(getString(R.string.data_version, Framework.nativeGetDataVersion()));
+        .setText(getString(R.string.data_version, Framework.nativeGetDataVersion()));
 
     setupItem(R.id.web, true);
     setupItem(R.id.blog, true);
@@ -127,7 +127,7 @@ public class AboutFragment extends BaseSettingsFragment
       case R.id.copyright:
         Statistics.INSTANCE.trackEvent(Statistics.EventName.Settings.COPYRIGHT);
         AlohaHelper.logClick(AlohaHelper.Settings.COPYRIGHT);
-        ((SettingsActivity) getActivity()).switchToFragment(CopyrightFragment.class, R.string.copyright);
+        getSettingsActivity().switchToFragment(CopyrightFragment.class, R.string.copyright);
         break;
       }
     } catch (ActivityNotFoundException e)

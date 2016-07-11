@@ -4,11 +4,104 @@
 #include "indexer/feature_data.hpp"
 #include "indexer/classificator.hpp"
 
+#include "std/map.hpp"
 #include "std/sstream.hpp"
 #include "std/utility.hpp"
 
+namespace
+{
+class HighwayClasses
+{
+  map<uint32_t, ftypes::HighwayClass> m_map;
+
+public:
+  HighwayClasses()
+  {
+    auto const & c = classif();
+    m_map[c.GetTypeByPath({"highway", "motorway"})] = ftypes::HighwayClass::Trunk;
+    m_map[c.GetTypeByPath({"highway", "motorway_link"})] = ftypes::HighwayClass::Trunk;
+    m_map[c.GetTypeByPath({"highway", "trunk"})] = ftypes::HighwayClass::Trunk;
+    m_map[c.GetTypeByPath({"highway", "trunk_link"})] = ftypes::HighwayClass::Trunk;
+    m_map[c.GetTypeByPath({"route", "ferry"})] = ftypes::HighwayClass::Trunk;
+
+    m_map[c.GetTypeByPath({"highway", "primary"})] = ftypes::HighwayClass::Primary;
+    m_map[c.GetTypeByPath({"highway", "primary_link"})] = ftypes::HighwayClass::Primary;
+
+    m_map[c.GetTypeByPath({"highway", "secondary"})] = ftypes::HighwayClass::Secondary;
+    m_map[c.GetTypeByPath({"highway", "secondary_link"})] = ftypes::HighwayClass::Secondary;
+
+    m_map[c.GetTypeByPath({"highway", "tertiary"})] = ftypes::HighwayClass::Tertiary;
+    m_map[c.GetTypeByPath({"highway", "tertiary_link"})] = ftypes::HighwayClass::Tertiary;
+
+    m_map[c.GetTypeByPath({"highway", "unclassified"})] = ftypes::HighwayClass::LivingStreet;
+    m_map[c.GetTypeByPath({"highway", "residential"})] = ftypes::HighwayClass::LivingStreet;
+    m_map[c.GetTypeByPath({"highway", "living_street"})] = ftypes::HighwayClass::LivingStreet;
+    m_map[c.GetTypeByPath({"highway", "road"})] = ftypes::HighwayClass::LivingStreet;
+
+    m_map[c.GetTypeByPath({"highway", "service"})] = ftypes::HighwayClass::Service;
+    m_map[c.GetTypeByPath({"highway", "track"})] = ftypes::HighwayClass::Service;
+
+    m_map[c.GetTypeByPath({"highway", "pedestrian"})] = ftypes::HighwayClass::Pedestrian;
+    m_map[c.GetTypeByPath({"highway", "footway"})] = ftypes::HighwayClass::Pedestrian;
+    m_map[c.GetTypeByPath({"highway", "bridleway"})] = ftypes::HighwayClass::Pedestrian;
+    m_map[c.GetTypeByPath({"highway", "steps"})] = ftypes::HighwayClass::Pedestrian;
+    m_map[c.GetTypeByPath({"highway", "cycleway"})] = ftypes::HighwayClass::Pedestrian;
+    m_map[c.GetTypeByPath({"highway", "path"})] = ftypes::HighwayClass::Pedestrian;
+  }
+
+  ftypes::HighwayClass Get(uint32_t t) const
+  {
+    auto const it = m_map.find(t);
+    if (it == m_map.cend())
+      return ftypes::HighwayClass::Error;
+    return it->second;
+  }
+};
+
+char const * HighwayClassToString(ftypes::HighwayClass const cls)
+{
+  switch (cls)
+  {
+  case ftypes::HighwayClass::Undefined: return "Undefined";
+  case ftypes::HighwayClass::Error: return "Error";
+  case ftypes::HighwayClass::Trunk: return "Trunk";
+  case ftypes::HighwayClass::Primary: return "Primary";
+  case ftypes::HighwayClass::Secondary: return "Secondary";
+  case ftypes::HighwayClass::Tertiary: return "Tertiary";
+  case ftypes::HighwayClass::LivingStreet: return "LivingStreet";
+  case ftypes::HighwayClass::Service: return "Service";
+  case ftypes::HighwayClass::Pedestrian: return "Pedestrian";
+  case ftypes::HighwayClass::Count: return "Count";
+  }
+  ASSERT(false, ());
+  return "";
+}
+}  // namespace
+
 namespace ftypes
 {
+string DebugPrint(HighwayClass const cls)
+{
+  stringstream out;
+  out << "[ " << HighwayClassToString(cls) << " ]";
+  return out.str();
+}
+
+HighwayClass GetHighwayClass(feature::TypesHolder const & types)
+{
+  uint8_t constexpr kTruncLevel = 2;
+  static HighwayClasses highwayClasses;
+
+  for (auto t : types)
+  {
+    ftype::TruncValue(t, kTruncLevel);
+    HighwayClass const hc = highwayClasses.Get(t);
+    if (hc != HighwayClass::Error)
+      return hc;
+  }
+
+  return HighwayClass::Error;
+}
 
 uint32_t BaseChecker::PrepareToMatch(uint32_t type, uint8_t level)
 {
@@ -21,7 +114,7 @@ bool BaseChecker::IsMatched(uint32_t type) const
   return (find(m_types.begin(), m_types.end(), PrepareToMatch(type, m_level)) != m_types.end());
 }
 
-bool BaseChecker::operator() (feature::TypesHolder const & types) const
+bool BaseChecker::operator()(feature::TypesHolder const & types) const
 {
   for (uint32_t t : types)
     if (IsMatched(t))
@@ -30,12 +123,12 @@ bool BaseChecker::operator() (feature::TypesHolder const & types) const
   return false;
 }
 
-bool BaseChecker::operator() (FeatureType const & ft) const
+bool BaseChecker::operator()(FeatureType const & ft) const
 {
-  return this->operator() (feature::TypesHolder(ft));
+  return this->operator()(feature::TypesHolder(ft));
 }
 
-bool BaseChecker::operator() (vector<uint32_t> const & types) const
+bool BaseChecker::operator()(vector<uint32_t> const & types) const
 {
   for (size_t i = 0; i < types.size(); ++i)
   {
@@ -48,7 +141,7 @@ bool BaseChecker::operator() (vector<uint32_t> const & types) const
 IsPeakChecker::IsPeakChecker()
 {
   Classificator const & c = classif();
-  m_types.push_back(c.GetTypeByPath({ "natural", "peak" }));
+  m_types.push_back(c.GetTypeByPath({"natural", "peak"}));
 }
 
 IsPeakChecker const & IsPeakChecker::Instance()
@@ -57,11 +150,10 @@ IsPeakChecker const & IsPeakChecker::Instance()
   return inst;
 }
 
-
 IsATMChecker::IsATMChecker()
 {
   Classificator const & c = classif();
-  m_types.push_back(c.GetTypeByPath({ "amenity", "atm" }));
+  m_types.push_back(c.GetTypeByPath({"amenity", "atm"}));
 }
 
 IsATMChecker const & IsATMChecker::Instance()
@@ -86,7 +178,7 @@ IsSpeedCamChecker const & IsSpeedCamChecker::Instance()
 IsFuelStationChecker::IsFuelStationChecker()
 {
   Classificator const & c = classif();
-  m_types.push_back(c.GetTypeByPath({ "amenity", "fuel" }));
+  m_types.push_back(c.GetTypeByPath({"amenity", "fuel"}));
 }
 
 IsFuelStationChecker const & IsFuelStationChecker::Instance()
@@ -95,25 +187,45 @@ IsFuelStationChecker const & IsFuelStationChecker::Instance()
   return inst;
 }
 
+IsRailwayStationChecker::IsRailwayStationChecker()
+{
+  Classificator const & c = classif();
+  m_types.push_back(c.GetTypeByPath({"railway", "station"}));
+}
+
+IsRailwayStationChecker const & IsRailwayStationChecker::Instance()
+{
+  static const IsRailwayStationChecker inst;
+  return inst;
+}
 
 IsStreetChecker::IsStreetChecker()
 {
+  // TODO (@y, @m, @vng): this list must be up-to-date with
+  // data/categories.txt, so, it's worth it to generate or parse it
+  // from that file.
   Classificator const & c = classif();
-  char const * arr[][2] = {
-    { "highway", "trunk" },
-    { "highway", "primary" },
-    { "highway", "secondary" },
-    { "highway", "residential" },
-    { "highway", "pedestrian" },
-    { "highway", "tertiary" },
-    { "highway", "construction" },
-    { "highway", "living_street" },
-    { "highway", "service" },
-    { "highway", "unclassified" }
-  };
-
-  for (size_t i = 0; i < ARRAY_SIZE(arr); ++i)
-    m_types.push_back(c.GetTypeByPath(vector<string>(arr[i], arr[i] + 2)));
+  char const * arr[][2] = {{"highway", "living_street"},
+                           {"highway", "footway"},
+                           {"highway", "motorway"},
+                           {"highway", "motorway_link"},
+                           {"highway", "path"},
+                           {"highway", "pedestrian"},
+                           {"highway", "primary"},
+                           {"highway", "primary_link"},
+                           {"highway", "residential"},
+                           {"highway", "road"},
+                           {"highway", "secondary"},
+                           {"highway", "secondary_link"},
+                           {"highway", "service"},
+                           {"highway", "tertiary"},
+                           {"highway", "tertiary_link"},
+                           {"highway", "track"},
+                           {"highway", "trunk"},
+                           {"highway", "trunk_link"},
+                           {"highway", "unclassified"}};
+  for (auto const & p : arr)
+    m_types.push_back(c.GetTypeByPath({p[0], p[1]}));
 }
 
 IsStreetChecker const & IsStreetChecker::Instance()
@@ -122,10 +234,43 @@ IsStreetChecker const & IsStreetChecker::Instance()
   return inst;
 }
 
+IsAddressObjectChecker::IsAddressObjectChecker() : BaseChecker(1 /* level */)
+{
+  auto const paths = {"building", "amenity", "shop", "tourism", "historic", "office", "craft"};
+
+  Classificator const & c = classif();
+  for (auto const & p : paths)
+    m_types.push_back(c.GetTypeByPath({p}));
+}
+
+IsAddressObjectChecker const & IsAddressObjectChecker::Instance()
+{
+  static const IsAddressObjectChecker inst;
+  return inst;
+}
+
+IsVillageChecker::IsVillageChecker()
+{
+  // TODO (@y, @m, @vng): this list must be up-to-date with
+  // data/categories.txt, so, it's worth it to generate or parse it
+  // from that file.
+  Classificator const & c = classif();
+  char const * arr[][2] = {{"place", "village"}, {"place", "hamlet"}};
+
+  for (auto const & p : arr)
+    m_types.push_back(c.GetTypeByPath({p[0], p[1]}));
+}
+
+IsVillageChecker const & IsVillageChecker::Instance()
+{
+  static const IsVillageChecker inst;
+  return inst;
+}
+
 IsOneWayChecker::IsOneWayChecker()
 {
   Classificator const & c = classif();
-  m_types.push_back(c.GetTypeByPath({ "hwtag", "oneway" }));
+  m_types.push_back(c.GetTypeByPath({"hwtag", "oneway"}));
 }
 
 IsOneWayChecker const & IsOneWayChecker::Instance()
@@ -137,7 +282,7 @@ IsOneWayChecker const & IsOneWayChecker::Instance()
 IsRoundAboutChecker::IsRoundAboutChecker()
 {
   Classificator const & c = classif();
-  m_types.push_back(c.GetTypeByPath({ "junction", "roundabout" }));
+  m_types.push_back(c.GetTypeByPath({"junction", "roundabout"}));
 }
 
 IsRoundAboutChecker const & IsRoundAboutChecker::Instance()
@@ -149,13 +294,11 @@ IsRoundAboutChecker const & IsRoundAboutChecker::Instance()
 IsLinkChecker::IsLinkChecker()
 {
   Classificator const & c = classif();
-  char const * arr[][2] = {
-    { "highway", "motorway_link" },
-    { "highway", "trunk_link" },
-    { "highway", "primary_link" },
-    { "highway", "secondary_link" },
-    { "highway", "tertiary_link" }
-  };
+  char const * arr[][2] = {{"highway", "motorway_link"},
+                           {"highway", "trunk_link"},
+                           {"highway", "primary_link"},
+                           {"highway", "secondary_link"},
+                           {"highway", "tertiary_link"}};
 
   for (size_t i = 0; i < ARRAY_SIZE(arr); ++i)
     m_types.push_back(c.GetTypeByPath(vector<string>(arr[i], arr[i] + 2)));
@@ -167,12 +310,9 @@ IsLinkChecker const & IsLinkChecker::Instance()
   return inst;
 }
 
-IsBuildingChecker::IsBuildingChecker()
+IsBuildingChecker::IsBuildingChecker() : BaseChecker(1 /* level */)
 {
-  Classificator const & c = classif();
-
-  m_types.push_back(c.GetTypeByPath({ "building" }));
-  m_types.push_back(c.GetTypeByPath({ "building", "address" }));
+  m_types.push_back(classif().GetTypeByPath({"building"}));
 }
 
 IsBuildingChecker const & IsBuildingChecker::Instance()
@@ -199,8 +339,9 @@ IsLocalityChecker::IsLocalityChecker()
     m_types.push_back(c.GetTypeByPath(vector<string>(arr[i], arr[i] + 2)));
 }
 
-IsBuildingPartChecker::IsBuildingPartChecker() : BaseChecker(3)
+IsBuildingPartChecker::IsBuildingPartChecker() : BaseChecker(1 /* level */)
 {
+  m_types.push_back(classif().GetTypeByPath({"building:part"}));
 }
 
 IsBuildingPartChecker const & IsBuildingPartChecker::Instance()
@@ -209,15 +350,7 @@ IsBuildingPartChecker const & IsBuildingPartChecker::Instance()
   return inst;
 }
 
-bool IsBuildingPartChecker::IsMatched(uint32_t type) const
-{
-  return IsTypeConformed(type, {"building:part"});
-}
-
-IsBridgeChecker::IsBridgeChecker() : BaseChecker(3)
-{ 
-}
-
+IsBridgeChecker::IsBridgeChecker() : BaseChecker(3 /* level */) {}
 IsBridgeChecker const & IsBridgeChecker::Instance()
 {
   static const IsBridgeChecker inst;
@@ -229,10 +362,7 @@ bool IsBridgeChecker::IsMatched(uint32_t type) const
   return IsTypeConformed(type, {"highway", "*", "bridge"});
 }
 
-IsTunnelChecker::IsTunnelChecker() : BaseChecker(3)
-{
-}
-
+IsTunnelChecker::IsTunnelChecker() : BaseChecker(3 /* level */) {}
 IsTunnelChecker const & IsTunnelChecker::Instance()
 {
   static const IsTunnelChecker inst;
@@ -244,26 +374,34 @@ bool IsTunnelChecker::IsMatched(uint32_t type) const
   return IsTypeConformed(type, {"highway", "*", "tunnel"});
 }
 
-Type IsLocalityChecker::GetType(feature::TypesHolder const & types) const
+Type IsLocalityChecker::GetType(uint32_t t) const
 {
-  for (uint32_t t : types)
-  {
-    ftype::TruncValue(t, 2);
+  ftype::TruncValue(t, 2);
 
-    size_t j = COUNTRY;
-    for (; j < LOCALITY_COUNT; ++j)
-      if (t == m_types[j])
-        return static_cast<Type>(j);
+  size_t j = COUNTRY;
+  for (; j < LOCALITY_COUNT; ++j)
+    if (t == m_types[j])
+      return static_cast<Type>(j);
 
-    for (; j < m_types.size(); ++j)
-      if (t == m_types[j])
-        return VILLAGE;
-  }
+  for (; j < m_types.size(); ++j)
+    if (t == m_types[j])
+      return VILLAGE;
 
   return NONE;
 }
 
-Type IsLocalityChecker::GetType(const FeatureType & f) const
+Type IsLocalityChecker::GetType(feature::TypesHolder const & types) const
+{
+  for (uint32_t t : types)
+  {
+    Type const type = GetType(t);
+    if (type != NONE)
+      return type;
+  }
+  return NONE;
+}
+
+Type IsLocalityChecker::GetType(FeatureType const & f) const
 {
   feature::TypesHolder types(f);
   return GetType(types);
@@ -273,6 +411,38 @@ IsLocalityChecker const & IsLocalityChecker::Instance()
 {
   static IsLocalityChecker const inst;
   return inst;
+}
+
+IsBookingChecker::IsBookingChecker()
+{
+  Classificator const & c = classif();
+  m_types.push_back(c.GetTypeByPath({"sponsored", "booking"}));
+}
+
+IsBookingChecker const & IsBookingChecker::Instance()
+{
+  static const IsBookingChecker inst;
+  return inst;
+}
+
+IsHotelChecker::IsHotelChecker()
+{
+  Classificator const & c = classif();
+  for (auto const & tag : GetHotelTags())
+    m_types.push_back(c.GetTypeByPath({"tourism", tag}));
+}
+
+IsHotelChecker const & IsHotelChecker::Instance()
+{
+  static const IsHotelChecker inst;
+  return inst;
+}
+
+vector<string> const & IsHotelChecker::GetHotelTags()
+{
+  static vector<string> hotelTags = {"hotel",       "apartment", "camp_site", "chalet",
+                                     "guest_house", "hostel",    "motel",     "resort"};
+  return hotelTags;
 }
 
 uint32_t GetPopulation(FeatureType const & ft)
@@ -308,96 +478,26 @@ uint32_t GetPopulationByRadius(double r)
   return my::rounds(pow(r / 550.0, 3.6));
 }
 
-bool IsTypeConformed(uint32_t type, vector<string> const & path)
+bool IsTypeConformed(uint32_t type, StringIL const & path)
 {
-  Classificator const & c = classif();
-  ClassifObject const * p = c.GetRoot();
+  ClassifObject const * p = classif().GetRoot();
   ASSERT(p, ());
 
   uint8_t val = 0, i = 0;
-  for (auto const & n : path)
+  for (char const * s : path)
   {
     if (!ftype::GetValue(type, i, val))
       return false;
+
     p = p->GetObject(val);
     if (p == 0)
       return false;
-    string const name = p->GetName();
-    if (n != name && n != "*")
+
+    if (p->GetName() != s && strcmp(s, "*") != 0)
       return false;
+
     ++i;
   }
   return true;
 }
-
-string DebugPrint(HighwayClass const cls)
-{
-  stringstream out;
-  out << "[ ";
-  switch (cls)
-  {
-    case HighwayClass::Undefined:
-      out << "Undefined";
-    case HighwayClass::Error:
-      out << "Error";
-    case HighwayClass::Trunk:
-      out << "Trunk";
-    case HighwayClass::Primary:
-      out << "Primary";
-    case HighwayClass::Secondary:
-      out << "Secondary";
-    case HighwayClass::Tertiary:
-      out << "Tertiary";
-    case HighwayClass::LivingStreet:
-      out << "LivingStreet";
-    case HighwayClass::Service:
-      out << "Service";
-    case HighwayClass::Count:
-      out << "Count";
-    default:
-      out << "Unknown value of HighwayClass: " << static_cast<int>(cls);
-  }
-  out << " ]";
-  return out.str();
-}
-
-HighwayClass GetHighwayClass(feature::TypesHolder const & types)
-{
-  Classificator const & c = classif();
-  static pair<HighwayClass, uint32_t> const kHighwayClasses[] = {
-      {HighwayClass::Trunk, c.GetTypeByPath({"highway", "motorway"})},
-      {HighwayClass::Trunk, c.GetTypeByPath({"highway", "motorway_link"})},
-      {HighwayClass::Trunk, c.GetTypeByPath({"highway", "trunk"})},
-      {HighwayClass::Trunk, c.GetTypeByPath({"highway", "trunk_link"})},
-      {HighwayClass::Trunk, c.GetTypeByPath({"route", "ferry"})},
-      {HighwayClass::Primary, c.GetTypeByPath({"highway", "primary"})},
-      {HighwayClass::Primary, c.GetTypeByPath({"highway", "primary_link"})},
-      {HighwayClass::Secondary, c.GetTypeByPath({"highway", "secondary"})},
-      {HighwayClass::Secondary, c.GetTypeByPath({"highway", "secondary_link"})},
-      {HighwayClass::Tertiary, c.GetTypeByPath({"highway", "tertiary"})},
-      {HighwayClass::Tertiary, c.GetTypeByPath({"highway", "tertiary_link"})},
-      {HighwayClass::LivingStreet, c.GetTypeByPath({"highway", "unclassified"})},
-      {HighwayClass::LivingStreet, c.GetTypeByPath({"highway", "residential"})},
-      {HighwayClass::LivingStreet, c.GetTypeByPath({"highway", "living_street"})},
-      {HighwayClass::Service, c.GetTypeByPath({"highway", "service"})},
-      {HighwayClass::Service, c.GetTypeByPath({"highway", "track"})}};
-  uint8_t const kTruncLevel = 2;
-
-  for (auto t : types)
-  {
-    ftype::TruncValue(t, kTruncLevel);
-    for (auto const & cls : kHighwayClasses)
-    {
-      if (cls.second == t)
-        return cls.first;
-    }
-  }
-
-  return HighwayClass::Error;
-}
-
-HighwayClass GetHighwayClass(FeatureType const & ft)
-{
-  return GetHighwayClass(feature::TypesHolder(ft));
-}
-}
+}  // namespace ftypes

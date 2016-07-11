@@ -24,15 +24,8 @@
 #pragma mark - Actions
 - (void)addBookmark;
 - (void)removeBookmark;
-- (void)changeBookmarkColor;
-- (void)changeBookmarkCategory;
-- (void)changeBookmarkDescription;
-- (void)share;
-- (void)route;
+- (void)editBookmark;
 - (void)reloadBookmark;
-- (void)apiBack;
-- (void)willStartEditingBookmarkTitle;
-- (void)willFinishEditingBookmarkTitle:(NSString *)title;
 - (void)addPlacePageShadowToView:(UIView *)view offset:(CGSize)offset;
 
 - (IBAction)didTap:(UITapGestureRecognizer *)sender;
@@ -41,8 +34,7 @@
 - (void)setDistance:(NSString *)distance;
 - (void)updateMyPositionStatus:(NSString *)status;
 
-- (void)keyboardWillShow:(NSNotification *)aNotification;
-- (void)keyboardWillHide;
+- (void)refresh;
 
 - (instancetype)init __attribute__((unavailable("call initWithManager: instead")));
 

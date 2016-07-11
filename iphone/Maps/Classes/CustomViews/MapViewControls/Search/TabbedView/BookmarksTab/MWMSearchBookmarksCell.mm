@@ -1,4 +1,5 @@
 #import "BookmarksVC.h"
+#import "Common.h"
 #import "MWMSearchBookmarksCell.h"
 #import "UIColor+MapsMeColor.h"
 #import "UIFont+MapsMeFonts.h"
@@ -22,6 +23,7 @@
 
 - (void)awakeFromNib
 {
+  [super awakeFromNib];
   if (IPAD)
     self.contentView.backgroundColor = [UIColor white];
   self.layer.shouldRasterize = YES;
@@ -40,6 +42,17 @@
   }
   self.count = userMarksCount + cat->GetTracksCount();
   self.titleLabel.text = @(cat->GetName().c_str());
+}
+
+- (void)layoutSubviews
+{
+  [super layoutSubviews];
+  if (isIOS7)
+  {
+    self.titleLabel.preferredMaxLayoutWidth = floor(self.titleLabel.width);
+    self.countLabel.preferredMaxLayoutWidth = floor(self.countLabel.width);
+    [super layoutSubviews];
+  }
 }
 
 - (IBAction)toggleVisibility

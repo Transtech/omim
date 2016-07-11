@@ -1,24 +1,26 @@
 #pragma once
 
+#include "generator/feature_builder.hpp"
 #include "generator/osm2type.hpp"
 #include "generator/osm_element.hpp"
-#include "generator/feature_builder.hpp"
 #include "generator/ways_merger.hpp"
 
-#include "indexer/ftypes_matcher.hpp"
-#include "indexer/feature_visibility.hpp"
 #include "indexer/classificator.hpp"
+#include "indexer/feature_visibility.hpp"
+#include "indexer/ftypes_matcher.hpp"
 
 #include "geometry/tree4d.hpp"
 
-#include "base/string_utils.hpp"
+#include "coding/file_writer.hpp"
+
+#include "base/cache.hpp"
 #include "base/logging.hpp"
 #include "base/stl_add.hpp"
-#include "base/cache.hpp"
+#include "base/string_utils.hpp"
 
-#include "std/unordered_set.hpp"
 #include "std/list.hpp"
 #include "std/type_traits.hpp"
+#include "std/unordered_set.hpp"
 
 namespace
 {
@@ -27,8 +29,7 @@ class Place
   FeatureBuilder1 m_ft;
   m2::PointD m_pt;
   uint32_t m_type;
-
-  static constexpr double EQUAL_PLACE_SEARCH_RADIUS_M = 20000.0;
+  double m_thresholdM;
 
   bool IsPoint() const { return (m_ft.GetGeomType() == feature::GEOM_POINT); }
   static bool IsEqualTypes(uint32_t t1, uint32_t t2)
@@ -41,13 +42,26 @@ class Place
   }
 
 public:
-  Place(FeatureBuilder1 const & ft, uint32_t type) : m_ft(ft), m_pt(ft.GetKeyPoint()), m_type(type) {}
+  Place(FeatureBuilder1 const & ft, uint32_t type) : m_ft(ft), m_pt(ft.GetKeyPoint()), m_type(type)
+  {
+    using namespace ftypes;
+
+    switch (IsLocalityChecker::Instance().GetType(m_type))
+    {
+    case COUNTRY: m_thresholdM = 300000.0; break;
+    case STATE: m_thresholdM = 100000.0; break;
+    case CITY: m_thresholdM = 30000.0; break;
+    case TOWN: m_thresholdM = 20000.0; break;
+    case VILLAGE: m_thresholdM = 10000.0; break;
+    default: m_thresholdM = 10000.0; break;
+    }
+  }
 
   FeatureBuilder1 const & GetFeature() const { return m_ft; }
 
   m2::RectD GetLimitRect() const
   {
-    return MercatorBounds::RectByCenterXYAndSizeInMeters(m_pt, EQUAL_PLACE_SEARCH_RADIUS_M);
+    return MercatorBounds::RectByCenterXYAndSizeInMeters(m_pt, m_thresholdM);
   }
 
   bool IsEqual(Place const & r) const
@@ -55,17 +69,17 @@ public:
     return (IsEqualTypes(m_type, r.m_type) &&
             m_ft.GetName() == r.m_ft.GetName() &&
             (IsPoint() || r.IsPoint()) &&
-            MercatorBounds::DistanceOnEarth(m_pt, r.m_pt) < EQUAL_PLACE_SEARCH_RADIUS_M);
+            MercatorBounds::DistanceOnEarth(m_pt, r.m_pt) < m_thresholdM);
   }
 
   /// Check whether we need to replace place @r with place @this.
   bool IsBetterThan(Place const & r) const
   {
-    // Area places has priority before point places.
-    if (!r.IsPoint())
-      return false;
-    if (!IsPoint())
-      return true;
+    // Check ranks.
+    uint8_t const r1 = m_ft.GetRank();
+    uint8_t const r2 = r.m_ft.GetRank();
+    if (r1 != r2)
+      return (r2 < r1);
 
     // Check types length.
     // ("place-city-capital-2" is better than "place-city").
@@ -74,8 +88,10 @@ public:
     if (l1 != l2)
       return (l2 < l1);
 
-    // Check ranks.
-    return (r.m_ft.GetRank() < m_ft.GetRank());
+    // Assume that area places has better priority than point places at the very end ...
+    /// @todo It was usefull when place=XXX type has any area fill style.
+    /// Need to review priority logic here (leave the native osm label).
+    return !IsPoint();
   }
 };
 
@@ -119,6 +135,11 @@ protected:
     return false;
   }
 
+  void AddCustomTag(pair<string, string> const & p)
+  {
+    m_current->AddTag(p.first, p.second);
+  }
+
   virtual void Process(RelationElement const & e) = 0;
 
 protected:
@@ -136,15 +157,28 @@ class RelationTagsNode : public RelationTagsBase
 protected:
   void Process(RelationElement const & e) override
   {
-    if (TBase::IsSkipRelation(e.GetType()))
+    string const & type = e.GetType();
+    if (TBase::IsSkipRelation(type))
       return;
+
+    bool const processAssociatedStreet = type == "associatedStreet" &&
+        TBase::IsKeyTagExists("addr:housenumber") && !TBase::IsKeyTagExists("addr:street");
 
     for (auto const & p : e.tags)
     {
-      // Store only this tags to use it in railway stations processing for the particular city.
-      if (p.first == "network" || p.first == "operator" || p.first == "route" || p.first == "maxspeed")
+      // - used in railway station processing
+      // - used in routing information
+      // - used in building addresses matching
+      if (p.first == "network" || p.first == "operator" || p.first == "route" ||
+          p.first == "maxspeed" ||
+          strings::StartsWith(p.first, "addr:"))
+      {
         if (!TBase::IsKeyTagExists(p.first))
-          TBase::m_current->AddTag(p.first, p.second);
+          TBase::AddCustomTag(p);
+      }
+      // Convert associatedStreet relation name to addr:street tag if we don't have one.
+      else if (p.first == "name" && processAssociatedStreet)
+        TBase::AddCustomTag({"addr:street", p.second});
     }
   }
 };
@@ -164,45 +198,40 @@ class RelationTagsWay : public RelationTagsBase
     return (role != "inner");
   }
 
-  void GetNameKeys(TNameKeys & keys) const
-  {
-    for (auto const & p : TBase::m_current->m_tags)
-      if (strings::StartsWith(p.key, "name"))
-        keys.insert(p.key);
-  }
-
 protected:
   void Process(RelationElement const & e) override
   {
     /// @todo Review route relations in future.
     /// Actually, now they give a lot of dummy tags.
-    string const type = e.GetType();
+    string const & type = e.GetType();
     if (TBase::IsSkipRelation(type) || type == "route")
       return;
 
-    bool const isWay = (TBase::m_current->type == OsmElement::EntityType::Way);
-    bool const isBoundary = isWay && (type == "boundary") && IsAcceptBoundary(e);
-
-    TNameKeys nameKeys;
-    GetNameKeys(nameKeys);
+    bool const isBoundary = (type == "boundary") && IsAcceptBoundary(e);
+    bool const processAssociatedStreet = type == "associatedStreet" &&
+        TBase::IsKeyTagExists("addr:housenumber") && !TBase::IsKeyTagExists("addr:street");
 
     for (auto const & p : e.tags)
     {
       /// @todo Skip common key tags.
-      if (p.first == "type" || p.first == "route")
+      if (p.first == "type" || p.first == "route" || p.first == "area")
         continue;
 
-      // Skip already existing "name" tags.
-      if (nameKeys.count(p.first) != 0)
+      // Convert associatedStreet relation name to addr:street tag if we don't have one.
+      if (p.first == "name" && processAssociatedStreet)
+        TBase::AddCustomTag({"addr:street", p.second});
+
+      // Important! Skip all "name" tags.
+      if (strings::StartsWith(p.first, "name"))
         continue;
 
       if (!isBoundary && p.first == "boundary")
         continue;
 
-      if (isWay && p.first == "place")
+      if (p.first == "place")
         continue;
 
-      TBase::m_current->AddTag(p.first, p.second);
+      TBase::AddCustomTag(p);
     }
   }
 };

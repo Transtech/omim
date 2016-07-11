@@ -129,4 +129,7 @@ private.h
 tools/android/mapswithme.keystore
 tools/android/yota.keystore
 android/secure.properties
+android/fabric.properties
+android/pushwoosh.properties
+android/res/values/google-service.xml
 server

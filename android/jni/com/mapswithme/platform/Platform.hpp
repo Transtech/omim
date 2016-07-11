@@ -2,8 +2,6 @@
 
 #include <jni.h>
 
-#include "MethodRef.hpp"
-
 #include "platform/platform.hpp"
 
 namespace android
@@ -11,22 +9,22 @@ namespace android
   class Platform : public ::Platform
   {
   public:
-    Platform();
     void Initialize(JNIEnv * env,
+                    jobject functorProcessObject,
                     jstring apkPath, jstring storagePath,
                     jstring tmpPath, jstring obbGooglePath,
                     jstring flavorName, jstring buildType,
-                    bool isYota, bool isTablet);
+                    bool isTablet);
 
-    void InitAppMethodRefs(jobject appObject);
-    void CallNativeFunctor(jlong functionPointer);
+    void ProcessFunctor(jlong functionPointer);
 
     void OnExternalStorageStatusChanged(bool isAvailable);
 
     /// get storage path without ending "/MapsWithMe/"
     string GetStoragePathPrefix() const;
     /// assign storage path (should contain ending "/MapsWithMe/")
-    void SetStoragePath(string const & path);
+    void SetWritableDir(string const & dir);
+    void SetSettingsDir(string const & dir);
 
     bool HasAvailableSpaceForWriting(uint64_t size) const;
     void RunOnGuiThread(TFunctor const & fn);
@@ -34,6 +32,7 @@ namespace android
     static Platform & Instance();
 
   private:
-    MethodRef m_runOnUI;
+    jobject m_functorProcessObject;
+    jmethodID m_functorProcessMethod;
   };
 }

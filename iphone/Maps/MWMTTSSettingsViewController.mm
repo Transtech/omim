@@ -7,9 +7,11 @@
 #import "WebViewController.h"
 #import <AVFoundation/AVFoundation.h>
 
+#include "LocaleTranslator.h"
+
 static NSString * kSelectTTSLanguageSegueName = @"TTSLanguage";
 
-using namespace std;
+using namespace locale_translator;
 
 @interface MWMTTSSettingsViewController ()
 {
@@ -129,7 +131,7 @@ using namespace std;
   {
     if (indexPath.row == _languages.size())
     {
-      [[Statistics instance] logEvent:kStatEventName(kStatTTSSettings, kStatChangeLanguage)
+      [Statistics logEvent:kStatEventName(kStatTTSSettings, kStatChangeLanguage)
                        withParameters:@{kStatValue : kStatOther}];
       [self performSegueWithIdentifier:kSelectTTSLanguageSegueName sender:nil];
     }
@@ -141,7 +143,7 @@ using namespace std;
   }
   else if (indexPath.section == 1)
   {
-    [[Statistics instance] logEvent:kStatEventName(kStatTTSSettings, kStatHelp)];
+    [Statistics logEvent:kStatEventName(kStatTTSSettings, kStatHelp)];
     NSString * path = [[NSBundle mainBundle] pathForResource:@"tts-how-to-set-up-voice" ofType:@"html"];
     NSString * html = [[NSString alloc] initWithContentsOfFile:path encoding:NSUTF8StringEncoding error:nil];
     NSURL * baseURL = [NSURL fileURLWithPath:path];

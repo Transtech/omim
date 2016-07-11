@@ -2,14 +2,20 @@ package com.mapswithme.util;
 
 import android.animation.Animator;
 import android.app.Activity;
+import android.content.ContentResolver;
+import android.content.Context;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.content.res.Configuration;
+import android.content.res.Resources;
+import android.net.Uri;
 import android.os.Build;
-import android.provider.Settings;
+import android.support.annotation.AnyRes;
 import android.support.annotation.DimenRes;
+import android.support.annotation.DrawableRes;
 import android.support.annotation.IdRes;
 import android.support.annotation.NonNull;
+import android.support.annotation.StringRes;
+import android.support.design.widget.TextInputLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
@@ -18,6 +24,8 @@ import android.view.View;
 import android.view.ViewTreeObserver;
 import android.view.animation.Animation;
 import android.view.animation.Animation.AnimationListener;
+import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.mapswithme.maps.MwmApplication;
@@ -213,49 +221,6 @@ public final class UiUtils
     showIf(!TextUtils.isEmpty(text), tv);
   }
 
-  public static void checkConnectionAndShowAlert(final Activity activity, final String message)
-  {
-    if (!ConnectionState.isConnected())
-    {
-      activity.runOnUiThread(new Runnable()
-      {
-        @Override
-        public void run()
-        {
-          new AlertDialog.Builder(activity)
-                  .setCancelable(false)
-                  .setMessage(message)
-                  .setPositiveButton(activity.getString(R.string.connection_settings), new DialogInterface.OnClickListener()
-                  {
-                    @Override
-                    public void onClick(DialogInterface dlg, int which)
-                    {
-                      try
-                      {
-                        activity.startActivity(new Intent(Settings.ACTION_WIRELESS_SETTINGS));
-                      } catch (final Exception ex)
-                      {
-                        ex.printStackTrace();
-                      }
-
-                      dlg.dismiss();
-                    }
-                  })
-                  .setNegativeButton(activity.getString(R.string.close), new DialogInterface.OnClickListener()
-                  {
-                    @Override
-                    public void onClick(DialogInterface dlg, int which)
-                    {
-                      dlg.dismiss();
-                    }
-                  })
-                  .create()
-                  .show();
-        }
-      });
-    }
-  }
-
   public static void showHomeUpButton(Toolbar toolbar)
   {
     toolbar.setNavigationIcon(ThemeUtils.getResource(toolbar.getContext(), R.attr.homeAsUpIndicator));
@@ -318,7 +283,46 @@ public final class UiUtils
     return (int) (dp * sScreenDensity + 0.5);
   }
 
+  public static void updateButton(Button button)
+  {
+    button.setTextColor(ThemeUtils.getColor(button.getContext(), button.isEnabled() ? R.attr.buttonTextColor
+                                                                                    : R.attr.buttonTextColorDisabled));
+  }
+
+  public static void updateAccentButton(Button button)
+  {
+    button.setTextColor(ThemeUtils.getColor(button.getContext(), button.isEnabled() ? R.attr.accentButtonTextColor
+                                                                                    : R.attr.accentButtonTextColorDisabled));
+  }
+
+  public static void setupPlaceholder(View frame, @DrawableRes int imageRes, @StringRes int titleRes, @StringRes int subtitleRes)
+  {
+    ImageView image = (ImageView) frame.findViewById(R.id.image);
+    image.setImageResource(imageRes);
+
+    TextView title = (TextView) frame.findViewById(R.id.title);
+    title.setText(titleRes);
+
+    TextView subtitle = (TextView) frame.findViewById(R.id.subtitle);
+    subtitle.setText(subtitleRes);
+  }
+
+  public static Uri getUriToResId(@NonNull Context context, @AnyRes int resId)
+  {
+    final Resources resources = context.getResources();
+    return Uri.parse(ContentResolver.SCHEME_ANDROID_RESOURCE + "://"
+                         + resources.getResourcePackageName(resId) + '/'
+                         + resources.getResourceTypeName(resId) + '/'
+                         + resources.getResourceEntryName(resId));
+  }
+
+  public static void setInputError(@NonNull TextInputLayout layout, @StringRes int error)
+  {
+    layout.setError(error == 0 ? null : layout.getContext().getString(error));
+    layout.getEditText().setTextColor(error == 0 ? ThemeUtils.getColor(layout.getContext(), android.R.attr.textColorPrimary)
+                                                 : layout.getContext().getResources().getColor(R.color.base_red));
+  }
+
   // utility class
-  private UiUtils()
-  {}
+  private UiUtils() {}
 }

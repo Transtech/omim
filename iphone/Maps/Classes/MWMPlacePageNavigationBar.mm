@@ -4,11 +4,12 @@
 #import "MWMPlacePageEntity.h"
 #import "MWMPlacePageNavigationBar.h"
 #import "MWMPlacePageViewManager.h"
+#import "MWMViewController.h"
 #import "Statistics.h"
 #import <objc/runtime.h>
 
 static NSString * const kPlacePageNavigationBarNibName = @"PlacePageNavigationBar";
-static CGFloat const kNavigationBarHeight = 64.;
+static CGFloat const kNavigationBarHeight = 36.;
 
 static inline CGPoint const openCenter(CGFloat xPosition)
 {
@@ -22,7 +23,6 @@ static inline CGPoint const dismissCenter(CGFloat xPosition)
 
 @interface MWMPlacePageNavigationBar ()
 
-@property (weak, nonatomic) IBOutlet UILabel * titleLabel;
 @property (weak, nonatomic) MWMiPhonePortraitPlacePage * placePage;
 
 @end
@@ -53,8 +53,6 @@ static inline CGPoint const dismissCenter(CGFloat xPosition)
   }
 
   navBar.placePage = placePage;
-  MWMPlacePageEntity * entity = placePage.manager.entity;
-  navBar.titleLabel.text = entity.type == MWMPlacePageEntityTypeBookmark ? entity.bookmarkTitle : entity.title;
   [navBar show];
 }
 
@@ -98,9 +96,9 @@ static inline CGPoint const dismissCenter(CGFloat xPosition)
   return navBar;
 }
 
-- (IBAction)backTap:(id)sender
+- (IBAction)dismissTap
 {
-  [[Statistics instance] logEvent:kStatEventName(kStatPlacePage, kStatBack)];
+  [Statistics logEvent:kStatEventName(kStatPlacePage, kStatBack)];
   [self dismiss];
   [self.placePage.manager refreshPlacePage];
 }
@@ -109,12 +107,6 @@ static inline CGPoint const dismissCenter(CGFloat xPosition)
 {
   if (self)
     self.origin = CGPointZero;
-}
-
-- (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event
-{
-// Prevent super call to stop event propagation
-// [super touchesBegan:touches withEvent:event];
 }
 
 @end

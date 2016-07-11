@@ -1,24 +1,24 @@
 package com.mapswithme.maps.base;
 
-import android.app.Activity;
 import android.os.Bundle;
 import android.support.annotation.LayoutRes;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.NavUtils;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+
 import com.mapswithme.maps.R;
-import com.mapswithme.maps.activity.CustomNavigateUpListener;
 import com.mapswithme.util.UiUtils;
+import com.mapswithme.util.Utils;
 
 public abstract class BaseMwmRecyclerFragment extends Fragment
 {
   private Toolbar mToolbar;
-  protected RecyclerView mRecycler;
+  private RecyclerView mRecycler;
+  private View mPlaceholder;
 
   protected abstract RecyclerView.Adapter createAdapter();
 
@@ -52,7 +52,7 @@ public abstract class BaseMwmRecyclerFragment extends Fragment
         @Override
         public void onClick(View v)
         {
-          navigateUpToParent();
+          Utils.navigateToParent(getActivity());
         }
       });
     }
@@ -62,8 +62,12 @@ public abstract class BaseMwmRecyclerFragment extends Fragment
       throw new IllegalStateException("RecyclerView not found in layout");
 
     LinearLayoutManager manager = new LinearLayoutManager(view.getContext());
+    manager.setSmoothScrollbarEnabled(true);
     mRecycler.setLayoutManager(manager);
     mRecycler.setAdapter(createAdapter());
+
+    mPlaceholder = view.findViewById(R.id.placeholder);
+    setupPlaceholder(mPlaceholder);
   }
 
   public Toolbar getToolbar()
@@ -91,12 +95,16 @@ public abstract class BaseMwmRecyclerFragment extends Fragment
     org.alohalytics.Statistics.logEvent("$onPause", this.getClass().getSimpleName());
   }
 
-  public void navigateUpToParent()
+  protected void setupPlaceholder(View placeholder) {}
+
+  public void setupPlaceholder()
   {
-    final Activity activity = getActivity();
-    if (activity instanceof CustomNavigateUpListener)
-      ((CustomNavigateUpListener) activity).customOnNavigateUp();
-    else
-      NavUtils.navigateUpFromSameTask(activity);
+    setupPlaceholder(mPlaceholder);
+  }
+
+  public void showPlaceholder(boolean show)
+  {
+    if (mPlaceholder != null)
+      UiUtils.showIf(show, mPlaceholder);
   }
 }

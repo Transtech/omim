@@ -3,8 +3,9 @@
 #include "coding/write_to_sink.hpp"
 #include "coding/internal/file_data.hpp"
 
+#include "std/cstring.hpp"
+
 #ifndef OMIM_OS_WINDOWS
-  #include <errno.h>
   #include <stdio.h>
   #include <unistd.h>
   #include <sys/mman.h>
@@ -18,6 +19,7 @@
   #include <windows.h>
 #endif
 
+#include <errno.h>
 
 template <class TSource, class InfoT> void Read(TSource & src, InfoT & i)
 {
@@ -64,18 +66,18 @@ void FilesContainerBase::ReadInfo(ReaderT & reader)
 FilesContainerR::FilesContainerR(string const & filePath,
                                  uint32_t logPageSize,
                                  uint32_t logPageCount)
-  : m_source(new FileReader(filePath, logPageSize, logPageCount))
+  : m_source(make_unique<FileReader>(filePath, logPageSize, logPageCount))
 {
   ReadInfo(m_source);
 }
 
-FilesContainerR::FilesContainerR(ReaderT const & file)
+FilesContainerR::FilesContainerR(TReader const & file)
   : m_source(file)
 {
   ReadInfo(m_source);
 }
 
-FilesContainerR::ReaderT FilesContainerR::GetReader(Tag const & tag) const
+FilesContainerR::TReader FilesContainerR::GetReader(Tag const & tag) const
 {
   Info const * p = GetInfo(tag);
   if (!p)
@@ -122,7 +124,17 @@ void MappedFile::Open(string const & fName)
 #else
   m_fd = open(fName.c_str(), O_RDONLY | O_NONBLOCK);
   if (m_fd == -1)
-    MYTHROW(Reader::OpenException, ("Can't open file:", fName));
+  {
+    if (errno == EMFILE || errno == ENFILE)
+    {
+      MYTHROW(Reader::TooManyFilesException,
+              ("Can't open file:", fName, ", reason:", strerror(errno)));
+    }
+    else
+    {
+      MYTHROW(Reader::OpenException, ("Can't open file:", fName, ", reason:", strerror(errno)));
+    }
+  }
 #endif
 }
 
@@ -413,7 +425,7 @@ FileWriter FilesContainerW::GetWriter(Tag const & tag)
 
 void FilesContainerW::Write(string const & fPath, Tag const & tag)
 {
-  Write(new FileReader(fPath), tag);
+  Write(ModelReaderPtr(make_unique<FileReader>(fPath)), tag);
 }
 
 void FilesContainerW::Write(ModelReaderPtr reader, Tag const & tag)
