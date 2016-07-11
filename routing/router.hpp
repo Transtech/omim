@@ -21,7 +21,7 @@ enum class RouterType
 {
   Vehicle = 0, /// For OSRM vehicle routing
   Pedestrian = 1,   /// For A star pedestrian routing
-  Truck = 2 /// For Graphhopper integration
+  Truck = 2 /// For GraphHopper integration
 };
 
 string ToString(RouterType type);

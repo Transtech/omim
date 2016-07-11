@@ -209,5 +209,5 @@ public class Framework
 
   public native static void nativeSet3dMode(boolean allow3d, boolean allow3dBuildings);
 
-    public native static void nativeSetExternalRouter(IRouter router);
+  public native static void nativeSetExternalRouter(IRouter router, int routerType);
 }

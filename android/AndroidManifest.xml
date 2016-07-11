@@ -170,7 +170,8 @@
     <activity
         android:name="com.mapswithme.maps.MwmActivity"
         android:launchMode="singleTask"
-        android:windowSoftInputMode="stateAlwaysHidden|adjustPan"/>
+        android:windowSoftInputMode="stateAlwaysHidden|adjustPan"
+        android:exported="true"/>
 
     <activity
         android:name="com.mapswithme.country.DownloadActivity"

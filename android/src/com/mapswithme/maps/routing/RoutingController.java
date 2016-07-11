@@ -330,10 +330,12 @@ public class RoutingController
     mEndPoint = endPoint;
     setState(State.PREPARE);
 
-    if (mStartPoint != null && mEndPoint != null)
-      mLastRouterType = Framework.nativeGetBestRouter(mStartPoint.getLat(), mStartPoint.getLon(),
-                                                      mEndPoint.getLat(), mEndPoint.getLon());
-    Framework.nativeSetRouter(mLastRouterType);
+//    if (mStartPoint != null && mEndPoint != null)
+//      mLastRouterType = Framework.nativeGetBestRouter(mStartPoint.getLat(), mStartPoint.getLon(),
+//                                                      mEndPoint.getLat(), mEndPoint.getLon());
+//    Framework.nativeSetRouter(mLastRouterType);
+
+    Framework.nativeSetExternalRouter( new GraphHopperRouter( mContainer.getActivity() ), Framework.ROUTER_TYPE_TRUCK );
 
     if (mContainer != null)
       mContainer.showRoutePlan(true, new Runnable()

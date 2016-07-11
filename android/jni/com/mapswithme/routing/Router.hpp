@@ -1,18 +1,20 @@
 #pragma once
 
-#include "../routing/router.hpp"
+#include <jni.h>
+
+#include "routing/router.hpp"
 
 namespace routing
 {
 
-class Router : public IRouter
+class Router : public routing::IRouter
 {
 private:
     jobject m_self;
 
 public:
 
-    Router();
+    Router( jobject self );
     virtual ~Router();
 
     string GetName() const;

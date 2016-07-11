@@ -9,5 +9,5 @@ public interface IRouter
 {
     String getName();
     void clearState();
-    int calculateRoute(double startLat, double startLon, double finishLat, double finishLon);
+    Route calculateRoute(double startLat, double startLon, double finishLat, double finishLon);
 }

@@ -13,7 +13,7 @@ double constexpr kPathFoundProgress = 70.0f;
   do                               \
   {                                \
     if (DELEGATE.IsCancelled())    \
-      return Cancelled;            \
+      return IRouter::ResultCode::Cancelled;            \
   } while (false)
 
 

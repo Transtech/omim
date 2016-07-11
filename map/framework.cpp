@@ -2030,11 +2030,13 @@ void Framework::SetRouterImpl(RouterType type)
 
   if (type == RouterType::Pedestrian)
   {
+    LOG(LINFO, ("Routing type: Pedestrian"));
     router = CreatePedestrianAStarBidirectionalRouter(m_model.GetIndex(), countryFileGetter);
     m_routingSession.SetRoutingSettings(routing::GetPedestrianRoutingSettings());
   }
   else if(type == RouterType::Truck && m_externalRouter != nullptr)
   {
+    LOG(LINFO, ("Routing type: Truck"));
     auto localFileGetter = [this](string const & countryFile) -> shared_ptr<LocalCountryFile>
     {
       return m_storage.GetLatestLocalFile(CountryFile(countryFile));
@@ -2046,6 +2048,7 @@ void Framework::SetRouterImpl(RouterType type)
   }
   else
   {
+    LOG(LINFO, ("Routing type: Car"));
     auto localFileGetter = [this](string const & countryFile) -> shared_ptr<LocalCountryFile>
     {
       return m_storage.GetLatestLocalFile(CountryFile(countryFile));
@@ -2190,7 +2193,7 @@ RouterType Framework::GetBestRouter(m2::PointD const & startPoint, m2::PointD co
       return RouterType::Pedestrian;
     }
   }
-  return RouterType::Vehicle;
+  return (GetLastUsedRouter() == RouterType::Truck) ? RouterType::Truck : RouterType::Vehicle;
 }
 
 RouterType Framework::GetLastUsedRouter() const

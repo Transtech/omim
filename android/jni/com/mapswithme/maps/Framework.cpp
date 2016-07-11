@@ -11,6 +11,8 @@
 
 #include "map/user_mark.hpp"
 
+#include "../routing/Router.hpp"
+
 #include "drape_frontend/visual_params.hpp"
 #include "drape_frontend/user_event_stream.hpp"
 #include "drape/pointers.hpp"
@@ -1382,7 +1384,13 @@ extern "C"
   }
 
   JNIEXPORT void JNICALL
-  Java_com_mapswithme_maps_Framework_nativeSetExternalRouter(JNIEnv * env, jclass thiz, jobject router)
+  Java_com_mapswithme_maps_Framework_nativeSetExternalRouter(JNIEnv * env, jclass thiz, jobject router, jint routerType)
   {
+    LOG(LDEBUG, ("Setting external router"));
+
+    routing::Router *pRouter = new routing::Router( router );
+    frm()->SetExternalRouter( pRouter );
+
+    g_framework->SetRouter(static_cast<routing::RouterType>(routerType));
   }
 } // extern "C"
