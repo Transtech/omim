@@ -2334,18 +2334,6 @@ void Framework::SetRouterImpl(RouterType type)
     router = CreatePedestrianAStarBidirectionalRouter(m_model.GetIndex(), countryFileGetter);
     m_routingSession.SetRoutingSettings(routing::GetPedestrianRoutingSettings());
   }
-  else if(type == RouterType::Truck && m_externalRouter != nullptr)
-  {
-    LOG(LINFO, ("Routing type: Truck"));
-    auto localFileGetter = [this](string const & countryFile) -> shared_ptr<LocalCountryFile>
-    {
-      return m_storage.GetLatestLocalFile(CountryFile(countryFile));
-    };
-
-    router.reset(new ExternalRouter(m_externalRouter, &m_model.GetIndex(), countryFileGetter));
-    fetcher.reset(new OnlineAbsentCountriesFetcher(countryFileGetter, localFileGetter));
-    m_routingSession.SetRoutingSettings(routing::GetCarRoutingSettings());
-  }
   else if (type == RouterType::Bicycle)
   {
     router = CreateBicycleAStarBidirectionalRouter(m_model.GetIndex(), countryFileGetter);
@@ -2358,7 +2346,11 @@ void Framework::SetRouterImpl(RouterType type)
       return m_model.GetIndex().GetMwmIdByCountryFile(CountryFile(countryFile)).IsAlive();
     };
 
-    router.reset(new OsrmRouter(&m_model.GetIndex(), countryFileGetter));
+    if (type == RouterType::Truck && m_externalRouter != nullptr)
+        router.reset(new ExternalRouter(m_externalRouter, &m_model.GetIndex(), countryFileGetter));
+    else
+        router.reset(new OsrmRouter(&m_model.GetIndex(), countryFileGetter));
+
     fetcher.reset(new OnlineAbsentCountriesFetcher(countryFileGetter, localFileChecker));
     m_routingSession.SetRoutingSettings(routing::GetCarRoutingSettings());
   }
@@ -2497,6 +2489,7 @@ RouterType Framework::GetBestRouter(m2::PointD const & startPoint, m2::PointD co
       case RouterType::Bicycle:
         return lastUsedRouter;
       case RouterType::Vehicle:
+      case RouterType::Truck:
         ; // fall through
     }
 

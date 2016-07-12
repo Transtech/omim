@@ -21,7 +21,7 @@ public:
 
 private:
     IRouter * m_realRouter;
-    Index const * m_pIndex;
+//    Index const * m_pIndex;
     RoutingIndexManager m_indexManager;
 };
 

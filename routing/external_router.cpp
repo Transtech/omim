@@ -4,9 +4,9 @@
 
 namespace
 {
-double constexpr kMwmLoadedProgress = 10.0f;
-double constexpr kPointsFoundProgress = 15.0f;
-double constexpr kPathFoundProgress = 70.0f;
+//double constexpr kMwmLoadedProgress = 10.0f;
+//double constexpr kPointsFoundProgress = 15.0f;
+//double constexpr kPathFoundProgress = 70.0f;
 } //  namespace
 
 #define INTERRUPT_WHEN_CANCELLED(DELEGATE) \
@@ -21,7 +21,9 @@ namespace routing
 {
 
 ExternalRouter::ExternalRouter(IRouter * router, Index * index, TCountryFileFn const & countryFileFn) :
-    m_realRouter(router), m_pIndex(index), m_indexManager(countryFileFn, *index)
+    m_realRouter(router)
+//  , m_pIndex(index)
+  , m_indexManager(countryFileFn, *index)
 {
 
 }
