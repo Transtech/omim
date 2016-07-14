@@ -7,11 +7,8 @@
 
 #include "map/user_mark.hpp"
 
-<<<<<<< HEAD
 #include "../routing/Router.hpp"
-=======
 #include "storage/storage_helpers.hpp"
->>>>>>> upstream
 
 #include "drape_frontend/visual_params.hpp"
 #include "drape_frontend/user_event_stream.hpp"

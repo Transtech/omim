@@ -168,8 +168,8 @@ bool OsmOAuth::LoginUserPassword(string const & login, string const & password, 
   };
   HTTPClientPlatformWrapper request(m_baseUrl + "/login");
   request.set_body_data(BuildPostRequest(params), "application/x-www-form-urlencoded")
-         .set_cookies(sid.m_cookies)
-         .set_handle_redirects(false);
+         .set_cookies(sid.m_cookies);
+//         .set_handle_redirects(false);
   if (!request.RunHTTPRequest())
     MYTHROW(NetworkError, ("LoginUserPassword Network error while connecting to", request.url_requested()));
 
@@ -194,8 +194,8 @@ bool OsmOAuth::LoginSocial(string const & callbackPart, string const & socialTok
 {
   string const url = m_baseUrl + callbackPart + socialToken;
   HTTPClientPlatformWrapper request(url);
-  request.set_cookies(sid.m_cookies)
-         .set_handle_redirects(false);
+  request.set_cookies(sid.m_cookies);
+//         .set_handle_redirects(false);
   if (!request.RunHTTPRequest())
     MYTHROW(NetworkError, ("LoginSocial Network error while connecting to", request.url_requested()));
   if (request.error_code() != HTTP::OK && request.error_code() != HTTP::Found)
@@ -229,8 +229,8 @@ string OsmOAuth::SendAuthRequest(string const & requestTokenKey, SessionID const
   };
   HTTPClientPlatformWrapper request(m_baseUrl + "/oauth/authorize");
   request.set_body_data(BuildPostRequest(params), "application/x-www-form-urlencoded")
-         .set_cookies(sid.m_cookies)
-         .set_handle_redirects(false);
+         .set_cookies(sid.m_cookies);
+//         .set_handle_redirects(false);
   if (!request.RunHTTPRequest())
     MYTHROW(NetworkError, ("SendAuthRequest Network error while connecting to", request.url_requested()));
 
