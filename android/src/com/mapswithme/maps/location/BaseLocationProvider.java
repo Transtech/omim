@@ -37,7 +37,7 @@ abstract class BaseLocationProvider implements LocationListener
     if (location.getAccuracy() <= 0.0)
       return;
 
-    if (isLocationBetterThanLast(location))
+    if (isLocationBetterThanLast(location) || LocationHelper.INSTANCE.useDemoGPS())
     {
       LocationHelper.INSTANCE.resetMagneticField(location);
       LocationHelper.INSTANCE.onLocationUpdated(location);

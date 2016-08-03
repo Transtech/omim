@@ -34,6 +34,8 @@ public final class Config
   private static final String KEY_MISC_UI_THEME = "UiTheme";
   private static final String KEY_MISC_UI_THEME_SETTINGS = "UiThemeSettings";
 
+    private static final String KEY_NAV_DEMO_GPS = "DemoGPS";
+
   private Config() {}
 
   private static int getInt(String key)
@@ -343,6 +345,15 @@ public final class Config
     setString(KEY_MISC_UI_THEME_SETTINGS, theme);
     return true;
   }
+
+    public static boolean useDemoGPS()
+    {
+        return getBool(KEY_NAV_DEMO_GPS, true);
+    }
+    public static void setUseDemoGPS( boolean b)
+    {
+        setBool(KEY_NAV_DEMO_GPS, b);
+    }
 
   private static native boolean nativeGetBoolean(String name, boolean defaultValue);
   private static native void nativeSetBoolean(String name, boolean value);

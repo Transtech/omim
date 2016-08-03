@@ -32,7 +32,14 @@ public class Route
         public double time;
     }
 
+    public static class StreetItem
+    {
+        public int index; //index into 'path'
+        public String name;
+    }
+
     public TurnItem[] turns;
     public TimeItem[] times;
+    public StreetItem[] streets;
     public Position[] path;
 }

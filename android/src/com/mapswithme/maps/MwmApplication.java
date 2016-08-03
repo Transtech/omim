@@ -11,6 +11,9 @@ import android.support.annotation.UiThread;
 import android.text.TextUtils;
 import android.util.Log;
 
+import android.support.multidex.MultiDex;
+import android.content.Context;
+
 import java.io.File;
 import java.util.List;
 
@@ -94,6 +97,12 @@ public class MwmApplication extends Application
   public static SharedPreferences prefs()
   {
     return sSelf.mPrefs;
+  }
+
+  @Override
+  protected void attachBaseContext(Context base) {
+    super.attachBaseContext(base);
+    MultiDex.install(this);
   }
 
   @SuppressWarnings("ResultOfMethodCallIgnored")

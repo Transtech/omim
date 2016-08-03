@@ -68,6 +68,14 @@
         android:layout_height="@dimen/routing_selector_size"
         tools:button="@drawable/ic_walk"
         tools:buttonTint="?colorAccent"/>
+
+        <RadioButton
+                android:id="@+id/bicycle"
+                android:layout_width="@dimen/routing_selector_size"
+                android:layout_height="@dimen/routing_selector_size"
+                tools:button="@drawable/ic_bicycle"
+                tools:buttonTint="?colorAccent"/>
+
     </RadioGroup>
   </FrameLayout>
 

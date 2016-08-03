@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.os.Build;
 import android.support.annotation.DrawableRes;
 import android.support.annotation.IdRes;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CompoundButton;
@@ -55,6 +56,7 @@ public class RoutingPlanController extends ToolbarController
       @Override
       public void onCheckedChanged(CompoundButton buttonView, boolean isChecked)
       {
+          if( buttonView != null )
         buttonView.setButtonDrawable(Graphics.tint(mActivity, iconRes, isChecked ? R.attr.colorAccent
                                                                                  : R.attr.iconTint));
       }
@@ -96,8 +98,8 @@ public class RoutingPlanController extends ToolbarController
       @Override
       public void onClick(View v)
       {
-        AlohaHelper.logClick(AlohaHelper.ROUTING_VEHICLE_SET);
-        Statistics.INSTANCE.trackEvent(Statistics.EventName.ROUTING_VEHICLE_SET);
+//        AlohaHelper.logClick(AlohaHelper.ROUTING_VEHICLE_SET);
+//        Statistics.INSTANCE.trackEvent(Statistics.EventName.ROUTING_VEHICLE_SET);
         RoutingController.get().setRouterType(Framework.ROUTER_TYPE_VEHICLE);
       }
     });
@@ -107,8 +109,8 @@ public class RoutingPlanController extends ToolbarController
       @Override
       public void onClick(View v)
       {
-        AlohaHelper.logClick(AlohaHelper.ROUTING_PEDESTRIAN_SET);
-        Statistics.INSTANCE.trackEvent(Statistics.EventName.ROUTING_PEDESTRIAN_SET);
+//        AlohaHelper.logClick(AlohaHelper.ROUTING_PEDESTRIAN_SET);
+//        Statistics.INSTANCE.trackEvent(Statistics.EventName.ROUTING_PEDESTRIAN_SET);
         RoutingController.get().setRouterType(Framework.ROUTER_TYPE_PEDESTRIAN);
       }
     });
@@ -118,8 +120,8 @@ public class RoutingPlanController extends ToolbarController
       @Override
       public void onClick(View v)
       {
-        AlohaHelper.logClick(AlohaHelper.ROUTING_BICYCLE_SET);
-        Statistics.INSTANCE.trackEvent(Statistics.EventName.ROUTING_BICYCLE_SET);
+//        AlohaHelper.logClick(AlohaHelper.ROUTING_BICYCLE_SET);
+//        Statistics.INSTANCE.trackEvent(Statistics.EventName.ROUTING_BICYCLE_SET);
         RoutingController.get().setRouterType(Framework.ROUTER_TYPE_BICYCLE);
       }
     });

@@ -14,6 +14,7 @@ buildscript {
 
 allprojects {
   repositories {
+    mavenLocal()
     jcenter()
     mavenCentral()
   }
@@ -59,6 +60,9 @@ dependencies {
   // TODO remove this library when default LinearLayoutManager will be fixed.
   compile 'org.solovyev.android.views:linear-layout-manager:0.5@aar'
   compile 'com.timehop.stickyheadersrecyclerview:library:0.4.3@aar'
+  compile 'au.net.transtech.geo:geo-engine:1.0-SNAPSHOT'
+
+  compile 'com.android.support:multidex:1.0.0'
 }
 
 def getDate() {
@@ -91,6 +95,8 @@ android {
     buildConfigField 'String', 'SUPPORT_MAIL', '"android@maps.me"'
     buildConfigField 'String', 'REVIEW_URL', '"market://details?id=com.mapswithme.maps.pro"'
     buildConfigField 'int', 'RATING_THRESHOLD', '5'
+
+    multiDexEnabled true
 
     // Crashlytics API key
     Properties props = new Properties()
@@ -227,6 +233,10 @@ android {
   // TODO: Fix a lot of lint errors in our code
   lintOptions {
     abortOnError false
+  }
+
+  dexOptions {
+    jumboMode true
   }
 
   gradle.projectsEvaluated {

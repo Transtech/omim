@@ -15,6 +15,7 @@ jclass routeClass;
 jfieldID fPathId;
 jfieldID fTimesId;
 jfieldID fTurnsId;
+jfieldID fStreetsId;
 
 jclass posClass;
 jfieldID fLat;
@@ -28,9 +29,13 @@ jfieldID fSource;
 jfieldID fTarget;
 jfieldID fKeep;
 
-jclass timeClass; //not used yet
+jclass timeClass;
 jfieldID fIndex2;
 jfieldID fTime;
+
+jclass streetClass;
+jfieldID fIndex3;
+jfieldID fName;
 
 } //  namespace
 
@@ -64,12 +69,18 @@ Router::Router(jobject obj)
     ASSERT(localRef, (jni::DescribeException()));
     timeClass = (jclass) env->NewGlobalRef(localRef);
 
+    localRef = env->FindClass( "com/mapswithme/maps/routing/Route$StreetItem" );
+    ASSERT(localRef, (jni::DescribeException()));
+    streetClass = (jclass) env->NewGlobalRef(localRef);
+
     fPathId = env->GetFieldID(routeClass, "path", "[Lcom/mapswithme/maps/routing/Route$Position;");
     ASSERT(fPathId, (jni::DescribeException()));
     fTimesId = env->GetFieldID(routeClass, "times", "[Lcom/mapswithme/maps/routing/Route$TimeItem;");
     ASSERT(fTimesId, (jni::DescribeException()));
     fTurnsId = env->GetFieldID(routeClass, "turns", "[Lcom/mapswithme/maps/routing/Route$TurnItem;");
     ASSERT(fTurnsId, (jni::DescribeException()));
+    fStreetsId = env->GetFieldID(routeClass, "streets", "[Lcom/mapswithme/maps/routing/Route$StreetItem;");
+    ASSERT(fStreetsId, (jni::DescribeException()));
 
     fLat = env->GetFieldID(posClass, "lat", "D");
     ASSERT(fLat, (jni::DescribeException()));
@@ -93,6 +104,11 @@ Router::Router(jobject obj)
     ASSERT(fIndex2, (jni::DescribeException()));
     fTime = env->GetFieldID(timeClass, "time", "D");
     ASSERT(fTime, (jni::DescribeException()));
+
+    fIndex3 = env->GetFieldID(streetClass, "index", "I");
+    ASSERT(fIndex3, (jni::DescribeException()));
+    fName = env->GetFieldID(streetClass, "name", "Ljava/lang/String;");
+    ASSERT(fName, (jni::DescribeException()));
 }
 
 Router::~Router()
@@ -167,11 +183,20 @@ IRouter::ResultCode Router::CalculateRoute(m2::PointD const & startPoint,
 //  typedef vector<TTimeItem> TTimes;
     Route::TTurns turnsDir;
     Route::TTimes times;
+    Route::TStreets streets;
     vector<m2::PointD> points;
 
+    ms::LatLon startPos = MercatorBounds::ToLatLon(startPoint);
+    ms::LatLon finalPos = MercatorBounds::ToLatLon(finalPoint);
+
     //TODO: add delegate progress calls: eg. delegate.OnProgress(kPathFoundProgress);
-    LOG(LDEBUG,("JNI Router callback CalculateRoute(",startPoint.x, ",", startPoint.y, ",", finalPoint.x, ",", finalPoint.y, ")" ));
-    jobject jRoute = env->CallObjectMethod(m_self, calcMethodID, startPoint.x, startPoint.y, finalPoint.x, finalPoint.y);
+    LOG(LDEBUG,("JNI Router callback CalculateRoute(",startPos.lat, ",", startPos.lon, ",", finalPos.lat, ",", finalPos.lon, ")" ));
+    jobject jRoute = env->CallObjectMethod(m_self, calcMethodID, startPos.lat, startPos.lon, finalPos.lat, finalPos.lon);
+    if( nullptr == jRoute )
+    {
+        LOG(LINFO,("JNI Router callback CalculateRoute - no route found" ));
+        return ResultCode::RouteNotFound;
+    }
     ASSERT(jRoute, (jni::DescribeException()));
 
     LOG(LDEBUG,("JNI Router callback CalculateRoute - result 1" ));
@@ -185,6 +210,10 @@ IRouter::ResultCode Router::CalculateRoute(m2::PointD const & startPoint,
     LOG(LDEBUG,("JNI Router callback CalculateRoute - result 3" ));
     jobjectArray jTimesArr = (jobjectArray) env->GetObjectField(jRoute, fTimesId);
     ASSERT(jTimesArr, (jni::DescribeException()));
+
+    LOG(LDEBUG,("JNI Router callback CalculateRoute - result 4" ));
+    jobjectArray jStreetArr = (jobjectArray) env->GetObjectField(jRoute, fStreetsId);
+    ASSERT(jStreetArr, (jni::DescribeException()));
 
     if( jPositionArr != nullptr )
     {
@@ -219,9 +248,16 @@ IRouter::ResultCode Router::CalculateRoute(m2::PointD const & startPoint,
             ti.m_turn = static_cast<turns::TurnDirection>(env->GetIntField(jTurnObj, fDirection));
             //NB: not doing lane info
             ti.m_exitNum = env->GetIntField(jTurnObj, fExitNum);
-            ti.m_sourceName = jni::ToNativeString(env, (jstring) env->GetObjectField(jTurnObj, fSource));
-            ti.m_targetName = jni::ToNativeString(env, (jstring) env->GetObjectField(jTurnObj, fTarget));
+
+            jstring jsSource = (jstring) env->GetObjectField(jTurnObj, fSource);
+            ti.m_sourceName = jni::ToNativeString(env, jsSource);
+
+            jstring jsTarget = (jstring) env->GetObjectField(jTurnObj, fTarget);
+            ti.m_targetName = jni::ToNativeString(env, jsTarget);
+
             ti.m_keepAnyway = env->GetBooleanField(jTurnObj, fKeep);
+            env->DeleteLocalRef(jsSource);
+            env->DeleteLocalRef(jsTarget);
             env->DeleteLocalRef(jTurnObj);
 
             turnsDir.push_back( ti );
@@ -239,10 +275,33 @@ IRouter::ResultCode Router::CalculateRoute(m2::PointD const & startPoint,
             ASSERT(jTimeObj, (jni::DescribeException()));
 
             int idx = env->GetIntField(jTimeObj, fIndex2);
-            double time = env->GetIntField(jTimeObj, fTime);
+            double time = env->GetDoubleField(jTimeObj, fTime);
             env->DeleteLocalRef(jTimeObj);
 
+//            LOG(LINFO,("MapsWithMe: JNI Router adding time item ", idx, " of ", time, " seconds"));
             times.push_back( Route::TTimeItem(idx, time) );
+        }
+    }
+
+    if( jStreetArr != nullptr )
+    {
+        //Extract streets from route.streets -> streets
+        int len = env->GetArrayLength(jStreetArr);
+        LOG(LDEBUG,("JNI Router callback CalculateRoute - result 6 - there are", len, "street objects" ));
+        for( int i = 0; i < len; ++i )
+        {
+            jobject jStreetObj = env->GetObjectArrayElement(jStreetArr, i);
+            ASSERT(jStreetObj, (jni::DescribeException()));
+
+            Route::TStreetItem streetItem;
+            int idx = env->GetIntField(jStreetObj, fIndex3);
+            jstring jsName = (jstring) env->GetObjectField(jStreetObj, fName);
+            string strName = jni::ToNativeString(env, jsName);
+            env->DeleteLocalRef(jsName);
+            env->DeleteLocalRef(jStreetObj);
+
+//            LOG(LINFO,("MapsWithMe: JNI Router adding time item ", idx, " of ", time, " seconds"));
+            streets.push_back( Route::TStreetItem(idx, strName) );
         }
     }
 
@@ -250,7 +309,9 @@ IRouter::ResultCode Router::CalculateRoute(m2::PointD const & startPoint,
     route.SetGeometry(points.begin(), points.end());
     route.SetTurnInstructions(turnsDir);
     route.SetSectionTimes(times);
+    route.SetStreetNames(streets);
 
+    env->DeleteLocalRef(jRoute);
     env->DeleteLocalRef(jPositionArr);
     env->DeleteLocalRef(jTimesArr);
     env->DeleteLocalRef(jTurnsArr);

@@ -6,10 +6,7 @@ import android.content.Intent;
 import android.location.Location;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AlertDialog;
-
-import java.lang.ref.WeakReference;
-import java.util.List;
-
+import android.util.Log;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.mapswithme.maps.Framework;
@@ -25,6 +22,9 @@ import com.mapswithme.util.Utils;
 import com.mapswithme.util.concurrency.UiThread;
 import com.mapswithme.util.log.DebugLogger;
 import com.mapswithme.util.log.Logger;
+
+import java.lang.ref.WeakReference;
+import java.util.List;
 
 public enum LocationHelper
 {
@@ -148,6 +148,8 @@ public enum LocationHelper
 
   private boolean mPendingNoLocation;
 
+    private boolean mUseDemoGPS = false;
+
   @SuppressWarnings("FieldCanBeLocal")
   private final LocationState.ModeChangeListener mModeChangeListener = new LocationState.ModeChangeListener()
   {
@@ -217,7 +219,13 @@ public enum LocationHelper
     final MwmApplication application = MwmApplication.get();
     final boolean containsGoogleServices = GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(application) == ConnectionResult.SUCCESS;
     final boolean googleServicesTurnedInSettings = Config.useGoogleServices();
-    if (!forceNative &&
+
+      if( mUseDemoGPS)
+      {
+          mLogger.d("Use demo GPS");
+          mLocationProvider = new DemoLocationProvider();
+      }
+    else if (!forceNative &&
         containsGoogleServices &&
         googleServicesTurnedInSettings)
     {
@@ -491,6 +499,10 @@ public enum LocationHelper
         mInterval = INTERVAL_NAVIGATION_BICYCLE_MS;
         break;
 
+      case Framework.ROUTER_TYPE_TRUCK:
+        mInterval = INTERVAL_NAVIGATION_VEHICLE_MS;
+        break;
+
       default:
         throw new IllegalArgumentException("Unsupported router type: " + router);
       }
@@ -704,6 +716,28 @@ public enum LocationHelper
   {
     return mCompassData;
   }
+
+    public boolean useDemoGPS()
+    {
+        return mUseDemoGPS;
+    }
+
+    private static final String TAG = "Maps_LocationHelper";
+    public void setUseDemoGPS(boolean b)
+    {
+        Log.i(TAG,"Setting demo location provider to " + b + ", number of listeners " + mListeners.getSize());
+        Config.setUseDemoGPS( b );
+        if( b == mUseDemoGPS )
+            return;
+
+        mUseDemoGPS = b;
+        if( mLocationProvider != null )
+        {
+            Log.i( TAG, "Stopping current location provider" );
+            mLocationProvider.stop();
+        }
+        initProvider( false );
+    }
 
   private static native void nativeOnLocationError(int errorCode);
   private static native void nativeLocationUpdated(long time, double lat, double lon, float accuracy, double altitude, float speed, float bearing);

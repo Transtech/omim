@@ -13,8 +13,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import android.util.Log;
 import com.mapswithme.maps.Framework;
 import com.mapswithme.maps.R;
+import com.mapswithme.maps.location.DemoLocationProvider;
+import com.mapswithme.maps.location.LocationHelper;
 import com.mapswithme.maps.sound.LanguageData;
 import com.mapswithme.maps.sound.TtsPlayer;
 import com.mapswithme.util.Config;
@@ -25,6 +28,7 @@ public class RoutePrefsFragment extends PreferenceFragment
   private static final int REQUEST_INSTALL_DATA = 1;
 
   private TwoStatePreference mPrefEnabled;
+  private TwoStatePreference mDemoEnabled;
   private ListPreference mPrefLanguages;
 
   private final Map<String, LanguageData> mLanguages = new HashMap<>();
@@ -81,9 +85,23 @@ public class RoutePrefsFragment extends PreferenceFragment
     }
   };
 
-  private void enableListeners(boolean enable)
+    private final Preference.OnPreferenceChangeListener mDemoListener = new Preference.OnPreferenceChangeListener()
+    {
+        @Override
+        public boolean onPreferenceChange(Preference preference, Object newValue)
+        {
+            boolean set = (Boolean)newValue;
+            Log.i("Maps_RoutePrefsFragment", "Setting useDemoGPS flag to " + set);
+            LocationHelper.INSTANCE.setUseDemoGPS( set );
+            return true;
+        }
+    };
+
+    private void enableListeners(boolean enable)
   {
     mPrefEnabled.setOnPreferenceChangeListener(enable ? mEnabledListener : null);
+      Log.i( "Maps_RoutePrefsFragment", (enable ? "Enabling" : "Disabling") + " useDemoGPS pref listener " );
+    mDemoEnabled.setOnPreferenceChangeListener(enable ? mDemoListener : null);
     mPrefLanguages.setOnPreferenceChangeListener(enable ? mLangListener : null);
   }
 
@@ -116,6 +134,9 @@ public class RoutePrefsFragment extends PreferenceFragment
       return;
     }
 
+      mDemoEnabled.setChecked( LocationHelper.INSTANCE.useDemoGPS() );
+      mDemoEnabled.setSummary( "Use fake GPS data from " + DemoLocationProvider.DEFAULT_FILE_NAME );
+
     mPrefEnabled.setChecked(TtsPlayer.INSTANCE.isEnabled());
     mPrefEnabled.setSummary(null);
 
@@ -140,7 +161,7 @@ public class RoutePrefsFragment extends PreferenceFragment
     mPrefLanguages.setValue(available ? mCurrentLanguage.internalCode : null);
     mPrefEnabled.setChecked(available && TtsPlayer.INSTANCE.isEnabled());
 
-    enableListeners(true);
+    enableListeners( true );
   }
 
   @Override
@@ -150,6 +171,7 @@ public class RoutePrefsFragment extends PreferenceFragment
     addPreferencesFromResource(R.xml.prefs_route);
 
     mPrefEnabled = (TwoStatePreference) findPreference(getString(R.string.pref_tts_enabled));
+    mDemoEnabled = (TwoStatePreference) findPreference(getString(R.string.pref_demo_gps));
     mPrefLanguages = (ListPreference) findPreference(getString(R.string.pref_tts_language));
 
     final Framework.Params3dMode _3d = new Framework.Params3dMode();

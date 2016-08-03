@@ -55,7 +55,16 @@
       android:layout_gravity="center"
       android:orientation="horizontal">
 
-      <RadioButton
+        <RadioButton
+                android:id="@+id/truck"
+                android:layout_width="@dimen/routing_selector_size"
+                android:layout_height="@dimen/routing_selector_size"
+                android:layout_marginEnd="@dimen/margin_double"
+                android:layout_marginRight="@dimen/margin_double"
+                tools:button="@drawable/ic_drive"
+                tools:buttonTint="?colorAccent"/>
+
+        <RadioButton
         android:id="@+id/vehicle"
         android:layout_width="@dimen/routing_selector_size"
         android:layout_height="@dimen/routing_selector_size"

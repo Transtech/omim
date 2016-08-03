@@ -320,6 +320,7 @@
 	<string name="pref_map_style_auto">Auto</string>
 	<!-- Settings «Map» category: «Perspective view» title -->
 	<string name="pref_map_3d_title">Perspective view</string>
+    <string name="pref_map_demo_gps_title">Demo GPS</string>
 	<!-- Settings «Map» category: «3D buildings» title -->
 	<string name="pref_map_3d_buildings_title">3D buildings</string>
 	<!-- Settings «Map» category: «3D buildings» summary -->

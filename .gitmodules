@@ -7,3 +7,6 @@
 [submodule "3party/Alohalytics"]
 	path = 3party/Alohalytics
 	url = git://github.com/mapsme/Alohalytics.git
+[submodule "android/3rd_party/geo-engine"]
+	path = android/3rd_party/geo-engine
+	url = git@bitbucket.org:transtech/geo-engine.git

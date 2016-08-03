@@ -7,6 +7,14 @@
 # flurry
 -dontwarn com.flurry.**
 
+# geo-engine
+-dontwarn com.google.**
+-dontwarn com.fasterxml.**
+-dontwarn org.apache.**
+-dontwarn com.graphhopper.**
+-dontwarn org.slf4j.**
+-dontwarn ch.qos.logback.**
+
 # parse
 -dontwarn com.squareup.okhttp.**
 -dontwarn okio.**
@@ -23,6 +31,7 @@
 -dontwarn com.mopub.**
 
 -dontoptimize
+-dontpreverify
 -keepattributes **
 
 # Gson support
@@ -44,3 +53,4 @@
 # HockeyApp
 -dontwarn net.hockeyapp.android.UpdateActivity
 -dontwarn net.hockeyapp.android.UpdateFragment
+
