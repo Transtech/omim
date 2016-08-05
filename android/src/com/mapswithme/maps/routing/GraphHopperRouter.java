@@ -1,15 +1,11 @@
 package com.mapswithme.maps.routing;
 
-import android.app.Activity;
-import android.content.Intent;
+import android.content.Context;
 import android.util.Log;
 import au.net.transtech.geo.GeoEngine;
-import au.net.transtech.geo.model.Leg;
-import au.net.transtech.geo.model.MultiPointRoute;
-import au.net.transtech.geo.model.Position;
-import au.net.transtech.geo.model.Segment;
-import com.mapswithme.maps.bookmarks.data.MapObject;
-import com.mapswithme.maps.location.LocationHelper;
+import au.net.transtech.geo.model.*;
+import com.mapswithme.transtech.Setting;
+import com.mapswithme.transtech.SettingConstants;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,47 +31,18 @@ public class GraphHopperRouter implements IRouter
     private static final int REACHED_VIA = 5;
     private static final int USE_ROUNDABOUT = 6;
 
-    private Activity context;
+    public static final String NETWORK_CAR = "car";
+
+    private Context context;
     private GeoEngine geoEngine;
+    private VehicleProfile selectedProfile;
 
     public static final double OFFROUTE_THRESHOLD = 150.0;  //150 metres
-    public static final String NETWORK_BD = "bd"; //B-Double network
-    public static final String NETWORK_CAR = "car"; //B-Double network
     public static final double TIME_MULTIPLIER = 1.2;  //Increase estimated times for TRUCK routing
 
-    private static class RouteHolder
+    public GraphHopperRouter( Context context )
     {
-        private double startLat;
-        private double startLon;
-        private double finishLat;
-        private double finishLon;
-
-        RouteHolder( double startLat, double startLon, double finishLat, double finishLon )
-        {
-            this.startLat = startLat;
-            this.startLon = startLon;
-            this.finishLat = finishLat;
-            this.finishLon = finishLon;
-        }
-
-        Route route;
-
-        boolean isSame( double startLat, double startLon, double finishLat, double finishLon )
-        {
-            return isSame( finishLat, finishLon );
-        }
-
-        boolean isSame( double finishLat, double finishLon )
-        {
-            return Math.abs( finishLat - this.finishLat ) < 0.00001 && Math.abs( finishLon - this.finishLon ) < 0.00001;
-        }
-    }
-
-    private RouteHolder currentRoute;
-
-    public GraphHopperRouter( Activity activity )
-    {
-        this.context = activity;
+        this.context = context;
     }
 
     @Override
@@ -90,32 +57,77 @@ public class GraphHopperRouter implements IRouter
         //Do nothing
     }
 
+    public GeoEngine getGeoEngine()
+    {
+        if( geoEngine == null )
+        {
+            geoEngine = new GeoEngine( "/sdcard/MapsWithMe/Australia-gh" );
+            geoEngine.loadGraph();
+        }
+        return geoEngine;
+    }
+
+    public boolean setSelectedProfile(String profile)
+    {
+        VehicleProfile selVp = null;
+        for( VehicleProfile vp : getGeoEngine().getVehicleProfiles() )
+            if( vp.getCode().equals( profile ) )
+                selVp = vp;
+
+        if (selVp == null)
+            return false;
+
+        Setting.setString( context,
+                Setting.currentEnvironment( context ),
+                Setting.Scope.SMARTNAV2,
+                SettingConstants.ROUTE_NETWORK,
+                profile,
+                Setting.Origin.LOCAL,
+                Setting.Source.USER.name());
+
+        selectedProfile = selVp;
+        return true;
+    }
+
+    public VehicleProfile getSelectedProfile()
+    {
+        if( selectedProfile == null )
+        {
+            String network = Setting.getString( context,
+                    Setting.currentEnvironment( context ),
+                    Setting.Scope.SMARTNAV2,
+                    SettingConstants.ROUTE_NETWORK,
+                    NETWORK_CAR );
+
+            for( VehicleProfile vp : getGeoEngine().getVehicleProfiles() )
+                if( vp.getCode().equals( network ) )
+                    selectedProfile = vp;
+        }
+        return selectedProfile;
+    }
+
+
     @Override
     public Route calculateRoute( double startLat, double startLon, double finishLat, double finishLon )
     {
-        String s = "Received routing request starting from (" + startLat + ", " + startLon + ") to (" + finishLat + ", " + finishLon + ")";
-        Log.i( TAG, s );
-
-        boolean isFirstPlan = (currentRoute == null);
-        if( !isFirstPlan )
+        VehicleProfile currentProfile = getSelectedProfile();
+        if( currentProfile == null )
         {
-            MapObject pos = LocationHelper.INSTANCE.getMyPosition();
-            if( pos != null )
-                checkOffRoute( pos.getLat(), pos.getLon() );
+            Log.e( TAG, "Vehicle profile is NULL? Cannot route" );
+            return null;
         }
+        Log.i( TAG, "Received routing request starting from (" + startLat + ", " + startLon + ") to ("
+                + finishLat + ", " + finishLon + ") - using configured network profile '" + currentProfile.getCode() + "'");
 
         try
         {
-            if( geoEngine == null )
-                geoEngine = new GeoEngine( "/sdcard/MapsWithMe/Australia-gh" );
-
             List<Position> req = new ArrayList<Position>();
             req.add( new Position( startLat, startLon ) );
             req.add( new Position( finishLat, finishLon ) );
 
             MultiPointRoute ghStartCar = null, ghFinishCar = null;
 
-            MultiPointRoute ghRoute = geoEngine.route( req, NETWORK_BD );
+            MultiPointRoute ghRoute = getGeoEngine().route( req, currentProfile.getCode() );
 
             if( ghRoute != null && ghRoute.getPath() != null && ghRoute.getPath().size() > 0 )
             {
@@ -124,7 +136,7 @@ public class GraphHopperRouter implements IRouter
                 Position startPos = ghRoute.getPath().get( 0 );
                 double dist = haversineDistance( startLat, startLon, startPos.getLatitude(), startPos.getLongitude() );
                 Log.i( TAG, "Start position (" + startLat + "," + startLon + ") is "
-                        + dist + " meters from returned '" + NETWORK_BD + "' route - "
+                        + dist + " meters from returned '" + currentProfile.getCode() + "' route - "
                         + (dist > OFFROUTE_THRESHOLD ? " routing by CAR to start" : "looks good") );
                 if( dist > OFFROUTE_THRESHOLD )
                 {
@@ -132,7 +144,7 @@ public class GraphHopperRouter implements IRouter
                     List<Position> req2 = new ArrayList<Position>();
                     req2.add( new Position( startLat, startLon ) );
                     req2.add( startPos );
-                    ghStartCar = geoEngine.route( req2, NETWORK_CAR );
+                    ghStartCar = getGeoEngine().route( req2, NETWORK_CAR );
                 }
 
                 if( ghRoute.getPath().size() > 1 )
@@ -141,28 +153,22 @@ public class GraphHopperRouter implements IRouter
                     Position finishPos = ghRoute.getPath().get( ghRoute.getPath().size() - 1 );
                     dist = haversineDistance( finishLat, finishLon, finishPos.getLatitude(), finishPos.getLongitude() );
                     Log.i( TAG, "Finish position (" + finishLat + "," + finishLon + ") is "
-                            + dist + " meters from returned '" + NETWORK_BD + "' route - "
+                            + dist + " meters from returned '" + currentProfile.getCode() + "' route - "
                             + (dist > OFFROUTE_THRESHOLD ? " routing by CAR to finish" : "looks good") );
                     if( dist > OFFROUTE_THRESHOLD )
                     {
                         List<Position> req2 = new ArrayList<Position>();
                         req2.add( new Position( finishLat, finishLon ) );
                         req2.add( finishPos );
-                        ghFinishCar = geoEngine.route( req2, NETWORK_CAR );
+                        ghFinishCar = getGeoEngine().route( req2, NETWORK_CAR );
                     }
                 }
             }
 
-            if( currentRoute == null )
-                currentRoute = new RouteHolder(startLat, startLon, finishLat, finishLon);
+            Route route = toMwmRoute( ghStartCar, ghRoute, ghFinishCar );
 
-            currentRoute.route = toMwmRoute( ghStartCar, ghRoute, ghFinishCar );
-
-            Log.i( TAG, "Responding with GH route (" + currentRoute.route.path.length + " path items) and (" + currentRoute.route.turns.length + " turns)" );
-            if( isFirstPlan )
-                startRoute(currentRoute);
-
-            return currentRoute.route;
+            Log.i( TAG, "Responding with GH route (" + route.path.length + " path items) and (" + route.turns.length + " turns)" );
+            return route;
         }
         catch( Exception e )
         {
@@ -181,7 +187,7 @@ public class GraphHopperRouter implements IRouter
 
         Log.i( TAG, "Starting route path length " + (ghStartCar == null ? 0 : ghStartCar.getPath().size())
                 + ", final route path length " + (ghFinishCar == null ? 0 : ghFinishCar.getPath().size())
-                + ", '" + NETWORK_BD + "' path length " + ghRoute.getPath().size()
+                + ", core path length " + ghRoute.getPath().size()
                 + ", total length " + pathLen );
 
         result.path = new Route.Position[ pathLen ];
@@ -320,36 +326,20 @@ public class GraphHopperRouter implements IRouter
         return -1; //not found
     }
 
-    public void startRoute(RouteHolder route)
+    public double distanceFromNetwork(double lat, double lon)
     {
-        Intent driverAlertIntent = new Intent( "transtech.AF.Android.route.ACTION_ROUTE_SET_ONROUTE" );
-        driverAlertIntent.putExtra( "transtech.AF.Android.route.EXTRA_SELECTED_ROUTE_NAME", "B-Double Network" );
-        context.startService( driverAlertIntent );
-    }
+        VehicleProfile current = getSelectedProfile();
+        if( current == null )
+            return -0.1;
 
-    public void checkOffRoute( double startLat, double startLon )
-    {
-        if( currentRoute == null || currentRoute.route == null )
-            return;  //can't be off route if there is no route
+        List<Position> pos = new ArrayList<Position>();
+        pos.add( new Position( lat, lon ));
+        List<SnappedPosition> result = getGeoEngine().findClosestPoints( pos, current.getCode() );
+        if( result == null || result.size() == 0 )
+            return -0.2;
 
-        double minD = R;
-        for( Route.Position pos : currentRoute.route.path )
-            minD = Math.min( minD, haversineDistance( startLat, startLon, pos.lat, pos.lng ) );
-
-        Intent driverAlertIntent = new Intent();
-        driverAlertIntent.putExtra( "transtech.AF.Android.route.EXTRA_SELECTED_ROUTE_NAME", "B-Double Network" );
-        if( minD != R && minD > OFFROUTE_THRESHOLD )
-        {
-            //looks like we're far enough off route to cause a problem...
-            Log.w( TAG, "Driver is only " + minD + " metres from route - alerting!" );
-            driverAlertIntent.setAction( "transtech.AF.Android.route.ACTION_ROUTE_SET_OFFROUTE" );
-        }
-        else
-        {
-            Log.i( TAG, "Driver is only " + minD + " metres from route - all good" );
-            driverAlertIntent.setAction( "transtech.AF.Android.route.ACTION_ROUTE_SET_ONROUTE" );
-        }
-        context.startService( driverAlertIntent );
+        Position posFromSeg = result.get(0).getSnapped();
+        return haversineDistance( lat, lon, posFromSeg.getLatitude(), posFromSeg.getLongitude() );
     }
 
     /**
@@ -365,7 +355,7 @@ public class GraphHopperRouter implements IRouter
      */
     private static final double R = 6371e3;
 
-    private double haversineDistance( double lat1, double lon1, double lat2, double lon2 )
+    public double haversineDistance( double lat1, double lon1, double lat2, double lon2 )
     {
         double r1 = toRad( lat1 );
         double r2 = toRad( lat2 );

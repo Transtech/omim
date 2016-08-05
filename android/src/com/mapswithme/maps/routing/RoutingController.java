@@ -96,6 +96,8 @@ public class RoutingController
   private String[] mLastMissingMaps;
   private RoutingInfo mCachedRoutingInfo;
 
+  private ComplianceController complianceController;
+
   @SuppressWarnings("FieldCanBeLocal")
   private final Framework.RoutingListener mRoutingListener = new Framework.RoutingListener()
   {
@@ -303,7 +305,6 @@ public class RoutingController
 //    Framework.nativeSetRouter(mLastRouterType);
 
     Framework.nativeSetExternalRouter( new GraphHopperRouter( mContainer.getActivity() ), Framework.ROUTER_TYPE_TRUCK );
-
     if (mContainer != null)
       mContainer.showRoutePlan(true, new Runnable()
       {

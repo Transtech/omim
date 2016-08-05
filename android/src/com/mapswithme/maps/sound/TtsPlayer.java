@@ -188,6 +188,11 @@ public enum TtsPlayer
         speak(textToSpeak);
   }
 
+    public void sayThis(String text)
+    {
+        speak( text );
+    }
+
   public void stop()
   {
     if (isReady())

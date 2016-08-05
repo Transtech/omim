@@ -34,8 +34,8 @@ public class RoutingPlanController extends ToolbarController
   private final SlotFrame mSlotFrame;
   private final RadioGroup mRouterTypes;
   private final WheelProgressView mProgressVehicle;
-  private final WheelProgressView mProgressPedestrian;
-  private final WheelProgressView mProgressBicycle;
+//  private final WheelProgressView mProgressPedestrian;
+//  private final WheelProgressView mProgressBicycle;
   private final View mPlanningLabel;
   private final View mErrorLabel;
   private final View mDetailsFrame;
@@ -103,7 +103,7 @@ public class RoutingPlanController extends ToolbarController
         RoutingController.get().setRouterType(Framework.ROUTER_TYPE_VEHICLE);
       }
     });
-
+/*
     setupRouterButton(R.id.pedestrian, R.drawable.ic_walk, new View.OnClickListener()
     {
       @Override
@@ -125,11 +125,11 @@ public class RoutingPlanController extends ToolbarController
         RoutingController.get().setRouterType(Framework.ROUTER_TYPE_BICYCLE);
       }
     });
-
+*/
     View progressFrame = planFrame.findViewById(R.id.progress_frame);
     mProgressVehicle = (WheelProgressView) progressFrame.findViewById(R.id.progress_vehicle);
-    mProgressPedestrian = (WheelProgressView) progressFrame.findViewById(R.id.progress_pedestrian);
-    mProgressBicycle = (WheelProgressView) progressFrame.findViewById(R.id.progress_bicycle);
+//    mProgressPedestrian = (WheelProgressView) progressFrame.findViewById(R.id.progress_pedestrian);
+//    mProgressBicycle = (WheelProgressView) progressFrame.findViewById(R.id.progress_bicycle);
 
     mPlanningLabel = planFrame.findViewById(R.id.planning);
     mErrorLabel = planFrame.findViewById(R.id.error);
@@ -218,18 +218,19 @@ public class RoutingPlanController extends ToolbarController
   {
     updateProgressLabels();
 
-    UiUtils.invisible(mProgressVehicle, mProgressPedestrian, mProgressBicycle);
+    UiUtils.invisible(mProgressVehicle/*, mProgressPedestrian, mProgressBicycle*/);
     WheelProgressView progressView;
-    if (router == Framework.ROUTER_TYPE_VEHICLE)
+    if (router == Framework.ROUTER_TYPE_TRUCK)
     {
-      mRouterTypes.check(R.id.vehicle);
-      progressView = mProgressVehicle;
+        mRouterTypes.check(R.id.truck);
+        progressView = mProgressVehicle;
     }
-    else if (router == Framework.ROUTER_TYPE_TRUCK)
+    else //if (router == Framework.ROUTER_TYPE_VEHICLE)
     {
-      mRouterTypes.check(R.id.truck);
-      progressView = mProgressVehicle;
+        mRouterTypes.check(R.id.vehicle);
+        progressView = mProgressVehicle;
     }
+    /*
     else if (router == Framework.ROUTER_TYPE_PEDESTRIAN)
     {
       mRouterTypes.check(R.id.pedestrian);
@@ -240,7 +241,7 @@ public class RoutingPlanController extends ToolbarController
       mRouterTypes.check(R.id.bicycle);
       progressView = mProgressBicycle;
     }
-
+*/
     if (!RoutingController.get().isBuilding())
       return;
 

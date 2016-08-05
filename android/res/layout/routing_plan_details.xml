@@ -53,7 +53,7 @@
       android:layout_height="@dimen/routing_selector_size"
       tools:button="@drawable/ic_drive"
       tools:buttonTint="?iconTintLight"/>
-
+<!--
     <RadioButton
       android:id="@+id/pedestrian"
       android:layout_width="@dimen/routing_selector_size"
@@ -67,6 +67,7 @@
       android:layout_height="@dimen/routing_selector_size"
       tools:button="@drawable/ic_bicycle"
       tools:buttonTint="?iconTintLight"/>
+-->
   </RadioGroup>
 
   <ImageView

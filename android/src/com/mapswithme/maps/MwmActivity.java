@@ -52,11 +52,7 @@ import com.mapswithme.maps.location.CompassData;
 import com.mapswithme.maps.location.LocationHelper;
 import com.mapswithme.maps.news.FirstStartFragment;
 import com.mapswithme.maps.news.NewsFragment;
-import com.mapswithme.maps.routing.NavigationController;
-import com.mapswithme.maps.routing.RoutingController;
-import com.mapswithme.maps.routing.RoutingInfo;
-import com.mapswithme.maps.routing.RoutingPlanFragment;
-import com.mapswithme.maps.routing.RoutingPlanInplaceController;
+import com.mapswithme.maps.routing.*;
 import com.mapswithme.maps.search.FloatingSearchToolbarController;
 import com.mapswithme.maps.search.SearchActivity;
 import com.mapswithme.maps.search.SearchEngine;
@@ -843,6 +839,9 @@ public class MwmActivity extends BaseMwmFragmentActivity
 
     if (MapFragment.nativeIsEngineCreated())
       LocationHelper.INSTANCE.attach(this);
+
+      ComplianceController.get().attach(this);
+      ComplianceController.get().start();
   }
 
   private void initShowcase()
@@ -885,6 +884,8 @@ public class MwmActivity extends BaseMwmFragmentActivity
     LocationHelper.INSTANCE.detach(!isFinishing());
     mMytargetHelper.cancel();
     RoutingController.get().detach();
+      ComplianceController.get().stop();
+      ComplianceController.get().detach();
   }
 
   @Override

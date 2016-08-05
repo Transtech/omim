@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Class DemoLocationProvider
@@ -70,6 +71,7 @@ public class DemoLocationProvider extends BaseLocationProvider
 
     private List<Location> fakeData = null;
     private FakerThread fakeThread;
+    private static AtomicInteger thrCount = new AtomicInteger();
 
     DemoLocationProvider()
     {
@@ -106,6 +108,11 @@ public class DemoLocationProvider extends BaseLocationProvider
             Log.i(TAG, "DemoGPS thread stopping...");
             fakeThread.keepSending = false;
             fakeThread.interrupt();
+            try
+            {
+                fakeThread.join();
+            }
+            catch( InterruptedException ie ) {}
         }
 
         fakeThread = null;
@@ -134,10 +141,10 @@ public class DemoLocationProvider extends BaseLocationProvider
                 while( (line = br.readLine()) != null )
                 {
                     String data[] = line.split( "," );
-                    Location fakeLoc = null;
+                    MockLocation fakeLoc = null;
 
                     // -1 Signifies an invalid speed and normally when speed is invalid Location object is null, so let's do the same here
-                    fakeLoc = new Location( "DemoLocationProvider" );
+                    fakeLoc = new MockLocation( "DemoLocationProvider" );
                     if( !data[ 5 ].equals( "-1" ) )
                     {
                         fakeLoc.setLatitude( toDegrees( data[ 0 ] ) );
@@ -146,7 +153,9 @@ public class DemoLocationProvider extends BaseLocationProvider
                         fakeLoc.setSpeed( Float.parseFloat( data[ 5 ] ) * KNOTS_TO_MPS );
                         fakeLoc.setBearing( Float.parseFloat( data[ 6 ] ) );
                         fakeLoc.setAltitude( Double.parseDouble( data[ 7 ] ) );
-                        fakeLoc.setAccuracy( 20.0f );
+                        float hdop = Float.parseFloat( data[ 8 ] );
+                        int numSats = Integer.parseInt( data[ 9 ] );
+                        fakeLoc.setAccuracy( numSats * 10 + hdop );
                     }
                     fakeData.add( fakeLoc );
                 }
@@ -165,19 +174,22 @@ public class DemoLocationProvider extends BaseLocationProvider
                 for( int i = 0; i < events.length(); i++ )
                 {
                     JSONObject event = events.getJSONObject( i );
-                    Location fakeLoc = null;
+                    MockLocation fakeLoc = null;
 
                     // -1 Signifies an invalid speed and normally when speed is invalid Location object is null, so let's do the same here
-                    fakeLoc = new Location( "DemoLocationProvider" );
+                    fakeLoc = new MockLocation( "DemoLocationProvider" );
                     if( event.getInt( "Spd" ) != -1.0 )
                     {
                         fakeLoc.setLatitude( event.getDouble( "Lat" ) );
                         fakeLoc.setLongitude( event.getDouble( "Lng" ) );
                         fakeLoc.setTime( System.currentTimeMillis() );
                         fakeLoc.setSpeed( (float) (event.getDouble( "Spd" ) * KMH_TO_MPS) );
-                        fakeLoc.setBearing( event.getInt( "Hdg" ) );
+                        fakeLoc.setBearing( event.getInt( "Dir" ) );
                         fakeLoc.setAltitude( event.getDouble( "Alt" ) );
-                        fakeLoc.setAccuracy( 20.0f );
+
+                        double hdop = event.getDouble( "HDOP");
+                        int numSats = event.getInt( "NSat" );
+                        fakeLoc.setAccuracy( (float) (numSats * 10 + hdop) );
                     }
                     fakeData.add( fakeLoc );
                 }
@@ -225,6 +237,8 @@ public class DemoLocationProvider extends BaseLocationProvider
 
         public void run()
         {
+            int num = thrCount.incrementAndGet();
+            Log.i( TAG, "Creating new fake GPS thread (" + num + ")" );
             while( keepSending )
             {
                 if( fakeData == null || fakeData.size() == 0 )
@@ -234,26 +248,26 @@ public class DemoLocationProvider extends BaseLocationProvider
                     return;
                 }
 
-                ++currentIndex; //this keeps going around until the thread is stopped
+                currentIndex = ++currentIndex % fakeData.size(); //this keeps going around until the thread is stopped
 
                 try
                 {
-                    Location loc = fakeData.get( currentIndex % fakeData.size() );
+                    Location loc = fakeData.get( currentIndex );
                     loc.setTime( new Date().getTime() );
                     loc.setElapsedRealtimeNanos( SystemClock.elapsedRealtimeNanos() );
 
-                    Log.d( TAG, "" + currentIndex + ": fake location -> " + loc );
+                    if( currentIndex % 10 == 0 )
+                        Log.d( TAG, "" + currentIndex + ": fake location -> " + loc );
                     onLocationChanged( loc );
                 }
                 catch( Exception e )
                 {
                     Log.e( TAG, "Error creating a fake location", e );
-
                 }
 
                 try
                 {
-                    Thread.sleep( LocationHelper.INSTANCE.getInterval() );
+                    Thread.sleep( 250 );
                 }
                 catch( InterruptedException ie )
                 {
@@ -261,7 +275,8 @@ public class DemoLocationProvider extends BaseLocationProvider
                     keepSending = false;
                 }
             }
-            Log.i(TAG, "DemoGPS thread stopped");
+            num = thrCount.decrementAndGet();
+            Log.i(TAG, "DemoGPS thread stopped (" + num + ")");
         }
     }
 

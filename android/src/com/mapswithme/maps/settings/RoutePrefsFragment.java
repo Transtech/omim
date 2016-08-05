@@ -1,5 +1,6 @@
 package com.mapswithme.maps.settings;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.preference.ListPreference;
@@ -8,20 +9,24 @@ import android.preference.PreferenceFragment;
 import android.preference.TwoStatePreference;
 import android.speech.tts.TextToSpeech;
 import android.support.annotation.NonNull;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import android.util.Log;
+import au.net.transtech.geo.model.VehicleProfile;
 import com.mapswithme.maps.Framework;
 import com.mapswithme.maps.R;
 import com.mapswithme.maps.location.DemoLocationProvider;
 import com.mapswithme.maps.location.LocationHelper;
+import com.mapswithme.maps.routing.ComplianceController;
+import com.mapswithme.maps.routing.GraphHopperRouter;
 import com.mapswithme.maps.sound.LanguageData;
 import com.mapswithme.maps.sound.TtsPlayer;
+import com.mapswithme.transtech.Setting;
+import com.mapswithme.transtech.SettingConstants;
 import com.mapswithme.util.Config;
 import com.mapswithme.util.statistics.Statistics;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class RoutePrefsFragment extends PreferenceFragment
 {
@@ -30,10 +35,12 @@ public class RoutePrefsFragment extends PreferenceFragment
   private TwoStatePreference mPrefEnabled;
   private TwoStatePreference mDemoEnabled;
   private ListPreference mPrefLanguages;
+  private ListPreference mNetwork;
 
   private final Map<String, LanguageData> mLanguages = new HashMap<>();
   private LanguageData mCurrentLanguage;
   private String mSelectedLanguage;
+  private String mSelectedNetwork;
 
   private final Preference.OnPreferenceChangeListener mEnabledListener = new Preference.OnPreferenceChangeListener()
   {
@@ -91,18 +98,36 @@ public class RoutePrefsFragment extends PreferenceFragment
         public boolean onPreferenceChange(Preference preference, Object newValue)
         {
             boolean set = (Boolean)newValue;
-            Log.i("Maps_RoutePrefsFragment", "Setting useDemoGPS flag to " + set);
             LocationHelper.INSTANCE.setUseDemoGPS( set );
             return true;
         }
     };
 
+    private final Preference.OnPreferenceChangeListener mNetworkListener = new Preference.OnPreferenceChangeListener()
+    {
+        @Override
+        public boolean onPreferenceChange(Preference preference, Object newValue)
+        {
+            if (newValue == null)
+                return false;
+
+            mSelectedNetwork = (String)newValue;
+            mNetwork.setValue( mSelectedNetwork );
+            GraphHopperRouter router = ComplianceController.get().getRouter( RoutePrefsFragment.this.getActivity() );
+            boolean result = router.setSelectedProfile( mSelectedNetwork );
+            update();
+            return result;
+        }
+    };
+
+
     private void enableListeners(boolean enable)
   {
-    mPrefEnabled.setOnPreferenceChangeListener(enable ? mEnabledListener : null);
-      Log.i( "Maps_RoutePrefsFragment", (enable ? "Enabling" : "Disabling") + " useDemoGPS pref listener " );
-    mDemoEnabled.setOnPreferenceChangeListener(enable ? mDemoListener : null);
+    mPrefEnabled.setOnPreferenceChangeListener( enable ? mEnabledListener : null );
     mPrefLanguages.setOnPreferenceChangeListener(enable ? mLangListener : null);
+//      Log.i( "Maps_RoutePrefsFragment", (enable ? "Enabling" : "Disabling") + " useDemoGPS pref listener " );
+      mDemoEnabled.setOnPreferenceChangeListener( enable ? mDemoListener : null );
+      mNetwork.setOnPreferenceChangeListener(enable ? mNetworkListener : null);
   }
 
   private void setLanguage(@NonNull LanguageData lang)
@@ -134,9 +159,6 @@ public class RoutePrefsFragment extends PreferenceFragment
       return;
     }
 
-      mDemoEnabled.setChecked( LocationHelper.INSTANCE.useDemoGPS() );
-      mDemoEnabled.setSummary( "Use fake GPS data from " + DemoLocationProvider.DEFAULT_FILE_NAME );
-
     mPrefEnabled.setChecked(TtsPlayer.INSTANCE.isEnabled());
     mPrefEnabled.setSummary(null);
 
@@ -159,9 +181,35 @@ public class RoutePrefsFragment extends PreferenceFragment
     mPrefLanguages.setEnabled(available && TtsPlayer.INSTANCE.isEnabled());
     mPrefLanguages.setSummary(available ? mCurrentLanguage.name : null);
     mPrefLanguages.setValue(available ? mCurrentLanguage.internalCode : null);
+
     mPrefEnabled.setChecked(available && TtsPlayer.INSTANCE.isEnabled());
 
-    enableListeners( true );
+      mDemoEnabled.setChecked( LocationHelper.INSTANCE.useDemoGPS() );
+      mDemoEnabled.setSummary( "Use fake GPS data from " + DemoLocationProvider.DEFAULT_FILE_NAME );
+
+      List<VehicleProfile> profiles = ComplianceController.get().getRouter( RoutePrefsFragment.this.getActivity() ).getGeoEngine().getVehicleProfiles();
+      if( profiles != null && profiles.size() > 0 )
+      {
+          final CharSequence[] entries2 = new CharSequence[ profiles.size() ];
+          final CharSequence[] values2 = new CharSequence[ profiles.size() ];
+          for( int i = 0; i < profiles.size(); ++i )
+          {
+              VehicleProfile vp = profiles.get( i );
+              entries2[ i ] = vp.getDescription();
+              values2[ i ] = vp.getCode();
+
+              Log.i( "Maps_RoutePrefsFragment", "Adding vehicle profile: " + vp.getDescription() + " (" + vp.getCode() + ")" );
+          }
+
+          mNetwork.setEntries( entries2 );
+          mNetwork.setEntryValues( values2 );
+
+          GraphHopperRouter router = ComplianceController.get().getRouter( RoutePrefsFragment.this.getActivity() );
+          VehicleProfile vp = router.getSelectedProfile();
+          mNetwork.setSummary( vp == null ? null : vp.getDescription() + " (" + vp.getCode() + ")" );
+          mNetwork.setValue( vp == null ? null : vp.getCode() );
+      }
+      enableListeners( true );
   }
 
   @Override
@@ -173,6 +221,7 @@ public class RoutePrefsFragment extends PreferenceFragment
     mPrefEnabled = (TwoStatePreference) findPreference(getString(R.string.pref_tts_enabled));
     mDemoEnabled = (TwoStatePreference) findPreference(getString(R.string.pref_demo_gps));
     mPrefLanguages = (ListPreference) findPreference(getString(R.string.pref_tts_language));
+      mNetwork = (ListPreference) findPreference(getString(R.string.pref_route_network));
 
     final Framework.Params3dMode _3d = new Framework.Params3dMode();
     Framework.nativeGet3dMode(_3d);

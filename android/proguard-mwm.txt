@@ -14,6 +14,7 @@
 -dontwarn com.graphhopper.**
 -dontwarn org.slf4j.**
 -dontwarn ch.qos.logback.**
+-dontwarn org.assertj.**
 
 # parse
 -dontwarn com.squareup.okhttp.**
