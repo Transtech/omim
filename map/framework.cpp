@@ -373,7 +373,6 @@ Framework::Framework()
   routing::RouterDelegate::TPointCheckCallback const routingVisualizerFn = nullptr;
 #endif
   m_routingSession.Init(routingStatisticsFn, routingVisualizerFn);
-  m_externalRouter = nullptr;
   SetRouterImpl(RouterType::Vehicle);
 
   UpdateMinBuildingsTapZoom();
@@ -2346,8 +2345,12 @@ void Framework::SetRouterImpl(RouterType type)
       return m_model.GetIndex().GetMwmIdByCountryFile(CountryFile(countryFile)).IsAlive();
     };
 
-    if (type == RouterType::Truck && m_externalRouter != nullptr)
-        router.reset(new ExternalRouter(m_externalRouter, &m_model.GetIndex(), countryFileGetter));
+    TRouterMap::iterator it = m_externalRouters.find(static_cast<int>(type));
+    if (it != m_externalRouters.end())
+    {
+        LOG(LINFO, ("Routing type: ", routing::ToString(type)));
+        router.reset(new ExternalRouter(it->second, &m_model.GetIndex(), countryFileGetter));
+    }
     else
         router.reset(new OsrmRouter(&m_model.GetIndex(), countryFileGetter));
 
@@ -3005,4 +3008,9 @@ void Framework::CreateNote(ms::LatLon const & latLon, FeatureID const & fid,
   osm::Editor::Instance().CreateNote(latLon, fid, type, note);
   if (type == osm::Editor::NoteProblemType::PlaceDoesNotExist)
     DeactivateMapSelection(true /* notifyUI */);
+}
+
+void Framework::SetExternalRouter(routing::RouterType type, routing::IRouter *router)
+{
+    m_externalRouters.insert(TRouterMap::value_type(static_cast<int>(type), router));
 }

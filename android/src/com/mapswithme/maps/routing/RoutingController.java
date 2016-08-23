@@ -304,7 +304,9 @@ public class RoutingController
 //                                                      mEndPoint.getLat(), mEndPoint.getLon());
 //    Framework.nativeSetRouter(mLastRouterType);
 
-    Framework.nativeSetExternalRouter( new GraphHopperRouter( mContainer.getActivity() ), Framework.ROUTER_TYPE_TRUCK );
+    Framework.nativeSetExternalRouter( Framework.ROUTER_TYPE_VEHICLE, new GraphHopperRouter( null, Framework.ROUTER_TYPE_VEHICLE ) );
+    Framework.nativeSetExternalRouter( Framework.ROUTER_TYPE_TRUCK, ComplianceController.get().getRouter( null, Framework.ROUTER_TYPE_TRUCK ));
+
     if (mContainer != null)
       mContainer.showRoutePlan(true, new Runnable()
       {

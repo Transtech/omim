@@ -656,7 +656,8 @@ public:
   void Save3dMode(bool allow3d, bool allow3dBuildings);
   void Load3dMode(bool & allow3d, bool & allow3dBuildings);
 
-  void SetExternalRouter(routing::IRouter *router) { m_externalRouter = router; }
+  void SetExternalRouter(routing::RouterType type, routing::IRouter *router);
+
 public:
   /// @name Editor interface.
   //@{
@@ -690,7 +691,9 @@ private:
   TRouteBuildingCallback m_routingCallback;
   TRouteProgressCallback m_progressCallback;
   routing::RouterType m_currentRouterType;
-  routing::IRouter *m_externalRouter;
+//  routing::IRouter *m_externalRouter;
+  typedef std::unordered_map<int, routing::IRouter*> TRouterMap;
+  TRouterMap m_externalRouters;
   //@}
 
 public:

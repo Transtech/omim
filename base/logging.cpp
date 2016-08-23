@@ -95,7 +95,7 @@ namespace my
   TLogLevel g_LogLevel = {LDEBUG};
   TLogLevel g_LogAbortLevel = {LERROR};
 #else
-  TLogLevel g_LogLevel = {LINFO};
+  TLogLevel g_LogLevel = {LDEBUG};
   TLogLevel g_LogAbortLevel = {LCRITICAL};
 #endif
 }

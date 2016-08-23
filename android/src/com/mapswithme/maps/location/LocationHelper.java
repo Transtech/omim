@@ -723,6 +723,10 @@ public enum LocationHelper
     }
 
     private static final String TAG = "Maps_LocationHelper";
+    public void setUseDemoGPS(boolean b, String dataFile)
+    {
+    }
+
     public void setUseDemoGPS(boolean b)
     {
         Log.i(TAG,"Setting demo location provider to " + b + ", number of listeners " + mListeners.getSize());

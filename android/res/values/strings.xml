@@ -19,6 +19,7 @@
 	<!-- Button "do not interrupt download" if user touched actively downloading country -->
 	<string name="do_nothing">Continue</string>
 	<string name="download_maps">Download Maps</string>
+	<string name="demo_mode">Available Demo\'s</string>
 	<!-- Settings/Downloader - Download confirmation button -->
 	<string name="download_x_kb">Download %qu kB</string>
 	<!-- Settings/Downloader - Download confirmation button -->

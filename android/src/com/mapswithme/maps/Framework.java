@@ -200,7 +200,7 @@ public class Framework
 
   public native static void nativeSet3dMode(boolean allow3d, boolean allow3dBuildings);
 
-  public native static void nativeSetExternalRouter(IRouter router, int routerType);
+  public native static void nativeSetExternalRouter(int routerType, IRouter router);
 
   @NonNull
   public static native MapObject nativeDeleteBookmarkFromMapObject();

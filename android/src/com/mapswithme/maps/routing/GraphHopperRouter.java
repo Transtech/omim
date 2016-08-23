@@ -4,6 +4,7 @@ import android.content.Context;
 import android.util.Log;
 import au.net.transtech.geo.GeoEngine;
 import au.net.transtech.geo.model.*;
+import com.mapswithme.maps.Framework;
 import com.mapswithme.transtech.Setting;
 import com.mapswithme.transtech.SettingConstants;
 
@@ -18,6 +19,7 @@ import java.util.List;
 public class GraphHopperRouter implements IRouter
 {
     private static final String TAG = "Maps_GraphHopperRouter";
+    private static final String GRAPHHOPPER_PATH = "/sdcard/MapsWithMe/car-bd-crane-gh";
 
     private static final int LEAVE_ROUNDABOUT = -6;
     private static final int TURN_SHARP_LEFT = -3;
@@ -33,16 +35,18 @@ public class GraphHopperRouter implements IRouter
 
     public static final String NETWORK_CAR = "car";
 
-    private Context context;
+    private final Context context;
+    private final int routerType;
     private GeoEngine geoEngine;
     private VehicleProfile selectedProfile;
 
-    public static final double OFFROUTE_THRESHOLD = 150.0;  //150 metres
-    public static final double TIME_MULTIPLIER = 1.2;  //Increase estimated times for TRUCK routing
+    public static final double TRUCK_MULTIPLIER = 1.4;  //Increase estimated times for TRUCK routing
+    public static final double CAR_MULTIPLIER = 1.0;  //Increase estimated times for CAR routing
 
-    public GraphHopperRouter( Context context )
+    public GraphHopperRouter( Context context, int routerType )
     {
         this.context = context;
+        this.routerType = routerType;
     }
 
     @Override
@@ -57,58 +61,34 @@ public class GraphHopperRouter implements IRouter
         //Do nothing
     }
 
+    public int getRouterType()
+    {
+        return routerType;
+    }
+
     public GeoEngine getGeoEngine()
     {
         if( geoEngine == null )
         {
-            geoEngine = new GeoEngine( "/sdcard/MapsWithMe/Australia-gh" );
+            geoEngine = new GeoEngine( GRAPHHOPPER_PATH );
             geoEngine.loadGraph();
         }
         return geoEngine;
     }
 
-    public boolean setSelectedProfile(String profile)
-    {
-        VehicleProfile selVp = null;
-        for( VehicleProfile vp : getGeoEngine().getVehicleProfiles() )
-            if( vp.getCode().equals( profile ) )
-                selVp = vp;
-
-        if (selVp == null)
-            return false;
-
-        Setting.setString( context,
-                Setting.currentEnvironment( context ),
-                Setting.Scope.SMARTNAV2,
-                SettingConstants.ROUTE_NETWORK,
-                profile,
-                Setting.Origin.LOCAL,
-                Setting.Source.USER.name());
-
-        selectedProfile = selVp;
-        return true;
-    }
-
-    public VehicleProfile getSelectedProfile()
-    {
-        if( selectedProfile == null )
-        {
-            String network = Setting.getString( context,
-                    Setting.currentEnvironment( context ),
-                    Setting.Scope.SMARTNAV2,
-                    SettingConstants.ROUTE_NETWORK,
-                    NETWORK_CAR );
-
-            for( VehicleProfile vp : getGeoEngine().getVehicleProfiles() )
-                if( vp.getCode().equals( network ) )
-                    selectedProfile = vp;
-        }
-        return selectedProfile;
-    }
-
 
     @Override
     public Route calculateRoute( double startLat, double startLon, double finishLat, double finishLon )
+    {
+        Log.i( TAG, "Received routing request received for GH network '" + routerType + "'");
+        ComplianceController.get().setCurrentRouterType( routerType );
+        if( routerType != Framework.ROUTER_TYPE_TRUCK )
+            return routeByCar(startLat, startLon, finishLat, finishLon);
+
+        return routeOnSelectedProfile( startLat, startLon, finishLat, finishLon );
+    }
+
+    private Route routeOnSelectedProfile(double startLat, double startLon, double finishLat, double finishLon)
     {
         VehicleProfile currentProfile = getSelectedProfile();
         if( currentProfile == null )
@@ -137,8 +117,8 @@ public class GraphHopperRouter implements IRouter
                 double dist = haversineDistance( startLat, startLon, startPos.getLatitude(), startPos.getLongitude() );
                 Log.i( TAG, "Start position (" + startLat + "," + startLon + ") is "
                         + dist + " meters from returned '" + currentProfile.getCode() + "' route - "
-                        + (dist > OFFROUTE_THRESHOLD ? " routing by CAR to start" : "looks good") );
-                if( dist > OFFROUTE_THRESHOLD )
+                        + (dist > ComplianceController.OFFROUTE_THRESHOLD ? " routing by CAR to start" : "looks good") );
+                if( dist > ComplianceController.OFFROUTE_THRESHOLD )
                 {
                     //yes we do
                     List<Position> req2 = new ArrayList<Position>();
@@ -154,8 +134,8 @@ public class GraphHopperRouter implements IRouter
                     dist = haversineDistance( finishLat, finishLon, finishPos.getLatitude(), finishPos.getLongitude() );
                     Log.i( TAG, "Finish position (" + finishLat + "," + finishLon + ") is "
                             + dist + " meters from returned '" + currentProfile.getCode() + "' route - "
-                            + (dist > OFFROUTE_THRESHOLD ? " routing by CAR to finish" : "looks good") );
-                    if( dist > OFFROUTE_THRESHOLD )
+                            + (dist > ComplianceController.OFFROUTE_THRESHOLD ? " routing by CAR to finish" : "looks good") );
+                    if( dist > ComplianceController.OFFROUTE_THRESHOLD )
                     {
                         List<Position> req2 = new ArrayList<Position>();
                         req2.add( new Position( finishLat, finishLon ) );
@@ -177,13 +157,34 @@ public class GraphHopperRouter implements IRouter
         return null;
     }
 
+    private Route routeByCar(double startLat, double startLon, double finishLat, double finishLon)
+    {
+        try
+        {
+            List<Position> req = new ArrayList<Position>();
+            req.add( new Position( startLat, startLon ) );
+            req.add( new Position( finishLat, finishLon ) );
+
+            MultiPointRoute ghRoute = getGeoEngine().route( req, NETWORK_CAR );
+            Route route = toMwmRoute( null, ghRoute, null );
+
+            Log.i( TAG, "Responding with GH route (" + route.path.length + " path items) and (" + route.turns.length + " turns)" );
+            return route;
+        }
+        catch( Exception e )
+        {
+            Log.e( TAG, "Routing request from (" + startLat + ", " + startLon + ") to (" + finishLat + ", " + finishLon + ") FAILED", e );
+        }
+        return null;
+    }
+
     private Route toMwmRoute( MultiPointRoute ghStartCar, MultiPointRoute ghRoute, MultiPointRoute ghFinishCar )
     {
         Route result = new Route();
 
         int pathLen = ghRoute.getPath().size()
-                + (ghStartCar == null ? 0 : ghStartCar.getPath().size())
-                + (ghFinishCar == null ? 0 : ghFinishCar.getPath().size());
+                + (ghStartCar == null ? 0 : ghStartCar.getPath().size() - 1)
+                + (ghFinishCar == null ? 0 : ghFinishCar.getPath().size() - 1);
 
         Log.i( TAG, "Starting route path length " + (ghStartCar == null ? 0 : ghStartCar.getPath().size())
                 + ", final route path length " + (ghFinishCar == null ? 0 : ghFinishCar.getPath().size())
@@ -192,11 +193,18 @@ public class GraphHopperRouter implements IRouter
 
         result.path = new Route.Position[ pathLen ];
         int i = 0;
+        double MULTIPLIER = (routerType == Framework.ROUTER_TYPE_TRUCK ? TRUCK_MULTIPLIER : CAR_MULTIPLIER);
 
         // Add start if it exists
         if( ghStartCar != null )
+        {
             for( Position pos : ghStartCar.getPath() )
                 result.path[ i++ ] = new Route.Position( pos.getLatitude(), pos.getLongitude() );
+
+            //remove finish location...
+            if( result.path.length > 1 )
+                i--;
+        }
 
         // Add main route
         for( Position pos : ghRoute.getPath() )
@@ -204,20 +212,30 @@ public class GraphHopperRouter implements IRouter
 
         // Add finish if it exists
         if( ghFinishCar != null )
+        {
+            //remove finish location...
+            if( result.path.length > 1 )
+                i--;
+
             for( Position pos : ghFinishCar.getPath() )
                 result.path[ i++ ] = new Route.Position( pos.getLatitude(), pos.getLongitude() );
+        }
 
         int segLen = 0;
         if( ghStartCar != null )
-            for( Leg leg : ghStartCar.getLegs() )
-                segLen += leg.getSegments().size();
+        {
+            for( int j = 0; j < ghStartCar.getLegs().size() - 1; j++ )
+                segLen += ghStartCar.getLegs().get( j ).getSegments().size();
+        }
 
         for( Leg leg : ghRoute.getLegs() )
             segLen += leg.getSegments().size();
 
         if( ghFinishCar != null )
-            for( Leg leg : ghFinishCar.getLegs() )
-                segLen += leg.getSegments().size();
+        {
+            for( int j = 1; j < ghFinishCar.getLegs().size(); j++ )
+                segLen += ghFinishCar.getLegs().get( j ).getSegments().size();
+        }
 
         result.turns = new Route.TurnItem[ segLen ];
         result.times = new Route.TimeItem[ segLen ];
@@ -227,12 +245,13 @@ public class GraphHopperRouter implements IRouter
         Long timeTotal = 0L;
         if( ghStartCar != null )
         {
-            for( Leg leg : ghStartCar.getLegs() )
+            for( int j = 0; j < ghStartCar.getLegs().size() - 1; j++ )
             {
+                Leg leg = ghStartCar.getLegs().get( j );
                 for( Segment seg : leg.getSegments() )
                 {
                     addSegment( result, i, timeTotal, seg );
-                    timeTotal += new Double( seg.getTime() * TIME_MULTIPLIER ).longValue();
+                    timeTotal += new Double( seg.getTime() * MULTIPLIER ).longValue();
                     i++;
                 }
             }
@@ -243,24 +262,26 @@ public class GraphHopperRouter implements IRouter
             for( Segment seg : leg.getSegments() )
             {
                 addSegment( result, i, timeTotal, seg );
-                timeTotal += new Double( seg.getTime() * TIME_MULTIPLIER ).longValue();
+                timeTotal += new Double( seg.getTime() * MULTIPLIER ).longValue();
                 i++;
             }
         }
 
         if( ghFinishCar != null )
         {
-            for( Leg leg : ghFinishCar.getLegs() )
+            for( int j = 1; j < ghFinishCar.getLegs().size(); j++ )
             {
+                Leg leg = ghFinishCar.getLegs().get( j );
                 for( Segment seg : leg.getSegments() )
                 {
                     addSegment( result, i, timeTotal, seg );
-                    timeTotal += new Double( seg.getTime() * TIME_MULTIPLIER ).longValue();
+                    timeTotal += new Double( seg.getTime() * MULTIPLIER ).longValue();
                     i++;
                 }
             }
         }
 
+        dumpRoute(result);
         return result;
     }
 
@@ -326,6 +347,45 @@ public class GraphHopperRouter implements IRouter
         return -1; //not found
     }
 
+    public boolean setSelectedProfile(String profile)
+    {
+        VehicleProfile selVp = null;
+        for( VehicleProfile vp : getGeoEngine().getVehicleProfiles() )
+            if( vp.getCode().equals( profile ) )
+                selVp = vp;
+
+        if (selVp == null)
+            return false;
+
+        Setting.setString( context,
+                Setting.currentEnvironment( context ),
+                Setting.Scope.SMARTNAV2,
+                SettingConstants.ROUTE_NETWORK,
+                profile,
+                Setting.Origin.LOCAL,
+                Setting.Source.USER.name() );
+
+        selectedProfile = selVp;
+        return true;
+    }
+
+    public VehicleProfile getSelectedProfile()
+    {
+        if( selectedProfile == null )
+        {
+            String network = Setting.getString( context,
+                    Setting.currentEnvironment( context ),
+                    Setting.Scope.SMARTNAV2,
+                    SettingConstants.ROUTE_NETWORK,
+                    NETWORK_CAR );
+
+            for( VehicleProfile vp : getGeoEngine().getVehicleProfiles() )
+                if( vp.getCode().equals( network ) )
+                    selectedProfile = vp;
+        }
+        return selectedProfile;
+    }
+
     public double distanceFromNetwork(double lat, double lon)
     {
         VehicleProfile current = getSelectedProfile();
@@ -340,6 +400,25 @@ public class GraphHopperRouter implements IRouter
 
         Position posFromSeg = result.get(0).getSnapped();
         return haversineDistance( lat, lon, posFromSeg.getLatitude(), posFromSeg.getLongitude() );
+    }
+
+    private void dumpRoute(Route route)
+    {
+        int i = 0;
+        for( Route.Position pos : route.path )
+            Log.d(TAG, "Path[" + (i++) + "] - " + pos.lat + "," + pos.lng);
+
+        i = 0;
+        for(Route.TimeItem t : route.times)
+            Log.d(TAG, "Time[" + (i++) + "] - i:" + t.index + ",t:" + t.time );
+
+        i = 0;
+        for( Route.TurnItem turn : route.turns)
+            Log.d(TAG, "Turn[" + (i++) + "] - i:" + turn.index + ",d:" + turn.direction + ",s:" + turn.sourceName + ",t:" + turn.targetName );
+
+        i = 0;
+        for(Route.StreetItem st : route.streets)
+            Log.d(TAG, "Street[" + (i++) + "] - i:" + st.index + ",n:" + st.name );
     }
 
     /**

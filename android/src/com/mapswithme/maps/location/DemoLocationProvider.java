@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class DemoLocationProvider extends BaseLocationProvider
 {
     private static final String TAG = "Maps_DemoLocationProvider";
-    public static final String DEFAULT_FILE_NAME = "/sdcard/MapsWithMe/GpsData.txt";
+    public static String GPS_DATA_SOURCE = "/sdcard/MapsWithMe/GpsData.txt";
 
     /**
      * Conversion factor converting MPS to KNOTS.
@@ -75,12 +75,12 @@ public class DemoLocationProvider extends BaseLocationProvider
 
     DemoLocationProvider()
     {
-        this(DEFAULT_FILE_NAME);
+        this(GPS_DATA_SOURCE);
     }
 
     DemoLocationProvider( String fileName )
     {
-        populateList( fileName );
+        setDataSource( fileName );
     }
 
     @Override
@@ -125,9 +125,10 @@ public class DemoLocationProvider extends BaseLocationProvider
      *
      * @param source
      */
-    private void populateList( String source )
+    private void setDataSource( String source )
     {
-        final String fileName = (source == null ? DEFAULT_FILE_NAME : source);
+        final String fileName = (source == null ? GPS_DATA_SOURCE : source);
+
         fakeData = new ArrayList<Location>();
         Log.d( TAG, "Reading the file  ->" + fileName );
 
@@ -204,8 +205,6 @@ public class DemoLocationProvider extends BaseLocationProvider
         {
             Log.e( TAG, Log.getStackTraceString( e ) );
         }
-
-        Log.d( TAG, "finished reading file." );
     }
 
     /**

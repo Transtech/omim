@@ -113,7 +113,7 @@ public class RoutePrefsFragment extends PreferenceFragment
 
             mSelectedNetwork = (String)newValue;
             mNetwork.setValue( mSelectedNetwork );
-            GraphHopperRouter router = ComplianceController.get().getRouter( RoutePrefsFragment.this.getActivity() );
+            GraphHopperRouter router = ComplianceController.get().getRouter( RoutePrefsFragment.this.getActivity(), Framework.ROUTER_TYPE_TRUCK );
             boolean result = router.setSelectedProfile( mSelectedNetwork );
             update();
             return result;
@@ -185,27 +185,31 @@ public class RoutePrefsFragment extends PreferenceFragment
     mPrefEnabled.setChecked(available && TtsPlayer.INSTANCE.isEnabled());
 
       mDemoEnabled.setChecked( LocationHelper.INSTANCE.useDemoGPS() );
-      mDemoEnabled.setSummary( "Use fake GPS data from " + DemoLocationProvider.DEFAULT_FILE_NAME );
+      mDemoEnabled.setSummary( "Use fake GPS data from " + DemoLocationProvider.GPS_DATA_SOURCE);
 
-      List<VehicleProfile> profiles = ComplianceController.get().getRouter( RoutePrefsFragment.this.getActivity() ).getGeoEngine().getVehicleProfiles();
+      GraphHopperRouter truckRouter = ComplianceController.get().getRouter( RoutePrefsFragment.this.getActivity(), Framework.ROUTER_TYPE_TRUCK );
+      List<VehicleProfile> profiles = truckRouter.getGeoEngine().getVehicleProfiles();
       if( profiles != null && profiles.size() > 0 )
       {
-          final CharSequence[] entries2 = new CharSequence[ profiles.size() ];
-          final CharSequence[] values2 = new CharSequence[ profiles.size() ];
-          for( int i = 0; i < profiles.size(); ++i )
+          final CharSequence[] entries2 = new CharSequence[ profiles.size() - 1 ];
+          final CharSequence[] values2 = new CharSequence[ profiles.size() - 1 ];
+          int i = 0;
+          for( VehicleProfile vp : profiles )
           {
-              VehicleProfile vp = profiles.get( i );
+              if( GraphHopperRouter.NETWORK_CAR.equals( vp.getCode() ) )
+                  continue;
+
               entries2[ i ] = vp.getDescription();
               values2[ i ] = vp.getCode();
 
               Log.i( "Maps_RoutePrefsFragment", "Adding vehicle profile: " + vp.getDescription() + " (" + vp.getCode() + ")" );
+              i++;
           }
 
           mNetwork.setEntries( entries2 );
           mNetwork.setEntryValues( values2 );
 
-          GraphHopperRouter router = ComplianceController.get().getRouter( RoutePrefsFragment.this.getActivity() );
-          VehicleProfile vp = router.getSelectedProfile();
+          VehicleProfile vp = truckRouter.getSelectedProfile();
           mNetwork.setSummary( vp == null ? null : vp.getDescription() + " (" + vp.getCode() + ")" );
           mNetwork.setValue( vp == null ? null : vp.getCode() );
       }

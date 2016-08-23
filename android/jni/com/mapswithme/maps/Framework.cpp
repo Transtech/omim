@@ -1055,12 +1055,12 @@ Java_com_mapswithme_maps_Framework_nativeGetActiveObjectFormattedCuisine(JNIEnv 
 }
 
 JNIEXPORT void JNICALL
-Java_com_mapswithme_maps_Framework_nativeSetExternalRouter(JNIEnv * env, jclass thiz, jobject router, jint routerType)
+Java_com_mapswithme_maps_Framework_nativeSetExternalRouter(JNIEnv * env, jclass thiz, jint routerType, jobject router)
 {
   LOG(LDEBUG, ("Setting external router"));
 
   routing::Router *pRouter = new routing::Router( router );
-  frm()->SetExternalRouter( pRouter );
+  frm()->SetExternalRouter( static_cast<routing::RouterType>(routerType), pRouter );
 
   g_framework->SetRouter(static_cast<routing::RouterType>(routerType));
 }

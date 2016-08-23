@@ -271,6 +271,12 @@ public class MwmActivity extends BaseMwmFragmentActivity
         .show();
   }
 
+    public void showDemo()
+    {
+        DemoActivity.mwmActivity = this;
+        startActivity(new Intent(this, DemoActivity.class));
+    }
+
   @Override
   public void showDownloader(boolean openDownloaded)
   {
@@ -696,6 +702,8 @@ public class MwmActivity extends BaseMwmFragmentActivity
       addTask(intent);
     else if (intent.hasExtra(EXTRA_UPDATE_COUNTRIES))
       showDownloader(true);
+      else if(intent.hasExtra( "DEMO" ))
+        showDemo();
   }
 
   private void addTask(Intent intent)

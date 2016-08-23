@@ -301,7 +301,18 @@
         android:name="ru.mail.android.mytarget.ads.MyTargetActivity"
         android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|uiMode|screenSize|smallestScreenSize"/>
 
-    <receiver
+      <activity
+              android:name="com.mapswithme.maps.DemoActivity"
+              android:configChanges="orientation|screenLayout|screenSize"
+              android:label="@string/bookmarks"
+              android:parentActivityName="com.mapswithme.maps.MwmActivity">
+          <!-- The meta-data element is needed for versions lower than 4.1 -->
+          <meta-data
+                  android:name="android.support.PARENT_ACTIVITY"
+                  android:value="com.mapswithme.maps.MwmActivity"/>
+      </activity>
+
+      <receiver
         android:name="com.mapswithme.maps.background.ConnectivityChangedReceiver"
         android:enabled="true"
         android:exported="true">
