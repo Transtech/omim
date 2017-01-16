@@ -9,24 +9,17 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.FragmentActivity;
 import android.support.v7.app.AlertDialog;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
-
-import java.util.Calendar;
-import java.util.concurrent.TimeUnit;
-
 import com.mapswithme.maps.Framework;
 import com.mapswithme.maps.MwmApplication;
 import com.mapswithme.maps.R;
 import com.mapswithme.maps.bookmarks.data.MapObject;
 import com.mapswithme.maps.downloader.MapManager;
 import com.mapswithme.maps.location.LocationHelper;
-import com.mapswithme.util.Config;
-import com.mapswithme.util.StringUtils;
-import com.mapswithme.util.ThemeSwitcher;
-import com.mapswithme.util.UiUtils;
-import com.mapswithme.util.Utils;
+import com.mapswithme.util.*;
 import com.mapswithme.util.concurrency.UiThread;
 import com.mapswithme.util.log.DebugLogger;
 import com.mapswithme.util.log.Logger;
@@ -34,7 +27,6 @@ import com.mapswithme.util.statistics.AlohaHelper;
 import com.mapswithme.util.statistics.Statistics;
 
 import java.util.Calendar;
-import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
 @android.support.annotation.UiThread
@@ -177,6 +169,7 @@ public class RoutingController
   private void setState(State newState)
   {
     mLogger.d("[S] State: " + mState + " -> " + newState + ", BuildState: " + mBuildState);
+      Log.i( "Maps_RoutingController", "[S] State: " + mState + " -> " + newState + ", BuildState: " + mBuildState );
     mState = newState;
 
     if (mContainer != null)
@@ -327,6 +320,7 @@ public class RoutingController
 
     if (!MapObject.isOfType(MapObject.MY_POSITION, mStartPoint))
     {
+        mLogger.d("No MY_POSITION available");
       Statistics.INSTANCE.trackEvent(Statistics.EventName.ROUTING_START_SUGGEST_REBUILD);
       AlohaHelper.logClick(AlohaHelper.ROUTING_START_SUGGEST_REBUILD);
       suggestRebuildRoute();
@@ -336,13 +330,14 @@ public class RoutingController
     MapObject my = LocationHelper.INSTANCE.getMyPosition();
     if (my == null)
     {
+        mLogger.d("No MY_POSITION available");
       mRoutingListener.onRoutingEvent(ResultCodesHelper.NO_POSITION, null);
       return;
     }
 
     mStartPoint = my;
     Statistics.INSTANCE.trackEvent(Statistics.EventName.ROUTING_START);
-    AlohaHelper.logClick(AlohaHelper.ROUTING_START);
+    AlohaHelper.logClick( AlohaHelper.ROUTING_START );
     setState(State.NAVIGATION);
 
     mContainer.showRoutePlan(false, null);

@@ -24,6 +24,7 @@ public class DemoLocationProvider extends BaseLocationProvider
 {
     private static final String TAG = "Maps_DemoLocationProvider";
     public static String GPS_DATA_SOURCE = "/sdcard/MapsWithMe/GpsData.txt";
+    public static boolean LOOP = true;
 
     /**
      * Conversion factor converting MPS to KNOTS.
@@ -238,6 +239,8 @@ public class DemoLocationProvider extends BaseLocationProvider
         {
             int num = thrCount.incrementAndGet();
             Log.i( TAG, "Creating new fake GPS thread (" + num + ")" );
+            Location prevLoc = null;
+
             while( keepSending )
             {
                 if( fakeData == null || fakeData.size() == 0 )
@@ -248,31 +251,43 @@ public class DemoLocationProvider extends BaseLocationProvider
                 }
 
                 currentIndex = ++currentIndex % fakeData.size(); //this keeps going around until the thread is stopped
+                if( !LOOP && currentIndex == fakeData.size() - 1)
+                    break;
+
+                Location mockLoc = currentIndex < fakeData.size() ? fakeData.get( currentIndex ) : null;
+                if( mockLoc != null )
+                {
+                    try
+                    {
+                        Location loc = new Location( mockLoc );
+                        loc.setTime( new Date().getTime() );
+                        loc.setElapsedRealtimeNanos( SystemClock.elapsedRealtimeNanos() );
+
+                        if( currentIndex % 10 == 0 )
+                            Log.d( TAG, "" + currentIndex + ": fake location -> " + loc );
+
+                        onLocationChanged( loc );
+                    }
+                    catch( Exception e )
+                    {
+                        Log.e( TAG, "Error creating a fake location", e );
+                    }
+                }
+
+                long delay = 250;
+                if( mockLoc != null && prevLoc != null )
+                    delay = Math.min(Math.max( Math.abs( mockLoc.getTime() - prevLoc.getTime() ) / 4, 250), 1000);
 
                 try
                 {
-                    Location loc = fakeData.get( currentIndex );
-                    loc.setTime( new Date().getTime() );
-                    loc.setElapsedRealtimeNanos( SystemClock.elapsedRealtimeNanos() );
-
-                    if( currentIndex % 10 == 0 )
-                        Log.d( TAG, "" + currentIndex + ": fake location -> " + loc );
-                    onLocationChanged( loc );
-                }
-                catch( Exception e )
-                {
-                    Log.e( TAG, "Error creating a fake location", e );
-                }
-
-                try
-                {
-                    Thread.sleep( 250 );
+                    Thread.sleep( delay );
                 }
                 catch( InterruptedException ie )
                 {
                     Log.w( TAG, "Fake GPS thread sleep interrupted - aborting fake GPS thread" );
                     keepSending = false;
                 }
+                prevLoc = mockLoc;
             }
             num = thrCount.decrementAndGet();
             Log.i(TAG, "DemoGPS thread stopped (" + num + ")");

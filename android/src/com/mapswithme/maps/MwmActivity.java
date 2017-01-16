@@ -15,6 +15,7 @@ import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -22,10 +23,6 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
-
-import java.io.Serializable;
-import java.util.Stack;
-
 import com.mapswithme.maps.Framework.MapObjectListener;
 import com.mapswithme.maps.activity.CustomNavigateUpListener;
 import com.mapswithme.maps.ads.LikesManager;
@@ -36,18 +33,8 @@ import com.mapswithme.maps.bookmarks.BookmarkCategoriesActivity;
 import com.mapswithme.maps.bookmarks.ChooseBookmarkCategoryFragment;
 import com.mapswithme.maps.bookmarks.data.BookmarkManager;
 import com.mapswithme.maps.bookmarks.data.MapObject;
-import com.mapswithme.maps.downloader.DownloaderActivity;
-import com.mapswithme.maps.downloader.DownloaderFragment;
-import com.mapswithme.maps.downloader.MapManager;
-import com.mapswithme.maps.downloader.MigrationFragment;
-import com.mapswithme.maps.downloader.OnmapDownloader;
-import com.mapswithme.maps.editor.AuthDialogFragment;
-import com.mapswithme.maps.editor.Editor;
-import com.mapswithme.maps.editor.EditorActivity;
-import com.mapswithme.maps.editor.EditorHostFragment;
-import com.mapswithme.maps.editor.FeatureCategoryActivity;
-import com.mapswithme.maps.editor.ReportFragment;
-import com.mapswithme.maps.editor.ViralFragment;
+import com.mapswithme.maps.downloader.*;
+import com.mapswithme.maps.editor.*;
 import com.mapswithme.maps.location.CompassData;
 import com.mapswithme.maps.location.LocationHelper;
 import com.mapswithme.maps.news.FirstStartFragment;
@@ -66,13 +53,7 @@ import com.mapswithme.maps.widget.menu.MainMenu;
 import com.mapswithme.maps.widget.placepage.BasePlacePageAnimationController;
 import com.mapswithme.maps.widget.placepage.PlacePageView;
 import com.mapswithme.maps.widget.placepage.PlacePageView.State;
-import com.mapswithme.util.Animations;
-import com.mapswithme.util.BottomSheetHelper;
-import com.mapswithme.util.Config;
-import com.mapswithme.util.InputUtils;
-import com.mapswithme.util.ThemeUtils;
-import com.mapswithme.util.UiUtils;
-import com.mapswithme.util.Utils;
+import com.mapswithme.util.*;
 import com.mapswithme.util.concurrency.UiThread;
 import com.mapswithme.util.sharing.ShareOption;
 import com.mapswithme.util.sharing.SharingHelper;
@@ -81,6 +62,9 @@ import com.mapswithme.util.statistics.MytargetHelper;
 import com.mapswithme.util.statistics.Statistics;
 import ru.mail.android.mytarget.nativeads.NativeAppwallAd;
 import ru.mail.android.mytarget.nativeads.banners.NativeAppwallBanner;
+
+import java.io.Serializable;
+import java.util.Stack;
 
 public class MwmActivity extends BaseMwmFragmentActivity
                       implements MapObjectListener,
@@ -846,7 +830,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
       mRoutingPlanInplaceController.setStartButton();
 
     if (MapFragment.nativeIsEngineCreated())
-      LocationHelper.INSTANCE.attach(this);
+        LocationHelper.INSTANCE.attach( this );
 
       ComplianceController.get().attach(this);
       ComplianceController.get().start();
@@ -1350,7 +1334,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
       mPlacePage.refreshLocation(location);
 
     if (!RoutingController.get().isNavigating())
-      return;
+        return;
 
     RoutingInfo info = Framework.nativeGetRouteFollowingInfo();
     mNavigationController.update(info);

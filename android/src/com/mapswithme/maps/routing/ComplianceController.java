@@ -136,7 +136,7 @@ public class ComplianceController implements LocationListener
     }
 
     @Override
-    public void onLocationUpdated( Location location )
+    public void onLocationUpdated( final Location location )
     {
         if( complianceState == State.UNKNOWN )
             return;
@@ -198,6 +198,18 @@ public class ComplianceController implements LocationListener
                 complianceState = State.ON_ROUTE;
             }
             lastLoc = location;
+
+            if( LocationHelper.INSTANCE.useDemoGPS() )
+            {
+                UiThread.run( new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        callback.onLocationUpdated( location );
+                    }
+                } );
+            }
         }
     }
 

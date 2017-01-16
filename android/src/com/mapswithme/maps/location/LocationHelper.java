@@ -296,7 +296,7 @@ public enum LocationHelper
     }
 
     for (LocationListener listener : mListeners)
-      listener.onLocationUpdated(mSavedLocation);
+        listener.onLocationUpdated( mSavedLocation );
     mListeners.finishIterate();
   }
 

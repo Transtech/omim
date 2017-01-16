@@ -2,6 +2,7 @@ package com.mapswithme.maps.routing;
 
 import android.app.Activity;
 import android.location.Location;
+import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -108,6 +109,7 @@ public class NavigationController
 
   public void update(RoutingInfo info)
   {
+      Log.i("Map_NavigationController", "Updating routing info " + info);
     if (info == null)
       return;
 

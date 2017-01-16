@@ -58,8 +58,8 @@ public class DemoActivity extends BaseMwmFragmentActivity
         DEMO2_START.setAccuracy( 20 );
 
         DEMO3_START = new MockLocation("DemoLocationProvider");
-        DEMO3_START.setLatitude( -37.85538150746134 );
-        DEMO3_START.setLongitude( 145.094633102417 );
+        DEMO3_START.setLatitude( -37.842240 );
+        DEMO3_START.setLongitude( 145.121452 );
         DEMO3_START.setTime( System.currentTimeMillis() );
         DEMO3_START.setSpeed( 0.0f );
         DEMO3_START.setAccuracy( 20 );
@@ -109,7 +109,6 @@ public class DemoActivity extends BaseMwmFragmentActivity
         processIntent( getIntent() );
     }
 
-
     private void processIntent( Intent intent )
     {
 
@@ -127,7 +126,7 @@ public class DemoActivity extends BaseMwmFragmentActivity
                         "Only allow the local device to route on a compliant network (B-Double)");
             case 2:
                 return formatEntry("Network Compliance when Rerouting",
-                        "The local device reroutes on a compliant network when driver diverts (Crane)");
+                        "The local device reroutes on a compliant network when driver diverts (B-Double)");
         }
 
         return formatEntry("Whoops", "Not that many demos defined!");
@@ -197,6 +196,9 @@ public class DemoActivity extends BaseMwmFragmentActivity
         Log.i( TAG, "Started demo location provider" );
 
         get().startActivity( new Intent( get(), MwmActivity.class ) );
+
+        Log.i( TAG, "Started demo 1" );
+        get().finish();
     }
 
     private void startRouteComplianceDemo()
@@ -233,7 +235,8 @@ public class DemoActivity extends BaseMwmFragmentActivity
         Log.i( TAG, "Prepared route... " );
 
         get().startActivity( new Intent( get(), MwmActivity.class ) );
-        Log.i( TAG, "Started demo" );
+        Log.i( TAG, "Started demo 2" );
+        get().finish();
     }
 
     private void startReRouteDemo()
@@ -260,14 +263,21 @@ public class DemoActivity extends BaseMwmFragmentActivity
 
         Log.i( TAG, "Set start position to " + DEMO3_START.getLatitude() + ", " + DEMO3_START.getLongitude() );
         //create a dummy bookmarked end point as our end position
-        MapObject endPoint = new MapObject(MapObject.API_POINT, "Oakleigh", null, null, -37.903549281610296, 145.08605003356934, null );
+        MapObject endPoint = new MapObject(MapObject.API_POINT, "Mitcham Hotel", null, null, -37.816931, 145.193893, null );
         Log.i( TAG, "Set end position to " + endPoint.getLat() + ", " + endPoint.getLon() );
 
         RoutingController.get().attach( mwmActivity );
         mwmActivity.startLocationToPoint( Statistics.EventName.MENU_P2P, AlohaHelper.MENU_POINT2POINT, endPoint );
         Log.i( TAG, "Prepared route... " );
 
+        DemoLocationProvider.GPS_DATA_SOURCE = "/sdcard/MapsWithMe/Demo2.txt";
+        DemoLocationProvider.LOOP = false; //just once around the block
+        Log.i( TAG, "Set GPS data source to " + DemoLocationProvider.GPS_DATA_SOURCE );
+        LocationHelper.INSTANCE.setUseDemoGPS( true );
+        Log.i( TAG, "Started demo location provider" );
+
         get().startActivity( new Intent( get(), MwmActivity.class ) );
-        Log.i( TAG, "Started demo" );
+        Log.i( TAG, "Started demo 3" );
+        get().finish();
     }
 }
