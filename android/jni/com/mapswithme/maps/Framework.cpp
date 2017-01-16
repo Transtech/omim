@@ -5,9 +5,11 @@
 #include "com/mapswithme/opengl/androidoglcontextfactory.hpp"
 #include "com/mapswithme/platform/Platform.hpp"
 
+#include "map/chart_generator.hpp"
 #include "map/user_mark.hpp"
 
-#include "../routing/Router.hpp"
+#include "search/everywhere_search_params.hpp"
+
 #include "storage/storage_helpers.hpp"
 
 #include "drape_frontend/visual_params.hpp"
@@ -25,6 +27,7 @@
 #include "platform/local_country_file_utils.hpp"
 #include "platform/location.hpp"
 #include "platform/measurement_utils.hpp"
+#include "platform/network_policy.hpp"
 #include "platform/platform.hpp"
 #include "platform/preferred_languages.hpp"
 #include "platform/settings.hpp"
@@ -35,9 +38,21 @@
 
 android::Framework * g_framework = 0;
 
+namespace platform
+{
+// Dummy, implementation and location should be chosen by android developer.
+NetworkPolicy ToNativeNetworkPolicy(jobject obj)
+{
+  return NetworkPolicy(true);
+}
+}  // namespace platform
+
 using namespace storage;
 using platform::CountryFile;
 using platform::LocalCountryFile;
+using platform::ToNativeNetworkPolicy;
+
+static_assert(sizeof(int) >= 4, "Size of jint in less than 4 bytes.");
 
 namespace
 {
@@ -62,12 +77,15 @@ enum MultiTouchAction
 
 Framework::Framework()
   : m_lastCompass(0.0)
+  , m_isContextDestroyed(false)
   , m_currentMode(location::PendingPosition)
   , m_isCurrentModeInitialized(false)
   , m_isChoosePositionMode(false)
 {
   ASSERT_EQUAL ( g_framework, 0, () );
   g_framework = this;
+
+  m_work.GetTrafficManager().SetStateListener(bind(&Framework::TrafficStateChanged, this, _1));
 }
 
 void Framework::OnLocationError(int errorCode)
@@ -111,6 +129,12 @@ void Framework::MyPositionModeChanged(location::EMyPositionMode mode, bool routi
     m_myPositionModeSignal(mode, routingActive);
 }
 
+void Framework::TrafficStateChanged(TrafficManager::TrafficState state)
+{
+  if (m_onTrafficStateChangedFn)
+    m_onTrafficStateChangedFn(state);
+}
+
 void Framework::SetMyPositionMode(location::EMyPositionMode mode)
 {
     OnMyPositionModeChanged(mode);
@@ -123,7 +147,10 @@ bool Framework::CreateDrapeEngine(JNIEnv * env, jobject jSurface, int densityDpi
   m_contextFactory = make_unique_dp<dp::ThreadSafeFactory>(new AndroidOGLContextFactory(env, jSurface));
   AndroidOGLContextFactory const * factory = m_contextFactory->CastFactory<AndroidOGLContextFactory>();
   if (!factory->IsValid())
+  {
+    LOG(LWARNING, ("Invalid GL context."));
     return false;
+  }
 
   ::Framework::DrapeCreationParams p;
   p.m_surfaceWidth = factory->GetWidth();
@@ -142,21 +169,7 @@ bool Framework::CreateDrapeEngine(JNIEnv * env, jobject jSurface, int densityDpi
   m_work.CreateDrapeEngine(make_ref(m_contextFactory), move(p));
   m_work.EnterForeground();
 
-  // Execute drape tasks which set up custom state.
-  {
-    lock_guard<mutex> lock(m_drapeQueueMutex);
-    if (!m_drapeTasksQueue.empty())
-      ExecuteDrapeTasks();
-  }
-
   return true;
-}
-
-void Framework::DeleteDrapeEngine()
-{
-  m_work.EnterBackground();
-
-  m_work.DestroyDrapeEngine();
 }
 
 bool Framework::IsDrapeEngineCreated()
@@ -168,24 +181,56 @@ void Framework::Resize(int w, int h)
 {
   m_contextFactory->CastFactory<AndroidOGLContextFactory>()->UpdateSurfaceSize();
   m_work.OnSize(w, h);
+
+  //TODO: remove after correct visible rect calculation.
+  frm()->SetVisibleViewport(m2::RectD(0, 0, w, h));
 }
 
-void Framework::DetachSurface()
+void Framework::DetachSurface(bool destroyContext)
 {
-  m_work.SetRenderingEnabled(false);
+  LOG(LINFO, ("Detach surface."));
+  if (destroyContext)
+  {
+    LOG(LINFO, ("Destroy context."));
+    m_isContextDestroyed = true;
+    m_work.EnterBackground();
+    m_work.OnDestroyGLContext();
+  }
+  m_work.SetRenderingDisabled(destroyContext);
 
   ASSERT(m_contextFactory != nullptr, ());
   AndroidOGLContextFactory * factory = m_contextFactory->CastFactory<AndroidOGLContextFactory>();
   factory->ResetSurface();
 }
 
-void Framework::AttachSurface(JNIEnv * env, jobject jSurface)
+bool Framework::AttachSurface(JNIEnv * env, jobject jSurface)
 {
+  LOG(LINFO, ("Attach surface."));
+
   ASSERT(m_contextFactory != nullptr, ());
   AndroidOGLContextFactory * factory = m_contextFactory->CastFactory<AndroidOGLContextFactory>();
   factory->SetSurface(env, jSurface);
 
-  m_work.SetRenderingEnabled(true);
+  if (!factory->IsValid())
+  {
+    LOG(LWARNING, ("Invalid GL context."));
+    return false;
+  }
+
+  ASSERT(!m_guiPositions.empty(), ("GUI elements must be set-up before engine is created"));
+
+  m_work.SetRenderingEnabled(factory);
+
+  if (m_isContextDestroyed)
+  {
+    LOG(LINFO, ("Recover GL resources, viewport size:", factory->GetWidth(), factory->GetHeight()));
+    m_work.OnRecoverGLContext(factory->GetWidth(), factory->GetHeight());
+    m_isContextDestroyed = false;
+
+    m_work.EnterForeground();
+  }
+
+  return true;
 }
 
 void Framework::SetMapStyle(MapStyle mapStyle)
@@ -231,16 +276,16 @@ bool Framework::GetChoosePositionMode()
   return m_isChoosePositionMode;
 }
 
-Storage & Framework::Storage()
+Storage & Framework::GetStorage()
 {
-  return m_work.Storage();
+  return m_work.GetStorage();
 }
 
 void Framework::ShowNode(TCountryId const & idx, bool zoomToDownloadButton)
 {
   if (zoomToDownloadButton)
   {
-    m2::RectD const rect = CalcLimitRect(idx, m_work.Storage(), m_work.CountryInfoGetter());
+    m2::RectD const rect = CalcLimitRect(idx, m_work.GetStorage(), m_work.GetCountryInfoGetter());
     m_work.SetViewportCenter(rect.Center(), 10);
   }
   else
@@ -257,25 +302,29 @@ void Framework::Touch(int action, Finger const & f1, Finger const & f2, uint8_t 
   switch(eventType)
   {
   case MULTITOUCH_DOWN:
-    event.m_type = df::TouchEvent::TOUCH_DOWN;
+    event.SetTouchType(df::TouchEvent::TOUCH_DOWN);
     break;
   case MULTITOUCH_MOVE:
-    event.m_type = df::TouchEvent::TOUCH_MOVE;
+    event.SetTouchType(df::TouchEvent::TOUCH_MOVE);
     break;
   case MULTITOUCH_UP:
-    event.m_type = df::TouchEvent::TOUCH_UP;
+    event.SetTouchType(df::TouchEvent::TOUCH_UP);
     break;
   case MULTITOUCH_CANCEL:
-    event.m_type = df::TouchEvent::TOUCH_CANCEL;
+    event.SetTouchType(df::TouchEvent::TOUCH_CANCEL);
     break;
   default:
     return;
   }
 
-  event.m_touches[0].m_location = m2::PointD(f1.m_x, f1.m_y);
-  event.m_touches[0].m_id = f1.m_id;
-  event.m_touches[1].m_location = m2::PointD(f2.m_x, f2.m_y);
-  event.m_touches[1].m_id = f2.m_id;
+  df::Touch touch;
+  touch.m_location = m2::PointD(f1.m_x, f1.m_y);
+  touch.m_id = f1.m_id;
+  event.SetFirstTouch(touch);
+
+  touch.m_location = m2::PointD(f2.m_x, f2.m_y);
+  touch.m_id = f2.m_id;
+  event.SetSecondTouch(touch);
 
   event.SetFirstMaskedPointer(maskedPointer);
   m_work.TouchEvent(event);
@@ -308,10 +357,10 @@ void Framework::Scale(m2::PointD const & centerPt, int targetZoom, bool animate)
   return &m_work;
 }
 
-bool Framework::Search(search::SearchParams const & params)
+bool Framework::Search(search::EverywhereSearchParams const & params)
 {
   m_searchQuery = params.m_query;
-  return m_work.Search(params);
+  return m_work.SearchEverywhere(params);
 }
 
 void Framework::AddLocalMaps()
@@ -326,12 +375,12 @@ void Framework::RemoveLocalMaps()
 
 void Framework::ReplaceBookmark(BookmarkAndCategory const & ind, BookmarkData & bm)
 {
-  m_work.ReplaceBookmark(ind.first, ind.second, bm);
+  m_work.ReplaceBookmark(ind.m_categoryIndex, ind.m_bookmarkIndex, bm);
 }
 
 size_t Framework::ChangeBookmarkCategory(BookmarkAndCategory const & ind, size_t newCat)
 {
-  return m_work.MoveBookmark(ind.second, ind.first, newCat);
+  return m_work.MoveBookmark(ind.m_bookmarkIndex, ind.m_categoryIndex, newCat);
 }
 
 bool Framework::ShowMapForURL(string const & url)
@@ -347,7 +396,7 @@ void Framework::DeactivatePopup()
 string Framework::GetOutdatedCountriesString()
 {
   vector<Country const *> countries;
-  class Storage const & storage = Storage();
+  class Storage const & storage = GetStorage();
   storage.GetOutdatedCountries(countries);
 
   string res;
@@ -370,6 +419,23 @@ void Framework::ShowTrack(int category, int track)
 {
   Track const * nTrack = NativeFramework()->GetBmCategory(category)->GetTrack(track);
   NativeFramework()->ShowTrack(*nTrack);
+}
+
+void Framework::SetTrafficStateListener(TrafficManager::TrafficStateChangedFn const & fn)
+{
+  m_onTrafficStateChangedFn = fn;
+}
+
+void Framework::EnableTraffic()
+{
+  m_work.GetTrafficManager().SetEnabled(true);
+  NativeFramework()->SaveTrafficEnabled(true);
+}
+
+void Framework::DisableTraffic()
+{
+  m_work.GetTrafficManager().SetEnabled(false);
+  NativeFramework()->SaveTrafficEnabled(false);
 }
 
 void Framework::SetMyPositionModeListener(location::TMyPositionModeChanged const & fn)
@@ -432,23 +498,6 @@ void Framework::SetupMeasurementSystem()
   m_work.SetupMeasurementSystem();
 }
 
-void Framework::PostDrapeTask(TDrapeTask && task)
-{
-  ASSERT(task != nullptr, ());
-  lock_guard<mutex> lock(m_drapeQueueMutex);
-  if (IsDrapeEngineCreated())
-    task();
-  else
-    m_drapeTasksQueue.push_back(move(task));
-}
-
-void Framework::ExecuteDrapeTasks()
-{
-  for (auto & task : m_drapeTasksQueue)
-    task();
-  m_drapeTasksQueue.clear();
-}
-
 void Framework::SetPlacePageInfo(place_page::Info const & info)
 {
   m_info = info;
@@ -461,7 +510,21 @@ place_page::Info & Framework::GetPlacePageInfo()
 
 void Framework::RequestBookingMinPrice(string const & hotelId, string const & currencyCode, function<void(string const &, string const &)> const & callback)
 {
-  return m_work.GetBookingApi().GetMinPrice(hotelId, currencyCode, callback);
+  // Stub obj must be changed.
+  jobject obj;
+  auto const bookingApi = m_work.GetBookingApi(ToNativeNetworkPolicy(obj));
+  if (bookingApi)
+    bookingApi->GetMinPrice(hotelId, currencyCode, callback);
+}
+
+void Framework::RequestBookingInfo(string const & hotelId, string const & lang,
+                                   function<void(BookingApi::HotelInfo const &)> const & callback)
+{
+  // Stub obj must be changed.
+  jobject obj;
+  auto const bookingApi = m_work.GetBookingApi(ToNativeNetworkPolicy(obj));
+  if (bookingApi)
+    bookingApi->GetHotelInfo(hotelId, lang, callback);
 }
 
 bool Framework::HasSpaceForMigration()
@@ -482,17 +545,35 @@ storage::TCountryId Framework::PreMigrate(ms::LatLon const & position, Storage::
 
 bool Framework::IsAutoRetryDownloadFailed()
 {
-  return m_work.DownloadingPolicy().IsAutoRetryDownloadFailed();
+  return m_work.GetDownloadingPolicy().IsAutoRetryDownloadFailed();
 }
 
 bool Framework::IsDownloadOn3gEnabled()
 {
-  return m_work.DownloadingPolicy().IsCellularDownloadEnabled();
+  return m_work.GetDownloadingPolicy().IsCellularDownloadEnabled();
 }
 
 void Framework::EnableDownloadOn3g()
 {
-  m_work.DownloadingPolicy().EnableCellularDownload(true);
+  m_work.GetDownloadingPolicy().EnableCellularDownload(true);
+}
+
+uint64_t Framework::RequestUberProducts(ms::LatLon const & from, ms::LatLon const & to,
+                                        uber::ProductsCallback const & callback,
+                                        uber::ErrorCallback const & errorCallback)
+{
+  // Stub obj must be changed.
+  jobject obj;
+  auto const uberApi = m_work.GetUberApi(ToNativeNetworkPolicy(obj));
+  if (!uberApi)
+    return 0;
+
+  return uberApi->GetAvailableProducts(from, to, callback, errorCallback);
+}
+
+uber::RideRequestLinks Framework::GetUberLinks(string const & productId, ms::LatLon const & from, ms::LatLon const & to)
+{
+  return uber::Api::GetRideRequestLinks(productId, from, to);
 }
 
 
@@ -539,6 +620,37 @@ Java_com_mapswithme_maps_Framework_nativeClearApiPoints(JNIEnv * env, jclass cla
 {
   UserMarkControllerGuard guard(frm()->GetBookmarkManager(), UserMarkType::API_MARK);
   guard.m_controller.Clear();
+}
+
+JNIEXPORT jint JNICALL
+Java_com_mapswithme_maps_Framework_nativeParseAndSetApiUrl(JNIEnv * env, jclass clazz, jstring url)
+{
+  return static_cast<jint>(frm()->ParseAndSetApiURL(jni::ToNativeString(env, url)));
+}
+
+JNIEXPORT jobject JNICALL
+Java_com_mapswithme_maps_Framework_nativeGetParsedRoutingData(JNIEnv * env, jclass clazz)
+{
+  using namespace url_scheme;
+  static jclass const pointClazz = jni::GetGlobalClassRef(env, "com/mapswithme/maps/api/RoutePoint");
+  // Java signature : RoutePoint(double lat, double lon, String name)
+  static jmethodID const pointConstructor = jni::GetConstructorID(env, pointClazz, "(DDLjava/lang/String;)V");
+
+  static jclass const routeDataClazz = jni::GetGlobalClassRef(env, "com/mapswithme/maps/api/ParsedRoutingData");
+  // Java signature : ParsedRoutingData(RoutePoint[] points, int routerType) {
+  static jmethodID const routeDataConstructor = jni::GetConstructorID(env, routeDataClazz, "([Lcom/mapswithme/maps/api/RoutePoint;I)V");
+
+  auto const & routingData = frm()->GetParsedRoutingData();
+  jobjectArray points = jni::ToJavaArray(env, pointClazz, routingData.m_points,
+                                         [](JNIEnv * env, RoutePoint const & point)
+                                         {
+                                           jni::TScopedLocalRef const name(env, jni::ToJavaString(env, point.m_name));
+                                           return env->NewObject(pointClazz, pointConstructor,
+                                                                 MercatorBounds::YToLat(point.m_org.y),
+                                                                 MercatorBounds::XToLon(point.m_org.x), name.get());
+                                         });
+
+  return env->NewObject(routeDataClazz, routeDataConstructor, points, routingData.m_type);
 }
 
 JNIEXPORT void JNICALL
@@ -609,8 +721,9 @@ Java_com_mapswithme_maps_Framework_nativeGetDistanceAndAzimuthFromLatLon(
 JNIEXPORT jobject JNICALL
 Java_com_mapswithme_maps_Framework_nativeFormatLatLon(JNIEnv * env, jclass, jdouble lat, jdouble lon, jboolean useDMSFormat)
 {
-  return jni::ToJavaString(env, (useDMSFormat ? measurement_utils::FormatLatLonAsDMS(lat, lon, 2)
-                                              : measurement_utils::FormatLatLon(lat, lon, 6)));
+  return jni::ToJavaString(
+      env, (useDMSFormat ? measurement_utils::FormatLatLonAsDMS(lat, lon, 2)
+                         : measurement_utils::FormatLatLon(lat, lon, true /* withSemicolon */, 6)));
 }
 
 JNIEXPORT jobjectArray JNICALL
@@ -671,6 +784,12 @@ JNIEXPORT jint JNICALL
 Java_com_mapswithme_maps_Framework_nativeGetDrawScale(JNIEnv * env, jclass)
 {
   return static_cast<jint>(frm()->GetDrawScale());
+}
+
+JNIEXPORT void JNICALL
+Java_com_mapswithme_maps_Framework_nativeUpdateUserViewportChanged(JNIEnv * env, jclass)
+{
+  frm()->UpdateUserViewportChanged();
 }
 
 JNIEXPORT jdoubleArray JNICALL
@@ -765,22 +884,19 @@ Java_com_mapswithme_maps_Framework_nativeCloseRouting(JNIEnv * env, jclass)
 JNIEXPORT void JNICALL
 Java_com_mapswithme_maps_Framework_nativeBuildRoute(JNIEnv * env, jclass,
                                                     jdouble startLat,  jdouble startLon,
-                                                    jdouble finishLat, jdouble finishLon)
+                                                    jdouble finishLat, jdouble finishLon,
+                                                    jboolean isP2P)
 {
-  g_framework->PostDrapeTask([startLat, startLon, finishLat, finishLon]()
-  {
-    frm()->BuildRoute(MercatorBounds::FromLatLon(startLat, startLon),
-                      MercatorBounds::FromLatLon(finishLat, finishLon), 0 /* timeoutSec */);
-  });
+  frm()->BuildRoute(MercatorBounds::FromLatLon(startLat, startLon),
+                    MercatorBounds::FromLatLon(finishLat, finishLon),
+                    isP2P, 0 /* timeoutSec */);
+
 }
 
 JNIEXPORT void JNICALL
 Java_com_mapswithme_maps_Framework_nativeFollowRoute(JNIEnv * env, jclass)
 {
-  g_framework->PostDrapeTask([]()
-  {
-    frm()->FollowRoute();
-  });
+  frm()->FollowRoute();
 }
 
 JNIEXPORT void JNICALL
@@ -857,6 +973,68 @@ Java_com_mapswithme_maps_Framework_nativeGetRouteFollowingInfo(JNIEnv * env, jcl
       info.m_pedestrianDirectionPos.lat, info.m_pedestrianDirectionPos.lon, info.m_exitNum, info.m_time, jLanes);
   ASSERT(result, (jni::DescribeException()));
   return result;
+}
+
+JNIEXPORT jintArray JNICALL
+Java_com_mapswithme_maps_Framework_nativeGenerateRouteAltitudeChartBits(JNIEnv * env, jclass, jint width, jint height, jobject routeAltitudeLimits)
+{
+  ::Framework * fr = frm();
+  ASSERT(fr, ());
+
+  vector<uint8_t> imageRGBAData;
+  int32_t minRouteAltitude = 0;
+  int32_t maxRouteAltitude = 0;
+  measurement_utils::Units units = measurement_utils::Units::Metric;
+  if (!fr->GenerateRouteAltitudeChart(width, height, imageRGBAData, minRouteAltitude, maxRouteAltitude, units))
+  {
+    LOG(LWARNING, ("Can't generate route altitude image."));
+    return nullptr;
+  }
+
+  // Passing route limits.
+  jclass const routeAltitudeLimitsClass = env->GetObjectClass(routeAltitudeLimits);
+  ASSERT(routeAltitudeLimitsClass, ());
+
+  static jfieldID const minRouteAltitudeField = env->GetFieldID(routeAltitudeLimitsClass, "minRouteAltitude", "I");
+  ASSERT(minRouteAltitudeField, ());
+  env->SetIntField(routeAltitudeLimits, minRouteAltitudeField, minRouteAltitude);
+
+  static jfieldID const maxRouteAltitudeField = env->GetFieldID(routeAltitudeLimitsClass, "maxRouteAltitude", "I");
+  ASSERT(maxRouteAltitudeField, ());
+  env->SetIntField(routeAltitudeLimits, maxRouteAltitudeField, maxRouteAltitude);
+
+  static jfieldID const isMetricUnitsField = env->GetFieldID(routeAltitudeLimitsClass, "isMetricUnits", "Z");
+  ASSERT(isMetricUnitsField, ());
+  env->SetBooleanField(routeAltitudeLimits, isMetricUnitsField, units == measurement_utils::Units::Metric);
+
+  size_t const imageRGBADataSize = imageRGBAData.size();
+  ASSERT_NOT_EQUAL(imageRGBADataSize, 0, ("GenerateRouteAltitudeChart returns true but the vector with altitude image bits is empty."));
+
+  size_t const pxlCount = width * height;
+  if (maps::kAltitudeChartBPP * pxlCount != imageRGBADataSize)
+  {
+    LOG(LWARNING, ("Wrong size of vector with altitude image bits. Expected size:", pxlCount, ". Real size:", imageRGBADataSize));
+    return nullptr;
+  }
+
+  jintArray imageRGBADataArray = env->NewIntArray(pxlCount);
+  ASSERT(imageRGBADataArray, ());
+  jint * arrayElements = env->GetIntArrayElements(imageRGBADataArray, 0);
+  ASSERT(arrayElements, ());
+
+  for (size_t i = 0; i < pxlCount; ++i)
+  {
+    size_t const shiftInBytes = i * maps::kAltitudeChartBPP;
+    // Type of |imageRGBAData| elements is uint8_t. But uint8_t is promoted to unsinged int in code below before shifting.
+    // So there's no data lost in code below.
+    arrayElements[i] = (imageRGBAData[shiftInBytes + 3] << 24) /* alpha */
+        | (imageRGBAData[shiftInBytes] << 16) /* red */
+        | (imageRGBAData[shiftInBytes + 1] << 8) /* green */
+        | (imageRGBAData[shiftInBytes + 2]); /* blue */
+  }
+  env->ReleaseIntArrayElements(imageRGBADataArray, arrayElements, 0);
+
+  return imageRGBADataArray;
 }
 
 JNIEXPORT void JNICALL
@@ -977,10 +1155,7 @@ Java_com_mapswithme_maps_Framework_nativeSet3dMode(JNIEnv * env, jclass, jboolea
   bool const allow3dBuildings = static_cast<bool>(allowBuildings);
 
   g_framework->Save3dMode(allow3d, allow3dBuildings);
-  g_framework->PostDrapeTask([allow3d, allow3dBuildings]()
-  {
-    g_framework->Set3dMode(allow3d, allow3dBuildings);
-  });
+  g_framework->Set3dMode(allow3d, allow3dBuildings);
 }
 
 JNIEXPORT void JNICALL
@@ -999,6 +1174,20 @@ Java_com_mapswithme_maps_Framework_nativeGet3dMode(JNIEnv * env, jclass, jobject
   env->SetBooleanField(result, buildingsField, buildings);
 }
 
+JNIEXPORT void JNICALL
+Java_com_mapswithme_maps_Framework_nativeSetAutoZoomEnabled(JNIEnv * env, jclass, jboolean enabled)
+{
+  bool const autoZoomEnabled = static_cast<bool>(enabled);
+  frm()->SaveAutoZoom(autoZoomEnabled);
+  frm()->AllowAutoZoom(autoZoomEnabled);
+}
+
+JNIEXPORT jboolean JNICALL
+Java_com_mapswithme_maps_Framework_nativeGetAutoZoomEnabled(JNIEnv * env, jclass)
+{
+  return frm()->LoadAutoZoom();
+}
+
 // static void nativeZoomToPoint(double lat, double lon, int zoom, boolean animate);
 JNIEXPORT void JNICALL
 Java_com_mapswithme_maps_Framework_nativeZoomToPoint(JNIEnv * env, jclass, jdouble lat, jdouble lon, jint zoom, jboolean animate)
@@ -1010,8 +1199,8 @@ JNIEXPORT jobject JNICALL
 Java_com_mapswithme_maps_Framework_nativeDeleteBookmarkFromMapObject(JNIEnv * env, jclass)
 {
   place_page::Info & info = g_framework->GetPlacePageInfo();
-  bookmarks_helper::RemoveBookmark(info.m_bac.first, info.m_bac.second);
-  info.m_bac = MakeEmptyBookmarkAndCategory();
+  bookmarks_helper::RemoveBookmark(info.m_bac.m_categoryIndex, info.m_bac.m_bookmarkIndex);
+  info.m_bac = {};
   return usermark_helper::CreateMapObject(env, info);
 }
 
@@ -1019,8 +1208,8 @@ JNIEXPORT void JNICALL
 Java_com_mapswithme_maps_Framework_nativeOnBookmarkCategoryChanged(JNIEnv * env, jclass, jint cat, jint bmk)
 {
   place_page::Info & info = g_framework->GetPlacePageInfo();
-  info.m_bac.first = cat;
-  info.m_bac.second = bmk;
+  info.m_bac.m_categoryIndex = cat;
+  info.m_bac.m_bookmarkIndex = bmk;
 }
 
 JNIEXPORT void JNICALL
@@ -1045,7 +1234,7 @@ JNIEXPORT jboolean JNICALL
 Java_com_mapswithme_maps_Framework_nativeIsDownloadedMapAtScreenCenter(JNIEnv *, jclass)
 {
   ::Framework * fr = frm();
-  return storage::IsPointCoveredByDownloadedMaps(fr->GetViewportCenter(), fr->Storage(), fr->CountryInfoGetter());
+  return storage::IsPointCoveredByDownloadedMaps(fr->GetViewportCenter(), fr->GetStorage(), fr->GetCountryInfoGetter());
 }
 
 JNIEXPORT jstring JNICALL
@@ -1055,13 +1244,8 @@ Java_com_mapswithme_maps_Framework_nativeGetActiveObjectFormattedCuisine(JNIEnv 
 }
 
 JNIEXPORT void JNICALL
-Java_com_mapswithme_maps_Framework_nativeSetExternalRouter(JNIEnv * env, jclass thiz, jint routerType, jobject router)
+Java_com_mapswithme_maps_Framework_nativeSetVisibleRect(JNIEnv * env, jclass, jint left, jint top, jint right, jint bottom)
 {
-  LOG(LDEBUG, ("Setting external router"));
-
-  routing::Router *pRouter = new routing::Router( router );
-  frm()->SetExternalRouter( static_cast<routing::RouterType>(routerType), pRouter );
-
-  g_framework->SetRouter(static_cast<routing::RouterType>(routerType));
+  frm()->SetVisibleViewport(m2::RectD(left, top, right, bottom));
 }
-} // extern "C"
+}  // extern "C"

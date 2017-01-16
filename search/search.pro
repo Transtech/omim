@@ -12,10 +12,17 @@ HEADERS += \
     algos.hpp \
     approximate_string_match.hpp \
     cancel_exception.hpp \
+    categories_cache.hpp \
+    categories_set.hpp \
     cbv.hpp \
     common.hpp \
+    displayed_categories.hpp \
+    downloader_search_callback.hpp \
     dummy_rank_table.hpp \
+    editor_delegate.hpp \
+    emitter.hpp \
     engine.hpp \
+    everywhere_search_params.hpp \
     feature_offset_match.hpp \
     features_filter.hpp \
     features_layer.hpp \
@@ -25,6 +32,8 @@ HEADERS += \
     geocoder_context.hpp \
     geometry_cache.hpp \
     geometry_utils.hpp \
+    hotels_classifier.hpp \
+    hotels_filter.hpp \
     house_detector.hpp \
     house_numbers_matcher.hpp \
     house_to_street_table.hpp \
@@ -34,14 +43,15 @@ HEADERS += \
     keyword_lang_matcher.hpp \
     keyword_matcher.hpp \
     latlon_match.hpp \
+    lazy_centers_table.hpp \
     locality.hpp \
     locality_finder.hpp \
     locality_scorer.hpp \
     mode.hpp \
     model.hpp \
     mwm_context.hpp \
+    nearby_points_sweeper.hpp \
     nested_rects_cache.hpp \
-    params.hpp \
     pre_ranker.hpp \
     pre_ranking_info.hpp \
     processor.hpp \
@@ -58,6 +68,7 @@ HEADERS += \
     retrieval.hpp \
     reverse_geocoder.hpp \
     search_index_values.hpp \
+    search_params.hpp \
     search_trie.hpp \
     stats_cache.hpp \
     street_vicinity_loader.hpp \
@@ -67,11 +78,17 @@ HEADERS += \
     token_slice.hpp \
     types_skipper.hpp \
     utils.hpp \
+    viewport_search_callback.hpp \
+    viewport_search_params.hpp
 
 SOURCES += \
     approximate_string_match.cpp \
+    categories_cache.cpp \
     cbv.cpp \
+    displayed_categories.cpp \
+    downloader_search_callback.cpp \
     dummy_rank_table.cpp \
+    editor_delegate.cpp \
     engine.cpp \
     features_filter.cpp \
     features_layer.cpp \
@@ -81,6 +98,8 @@ SOURCES += \
     geocoder_context.cpp \
     geometry_cache.cpp \
     geometry_utils.cpp \
+    hotels_classifier.cpp \
+    hotels_filter.cpp \
     house_detector.cpp \
     house_numbers_matcher.cpp \
     house_to_street_table.cpp \
@@ -89,14 +108,15 @@ SOURCES += \
     keyword_lang_matcher.cpp \
     keyword_matcher.cpp \
     latlon_match.cpp \
+    lazy_centers_table.cpp \
     locality.cpp \
     locality_finder.cpp \
     locality_scorer.cpp \
     mode.cpp \
     model.cpp \
     mwm_context.cpp \
+    nearby_points_sweeper.cpp \
     nested_rects_cache.cpp \
-    params.cpp \
     pre_ranker.cpp \
     pre_ranking_info.cpp \
     processor.cpp \
@@ -111,7 +131,9 @@ SOURCES += \
     result.cpp \
     retrieval.cpp \
     reverse_geocoder.cpp \
+    search_params.cpp \
     street_vicinity_loader.cpp \
     streets_matcher.cpp \
     token_slice.cpp \
     types_skipper.cpp \
+    viewport_search_callback.cpp

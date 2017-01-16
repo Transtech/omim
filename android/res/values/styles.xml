@@ -1,9 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:android="http://schemas.android.com/apk/res/android"
-           xmlns:tools="http://schemas.android.com/tools">
+  xmlns:tools="http://schemas.android.com/tools">
+
   <style name="MwmWidget"/>
+
   <style name="MwmWidget.ProgressWheel"/>
+
   <style name="MwmWidget.FrameLayout"/>
+
   <style name="MwmWidget.Downloader"/>
 
   <style name="BottomSheet.Icon">
@@ -12,12 +16,16 @@
     <item name="android:layout_marginLeft">0dp</item>
   </style>
 
-  <style name="MwmWidget.MapButton"
-         parent="android:Widget.ImageButton">
+  <style name="MwmWidget.MapButton" parent="android:Widget.ImageButton">
     <item name="android:scaleType">center</item>
-    <item name="android:layout_height">wrap_content</item>
-    <item name="android:layout_width">wrap_content</item>
-    <item name="android:background">@null</item>
+    <item name="android:layout_height">64dp</item>
+    <item name="android:layout_width">64dp</item>
+    <item name="android:background">?nav_background</item>
+    <item name="android:tint">?iconTint</item>
+  </style>
+
+  <style name="MwmWidget.MapButton.Traffic">
+    <item name="android:tint">@null</item>
   </style>
 
   <style name="MwmWidget.Button">
@@ -31,15 +39,20 @@
     <item name="android:background">?accentButtonBackground</item>
   </style>
 
+  <style name="MwmWidget.Button.Start">
+    <item name="android:background">?startButtonBackground</item>
+    <item name="android:textColor">?accentButtonTextColor</item>
+    <item name="android:textSize">14sp</item>
+  </style>
+
   <style name="MwmWidget.ProgressWheel.RoutingPlan">
     <item name="android:layout_width">@dimen/routing_selector_wheel_size</item>
     <item name="android:layout_height">@dimen/routing_selector_wheel_size</item>
-    <item name="android:layout_margin">@dimen/routing_selector_wheel_margin</item>
     <item name="android:visibility">invisible</item>
     <item name="android:background">?selectableItemBackgroundBorderless</item>
     <item name="centerDrawable">@android:color/transparent</item>
-    <item name="wheelProgressColor">?colorAccent</item>
-    <item name="wheelSecondaryColor">?dividerHorizontal</item>
+    <item name="wheelProgressColor">?routingButtonHint</item>
+    <item name="wheelSecondaryColor">@android:color/transparent</item>
     <item name="wheelThickness">@dimen/margin_eighth</item>
   </style>
 
@@ -76,6 +89,10 @@
     <item name="titleTextAppearance">@style/MwmTextAppearance.Toolbar.Title.Light</item>
   </style>
 
+  <style name="MwmWidget.ToolbarStyle.NoElevation">
+    <item name="android:elevation" tools:ignore="NewApi">0dp</item>
+  </style>
+
   <style name="MwmWidget.ToolbarTheme" parent="ThemeOverlay.AppCompat.Dark.ActionBar">
     <item name="android:gravity">center_vertical</item>
     <item name="colorAccent">@android:color/white</item>
@@ -84,6 +101,21 @@
   <style name="MwmWidget.ToolbarTheme.Light" parent="ThemeOverlay.AppCompat.ActionBar">
     <item name="android:gravity">center_vertical</item>
     <item name="colorAccent">@color/bg_window_night</item>
+  </style>
+
+  <style name="MwmWidget.ToolbarTheme.Transparent" parent="ThemeOverlay.AppCompat.Dark.ActionBar">
+    <item name="android:gravity">center_vertical</item>
+    <item name="colorAccent">@android:color/white</item>
+    <item name="android:windowActionBarOverlay">true</item>
+    <item name="windowActionBarOverlay">true</item>
+  </style>
+
+  <style
+    name="MwmWidget.ToolbarTheme.DownButton"
+    parent="ThemeOverlay.AppCompat.Dark.ActionBar">
+    <item name="android:gravity">center_vertical</item>
+    <item name="colorAccent">@android:color/white</item>
+    <item name="android:homeAsUpIndicator">@drawable/ic_down</item>
   </style>
 
   <style name="MwmWidget.ListView" parent="Widget.AppCompat.ListView">
@@ -140,6 +172,10 @@
     <item name="android:singleLine">true</item>
   </style>
 
+  <style name="MwmWidget.TextView.PlanDetail.Number.Time">
+    <item name="android:textStyle">bold</item>
+  </style>
+
   <style name="MwmWidget.TextView.PlanDetail.Number.Secondary">
     <item name="android:textAppearance">@style/MwmTextAppearance.RoutingDetail.Secondary</item>
   </style>
@@ -147,6 +183,18 @@
   <style name="MwmWidget.TextView.PlanDetail.Status">
     <item name="android:layout_gravity">center_vertical</item>
     <item name="android:layout_centerVertical">true</item>
+  </style>
+
+  <style name="MwmWidget.TextView.NavStreet">
+    <item name="android:textAppearance">@style/MwmTextAppearance.NavStreet</item>
+  </style>
+
+  <style name="MwmWidget.TextView.NavNextTurn">
+    <item name="android:textAppearance">@style/MwmTextAppearance.NavNextTurn</item>
+  </style>
+
+  <style name="MwmWidget.TextView.NavNextTurn.Exit">
+    <item name="android:textAppearance">@style/MwmTextAppearance.NavNextTurn.Exit</item>
   </style>
 
   <style name="MwmWidget.FrameLayout.Elevation">
@@ -187,5 +235,13 @@
     <item name="android:background">?selectableItemBackgroundBorderless</item>
     <item name="android:padding">@dimen/margin_half</item>
     <item name="android:textAppearance">@style/MwmTextAppearance.Toolbar.Title.Button</item>
+  </style>
+
+  <style name="MwmWidget.SearchNavigationButton" parent="android:Widget.ImageButton">
+    <item name="android:scaleType">center</item>
+    <item name="android:layout_height">44dp</item>
+    <item name="android:layout_width">44dp</item>
+    <item name="android:background">?selectableItemBackgroundBorderless</item>
+    <item name="android:tint">?iconTint</item>
   </style>
 </resources>

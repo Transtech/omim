@@ -1,17 +1,16 @@
 package com.mapswithme.maps.routing;
 
-import android.os.Build;
+import android.animation.Animator;
+import android.animation.ValueAnimator;
 import android.os.Bundle;
-import android.view.View;
-import android.widget.Button;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.widget.ImageView;
 
 import com.mapswithme.maps.MwmActivity;
 import com.mapswithme.maps.R;
 import com.mapswithme.maps.bookmarks.data.MapObject;
-import com.mapswithme.util.ThemeUtils;
 import com.mapswithme.util.UiUtils;
-import com.mapswithme.util.statistics.AlohaHelper;
-import com.mapswithme.util.statistics.Statistics;
 
 public class RoutingPlanInplaceController extends RoutingPlanController
 {
@@ -19,20 +18,12 @@ public class RoutingPlanInplaceController extends RoutingPlanController
 
   private Boolean mSlotsRestoredState;
 
-  private void updateStatusBarColor()
-  {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
-      mActivity.getWindow().setStatusBarColor(ThemeUtils.getColor(mActivity, UiUtils.isVisible(mFrame) ? R.attr.statusBar
-                                                                                                       : android.R.attr.colorPrimaryDark));
-  }
-
   public RoutingPlanInplaceController(MwmActivity activity)
   {
     super(activity.findViewById(R.id.routing_plan_frame), activity);
-    updateStatusBarColor();
   }
 
-  public void show(boolean show)
+  public void show(final boolean show)
   {
     if (show == UiUtils.isVisible(mFrame))
       return;
@@ -48,43 +39,79 @@ public class RoutingPlanInplaceController extends RoutingPlanController
       mSlotsRestoredState = null;
     }
 
-    UiUtils.showIf(show, mFrame);
-    updateStatusBarColor();
     if (show)
+    {
+      UiUtils.show(mFrame);
       updatePoints();
-  }
+    }
 
-  public void setStartButton()
-  {
-    final MwmActivity activity = (MwmActivity) mActivity;
-
-    Button start = activity.getMainMenu().getRouteStartButton();
-    RoutingController.get().setStartButton(start);
-    start.setOnClickListener(new View.OnClickListener()
+    animateFrame(show, new Runnable()
     {
       @Override
-      public void onClick(View v)
+      public void run()
       {
-        activity.closeMenu(Statistics.EventName.ROUTING_START, AlohaHelper.ROUTING_START, new Runnable()
-        {
-          @Override
-          public void run()
-          {
-            RoutingController.get().start();
-          }
-        });
+        if (!show)
+          UiUtils.hide(mFrame);
       }
     });
   }
 
-  public void onSaveState(Bundle outState)
+  public void onSaveState(@NonNull Bundle outState)
   {
     outState.putBoolean(STATE_OPEN, isOpen());
+    saveRoutingPanelState(outState);
   }
 
-  public void restoreState(Bundle state)
+  public void restoreState(@NonNull Bundle state)
   {
     if (state.containsKey(STATE_OPEN))
       mSlotsRestoredState = state.getBoolean(STATE_OPEN);
+
+    restoreRoutingPanelState(state);
+  }
+
+  @Override
+  public void showRouteAltitudeChart()
+  {
+    ImageView altitudeChart = (ImageView) mActivity.findViewById(R.id.altitude_chart);
+    showRouteAltitudeChartInternal(altitudeChart);
+  }
+
+  private void animateFrame(final boolean show, final @Nullable Runnable completion)
+  {
+    if (!checkFrameHeight())
+    {
+      mFrame.post(new Runnable()
+      {
+        @Override
+        public void run()
+        {
+          animateFrame(show, completion);
+        }
+      });
+      return;
+    }
+
+    ValueAnimator animator =
+        ValueAnimator.ofFloat(show ? -mFrameHeight : 0, show ? 0 : -mFrameHeight);
+    animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener()
+    {
+      @Override
+      public void onAnimationUpdate(ValueAnimator animation)
+      {
+        mFrame.setTranslationY((Float) animation.getAnimatedValue());
+      }
+    });
+    animator.addListener(new UiUtils.SimpleAnimatorListener()
+    {
+      @Override
+      public void onAnimationEnd(Animator animation)
+      {
+        if (completion != null)
+          completion.run();
+      }
+    });
+    animator.setDuration(ANIM_TOGGLE);
+    animator.start();
   }
 }

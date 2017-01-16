@@ -13,6 +13,11 @@ enum ColorConstant
   MyPositionAccuracy,
   Selection,
   Route,
+  RouteOutline,
+  RouteTrafficG0,
+  RouteTrafficG1,
+  RouteTrafficG2,
+  RouteTrafficG3,
   RoutePedestrian,
   RouteBicycle,
   Arrow3D,
@@ -21,6 +26,17 @@ enum ColorConstant
   TrackCarSpeed,
   TrackPlaneSpeed,
   TrackUnknownDistance,
+  TrafficG0,
+  TrafficG1,
+  TrafficG2,
+  TrafficG3,
+  TrafficG4,
+  TrafficG5,
+  TrafficTempBlock,
+  TrafficUnknown,
+  TrafficArrowLight,
+  TrafficArrowDark,
+  TrafficOutline
 };
 
 dp::Color GetColorConstant(MapStyle style, ColorConstant constant);

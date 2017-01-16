@@ -14,6 +14,8 @@
 
 #include "base/buffer_vector.hpp"
 
+#include "std/set.hpp"
+
 namespace dp
 {
 
@@ -81,6 +83,7 @@ public:
   virtual uint64_t GetPriorityInFollowingMode() const;
 
   virtual bool IsBound() const { return false; }
+  virtual bool HasLinearFeatureShape() const { return false; }
 
   virtual bool Enable3dExtention() const { return true; }
 
@@ -164,5 +167,6 @@ private:
 };
 
 uint64_t CalculateOverlayPriority(int minZoomLevel, uint8_t rank, float depth);
+uint64_t CalculateSpecialModePriority(int specialPriority);
 
 } // namespace dp

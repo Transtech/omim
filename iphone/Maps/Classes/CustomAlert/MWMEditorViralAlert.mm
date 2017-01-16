@@ -1,4 +1,4 @@
-#import "Common.h"
+#import "MWMCommon.h"
 #import "MWMActivityViewController.h"
 #import "MWMAlertViewController.h"
 #import "MWMAuthorizationCommon.h"
@@ -26,7 +26,7 @@ namespace
 
 + (nonnull instancetype)alert
 {
-  MWMEditorViralAlert * alert = [[[NSBundle mainBundle] loadNibNamed:[MWMEditorViralAlert className] owner:nil options:nil] firstObject];
+  MWMEditorViralAlert * alert = [[[NSBundle mainBundle] loadNibNamed:[self className] owner:nil options:nil] firstObject];
   alert.indexOfMessage = rand() % kMessages.size();
   NSString * message = kMessages[alert.indexOfMessage];
   if (alert.indexOfMessage == 1)
@@ -36,8 +36,9 @@ namespace
   }
   alert.message.text = message;
   NSMutableDictionary <NSString *, NSString *> * info = [@{kStatValue : alert.statMessage} mutableCopy];
-  if (NSString * un = osm_auth_ios::OSMUserName())
-    [info setObject:un forKey:kStatOSMUserName];
+  NSString * un = osm_auth_ios::OSMUserName();
+  if (un)
+    info[kStatOSMUserName] = un;
 
   [Statistics logEvent:kStatEditorSecondTimeShareShow withParameters:info];
   return alert;
@@ -46,14 +47,16 @@ namespace
 - (IBAction)shareTap
 {
   [Statistics logEvent:kStatEditorSecondTimeShareClick withParameters:@{kStatValue : self.statMessage}];
-  MWMActivityViewController * shareVC = [MWMActivityViewController shareControllerForEditorViral];
-  [self close];
-  [shareVC presentInParentViewController:self.alertController.ownerViewController anchorView:self.shareButton];
+  [self close:^{
+    MWMActivityViewController * shareVC = [MWMActivityViewController shareControllerForEditorViral];
+    [shareVC presentInParentViewController:self.alertController.ownerViewController
+                                anchorView:self.shareButton];
+  }];
 }
 
 - (IBAction)cancelTap
 {
-  [self close];
+  [self close:nil];
 }
 
 - (NSString *)statMessage

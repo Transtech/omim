@@ -1,9 +1,14 @@
 #include "Framework.hpp"
 
-#include "base/thread.hpp"
+#include "search/everywhere_search_params.hpp"
+#include "search/hotels_filter.hpp"
+#include "search/mode.hpp"
 #include "search/result.hpp"
-#include "std/atomic.hpp"
-#include "std/mutex.hpp"
+#include "search/viewport_search_params.hpp"
+
+#include "base/logging.hpp"
+
+#include "std/cstdint.hpp"
 
 #include "../core/jni_helper.hpp"
 #include "../platform/Language.hpp"
@@ -14,14 +19,193 @@ using search::Result;
 
 namespace
 {
+class HotelsFilterBuilder
+{
+public:
+  using Rule = shared_ptr<search::hotels_filter::Rule>;
+
+  // *NOTE* keep this in sync with Java counterpart.
+  enum Type
+  {
+    TYPE_AND = 0,
+    TYPE_OR = 1,
+    TYPE_OP = 2
+  };
+
+  // *NOTE* keep this in sync with Java counterpart.
+  enum Field
+  {
+    FIELD_RATING = 0,
+    FIELD_PRICE_RATE = 1
+  };
+
+  // *NOTE* keep this in sync with Java counterpart.
+  enum Op
+  {
+    OP_LT = 0,
+    OP_LE = 1,
+    OP_GT = 2,
+    OP_GE = 3,
+    OP_EQ = 4
+  };
+
+  void Init(JNIEnv * env)
+  {
+    if (m_initialized)
+      return;
+
+    {
+      auto const baseClass = env->FindClass("com/mapswithme/maps/search/HotelsFilter");
+      m_type = env->GetFieldID(baseClass, "mType", "I");
+    }
+
+    {
+      auto const andClass = env->FindClass("com/mapswithme/maps/search/HotelsFilter$And");
+      m_andLhs = env->GetFieldID(andClass, "mLhs", "Lcom/mapswithme/maps/search/HotelsFilter;");
+      m_andRhs = env->GetFieldID(andClass, "mRhs", "Lcom/mapswithme/maps/search/HotelsFilter;");
+    }
+
+    {
+      auto const orClass = env->FindClass("com/mapswithme/maps/search/HotelsFilter$Or");
+      m_orLhs = env->GetFieldID(orClass, "mLhs", "Lcom/mapswithme/maps/search/HotelsFilter;");
+      m_orRhs = env->GetFieldID(orClass, "mRhs", "Lcom/mapswithme/maps/search/HotelsFilter;");
+    }
+
+    {
+      auto const opClass = env->FindClass("com/mapswithme/maps/search/HotelsFilter$Op");
+      m_field = env->GetFieldID(opClass, "mField", "I");
+      m_op = env->GetFieldID(opClass, "mOp", "I");
+    }
+
+    {
+      auto const ratingFilterClass =
+          env->FindClass("com/mapswithme/maps/search/HotelsFilter$RatingFilter");
+      m_rating = env->GetFieldID(ratingFilterClass, "mValue", "F");
+    }
+
+    {
+      auto const priceRateFilterClass =
+          env->FindClass("com/mapswithme/maps/search/HotelsFilter$PriceRateFilter");
+      m_priceRate = env->GetFieldID(priceRateFilterClass, "mValue", "I");
+    }
+
+    m_initialized = true;
+  }
+
+  Rule Build(JNIEnv * env, jobject filter)
+  {
+    if (!m_initialized)
+      return {};
+
+    if (!filter)
+      return {};
+
+    auto const type = static_cast<int>(env->GetIntField(filter, m_type));
+
+    switch (type)
+    {
+    case TYPE_AND: return BuildAnd(env, filter);
+    case TYPE_OR: return BuildOr(env, filter);
+    case TYPE_OP: return BuildOp(env, filter);
+    }
+
+    LOG(LERROR, ("Unknown type:", type));
+    return {};
+  }
+
+private:
+  Rule BuildAnd(JNIEnv * env, jobject filter)
+  {
+    auto const lhs = env->GetObjectField(filter, m_andLhs);
+    auto const rhs = env->GetObjectField(filter, m_andRhs);
+    return search::hotels_filter::And(Build(env, lhs), Build(env, rhs));
+  }
+
+  Rule BuildOr(JNIEnv * env, jobject filter)
+  {
+    auto const lhs = env->GetObjectField(filter, m_orLhs);
+    auto const rhs = env->GetObjectField(filter, m_orRhs);
+    return search::hotels_filter::Or(Build(env, lhs), Build(env, rhs));
+  }
+
+  Rule BuildOp(JNIEnv * env, jobject filter)
+  {
+    auto const field = static_cast<int>(env->GetIntField(filter, m_field));
+    auto const op = static_cast<int>(env->GetIntField(filter, m_op));
+
+    switch (field)
+    {
+    case FIELD_RATING: return BuildRatingOp(env, op, filter);
+    case FIELD_PRICE_RATE: return BuildPriceRateOp(env, op, filter);
+    }
+
+    LOG(LERROR, ("Unknown field:", field));
+    return {};
+  }
+
+  Rule BuildRatingOp(JNIEnv * env, int op, jobject filter)
+  {
+    using namespace search::hotels_filter;
+
+    auto const rating = static_cast<float>(env->GetFloatField(filter, m_rating));
+
+    switch (op)
+    {
+    case OP_LT: return Lt<Rating>(rating);
+    case OP_LE: return Le<Rating>(rating);
+    case OP_GT: return Gt<Rating>(rating);
+    case OP_GE: return Ge<Rating>(rating);
+    case OP_EQ: return Eq<Rating>(rating);
+    }
+
+    LOG(LERROR, ("Unknown op:", op));
+    return {};
+  }
+
+  Rule BuildPriceRateOp(JNIEnv * env, int op, jobject filter)
+  {
+    using namespace search::hotels_filter;
+
+    auto const priceRate = static_cast<int>(env->GetIntField(filter, m_priceRate));
+
+    switch (op)
+    {
+    case OP_LT: return Lt<PriceRate>(priceRate);
+    case OP_LE: return Le<PriceRate>(priceRate);
+    case OP_GT: return Gt<PriceRate>(priceRate);
+    case OP_GE: return Ge<PriceRate>(priceRate);
+    case OP_EQ: return Eq<PriceRate>(priceRate);
+    }
+
+    LOG(LERROR, ("Unknown op:", op));
+    return {};
+  }
+
+  jfieldID m_type;
+
+  jfieldID m_andLhs;
+  jfieldID m_andRhs;
+
+  jfieldID m_orLhs;
+  jfieldID m_orRhs;
+
+  jfieldID m_field;
+  jfieldID m_op;
+
+  jfieldID m_rating;
+  jfieldID m_priceRate;
+
+  bool m_initialized = false;
+} g_hotelsFilterBuilder;
+
 // TODO yunitsky
 // Do not cache search results here, after new search will be implemented.
 // Currently we cannot serialize FeatureID of search result properly.
 // Cache is needed to show results on the map after click in the list of results.
 Results g_results;
-mutex g_resultsMutex;
+
 // Timestamp of last search query. Results with older stamps are ignored.
-atomic<long long> g_queryTimestamp;
+uint64_t g_queryTimestamp;
 // Implements 'NativeSearchListener' java interface.
 jobject g_javaListener;
 jmethodID g_updateResultsId;
@@ -78,14 +262,18 @@ jobject ToJavaResult(Result & result, bool hasPosition, double lat, double lon)
   jni::TScopedLocalRef address(env, jni::ToJavaString(env, result.GetAddress()));
   jni::TScopedLocalRef dist(env, jni::ToJavaString(env, distance));
   jni::TScopedLocalRef cuisine(env, jni::ToJavaString(env, result.GetCuisine()));
+  jni::TScopedLocalRef rating(env, jni::ToJavaString(env, result.GetHotelRating()));
+  jni::TScopedLocalRef pricing(env, jni::ToJavaString(env, result.GetHotelApproximatePricing()));
   jni::TScopedLocalRef desc(env, env->NewObject(g_descriptionClass, g_descriptionConstructor,
                                                 featureType.get(), address.get(),
                                                 dist.get(), cuisine.get(),
+                                                rating.get(), pricing.get(),
                                                 result.GetStarsCount(),
                                                 static_cast<jint>(result.IsOpenNow())));
 
   jni::TScopedLocalRef name(env, jni::ToJavaString(env, result.GetString()));
-  jobject ret = env->NewObject(g_resultClass, g_resultConstructor, name.get(), desc.get(), ll.lat, ll.lon, ranges.get());
+  jobject ret = env->NewObject(g_resultClass, g_resultConstructor, name.get(), desc.get(), ll.lat,
+                               ll.lon, ranges.get(), result.IsHotel());
   ASSERT(ret, ());
 
   return ret;
@@ -94,7 +282,7 @@ jobject ToJavaResult(Result & result, bool hasPosition, double lat, double lon)
 jobjectArray BuildJavaResults(Results const & results, bool hasPosition, double lat, double lon)
 {
   JNIEnv * env = jni::GetEnv();
-  lock_guard<mutex> guard(g_resultsMutex);
+
   g_results = results;
 
   int const count = g_results.GetCount();
@@ -116,22 +304,25 @@ void OnResults(Results const & results, long long timestamp, bool isMapAndTable,
 
   JNIEnv * env = jni::GetEnv();
 
+  if (!results.IsEndMarker() || results.IsEndedNormal())
+  {
+    jni::TScopedLocalObjectArrayRef jResults(env, BuildJavaResults(results, hasPosition, lat, lon));
+    env->CallVoidMethod(g_javaListener, g_updateResultsId, jResults.get(),
+                        static_cast<jlong>(timestamp),
+                        search::HotelsClassifier::IsHotelResults(results));
+  }
+
   if (results.IsEndMarker())
   {
     env->CallVoidMethod(g_javaListener, g_endResultsId, static_cast<jlong>(timestamp));
     if (isMapAndTable && results.IsEndedNormal())
       g_framework->NativeFramework()->UpdateUserViewportChanged();
-    return;
   }
-
-  jni::TScopedLocalObjectArrayRef jResults(env, BuildJavaResults(results, hasPosition, lat, lon));
-  env->CallVoidMethod(g_javaListener, g_updateResultsId, jResults.get(), static_cast<jlong>(timestamp));
 }
 
 jobjectArray BuildJavaMapResults(vector<storage::DownloaderSearchResult> const & results)
 {
   JNIEnv * env = jni::GetEnv();
-  lock_guard<mutex> guard(g_resultsMutex);
 
   int const count = results.size();
   jobjectArray const res = env->NewObjectArray(count, g_mapResultClass, nullptr);
@@ -165,57 +356,68 @@ extern "C"
   Java_com_mapswithme_maps_search_SearchEngine_nativeInit(JNIEnv * env, jobject thiz)
   {
     g_javaListener = env->NewGlobalRef(thiz);
-    g_updateResultsId = jni::GetMethodID(env, g_javaListener, "onResultsUpdate", "([Lcom/mapswithme/maps/search/SearchResult;J)V");
+    g_updateResultsId = jni::GetMethodID(env, g_javaListener, "onResultsUpdate",
+                                         "([Lcom/mapswithme/maps/search/SearchResult;JZ)V");
     g_endResultsId = jni::GetMethodID(env, g_javaListener, "onResultsEnd", "(J)V");
     g_resultClass = jni::GetGlobalClassRef(env, "com/mapswithme/maps/search/SearchResult");
-    g_resultConstructor = jni::GetConstructorID(env, g_resultClass, "(Ljava/lang/String;Lcom/mapswithme/maps/search/SearchResult$Description;DD[I)V");
+    g_resultConstructor = jni::GetConstructorID(
+        env, g_resultClass,
+        "(Ljava/lang/String;Lcom/mapswithme/maps/search/SearchResult$Description;DD[IZ)V");
     g_suggestConstructor = jni::GetConstructorID(env, g_resultClass, "(Ljava/lang/String;Ljava/lang/String;DD[I)V");
     g_descriptionClass = jni::GetGlobalClassRef(env, "com/mapswithme/maps/search/SearchResult$Description");
-    g_descriptionConstructor = jni::GetConstructorID(env, g_descriptionClass, "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;II)V");
+    g_descriptionConstructor = jni::GetConstructorID(env, g_descriptionClass, "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;II)V");
 
     g_mapResultsMethod = jni::GetMethodID(env, g_javaListener, "onMapSearchResults", "([Lcom/mapswithme/maps/search/NativeMapSearchListener$Result;JZ)V");
     g_mapResultClass = jni::GetGlobalClassRef(env, "com/mapswithme/maps/search/NativeMapSearchListener$Result");
     g_mapResultCtor = jni::GetConstructorID(env, g_mapResultClass, "(Ljava/lang/String;Ljava/lang/String;)V");
+
+    g_hotelsFilterBuilder.Init(env);
   }
 
-  JNIEXPORT jboolean JNICALL
-  Java_com_mapswithme_maps_search_SearchEngine_nativeRunSearch(JNIEnv * env, jclass clazz, jbyteArray bytes, jstring lang,
-                                                               jlong timestamp, jboolean force, jboolean hasPosition, jdouble lat, jdouble lon)
+  JNIEXPORT jboolean JNICALL Java_com_mapswithme_maps_search_SearchEngine_nativeRunSearch(
+      JNIEnv * env, jclass clazz, jbyteArray bytes, jstring lang, jlong timestamp,
+      jboolean hasPosition, jdouble lat, jdouble lon, jobject hotelsFilter)
   {
-    search::SearchParams params;
+    search::EverywhereSearchParams params;
     params.m_query = jni::ToNativeString(env, bytes);
-    params.SetInputLocale(ReplaceDeprecatedLanguageCode(jni::ToNativeString(env, lang)));
-    params.SetForceSearch(force);
-    if (hasPosition)
-      params.SetPosition(lat, lon);
+    params.m_inputLocale = ReplaceDeprecatedLanguageCode(jni::ToNativeString(env, lang));
     params.m_onResults = bind(&OnResults, _1, timestamp, false, hasPosition, lat, lon);
+    params.m_hotelsFilter = g_hotelsFilterBuilder.Build(env, hotelsFilter);
 
-    bool const searchStarted = g_framework->NativeFramework()->Search(params);
+    bool const searchStarted = g_framework->NativeFramework()->SearchEverywhere(params);
     if (searchStarted)
       g_queryTimestamp = timestamp;
     return searchStarted;
   }
 
-  JNIEXPORT void JNICALL
-  Java_com_mapswithme_maps_search_SearchEngine_nativeRunInteractiveSearch(JNIEnv * env, jclass clazz, jbyteArray bytes,
-                                                                          jstring lang, jlong timestamp, jboolean isMapAndTable)
+  JNIEXPORT void JNICALL Java_com_mapswithme_maps_search_SearchEngine_nativeRunInteractiveSearch(
+      JNIEnv * env, jclass clazz, jbyteArray bytes, jstring lang, jlong timestamp,
+      jboolean isMapAndTable, jobject hotelsFilter)
   {
-    search::SearchParams params;
-    params.m_query = jni::ToNativeString(env, bytes);
-    params.SetInputLocale(ReplaceDeprecatedLanguageCode(jni::ToNativeString(env, lang)));
+    search::ViewportSearchParams vparams;
+    vparams.m_query = jni::ToNativeString(env, bytes);
+    vparams.m_inputLocale = ReplaceDeprecatedLanguageCode(jni::ToNativeString(env, lang));
+    vparams.m_hotelsFilter = g_hotelsFilterBuilder.Build(env, hotelsFilter);
 
-    g_framework->NativeFramework()->StartInteractiveSearch(params);
+    // TODO (@alexzatsepin): set up vparams.m_onCompleted here and use
+    // HotelsClassifier for hotel queries detection.
+    g_framework->NativeFramework()->SearchInViewport(vparams);
 
     if (isMapAndTable)
     {
-      params.m_onResults = bind(&OnResults, _1, timestamp, isMapAndTable, false /* hasPosition */, 0.0, 0.0);
-      if (g_framework->NativeFramework()->Search(params))
+      search::EverywhereSearchParams eparams;
+      eparams.m_query = vparams.m_query;
+      eparams.m_inputLocale = vparams.m_inputLocale;
+      eparams.m_onResults = bind(&OnResults, _1, timestamp, isMapAndTable, false /* hasPosition */,
+                                 0.0 /* lat */, 0.0 /* lon */);
+      eparams.m_hotelsFilter = vparams.m_hotelsFilter;
+      if (g_framework->NativeFramework()->SearchEverywhere(eparams))
         g_queryTimestamp = timestamp;
     }
   }
 
-  JNIEXPORT void JNICALL
-  Java_com_mapswithme_maps_search_SearchEngine_nativeRunSearchMaps(JNIEnv * env, jclass clazz, jbyteArray bytes, jstring lang, jlong timestamp)
+  JNIEXPORT void JNICALL Java_com_mapswithme_maps_search_SearchEngine_nativeRunSearchMaps(
+      JNIEnv * env, jclass clazz, jbyteArray bytes, jstring lang, jlong timestamp)
   {
     storage::DownloaderSearchParams params;
     params.m_query = jni::ToNativeString(env, bytes);
@@ -229,23 +431,13 @@ extern "C"
   JNIEXPORT void JNICALL
   Java_com_mapswithme_maps_search_SearchEngine_nativeShowResult(JNIEnv * env, jclass clazz, jint index)
   {
-    lock_guard<mutex> guard(g_resultsMutex);
-    Result const & result = g_results.GetResult(index);
-    g_framework->PostDrapeTask([result]()
-    {
-      g_framework->NativeFramework()->ShowSearchResult(result);
-    });
+    g_framework->NativeFramework()->ShowSearchResult(g_results.GetResult(index));
   }
 
   JNIEXPORT void JNICALL
   Java_com_mapswithme_maps_search_SearchEngine_nativeShowAllResults(JNIEnv * env, jclass clazz)
   {
-    lock_guard<mutex> guard(g_resultsMutex);
-    auto const & results = g_results;
-    g_framework->PostDrapeTask([results]()
-    {
-      g_framework->NativeFramework()->ShowSearchResults(results);
-    });
+    g_framework->NativeFramework()->ShowSearchResults(g_results);
   }
 
   JNIEXPORT void JNICALL
@@ -253,7 +445,7 @@ extern "C"
   {
     GetPlatform().RunOnGuiThread([]()
     {
-      g_framework->NativeFramework()->CancelInteractiveSearch();
+      g_framework->NativeFramework()->CancelSearch(search::Mode::Viewport);
     });
   }
 } // extern "C"

@@ -1,0 +1,99 @@
+project(coding)
+
+include_directories(
+  ${OMIM_ROOT}/coding
+  ${OMIM_ROOT}/3party/expat
+  ${OMIM_ROOT}/3party/lodepng
+)
+
+set(
+  SRC
+   ${OMIM_ROOT}/3party/expat/expat_impl.h
+   ${OMIM_ROOT}/3party/lodepng/lodepng.hpp
+   ${OMIM_ROOT}/3party/lodepng/lodepng_io.hpp
+   ${OMIM_ROOT}/3party/lodepng/lodepng_io_private.hpp
+   ${OMIM_ROOT}/3party/lodepng/lodepng.cpp
+
+  base64.cpp
+  base64.hpp
+  bit_streams.hpp
+  buffer_reader.hpp
+  byte_stream.hpp
+  coder.hpp
+  coder_util.hpp
+  compressed_bit_vector.cpp
+  compressed_bit_vector.hpp
+  constants.hpp
+  dd_vector.hpp
+  diff.hpp
+  diff_patch_common.hpp
+  elias_coder.hpp
+  endianness.hpp
+  file_container.cpp
+  file_container.hpp
+  file_name_utils.cpp
+  file_name_utils.hpp
+  file_reader.cpp
+  file_reader.hpp
+  file_sort.hpp
+  file_writer.cpp
+  file_writer.hpp
+  fixed_bits_ddvector.hpp
+  hex.cpp
+  hex.hpp
+  huffman.cpp
+  huffman.hpp
+  internal/file64_api.hpp
+  internal/file_data.cpp
+  internal/file_data.hpp
+  internal/xmlparser.hpp
+  matrix_traversal.hpp
+  memory_region.hpp
+  mmap_reader.cpp
+  mmap_reader.hpp
+  multilang_utf8_string.cpp
+  multilang_utf8_string.hpp
+  parse_xml.hpp
+  png_memory_encoder.cpp
+  png_memory_encoder.hpp
+  polymorph_reader.hpp
+  read_write_utils.hpp
+  reader.cpp
+  reader.hpp
+  reader_cache.hpp
+  reader_streambuf.cpp
+  reader_streambuf.hpp
+  reader_wrapper.hpp
+  reader_writer_ops.cpp
+  reader_writer_ops.hpp
+  simple_dense_coding.cpp
+  simple_dense_coding.hpp
+  streams.hpp
+  streams_common.hpp
+  streams_sink.hpp
+  succinct_mapper.hpp
+  traffic.cpp
+  traffic.hpp  
+  uri.cpp
+  uri.hpp
+  url_encode.hpp
+  value_opt_string.hpp
+  var_record_reader.hpp
+  var_serial_vector.hpp
+  varint.hpp
+  varint_misc.hpp
+#    varint_vector.cpp
+#    varint_vector.hpp
+  write_to_sink.hpp
+  writer.hpp
+  zip_creator.cpp
+  zip_creator.hpp
+  zip_reader.cpp
+  zip_reader.hpp
+  zlib.cpp
+  zlib.hpp
+)
+
+add_library(${PROJECT_NAME} ${SRC})
+
+omim_add_test_subdirectory(coding_tests)

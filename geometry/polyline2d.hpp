@@ -11,23 +11,26 @@
 
 namespace m2
 {
-
 template <typename T>
-class PolylineT
+class Polyline
 {
   vector<Point<T> > m_points;
 
 public:
-  PolylineT() {}
-  PolylineT(initializer_list<Point<T> > points) : m_points(points)
+  using Container = vector<Point<T>>;
+  using Iter = typename Container::const_iterator;
+
+  Polyline() {}
+  Polyline(initializer_list<Point<T>> const & points) : m_points(points)
   {
     ASSERT_GREATER(m_points.size(), 1, ());
   }
-  explicit PolylineT(vector<Point<T> > const & points) : m_points(points)
+  explicit Polyline(vector<Point<T>> const & points) : m_points(points)
   {
     ASSERT_GREATER(m_points.size(), 1, ());
   }
-  template <class IterT> PolylineT(IterT beg, IterT end) : m_points(beg, end)
+  template <class Iter>
+  Polyline(Iter beg, Iter end) : m_points(beg, end)
   {
     ASSERT_GREATER(m_points.size(), 1, ());
   }
@@ -46,8 +49,8 @@ public:
     double res = numeric_limits<double>::max();
     m2::DistanceToLineSquare<m2::Point<T> > d;
 
-    TIter i = Begin();
-    for (TIter j = i + 1; j != End(); ++i, ++j)
+    Iter i = Begin();
+    for (Iter j = i + 1; j != End(); ++i, ++j)
     {
       d.SetBounds(*i, *j);
       res = min(res, d(point));
@@ -67,19 +70,22 @@ public:
 
   void Clear() { m_points.clear(); }
   void Add(Point<T> const & pt) { m_points.push_back(pt); }
-  void Swap(PolylineT & rhs)
+  void Append(Polyline const & poly)
   {
-    m_points.swap(rhs.m_points);
+    m_points.insert(m_points.end(), poly.m_points.cbegin(), poly.m_points.cend());
   }
 
+  void PopBack()
+  {
+    ASSERT(!m_points.empty(), ());
+    m_points.pop_back();
+  }
+
+  void Swap(Polyline & rhs) { m_points.swap(rhs.m_points); }
   size_t GetSize() const { return m_points.size(); }
-
-  bool operator==(PolylineT<T> const & rhs) const { return m_points == rhs.m_points; }
-
-  typedef vector<Point<T> > TContainer;
-  typedef typename TContainer::const_iterator TIter;
-  TIter Begin() const { return m_points.begin(); }
-  TIter End() const { return m_points.end(); }
+  bool operator==(Polyline const & rhs) const { return m_points == rhs.m_points; }
+  Iter Begin() const { return m_points.begin(); }
+  Iter End() const { return m_points.end(); }
   Point<T> const & Front() const { return m_points.front(); }
   Point<T> const & Back() const { return m_points.back(); }
 
@@ -89,14 +95,38 @@ public:
     return m_points[idx];
   }
 
-  vector<Point<T> > const & GetPoints() const { return m_points; }
-
-  friend string DebugPrint(PolylineT<T> const & p)
+  Point<T> GetPointByDistance(T distance) const
   {
-    return ::DebugPrint(p.m_points);
+    if (distance < 0)
+      return m_points.front();
+
+    T dist = 0;
+    for (size_t i = 1; i < m_points.size(); ++i)
+    {
+      T const oldDist = dist;
+      dist += m_points[i - 1].Length(m_points[i]);
+      if (distance <= dist)
+      {
+        T const t = (distance - oldDist) / (dist - oldDist);
+        return m_points[i - 1] * (1 - t) + m_points[i] * t;
+      }
+    }
+
+    return m_points.back();
   }
+
+  vector<Point<T>> ExtractSegment(size_t segmentIndex, bool reversed) const
+  {
+    if (segmentIndex + 1 >= m_points.size())
+      return vector<Point<T>>();
+
+    return reversed ? vector<Point<T>>{m_points[segmentIndex + 1], m_points[segmentIndex]} :
+                      vector<Point<T>>{m_points[segmentIndex], m_points[segmentIndex + 1]};
+  }
+
+  vector<Point<T> > const & GetPoints() const { return m_points; }
+  friend string DebugPrint(Polyline const & p) { return ::DebugPrint(p.m_points); }
 };
 
-typedef PolylineT<double> PolylineD;
-
-}
+using PolylineD = Polyline<double>;
+}  // namespace m2

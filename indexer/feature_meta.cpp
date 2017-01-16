@@ -94,10 +94,71 @@ bool Metadata::TypeFromString(string const & k, Metadata::EType & outType)
     outType = Metadata::FMD_PRICE_RATE;
   else if (k == "rating:sponsored")
     outType = Metadata::FMD_RATING;
+  else if (k == "banner_url")
+    outType = Metadata::FMD_BANNER_URL;
   else
     return false;
 
   return true;
+}
+
+// static
+bool Metadata::IsSponsoredType(Metadata::EType const & type)
+{
+  switch (type)
+  {
+  case Metadata::FMD_SPONSORED_ID:
+  case Metadata::FMD_PRICE_RATE:
+  case Metadata::FMD_RATING:
+  case Metadata::FMD_BANNER_URL:
+    return true;
+  default:
+    return false;
+  }
+}
+
+void RegionData::SetLanguages(vector<string> const & codes)
+{
+  string value;
+  for (string const & code : codes)
+  {
+    int8_t const lang = StringUtf8Multilang::GetLangIndex(code);
+    if (lang != StringUtf8Multilang::kUnsupportedLanguageCode)
+      value.push_back(lang);
+  }
+  MetadataBase::Set(RegionData::Type::RD_LANGUAGES, value);
+}
+
+void RegionData::GetLanguages(vector<int8_t> & langs) const
+{
+  for (auto const lang : Get(RegionData::Type::RD_LANGUAGES))
+    langs.push_back(lang);
+}
+
+bool RegionData::HasLanguage(int8_t const lang) const
+{
+  for (auto const lng : Get(RegionData::Type::RD_LANGUAGES))
+  {
+    if (lng == lang)
+      return true;
+  }
+  return false;
+}
+
+bool RegionData::IsSingleLanguage(int8_t const lang) const
+{
+  string const value = Get(RegionData::Type::RD_LANGUAGES);
+  if (value.size() != 1)
+    return false;
+  return value.front() == lang;
+}
+
+void RegionData::AddPublicHoliday(int8_t month, int8_t offset)
+{
+  string value = Get(RegionData::Type::RD_PUBLIC_HOLIDAYS);
+  value.push_back(month);
+  value.push_back(offset);
+  Set(RegionData::Type::RD_PUBLIC_HOLIDAYS, value);
 }
 }  // namespace feature
 
@@ -132,6 +193,7 @@ string DebugPrint(feature::Metadata::EType type)
   case Metadata::FMD_SPONSORED_ID: return "ref:sponsored";
   case Metadata::FMD_PRICE_RATE: return "price_rate";
   case Metadata::FMD_RATING: return "rating:sponsored";
+  case Metadata::FMD_BANNER_URL: return "banner_url";
   case Metadata::FMD_TEST_ID: return "test_id";
   case Metadata::FMD_COUNT: CHECK(false, ("FMD_COUNT can not be used as a type."));
   };

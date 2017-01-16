@@ -3,13 +3,12 @@
 #include "generator/feature_builder.hpp"
 #include "generator/osm2type.hpp"
 #include "generator/osm_element.hpp"
+#include "generator/restriction_writer.hpp"
 #include "generator/ways_merger.hpp"
 
 #include "indexer/classificator.hpp"
 #include "indexer/feature_visibility.hpp"
 #include "indexer/ftypes_matcher.hpp"
-
-#include "geometry/tree4d.hpp"
 
 #include "coding/file_writer.hpp"
 
@@ -21,86 +20,19 @@
 #include "std/list.hpp"
 #include "std/type_traits.hpp"
 #include "std/unordered_set.hpp"
+#include "std/vector.hpp"
 
 namespace
 {
-class Place
-{
-  FeatureBuilder1 m_ft;
-  m2::PointD m_pt;
-  uint32_t m_type;
-  double m_thresholdM;
-
-  bool IsPoint() const { return (m_ft.GetGeomType() == feature::GEOM_POINT); }
-  static bool IsEqualTypes(uint32_t t1, uint32_t t2)
-  {
-    // Use 2-arity places comparison for filtering.
-    // ("place-city-capital-2" is equal to "place-city")
-    ftype::TruncValue(t1, 2);
-    ftype::TruncValue(t2, 2);
-    return (t1 == t2);
-  }
-
-public:
-  Place(FeatureBuilder1 const & ft, uint32_t type) : m_ft(ft), m_pt(ft.GetKeyPoint()), m_type(type)
-  {
-    using namespace ftypes;
-
-    switch (IsLocalityChecker::Instance().GetType(m_type))
-    {
-    case COUNTRY: m_thresholdM = 300000.0; break;
-    case STATE: m_thresholdM = 100000.0; break;
-    case CITY: m_thresholdM = 30000.0; break;
-    case TOWN: m_thresholdM = 20000.0; break;
-    case VILLAGE: m_thresholdM = 10000.0; break;
-    default: m_thresholdM = 10000.0; break;
-    }
-  }
-
-  FeatureBuilder1 const & GetFeature() const { return m_ft; }
-
-  m2::RectD GetLimitRect() const
-  {
-    return MercatorBounds::RectByCenterXYAndSizeInMeters(m_pt, m_thresholdM);
-  }
-
-  bool IsEqual(Place const & r) const
-  {
-    return (IsEqualTypes(m_type, r.m_type) &&
-            m_ft.GetName() == r.m_ft.GetName() &&
-            (IsPoint() || r.IsPoint()) &&
-            MercatorBounds::DistanceOnEarth(m_pt, r.m_pt) < m_thresholdM);
-  }
-
-  /// Check whether we need to replace place @r with place @this.
-  bool IsBetterThan(Place const & r) const
-  {
-    // Check ranks.
-    uint8_t const r1 = m_ft.GetRank();
-    uint8_t const r2 = r.m_ft.GetRank();
-    if (r1 != r2)
-      return (r2 < r1);
-
-    // Check types length.
-    // ("place-city-capital-2" is better than "place-city").
-    uint8_t const l1 = ftype::GetLevel(m_type);
-    uint8_t const l2 = ftype::GetLevel(r.m_type);
-    if (l1 != l2)
-      return (l2 < l1);
-
-    // Assume that area places has better priority than point places at the very end ...
-    /// @todo It was usefull when place=XXX type has any area fill style.
-    /// Need to review priority logic here (leave the native osm label).
-    return !IsPoint();
-  }
-};
-
 /// Generated features should include parent relation tags to make
 /// full types matching and storing any additional info.
 class RelationTagsBase
 {
 public:
-  RelationTagsBase() : m_cache(14) {}
+  RelationTagsBase(routing::RestrictionWriter & restrictionWriter)
+    : m_restrictionWriter(restrictionWriter), m_cache(14)
+  {
+  }
 
   void Reset(uint64_t fID, OsmElement * p)
   {
@@ -124,7 +56,7 @@ protected:
   static bool IsSkipRelation(string const & type)
   {
     /// @todo Skip special relation types.
-    return (type == "multipolygon" || type == "bridge" || type == "restriction");
+    return (type == "multipolygon" || type == "bridge");
   }
 
   bool IsKeyTagExists(string const & key) const
@@ -145,6 +77,7 @@ protected:
 protected:
   uint64_t m_featureID;
   OsmElement * m_current;
+  routing::RestrictionWriter & m_restrictionWriter;
 
 private:
   my::Cache<uint64_t, RelationElement> m_cache;
@@ -154,12 +87,24 @@ class RelationTagsNode : public RelationTagsBase
 {
   using TBase = RelationTagsBase;
 
+public:
+  RelationTagsNode(routing::RestrictionWriter & restrictionWriter)
+    : RelationTagsBase(restrictionWriter)
+  {
+  }
+
 protected:
   void Process(RelationElement const & e) override
   {
     string const & type = e.GetType();
     if (TBase::IsSkipRelation(type))
       return;
+
+    if (type == "restriction")
+    {
+      m_restrictionWriter.Write(e);
+      return;
+    }
 
     bool const processAssociatedStreet = type == "associatedStreet" &&
         TBase::IsKeyTagExists("addr:housenumber") && !TBase::IsKeyTagExists("addr:street");
@@ -185,6 +130,13 @@ protected:
 
 class RelationTagsWay : public RelationTagsBase
 {
+public:
+  RelationTagsWay(routing::RestrictionWriter & restrictionWriter)
+    : RelationTagsBase(restrictionWriter)
+  {
+  }
+
+private:
   using TBase = RelationTagsBase;
   using TNameKeys = unordered_set<string>;
 
@@ -207,6 +159,20 @@ protected:
     if (TBase::IsSkipRelation(type) || type == "route")
       return;
 
+    if (type == "restriction")
+    {
+      m_restrictionWriter.Write(e);
+      return;
+    }
+
+    if (type == "building")
+    {
+      // If this way has "outline" role, add [building=has_parts] type.
+      if (e.GetWayRole(m_current->id) == "outline")
+        TBase::AddCustomTag({"building", "has_parts"});
+      return;
+    }
+
     bool const isBoundary = (type == "boundary") && IsAcceptBoundary(e);
     bool const processAssociatedStreet = type == "associatedStreet" &&
         TBase::IsKeyTagExists("addr:housenumber") && !TBase::IsKeyTagExists("addr:street");
@@ -222,7 +188,7 @@ protected:
         TBase::AddCustomTag({"addr:street", p.second});
 
       // Important! Skip all "name" tags.
-      if (strings::StartsWith(p.first, "name"))
+      if (strings::StartsWith(p.first, "name") || p.first == "int_name")
         continue;
 
       if (!isBoundary && p.first == "boundary")
@@ -235,7 +201,6 @@ protected:
     }
   }
 };
-
 }  // namespace
 
 /// @param  TEmitter  Feature accumulating policy
@@ -247,7 +212,9 @@ class OsmToFeatureTranslator
   TCache & m_holder;
   uint32_t m_coastType;
   unique_ptr<FileWriter> m_addrWriter;
-  m4::Tree<Place> m_places;
+
+  routing::RestrictionWriter m_restrictionWriter;
+
   RelationTagsNode m_nodeRelations;
   RelationTagsWay m_wayRelations;
 
@@ -326,32 +293,25 @@ class OsmToFeatureTranslator
     return params.IsValid();
   }
 
-  void EmitFeatureBase(FeatureBuilder1 & ft, FeatureParams const & params)
+  void EmitFeatureBase(FeatureBuilder1 & ft, FeatureParams const & params) const
   {
     ft.SetParams(params);
     if (ft.PreSerialize())
     {
       string addr;
-      if (m_addrWriter && ftypes::IsBuildingChecker::Instance()(params.m_Types) && ft.FormatFullAddress(addr))
-        m_addrWriter->Write(addr.c_str(), addr.size());
-
-      static uint32_t const placeType = classif().GetTypeByPath({"place"});
-      uint32_t const type = params.FindType(placeType, 1);
-
-      if (type != ftype::GetEmptyValue() && !ft.GetName().empty())
+      if (m_addrWriter && ftypes::IsBuildingChecker::Instance()(params.m_Types) &&
+          ft.FormatFullAddress(addr))
       {
-        m_places.ReplaceEqualInRect(Place(ft, type),
-            [](Place const & p1, Place const & p2) { return p1.IsEqual(p2); },
-            [](Place const & p1, Place const & p2) { return p1.IsBetterThan(p2); });
+        m_addrWriter->Write(addr.c_str(), addr.size());
       }
-      else
-        m_emitter(ft);
+
+      m_emitter(ft);
     }
   }
 
   /// @param[in]  params  Pass by value because it can be modified.
   //@{
-  void EmitPoint(m2::PointD const & pt, FeatureParams params, osm::Id id)
+  void EmitPoint(m2::PointD const & pt, FeatureParams params, osm::Id id) const
   {
     if (feature::RemoveNoDrawableTypes(params.m_Types, feature::GEOM_POINT))
     {
@@ -362,7 +322,7 @@ class OsmToFeatureTranslator
     }
   }
 
-  void EmitLine(FeatureBuilder1 & ft, FeatureParams params, bool isCoastLine)
+  void EmitLine(FeatureBuilder1 & ft, FeatureParams params, bool isCoastLine) const
   {
     if (isCoastLine || feature::RemoveNoDrawableTypes(params.m_Types, feature::GEOM_LINE))
     {
@@ -372,7 +332,7 @@ class OsmToFeatureTranslator
   }
 
   template <class MakeFnT>
-  void EmitArea(FeatureBuilder1 & ft, FeatureParams params, MakeFnT makeFn)
+  void EmitArea(FeatureBuilder1 & ft, FeatureParams params, MakeFnT makeFn) const
   {
     using namespace feature;
 
@@ -556,19 +516,18 @@ public:
   }
 
 public:
-  OsmToFeatureTranslator(TEmitter & emitter, TCache & holder,
-                   uint32_t coastType, string const & addrFilePath)
-    : m_emitter(emitter), m_holder(holder), m_coastType(coastType)
+  OsmToFeatureTranslator(TEmitter & emitter, TCache & holder, uint32_t coastType,
+                         string const & addrFilePath = {}, string const & restrictionsFilePath = {})
+    : m_emitter(emitter)
+    , m_holder(holder)
+    , m_coastType(coastType)
+    , m_nodeRelations(m_restrictionWriter)
+    , m_wayRelations(m_restrictionWriter)
   {
     if (!addrFilePath.empty())
       m_addrWriter.reset(new FileWriter(addrFilePath));
-  }
 
-  void Finish()
-  {
-    m_places.ForEach([this] (Place const & p)
-    {
-      m_emitter(p.GetFeature());
-    });
+    if (!restrictionsFilePath.empty())
+      m_restrictionWriter.Open(restrictionsFilePath);
   }
 };

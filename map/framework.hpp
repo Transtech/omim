@@ -1,36 +1,49 @@
 #pragma once
 
 #include "map/api_mark_point.hpp"
-#include "map/booking_api.hpp"
 #include "map/bookmark.hpp"
 #include "map/bookmark_manager.hpp"
-#include "map/place_page_info.hpp"
+#include "map/displacement_mode_manager.hpp"
 #include "map/feature_vec_model.hpp"
 #include "map/mwm_url.hpp"
+#include "map/place_page_info.hpp"
 #include "map/track.hpp"
+#include "map/traffic_manager.hpp"
 
 #include "drape_frontend/gui/skin.hpp"
+#include "drape_frontend/drape_api.hpp"
 #include "drape_frontend/drape_engine.hpp"
 #include "drape_frontend/user_event_stream.hpp"
 #include "drape_frontend/watch/frame_image.hpp"
 
 #include "drape/oglcontextfactory.hpp"
 
+#include "indexer/banners.hpp"
 #include "indexer/data_header.hpp"
+#include "indexer/index_helpers.hpp"
 #include "indexer/map_style.hpp"
 #include "indexer/new_feature_categories.hpp"
 
 #include "editor/user_stats.hpp"
 
+#include "search/displayed_categories.hpp"
+#include "search/downloader_search_callback.hpp"
 #include "search/engine.hpp"
+#include "search/mode.hpp"
 #include "search/query_saver.hpp"
+#include "search/viewport_search_callback.hpp"
 
-#include "storage/downloader_search_params.hpp"
 #include "storage/downloading_policy.hpp"
 #include "storage/storage.hpp"
 
+#include "tracking/reporter.hpp"
+
+#include "partners_api/booking_api.hpp"
+#include "partners_api/uber_api.hpp"
+
 #include "platform/country_defines.hpp"
 #include "platform/location.hpp"
+#include "platform/platform.hpp"
 
 #include "routing/router.hpp"
 #include "routing/routing_session.hpp"
@@ -56,14 +69,17 @@ class EditableMapObject;
 
 namespace search
 {
-  class Result;
-  class Results;
-  struct AddressInfo;
+class Result;
+class Results;
+struct AddressInfo;
+struct EverywhereSearchParams;
+struct ViewportSearchParams;
 }
 
 namespace storage
 {
 class CountryInfoGetter;
+struct DownloaderSearchParams;
 }
 
 namespace routing { namespace turns{ class Settings; } }
@@ -76,11 +92,17 @@ namespace df
   }
 }
 
+namespace platform
+{
+class NetworkPolicy;
+}
+
 /// Uncomment line to make fixed position settings and
 /// build version for screenshots.
 //#define FIXED_LOCATION
 
-class Framework
+class Framework : public search::ViewportSearchCallback::Delegate,
+                  public search::DownloaderSearchCallback::Delegate
 {
   DISALLOW_COPY(Framework);
 
@@ -108,12 +130,15 @@ protected:
 
   StringsBundle m_stringsBundle;
 
+  model::FeaturesFetcher m_model;
+
+  // The order matters here: DisplayedCategories may be used only
+  // after classificator is loaded by |m_model|.
+  unique_ptr<search::DisplayedCategories> m_displayedCategories;
+
   // The order matters here: storage::CountryInfoGetter and
   // m_model::FeaturesFetcher must be initialized before
   // search::Engine and, therefore, destroyed after search::Engine.
-
-  model::FeaturesFetcher m_model;
-
   unique_ptr<storage::CountryInfoGetter> m_infoGetter;
 
   unique_ptr<search::Engine> m_searchEngine;
@@ -121,6 +146,7 @@ protected:
   search::QuerySaver m_searchQuerySaver;
 
   ScreenBase m_currentModelView;
+  m2::RectD m_visibleViewport;
 
   using TViewportChanged = df::DrapeEngine::TModelViewListenerFn;
   TViewportChanged m_viewportChanged;
@@ -140,9 +166,17 @@ protected:
 
   BookmarkManager m_bmManager;
 
-  BookingApi m_bookingApi;
+  unique_ptr<BookingApi> m_bookingApi = make_unique<BookingApi>();
+  unique_ptr<uber::Api> m_uberApi = make_unique<uber::Api>();
+
+  banner::BannerSet m_bannerSet;
+
+  df::DrapeApi m_drapeApi;
 
   bool m_isRenderingEnabled;
+  tracking::Reporter m_trackingReporter;
+
+  TrafficManager m_trafficManager;
 
   /// This function will be called by m_storage when latest local files
   /// is downloaded.
@@ -168,8 +202,11 @@ public:
   virtual ~Framework();
 
   /// Get access to booking api helpers
-  BookingApi & GetBookingApi() { return m_bookingApi; }
-  BookingApi const & GetBookingApi() const { return m_bookingApi; }
+  BookingApi * GetBookingApi(platform::NetworkPolicy const & policy);
+  BookingApi const * GetBookingApi(platform::NetworkPolicy const & policy) const;
+  uber::Api * GetUberApi(platform::NetworkPolicy const & policy);
+
+  df::DrapeApi & GetDrapeApi() { return m_drapeApi; }
 
   /// Migrate to new version of very different data.
   bool IsEnoughSpaceForMigrate() const;
@@ -230,10 +267,14 @@ public:
   string GetCountryName(m2::PointD const & pt) const;
   //@}
 
-  storage::Storage & Storage() { return m_storage; }
-  storage::Storage const & Storage() const { return m_storage; }
-  storage::CountryInfoGetter & CountryInfoGetter() { return *m_infoGetter; }
-  StorageDownloadingPolicy & DownloadingPolicy() { return m_storageDownloadingPolicy; }
+  storage::Storage & GetStorage() { return m_storage; }
+  storage::Storage const & GetStorage() const { return m_storage; }
+  search::DisplayedCategories const & GetDisplayedCategories() const
+  {
+    return *m_displayedCategories;
+  }
+  storage::CountryInfoGetter & GetCountryInfoGetter() { return *m_infoGetter; }
+  StorageDownloadingPolicy & GetDownloadingPolicy() { return m_storageDownloadingPolicy; }
 
   /// @name Bookmarks, Tracks and other UserMarks
   //@{
@@ -269,6 +310,32 @@ public:
   BookmarkAndCategory FindBookmark(UserMark const * mark) const;
   BookmarkManager & GetBookmarkManager() { return m_bmManager; }
 
+  m2::PointD GetSearchMarkSize(SearchMarkType searchMarkType);
+
+  // Utilities
+  void VizualizeRoadsInRect(m2::RectD const & rect);
+
+protected:
+  // search::ViewportSearchCallback::Delegate overrides:
+  void RunUITask(function<void()> fn) override { GetPlatform().RunOnGuiThread(move(fn)); }
+
+  void SetHotelDisplacementMode() override
+  {
+    SetDisplacementMode(DisplacementModeManager::SLOT_INTERACTIVE_SEARCH, true /* show */);
+  }
+
+  bool IsViewportSearchActive() const override
+  {
+    return !m_searchIntents[static_cast<size_t>(search::Mode::Viewport)].m_params.m_query.empty();
+  }
+
+  void ShowViewportSearchResults(search::Results const & results) override
+  {
+    FillSearchResultsMarks(results);
+  }
+
+  void ClearViewportSearchResults() override { ClearSearchResultsMarks(); }
+
 private:
   void ActivateMapSelection(bool needAnimation,
                             df::SelectionShape::ESelectedObject selectionType,
@@ -299,17 +366,32 @@ public:
   /// Guarantees that listener is called in the main thread context.
   void SetCurrentCountryChangedListener(TCurrentCountryChanged const & listener);
 
-private:
-  unique_ptr<df::TapInfo> m_lastTapEvent;
-#ifdef OMIM_OS_ANDROID
-  unique_ptr<location::CompassInfo> m_lastCompassInfo;
-  unique_ptr<location::GpsInfo> m_lastGPSInfo;
-#endif
+  vector<MwmSet::MwmId> GetMwmsByRect(m2::RectD const & rect);
 
-  void OnTapEvent(df::TapInfo const & tapInfo);
+private:
+  struct TapEvent
+  {
+    enum class Source
+    {
+      User,
+      Search,
+      Other
+    };
+
+    TapEvent(df::TapInfo const & info, Source source) : m_info(info), m_source(source) {}
+
+    df::TapInfo const m_info;
+    Source const m_source;
+  };
+
+  unique_ptr<TapEvent> m_lastTapEvent;
+
+  void OnTapEvent(TapEvent const & tapEvent);
   /// outInfo is valid only if return value is not df::SelectionShape::OBJECT_EMPTY.
-  df::SelectionShape::ESelectedObject OnTapEventImpl(df::TapInfo const & tapInfo,
+  df::SelectionShape::ESelectedObject OnTapEventImpl(TapEvent const & tapEvent,
                                                      place_page::Info & outInfo) const;
+  unique_ptr<TapEvent> MakeTapEvent(m2::PointD const & center, FeatureID const & fid,
+                                    TapEvent::Source source) const;
   FeatureID FindBuildingAtPoint(m2::PointD const & mercator) const;
   void UpdateMinBuildingsTapZoom();
 
@@ -320,6 +402,8 @@ private:
 
   /// Here we store last selected feature to get its polygons in case of adding organization.
   mutable FeatureID m_selectedFeature;
+
+  vector<m2::PointU> m_searchMarksSizes;
 
 private:
   vector<m2::TriangleD> GetSelectedFeatureTriangles() const;
@@ -336,6 +420,7 @@ public:
   void SetMyPositionModeListener(location::TMyPositionModeChanged && fn);
 
 private:
+  bool IsTrackingReporterEnabled() const;
   void OnUserPositionChanged(m2::PointD const & position);
   //@}
 
@@ -360,7 +445,12 @@ public:
   bool IsDrapeEngineCreated() const { return m_drapeEngine != nullptr; }
   void DestroyDrapeEngine();
   /// Called when graphics engine should be temporarily paused and then resumed.
-  void SetRenderingEnabled(bool enable);
+  void SetRenderingEnabled(ref_ptr<dp::OGLContextFactory> contextFactory = nullptr);
+  void SetRenderingDisabled(bool destroyContext);
+
+  void OnRecoverGLContext(int width, int height);
+  void OnDestroyGLContext();
+
 private:
   /// Depends on initialized Drape engine.
   void SaveViewport();
@@ -381,64 +471,72 @@ public:
 
   void PrepareToShutdown();
 
-  void SetDisplacementMode(int mode);
+  void SetDisplacementMode(DisplacementModeManager::Slot slot, bool show);
 
 private:
+  struct SearchIntent
+  {
+    search::SearchParams m_params;
+    weak_ptr<search::ProcessorHandle> m_handle;
+    m2::RectD m_viewport;
+  };
+
   void InitCountryInfoGetter();
   void InitSearchEngine();
 
-  // Last search query params for the interactive search.
-  search::SearchParams m_lastInteractiveSearchParams;
+  DisplacementModeManager m_displacementModeManager;
 
   bool m_connectToGpsTrack; // need to connect to tracker when Drape is being constructed
 
+  void Search(SearchIntent const & intent);
+
+  void SetCurrentPositionIfPossible(search::SearchParams & params);
+
   void FillSearchResultsMarks(search::Results const & results);
+
+  void ClearSearchResultsMarks();
 
   void OnUpdateCurrentCountry(m2::PointF const & pt, int zoomLevel);
 
   storage::TCountryId m_lastReportedCountry;
   TCurrentCountryChanged m_currentCountryChanged;
 
-  // Search query params and viewport for the latest search
-  // query. These fields are used to check whether a new search query
-  // can be skipped. Note that these fields are not guarded by a mutex
-  // because we're assuming that they will be accessed only from the
-  // UI thread.
-  search::SearchParams m_lastQueryParams;
-  m2::RectD m_lastQueryViewport;
+  // Descriptions of last search queries for different modes. May be
+  // used for search requests skipping. This field is not guarded
+  // because it must be used from the UI thread only.
+  SearchIntent m_searchIntents[static_cast<size_t>(search::Mode::Count)];
 
-  // A handle for the latest search processor.
-  weak_ptr<search::ProcessorHandle> m_lastProcessorHandle;
+  bool Search(search::SearchParams const & params);
 
   // Returns true when |params| and |viewport| are almost the same as
-  // the latest search query's params and viewport.
-  bool QueryMayBeSkipped(search::SearchParams const & params, m2::RectD const & viewport) const;
+  // the latest search query's params and viewport in the |intent|.
+  bool QueryMayBeSkipped(SearchIntent const & intent, search::SearchParams const & params,
+                         m2::RectD const & viewport) const;
 
   void OnUpdateGpsTrackPointsCallback(vector<pair<size_t, location::GpsTrackInfo>> && toAdd,
                                       pair<size_t, size_t> const & toRemove);
-  bool GetGroupCountryIdFromFeature(FeatureType const & ft, string & name) const;
 
 public:
   using TSearchRequest = search::QuerySaver::TSearchRequest;
 
   void UpdateUserViewportChanged();
 
-  /// Call this function before entering search GUI.
-  /// While it's loading, we can cache features in viewport.
-  bool Search(search::SearchParams const & params);
-  /// Searches for mwm based on |params|.
-  /// Calling |params::m_onResults| for returning the result.
-  bool SearchInDownloader(storage::DownloaderSearchParams const & params);
-  bool GetCurrentPosition(double & lat, double & lon) const;
+  /// Search everywhere.
+  bool SearchEverywhere(search::EverywhereSearchParams const & params);
 
-  void LoadSearchResultMetadata(search::Result & res) const;
+  /// Search in the viewport.
+  bool SearchInViewport(search::ViewportSearchParams const & params);
+
+  /// Search for maps by countries or cities.
+  bool SearchInDownloader(storage::DownloaderSearchParams const & params);
+
+  void CancelSearch(search::Mode mode);
+  void CancelAllSearches();
+
+  bool GetCurrentPosition(double & lat, double & lon) const;
 
   void ShowSearchResult(search::Result const & res);
   size_t ShowSearchResults(search::Results const & results);
-
-  void StartInteractiveSearch(search::SearchParams const & params);
-  bool IsInteractiveSearchActive() const { return !m_lastInteractiveSearchParams.m_query.empty(); }
-  void CancelInteractiveSearch();
 
   list<TSearchRequest> const & GetLastSearchQueries() const { return m_searchQuerySaver.Get(); }
   void SaveSearchQuery(TSearchRequest const & query) { m_searchQuerySaver.Add(query); }
@@ -464,12 +562,14 @@ public:
   void ShowAll();
 
   m2::PointD GetPixelCenter() const;
+  m2::PointD GetVisiblePixelCenter() const;
 
   m2::PointD const & GetViewportCenter() const;
   void SetViewportCenter(m2::PointD const & pt);
   void SetViewportCenter(m2::PointD const & pt, int zoomLevel);
 
   m2::RectD GetCurrentViewport() const;
+  void SetVisibleViewport(m2::RectD const & rect);
 
   /// - Check minimal visible scale according to downloaded countries.
   void ShowRect(m2::RectD const & rect, int maxScale = -1);
@@ -502,6 +602,19 @@ public:
 
   /// Set correct viewport, parse API, show balloon.
   bool ShowMapForURL(string const & url);
+  url_scheme::ParsedMapApi::ParsingResult ParseAndSetApiURL(string const & url);
+
+  struct ParsedRoutingData
+  {
+    ParsedRoutingData(vector<url_scheme::RoutePoint> const & points, routing::RouterType type)
+      : m_points(points), m_type(type)
+    {
+    }
+    vector<url_scheme::RoutePoint> m_points;
+    routing::RouterType m_type;
+  };
+
+  ParsedRoutingData GetParsedRoutingData() const;
 
 private:
   // TODO(vng): Uncomment when needed.
@@ -535,9 +648,11 @@ public:
   /// Ignores coastlines and prefers buildings over other area features.
   /// @returns nullptr if no feature was found at the given mercator point.
   unique_ptr<FeatureType> GetFeatureAtPoint(m2::PointD const & mercator) const;
-  using TFeatureTypeFn = function<void(FeatureType &)>;
-  void ForEachFeatureAtPoint(TFeatureTypeFn && fn, m2::PointD const & mercator,
-                             double featureDistanceToleranceInMeters = 0.0) const;
+  template <typename TFn>
+  void ForEachFeatureAtPoint(TFn && fn, m2::PointD const & mercator) const
+  {
+    indexer::ForEachFeatureAtPoint(m_model.GetIndex(), fn, mercator, 0.0);
+  }
   /// Set parse to false if you don't need all feature fields ready.
   /// TODO(AlexZ): Refactor code which uses this method to get rid of it.
   /// FeatureType instances shoud not be used outside ForEach* core methods.
@@ -603,7 +718,7 @@ public:
   bool IsRouteNavigable() const { return m_routingSession.IsNavigable(); }
 
   void BuildRoute(m2::PointD const & finish, uint32_t timeoutSec);
-  void BuildRoute(m2::PointD const & start, m2::PointD const & finish, uint32_t timeoutSec);
+  void BuildRoute(m2::PointD const & start, m2::PointD const & finish, bool isP2P, uint32_t timeoutSec);
   // FollowRoute has a bug where the router follows the route even if the method hads't been called.
   // This method was added because we do not want to break the behaviour that is familiar to our users.
   bool DisableFollowMode();
@@ -615,7 +730,7 @@ public:
   /// lambdas/functors before calling RunOnGuiThread.
   void SetRouteBuildingListener(TRouteBuildingCallback const & buildingCallback) { m_routingCallback = buildingCallback; }
   /// See warning above.
-  void SetRouteProgressListener(TRouteProgressCallback const & progressCallback) { m_progressCallback = progressCallback; }
+  void SetRouteProgressListener(TRouteProgressCallback const & progressCallback) { m_routingSession.SetProgressCallback(progressCallback); }
   void FollowRoute();
   void CloseRouting();
   void GetRouteFollowingInfo(location::FollowingInfo & info) const { m_routingSession.GetRouteFollowingInfo(info); }
@@ -646,6 +761,9 @@ public:
   /// GenerateTurnNotifications shall be called by the client when a new position is available.
   inline void GenerateTurnNotifications(vector<string> & turnNotifications)
   {
+    if (m_currentRouterType == routing::RouterType::Taxi)
+      return;
+
     return m_routingSession.GenerateTurnNotifications(turnNotifications);
   }
 
@@ -656,7 +774,38 @@ public:
   void Save3dMode(bool allow3d, bool allow3dBuildings);
   void Load3dMode(bool & allow3d, bool & allow3dBuildings);
 
-  void SetExternalRouter(routing::RouterType type, routing::IRouter *router);
+  void SetLargeFontsSize(bool isLargeSize);
+  void SaveLargeFontsSize(bool isLargeSize);
+  bool LoadLargeFontsSize();
+
+  bool LoadAutoZoom();
+  void AllowAutoZoom(bool allowAutoZoom);
+  void SaveAutoZoom(bool allowAutoZoom);
+
+  TrafficManager & GetTrafficManager();
+
+  bool LoadTrafficEnabled();
+  void SaveTrafficEnabled(bool trafficEnabled);
+
+  /// \returns true if altitude information along |m_route| is available and
+  /// false otherwise.
+  bool HasRouteAltitude() const;
+  /// \brief Generates 4 bytes per point image (RGBA) and put the data to |imageRGBAData|.
+  /// \param width is width of chart shall be generated in pixels.
+  /// \param height is height of chart shall be generated in pixels.
+  /// \param imageRGBAData is bits of result image in RGBA.
+  /// \param minRouteAltitude is min altitude along the route in altitudeUnits.
+  /// \param maxRouteAltitude is max altitude along the route in altitudeUnits.
+  /// \param altitudeUnits is units (meters or feet) which is used to pass min and max altitudes.
+  /// \returns If there is valid route info and the chart was generated returns true
+  /// and false otherwise. If the method returns true it is guaranteed that the size of
+  /// |imageRGBAData| is not zero.
+  /// \note If HasRouteAltitude() method returns true, GenerateRouteAltitudeChart(...)
+  /// could return false if route was deleted or rebuilt between the calls.
+  bool GenerateRouteAltitudeChart(uint32_t width, uint32_t height,
+                                  vector<uint8_t> & imageRGBAData,
+                                  int32_t & minRouteAltitude, int32_t & maxRouteAltitude,
+                                  measurement_utils::Units & altitudeUnits) const;
 
 public:
   /// @name Editor interface.
@@ -687,9 +836,10 @@ private:
                         storage::TCountriesVec const & absentCountries);
   void MatchLocationToRoute(location::GpsInfo & info, location::RouteMatchingInfo & routeMatchingInfo) const;
   string GetRoutingErrorMessage(routing::IRouter::ResultCode code);
+  void OnBuildRouteReady(routing::Route const & route, routing::IRouter::ResultCode code);
+  void OnRebuildRouteReady(routing::Route const & route, routing::IRouter::ResultCode code);
 
   TRouteBuildingCallback m_routingCallback;
-  TRouteProgressCallback m_progressCallback;
   routing::RouterType m_currentRouterType;
 //  routing::IRouter *m_externalRouter;
   typedef std::unordered_map<int, routing::IRouter*> TRouterMap;
@@ -718,5 +868,9 @@ private:
   editor::UserStatsLoader m_userStatsLoader;
   //@}
 
+public:
+  bool OriginalFeatureHasDefaultName(FeatureID const & fid) const;
+
+private:
   DECLARE_THREAD_CHECKER(m_threadChecker);
 };

@@ -16,6 +16,7 @@ public:
 
   /// VehicleModel overrides:
   bool IsOneWay(FeatureType const &) const override { return false; }
+  static PedestrianModel const & AllLimitsInstance();
 
 protected:
   RoadAvailability GetRoadAvailability(feature::TypesHolder const & types) const override;
@@ -27,12 +28,12 @@ private:
   uint32_t m_yesFootType = 0;
 };
 
-class PedestrianModelFactory : public IVehicleModelFactory
+class PedestrianModelFactory : public VehicleModelFactory
 {
 public:
   PedestrianModelFactory();
 
-  /// @name Overrides from IVehicleModelFactory.
+  /// @name Overrides from VehicleModelFactory.
   //@{
   shared_ptr<IVehicleModel> GetVehicleModel() const override;
   shared_ptr<IVehicleModel> GetVehicleModelForCountry(string const & country) const override;

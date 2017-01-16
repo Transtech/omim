@@ -12,10 +12,12 @@ include(CheckCXXCompilerFlag)
 include(FindPackageHandleStandardArgs)
 
 set(OMIM_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../../.." CACHE PATH "Path to the root of omim repository")
-if(CMAKE_BUILD_TYPE MATCHES Debug)
-  set(OMIM_BUILD_PATH "${OMIM_PATH}/../omim-build-debug/out/debug" CACHE PATH "Path to the debug build of omim")
-else()
-  set(OMIM_BUILD_PATH "${OMIM_PATH}/../omim-build-release/out/release" CACHE PATH "Path to the release build of omim")
+if(NOT OMIM_BUILD_PATH)
+  if(CMAKE_BUILD_TYPE MATCHES Debug)
+    set(OMIM_BUILD_PATH "${OMIM_PATH}/../omim-build-debug/out/debug" CACHE PATH "Path to the debug build of omim")
+  else()
+    set(OMIM_BUILD_PATH "${OMIM_PATH}/../omim-build-release/out/release" CACHE PATH "Path to the release build of omim")
+  endif()
 endif()
 
 set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
@@ -147,8 +149,9 @@ if(CMAKE_BUILD_TYPE MATCHES Release)
     if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" AND
         NOT "${CMAKE_CXX_COMPILER_VERSION}" VERSION_LESS "4.9.0" AND NOT MINGW)
       message(STATUS "Using gcc specific binutils for LTO.")
-      set(CMAKE_AR     "/usr/bin/gcc-ar")
-      set(CMAKE_RANLIB "/usr/bin/gcc-ranlib")
+      get_filename_component(GCC_PATH "${CMAKE_CXX_COMPILER}" PATH)
+      set(CMAKE_AR     "${GCC_PATH}/gcc-ar")
+      set(CMAKE_RANLIB "${GCC_PATH}/gcc-ranlib")
     endif()
   endif()
 endif()
@@ -235,6 +238,10 @@ set(OMIM_LIBRARIES
   "${OMIM_BUILD_PATH}/libbase.a"
   "${OMIM_BUILD_PATH}/libjansson.a"
 )
+
+if(APPLE)
+  SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -dead_strip")
+endif()
 
 target_link_libraries(OSRM ${Boost_LIBRARIES})
 target_link_libraries(osrm-extract ${Boost_LIBRARIES})

@@ -14,6 +14,7 @@ import com.mapswithme.maps.base.BaseMwmRecyclerFragment;
 import com.mapswithme.maps.base.OnBackPressListener;
 import com.mapswithme.maps.search.NativeMapSearchListener;
 import com.mapswithme.maps.search.SearchEngine;
+import com.mapswithme.maps.widget.PlaceholderView;
 import com.mapswithme.util.UiUtils;
 
 public class DownloaderFragment extends BaseMwmRecyclerFragment
@@ -40,28 +41,24 @@ public class DownloaderFragment extends BaseMwmRecyclerFragment
 
   private final NativeMapSearchListener mSearchListener = new NativeMapSearchListener()
   {
-    private final List<CountryItem> mResults = new ArrayList<>();
-
     @Override
     public void onMapSearchResults(Result[] results, long timestamp, boolean isLast)
     {
       if (!mSearchRunning || timestamp != mCurrentSearch)
         return;
 
+      List<CountryItem> rs = new ArrayList<>();
       for (Result result : results)
       {
         CountryItem item = CountryItem.fill(result.countryId);
         item.searchResultName = result.matchedString;
-        mResults.add(item);
+        rs.add(item);
       }
+
+      mAdapter.setSearchResultsMode(rs, mToolbarController.getQuery());
 
       if (isLast)
-      {
-        mAdapter.setSearchResultsMode(mResults, mToolbarController.getQuery());
-        mResults.clear();
-
         onSearchEnd();
-      }
     }
   };
 
@@ -76,6 +73,7 @@ public class DownloaderFragment extends BaseMwmRecyclerFragment
     mCurrentSearch = System.nanoTime();
     SearchEngine.searchMaps(mToolbarController.getQuery(), mCurrentSearch);
     mToolbarController.showProgress(true);
+    mAdapter.clearAdsAndCancelMyTarget();
   }
 
   void clearSearchQuery()
@@ -88,7 +86,7 @@ public class DownloaderFragment extends BaseMwmRecyclerFragment
     if (!mAdapter.isSearchResultsMode())
       return;
 
-    mAdapter.cancelSearch();
+    mAdapter.resetSearchResultsMode();
     onSearchEnd();
   }
 
@@ -204,13 +202,13 @@ public class DownloaderFragment extends BaseMwmRecyclerFragment
   }
 
   @Override
-  protected void setupPlaceholder(View placeholder)
+  protected void setupPlaceholder(@NonNull PlaceholderView placeholder)
   {
     if (mAdapter.isSearchResultsMode())
-      UiUtils.setupPlaceholder(placeholder, R.drawable.img_search_nothing_found_light,
-                               R.string.search_not_found, R.string.search_not_found_query);
+      placeholder.setContent(R.drawable.img_search_nothing_found_light,
+                             R.string.search_not_found, R.string.search_not_found_query);
     else
-      UiUtils.setupPlaceholder(placeholder, R.drawable.img_search_no_maps,
-                               R.string.downloader_no_downloaded_maps_title, R.string.downloader_no_downloaded_maps_message);
+      placeholder.setContent(R.drawable.img_search_no_maps,
+                             R.string.downloader_no_downloaded_maps_title, R.string.downloader_no_downloaded_maps_message);
   }
 }

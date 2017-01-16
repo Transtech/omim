@@ -1,9 +1,10 @@
 #import "MWMBottomMenuView.h"
 #import "MWMMapDownloaderTypes.h"
+#import "MWMNavigationDashboardManager.h"
 
 #include "platform/location.hpp"
 
-@class MapViewController, MWMButton;
+@class MapViewController, MWMButton, MWMTaxiCollectionView;
 
 @protocol MWMBottomMenuControllerProtocol<NSObject>
 
@@ -14,20 +15,20 @@
 
 @end
 
-@interface MWMBottomMenuViewController : UIViewController
+@interface MWMBottomMenuViewController : UIViewController<MWMNavigationDashboardInfoProtocol>
+
++ (MWMBottomMenuViewController *)controller;
 
 @property(nonatomic) MWMBottomMenuState state;
 @property(weak, nonatomic) IBOutlet MWMButton * p2pButton;
 @property(nonatomic) CGFloat leftBound;
+@property(nonatomic, readonly) CGFloat mainStateHeight;
 
 - (instancetype)initWithParentController:(MapViewController *)controller
                                 delegate:(id<MWMBottomMenuControllerProtocol>)delegate;
 
-- (void)setStreetName:(NSString *)streetName;
-- (void)setInactive;
-- (void)setPlanning;
-- (void)setGo;
 - (void)mwm_refreshUI;
-- (void)refreshLayout;
+- (MWMTaxiCollectionView *)taxiCollectionView;
+- (void)setRoutingErrorMessage:(NSString *)routingErrorMessage;
 
 @end

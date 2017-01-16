@@ -1,8 +1,11 @@
 package com.mapswithme.maps.widget.placepage;
 
+import android.content.Context;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -19,7 +22,6 @@ import com.mapswithme.maps.bookmarks.ChooseBookmarkCategoryFragment.Listener;
 import com.mapswithme.maps.bookmarks.data.Bookmark;
 import com.mapswithme.maps.bookmarks.data.BookmarkManager;
 import com.mapswithme.maps.bookmarks.data.Icon;
-import com.mapswithme.util.InputUtils;
 import com.mapswithme.util.UiUtils;
 import com.mapswithme.util.statistics.Statistics;
 
@@ -33,6 +35,17 @@ public class EditBookmarkFragment extends BaseMwmDialogFragment implements View.
   private TextView mTvBookmarkGroup;
   private ImageView mIvColor;
   private Bookmark mBookmark;
+
+  public static void editBookmark(int categoryId, int bookmarkId, @NonNull Context context, @NonNull FragmentManager manager)
+  {
+    final Bundle args = new Bundle();
+    args.putInt(EXTRA_CATEGORY_ID, categoryId);
+    args.putInt(EXTRA_BOOKMARK_ID, bookmarkId);
+    String name = EditBookmarkFragment.class.getName();
+    final EditBookmarkFragment fragment = (EditBookmarkFragment) Fragment.instantiate(context, name, args);
+    fragment.setArguments(args);
+    fragment.show(manager, name);
+  }
 
   public EditBookmarkFragment() {}
 
@@ -72,6 +85,7 @@ public class EditBookmarkFragment extends BaseMwmDialogFragment implements View.
   private void initToolbar(View view)
   {
     Toolbar toolbar = (Toolbar) view.findViewById(R.id.toolbar);
+    UiUtils.extendViewWithStatusBar(toolbar);
     final TextView textView = (TextView) toolbar.findViewById(R.id.tv__save);
     textView.setOnClickListener(new View.OnClickListener()
     {
@@ -137,9 +151,10 @@ public class EditBookmarkFragment extends BaseMwmDialogFragment implements View.
         final Icon newIcon = BookmarkManager.ICONS.get(colorPos);
         final String from = mBookmark.getIcon().getName();
         final String to = newIcon.getName();
-        if (!TextUtils.equals(from, to))
-          Statistics.INSTANCE.trackColorChanged(from, to);
+        if (TextUtils.equals(from, to))
+          return;
 
+        Statistics.INSTANCE.trackColorChanged(from, to);
         mBookmark.setParams(mBookmark.getTitle(), newIcon, mBookmark.getBookmarkDescription());
         mBookmark = BookmarkManager.INSTANCE.getBookmark(mBookmark.getCategoryId(), mBookmark.getBookmarkId());
         refreshColorMarker();
@@ -156,11 +171,11 @@ public class EditBookmarkFragment extends BaseMwmDialogFragment implements View.
 
   private void refreshBookmark()
   {
-    mEtName.setText(mBookmark.getTitle());
-    mEtName.selectAll();
-    InputUtils.showKeyboard(mEtName);
+    if (TextUtils.isEmpty(mEtName.getText()))
+      mEtName.setText(mBookmark.getTitle());
 
-    mEtDescription.setText(mBookmark.getBookmarkDescription());
+    if (TextUtils.isEmpty(mEtDescription.getText()))
+      mEtDescription.setText(mBookmark.getBookmarkDescription());
     mTvBookmarkGroup.setText(mBookmark.getCategoryName());
     refreshColorMarker();
   }

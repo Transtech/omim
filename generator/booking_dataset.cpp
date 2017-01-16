@@ -1,261 +1,145 @@
 #include "generator/booking_dataset.hpp"
 
-#include "platform/local_country_file_utils.hpp"
-#include "platform/platform.hpp"
+#include "generator/feature_builder.hpp"
+#include "generator/sponsored_scoring.hpp"
 
+#include "indexer/classificator.hpp"
 #include "indexer/ftypes_matcher.hpp"
-#include "indexer/search_delimiters.hpp"
-#include "indexer/search_string_utils.hpp"
 
-#include "geometry/distance_on_sphere.hpp"
-
-#include "base/logging.hpp"
 #include "base/string_utils.hpp"
 
-#include "std/fstream.hpp"
-#include "std/iostream.hpp"
-#include "std/sstream.hpp"
+#include "std/iomanip.hpp"
+
+#include "boost/algorithm/string/replace.hpp"
 
 namespace generator
 {
-namespace
-{
-bool CheckForValues(string const & value)
-{
-  auto const & tags = ftypes::IsHotelChecker::GetHotelTags();
-  return find(tags.begin(), tags.end(), value) != tags.end();
-}
-
-string EscapeTabs(string const & str)
-{
-  stringstream ss;
-  for (char c : str)
-  {
-    if (c == '\t')
-      ss << "\\t";
-    else
-      ss << c;
-  }
-  return ss.str();
-}
-}  // namespace
-
-BookingDataset::Hotel::Hotel(string const & src)
+// BookingHotel ------------------------------------------------------------------------------------
+BookingHotel::BookingHotel(string const & src)
 {
   vector<string> rec;
   strings::ParseCSVRow(src, '\t', rec);
-  CHECK(rec.size() == FieldsCount(), ("Error parsing hotels.tsv line:", EscapeTabs(src)));
+  CHECK_EQUAL(rec.size(), FieldsCount(), ("Error parsing hotels.tsv line:",
+                                          boost::replace_all_copy(src, "\t", "\\t")));
 
-  strings::to_uint(rec[Index(Fields::Id)], id);
-  strings::to_double(rec[Index(Fields::Latitude)], lat);
-  strings::to_double(rec[Index(Fields::Longtitude)], lon);
+  strings::to_uint(rec[FieldIndex(Fields::Id)], m_id.Get());
+  // TODO(mgsergio): Use ms::LatLon.
+  strings::to_double(rec[FieldIndex(Fields::Latitude)], m_latLon.lat);
+  strings::to_double(rec[FieldIndex(Fields::Longtitude)], m_latLon.lon);
 
-  name = rec[Index(Fields::Name)];
-  address = rec[Index(Fields::Address)];
+  m_name = rec[FieldIndex(Fields::Name)];
+  m_address = rec[FieldIndex(Fields::Address)];
 
-  strings::to_uint(rec[Index(Fields::Stars)], stars);
-  strings::to_uint(rec[Index(Fields::PriceCategory)], priceCategory);
-  strings::to_double(rec[Index(Fields::RatingBooking)], ratingBooking);
-  strings::to_double(rec[Index(Fields::RatingUsers)], ratingUser);
+  strings::to_uint(rec[FieldIndex(Fields::Stars)], m_stars);
+  strings::to_uint(rec[FieldIndex(Fields::PriceCategory)], m_priceCategory);
+  strings::to_double(rec[FieldIndex(Fields::RatingBooking)], m_ratingBooking);
+  strings::to_double(rec[FieldIndex(Fields::RatingUsers)], m_ratingUser);
 
-  descUrl = rec[Index(Fields::DescUrl)];
+  m_descUrl = rec[FieldIndex(Fields::DescUrl)];
 
-  strings::to_uint(rec[Index(Fields::Type)], type);
+  strings::to_uint(rec[FieldIndex(Fields::Type)], m_type);
 
-  translations = rec[Index(Fields::Translations)];
+  m_translations = rec[FieldIndex(Fields::Translations)];
 }
 
-ostream & operator<<(ostream & s, BookingDataset::Hotel const & h)
+ostream & operator<<(ostream & s, BookingHotel const & h)
 {
   s << fixed << setprecision(7);
-  return s << "Name: " << h.name << "\t Address: " << h.address << "\t lat: " << h.lat
-           << " lon: " << h.lon;
+  s << "Id: " << h.m_id << "\t Name: " << h.m_name << "\t Address: " << h.m_address
+    << "\t lat: " << h.m_latLon.lat << " lon: " << h.m_latLon.lon;
+  return s;
 }
 
-BookingDataset::AddressMatcher::AddressMatcher()
+// BookingDataset ----------------------------------------------------------------------------------
+template <>
+bool BookingDataset::NecessaryMatchingConditionHolds(FeatureBuilder1 const & fb) const
 {
-  vector<platform::LocalCountryFile> localFiles;
+  if (fb.GetName(StringUtf8Multilang::kDefaultCode).empty())
+    return false;
 
-  Platform & platform = GetPlatform();
-  platform::FindAllLocalMapsInDirectoryAndCleanup(platform.WritableDir(), 0 /* version */,
-                                                  -1 /* latestVersion */, localFiles);
+  return ftypes::IsHotelChecker::Instance()(fb.GetTypes());
+}
 
-  for (platform::LocalCountryFile const & localFile : localFiles)
+template <>
+void BookingDataset::PreprocessMatchedOsmObject(ObjectId, FeatureBuilder1 & fb,
+                                                function<void(FeatureBuilder1 &)> const fn) const
+{
+  // Turn a hotel into a simple building.
+  if (fb.GetGeomType() == feature::GEOM_AREA)
   {
-    LOG(LINFO, ("Found mwm:", localFile));
-    try
+    // Remove all information about the hotel.
+    auto params = fb.GetParams();
+    params.ClearName();
+    auto & meta = params.GetMetadata();
+    meta.Drop(feature::Metadata::EType::FMD_STARS);
+    meta.Drop(feature::Metadata::EType::FMD_WEBSITE);
+    meta.Drop(feature::Metadata::EType::FMD_PHONE_NUMBER);
+
+    auto const tourism = classif().GetTypeByPath({"tourism"});
+    my::EraseIf(params.m_Types, [tourism](uint32_t type)
     {
-      m_index.RegisterMap(localFile);
-    }
-    catch (RootException const & ex)
+      ftype::TruncValue(type, 1);
+      return type == tourism;
+    });
+    fb.SetParams(params);
+  }
+
+  fn(fb);
+}
+
+template <>
+void BookingDataset::BuildObject(Object const & hotel,
+                                 function<void(FeatureBuilder1 &)> const & fn) const
+{
+  FeatureBuilder1 fb;
+  FeatureParams params;
+
+  fb.SetCenter(MercatorBounds::FromLatLon(hotel.m_latLon.lat, hotel.m_latLon.lon));
+
+  auto & metadata = params.GetMetadata();
+  metadata.Set(feature::Metadata::FMD_SPONSORED_ID, strings::to_string(hotel.m_id.Get()));
+  metadata.Set(feature::Metadata::FMD_WEBSITE, hotel.m_descUrl);
+  metadata.Set(feature::Metadata::FMD_RATING, strings::to_string(hotel.m_ratingUser));
+  metadata.Set(feature::Metadata::FMD_STARS, strings::to_string(hotel.m_stars));
+  metadata.Set(feature::Metadata::FMD_PRICE_RATE, strings::to_string(hotel.m_priceCategory));
+
+  // params.AddAddress(hotel.address);
+  // TODO(mgsergio): addr:full ???
+
+  if (!hotel.m_street.empty())
+    fb.AddStreet(hotel.m_street);
+
+  if (!hotel.m_houseNumber.empty())
+    fb.AddHouseNumber(hotel.m_houseNumber);
+
+  params.AddName(StringUtf8Multilang::GetLangByCode(StringUtf8Multilang::kDefaultCode),
+                 hotel.m_name);
+  if (!hotel.m_translations.empty())
+  {
+    // TODO(mgsergio): Move parsing to the hotel costruction stage.
+    vector<string> parts;
+    strings::ParseCSVRow(hotel.m_translations, '|', parts);
+    CHECK_EQUAL(parts.size() % 3, 0, ("Invalid translation string:", hotel.m_translations));
+    for (auto i = 0; i < parts.size(); i += 3)
     {
-      CHECK(false, ("Bad mwm file:", localFile));
+      auto const langCode = StringUtf8Multilang::GetLangIndex(parts[i]);
+      params.AddName(StringUtf8Multilang::GetLangByCode(langCode), parts[i + 1]);
+      // TODO(mgsergio): e.AddTag("addr:full:" + parts[i], parts[i + 2]);
     }
   }
 
-  m_coder = make_unique<search::ReverseGeocoder>(m_index);
-}
-
-void BookingDataset::AddressMatcher::operator()(Hotel & hotel)
-{
-  search::ReverseGeocoder::Address addr;
-  m_coder->GetNearbyAddress(MercatorBounds::FromLatLon(hotel.lat, hotel.lon), addr);
-  hotel.street = addr.GetStreetName();
-  hotel.houseNumber = addr.GetHouseNumber();
-}
-
-BookingDataset::BookingDataset(string const & dataPath, string const & addressReferencePath)
-{
-  if (dataPath.empty())
-    return;
-
-  ifstream dataSource(dataPath);
-  if (!dataSource.is_open())
+  auto const & clf = classif();
+  params.AddType(clf.GetTypeByPath({"sponsored", "booking"}));
+  // Matching booking.com hotel types to OpenStreetMap values.
+  // Booking types are listed in the closed API docs.
+  switch (hotel.m_type)
   {
-    LOG(LERROR, ("Error while opening", dataPath, ":", strerror(errno)));
-    return;
-  }
-
-  LoadHotels(dataSource, addressReferencePath);
-}
-
-BookingDataset::BookingDataset(istream & dataSource, string const & addressReferencePath)
-{
-  LoadHotels(dataSource, addressReferencePath);
-}
-
-bool BookingDataset::BookingFilter(OsmElement const & e) const
-{
-  return Filter(e, [&](OsmElement const & e)
-                {
-                  return MatchWithBooking(e);
-                });
-}
-
-bool BookingDataset::TourismFilter(OsmElement const & e) const
-{
-  return Filter(e, [&](OsmElement const & e)
-                {
-                  return true;
-                });
-}
-
-BookingDataset::Hotel const & BookingDataset::GetHotel(size_t index) const
-{
-  ASSERT_LESS(index, m_hotels.size(), ());
-  return m_hotels[index];
-}
-
-BookingDataset::Hotel & BookingDataset::GetHotel(size_t index)
-{
-  ASSERT_LESS(index, m_hotels.size(), ());
-  return m_hotels[index];
-}
-
-vector<size_t> BookingDataset::GetNearestHotels(double lat, double lon, size_t limit,
-                                                double maxDistance /* = 0.0 */) const
-{
-  namespace bgi = boost::geometry::index;
-
-  vector<size_t> indexes;
-  for_each(bgi::qbegin(m_rtree, bgi::nearest(TPoint(lat, lon), limit)), bgi::qend(m_rtree),
-           [&](TValue const & v)
-           {
-             auto const & hotel = m_hotels[v.second];
-             double const dist = ms::DistanceOnEarth(lat, lon, hotel.lat, hotel.lon);
-             if (maxDistance != 0.0 && dist > maxDistance /* max distance in meters */)
-               return;
-
-             indexes.emplace_back(v.second);
-           });
-  return indexes;
-}
-
-bool BookingDataset::MatchByName(string const & osmName,
-                                 vector<size_t> const & bookingIndexes) const
-{
-  return false;
-
-  // Match name.
-  //  vector<strings::UniString> osmTokens;
-  //  NormalizeAndTokenizeString(name, osmTokens, search::Delimiters());
-  //
-  //  cout << "\n------------- " << name << endl;
-  //
-  //  bool matched = false;
-  //  for (auto const & index : indexes)
-  //  {
-  //    vector<strings::UniString> bookingTokens;
-  //    NormalizeAndTokenizeString(m_hotels[index].name, bookingTokens, search::Delimiters());
-  //
-  //    map<size_t, vector<pair<size_t, size_t>>> weightPair;
-  //
-  //    for (size_t j = 0; j < osmTokens.size(); ++j)
-  //    {
-  //      for (size_t i = 0; i < bookingTokens.size(); ++i)
-  //      {
-  //        size_t distance = strings::EditDistance(osmTokens[j].begin(), osmTokens[j].end(),
-  //                                                bookingTokens[i].begin(),
-  //                                                bookingTokens[i].end());
-  //        if (distance < 3)
-  //          weightPair[distance].emplace_back(i, j);
-  //      }
-  //    }
-  //
-  //    if (!weightPair.empty())
-  //    {
-  //      cout << m_hotels[e.second] << endl;
-  //      matched = true;
-  //    }
-  //  }
-}
-
-void BookingDataset::BuildFeatures(function<void(OsmElement *)> const & fn) const
-{
-  for (auto const & hotel : m_hotels)
-  {
-    OsmElement e;
-    e.type = OsmElement::EntityType::Node;
-    e.id = 1;
-
-    e.lat = hotel.lat;
-    e.lon = hotel.lon;
-
-    e.AddTag("sponsored", "booking");
-    e.AddTag("name", hotel.name);
-    e.AddTag("ref:sponsored", strings::to_string(hotel.id));
-    e.AddTag("website", hotel.descUrl);
-    e.AddTag("rating:sponsored", strings::to_string(hotel.ratingUser));
-    e.AddTag("stars", strings::to_string(hotel.stars));
-    e.AddTag("price_rate", strings::to_string(hotel.priceCategory));
-    e.AddTag("addr:full", hotel.address);
-
-    if (!hotel.translations.empty())
-    {
-      vector<string> parts;
-      strings::ParseCSVRow(hotel.translations, '|', parts);
-      CHECK(parts.size() % 3 == 0, ());
-      for (auto i = 0; i < parts.size(); i += 3)
-      {
-        e.AddTag("name:" + parts[i], parts[i + 1]);
-        e.AddTag("addr:full:" + parts[i], parts[i + 2]);
-      }
-    }
-
-    if (!hotel.street.empty())
-      e.AddTag("addr:street", hotel.street);
-
-    if (!hotel.houseNumber.empty())
-      e.AddTag("addr:housenumber", hotel.houseNumber);
-
-    switch (hotel.type)
-    {
     case 19:
-    case 205: e.AddTag("tourism", "motel"); break;
+    case 205: params.AddType(clf.GetTypeByPath({"tourism", "motel"})); break;
 
     case 21:
     case 206:
-    case 212: e.AddTag("tourism", "resort"); break;
+    case 212: params.AddType(clf.GetTypeByPath({"tourism", "resort"})); break;
 
     case 3:
     case 23:
@@ -268,7 +152,7 @@ void BookingDataset::BuildFeatures(function<void(OsmElement *)> const & fn) cons
     case 210:
     case 216:
     case 220:
-    case 223: e.AddTag("tourism", "guest_house"); break;
+    case 223: params.AddType(clf.GetTypeByPath({"tourism", "guest_house"})); break;
 
     case 14:
     case 204:
@@ -276,136 +160,50 @@ void BookingDataset::BuildFeatures(function<void(OsmElement *)> const & fn) cons
     case 218:
     case 219:
     case 226:
-    case 222: e.AddTag("tourism", "hotel"); break;
+    case 222: params.AddType(clf.GetTypeByPath({"tourism", "hotel"})); break;
 
     case 211:
     case 224:
-    case 228: e.AddTag("tourism", "chalet"); break;
+    case 228: params.AddType(clf.GetTypeByPath({"tourism", "chalet"})); break;
 
     case 13:
     case 225:
-    case 203: e.AddTag("tourism", "hostel"); break;
+    case 203: params.AddType(clf.GetTypeByPath({"tourism", "hostel"})); break;
 
     case 215:
     case 221:
     case 227:
     case 2:
-    case 201: e.AddTag("tourism", "apartment"); break;
+    case 201: params.AddType(clf.GetTypeByPath({"tourism", "apartment"})); break;
 
-    case 214: e.AddTag("tourism", "camp_site"); break;
+    case 214: params.AddType(clf.GetTypeByPath({"tourism", "camp_site"})); break;
 
-    default: e.AddTag("tourism", "hotel"); break;
-    }
-
-    fn(&e);
+    default: params.AddType(clf.GetTypeByPath({"tourism", "hotel"})); break;
   }
+
+  fb.SetParams(params);
+
+  fn(fb);
 }
 
-// static
-double BookingDataset::ScoreByLinearNormDistance(double distance)
+template <>
+BookingDataset::ObjectId BookingDataset::FindMatchingObjectIdImpl(FeatureBuilder1 const & fb) const
 {
-  distance = my::clamp(distance, 0, kDistanceLimitInMeters);
-  return 1.0 - distance / kDistanceLimitInMeters;
-}
-
-void BookingDataset::LoadHotels(istream & src, string const & addressReferencePath)
-{
-  m_hotels.clear();
-  m_rtree.clear();
-
-  for (string line; getline(src, line);)
-    m_hotels.emplace_back(line);
-
-  if (!addressReferencePath.empty())
-  {
-    LOG(LINFO, ("Reference addresses for booking objects", addressReferencePath));
-    Platform & platform = GetPlatform();
-    string const backupPath = platform.WritableDir();
-    platform.SetWritableDirForTests(addressReferencePath);
-
-    AddressMatcher addressMatcher;
-
-    size_t matchedNum = 0;
-    size_t emptyAddr = 0;
-    for (Hotel & hotel : m_hotels)
-    {
-      addressMatcher(hotel);
-
-      if (hotel.address.empty())
-        ++emptyAddr;
-      if (hotel.IsAddressPartsFilled())
-        ++matchedNum;
-    }
-    LOG(LINFO,
-        ("Num of hotels:", m_hotels.size(), "matched:", matchedNum, "empty addresses:", emptyAddr));
-    platform.SetWritableDirForTests(backupPath);
-  }
-
-  size_t counter = 0;
-  for (auto const & hotel : m_hotels)
-  {
-    TBox b(TPoint(hotel.lat, hotel.lon), TPoint(hotel.lat, hotel.lon));
-    m_rtree.insert(make_pair(b, counter));
-    ++counter;
-  }
-}
-
-bool BookingDataset::MatchWithBooking(OsmElement const & e) const
-{
-  string name;
-  for (auto const & tag : e.Tags())
-  {
-    if (tag.key == "name")
-    {
-      name = tag.value;
-      break;
-    }
-  }
+  auto const name = fb.GetName(StringUtf8Multilang::kDefaultCode);
 
   if (name.empty())
-    return false;
+    return Object::InvalidObjectId();
 
   // Find |kMaxSelectedElements| nearest values to a point.
-  auto const bookingIndexes =
-      GetNearestHotels(e.lat, e.lon, kMaxSelectedElements, kDistanceLimitInMeters);
+  auto const bookingIndexes = GetNearestObjects(MercatorBounds::ToLatLon(fb.GetKeyPoint()),
+                                                kMaxSelectedElements, kDistanceLimitInMeters);
 
-  bool matched = false;
-
-  for (size_t const j : bookingIndexes)
+  for (auto const j : bookingIndexes)
   {
-    auto const & hotel = GetHotel(j);
-    double const distanceMeters = ms::DistanceOnEarth(e.lat, e.lon, hotel.lat, hotel.lon);
-    double score = ScoreByLinearNormDistance(distanceMeters);
-    matched = score > kOptimalThreshold;
-    if (matched)
-      break;
+    if (sponsored_scoring::Match(GetObjectById(j), fb).IsMatched())
+      return j;
   }
 
-  return matched;
+  return Object::InvalidObjectId();
 }
-
-bool BookingDataset::Filter(OsmElement const & e,
-                            function<bool(OsmElement const &)> const & fn) const
-{
-  if (e.type != OsmElement::EntityType::Node)
-    return false;
-
-  if (e.Tags().empty())
-    return false;
-
-  bool matched = false;
-  for (auto const & tag : e.Tags())
-  {
-    if (tag.key == "tourism" && CheckForValues(tag.value))
-    {
-      matched = fn(e);
-      break;
-    }
-  }
-
-  // TODO: Need to write file with dropped osm features.
-
-  return matched;
-}
-
 }  // namespace generator

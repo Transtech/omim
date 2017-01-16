@@ -1,5 +1,3 @@
-#include "base/SRC_FIRST.hpp"
-
 #include "indexer/feature_loader_base.hpp"
 #include "indexer/feature_loader.hpp"
 #include "indexer/feature_impl.hpp"
@@ -42,6 +40,11 @@ SharedLoadInfo::TReader SharedLoadInfo::GetMetadataReader() const
 SharedLoadInfo::TReader SharedLoadInfo::GetMetadataIndexReader() const
 {
   return m_cont.GetReader(METADATA_INDEX_FILE_TAG);
+}
+
+SharedLoadInfo::TReader SharedLoadInfo::GetAltitudeReader() const
+{
+  return m_cont.GetReader(ALTITUDES_FILE_TAG);
 }
 
 SharedLoadInfo::TReader SharedLoadInfo::GetGeometryReader(int ind) const

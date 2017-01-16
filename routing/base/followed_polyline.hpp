@@ -20,10 +20,22 @@ public:
 
   void Swap(FollowedPolyline & rhs);
 
+  void Append(FollowedPolyline const & poly)
+  {
+    m_poly.Append(poly.m_poly);
+    Update();
+  }
+
+  void PopBack()
+  {
+    m_poly.PopBack();
+    Update();
+  }
+
   bool IsValid() const { return (m_current.IsValid() && m_poly.GetSize() > 1); }
 
   m2::PolylineD const & GetPolyline() const { return m_poly; }
-
+  vector<double> const & GetSegDistanceM() const { return m_segDistance; }
   double GetTotalDistanceM() const;
   double GetDistanceFromBeginM() const;
   double GetDistanceToEndM() const;
@@ -40,10 +52,11 @@ public:
     m2::PointD m_pt;
     size_t m_ind;
 
-    Iter(m2::PointD pt, size_t ind) : m_pt(pt), m_ind(ind) {}
-    Iter() : m_ind(-1) {}
+    static size_t constexpr kInvalidIndex = std::numeric_limits<size_t>::max();
 
-    bool IsValid() const { return m_ind != -1; }
+    Iter(m2::PointD pt, size_t ind) : m_pt(pt), m_ind(ind) {}
+    Iter() : m_ind(kInvalidIndex) {}
+    bool IsValid() const { return m_ind != kInvalidIndex; }
   };
 
   const Iter GetCurrentIter() const { return m_current; }

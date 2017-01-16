@@ -11,6 +11,7 @@
 #include "platform/settings.hpp"
 
 #include "std/bind.hpp"
+#include "std/utility.hpp"
 
 namespace df
 {
@@ -18,6 +19,8 @@ DrapeEngine::DrapeEngine(Params && params)
   : m_viewport(params.m_viewport)
 {
   VisualParams::Init(params.m_vs, df::CalculateTileSize(m_viewport.GetWidth(), m_viewport.GetHeight()));
+
+  df::VisualParams::Instance().SetFontScale(params.m_fontsScaleFactor);
 
   gui::DrapeGui & guiSubsystem = gui::DrapeGui::Instance();
   guiSubsystem.SetLocalizator(bind(&StringsBundle::GetString, params.m_stringsBundle.get(), _1));
@@ -53,20 +56,23 @@ DrapeEngine::DrapeEngine(Params && params)
                                     bind(&DrapeEngine::UserPositionChanged, this, _1),
                                     bind(&DrapeEngine::MyPositionModeChanged, this, _1, _2),
                                     mode, make_ref(m_requestedTiles), timeInBackground,
-                                    params.m_allow3dBuildings, params.m_blockTapEvents,
-                                    params.m_isFirstLaunch, params.m_isRoutingActive);
+                                    params.m_allow3dBuildings, params.m_trafficEnabled,
+                                    params.m_blockTapEvents, params.m_isFirstLaunch,
+                                    params.m_isRoutingActive, params.m_isAutozoomEnabled);
 
   m_frontend = make_unique_dp<FrontendRenderer>(frParams);
 
   BackendRenderer::Params brParams(frParams.m_commutator, frParams.m_oglContextFactory,
                                    frParams.m_texMng, params.m_model,
                                    params.m_model.UpdateCurrentCountryFn(),
-                                   make_ref(m_requestedTiles), params.m_allow3dBuildings);
+                                   make_ref(m_requestedTiles), params.m_allow3dBuildings,
+                                   params.m_trafficEnabled);
   m_backend = make_unique_dp<BackendRenderer>(brParams);
 
   m_widgetsInfo = move(params.m_info);
 
   RecacheGui(false);
+  RecacheMapShapes();
 
   if (params.m_showChoosePositionMark)
     EnableChoosePositionMode(true, move(params.m_boundAreaTriangles), false, m2::PointD());
@@ -91,10 +97,39 @@ DrapeEngine::~DrapeEngine()
   m_textureManager->Release();
 }
 
+void DrapeEngine::Update(int w, int h)
+{
+  if (m_choosePositionMode)
+  {
+    m_threadCommutator->PostMessage(ThreadsCommutator::ResourceUploadThread,
+                                    make_unique_dp<ShowChoosePositionMarkMessage>(),
+                                    MessagePriority::High);
+  }
+  RecacheGui(false);
+
+  RecacheMapShapes();
+
+  m_threadCommutator->PostMessage(ThreadsCommutator::RenderThread,
+                                  make_unique_dp<RecoverGLResourcesMessage>(),
+                                  MessagePriority::High);
+
+  ResizeImpl(w, h);
+}
+
 void DrapeEngine::Resize(int w, int h)
 {
-  if (m_viewport.GetHeight() != h || m_viewport.GetWidth() != w)
+  ASSERT_GREATER(w, 0, ());
+  ASSERT_GREATER(h, 0, ());
+  if (m_viewport.GetHeight() != static_cast<uint32_t>(h) ||
+      m_viewport.GetWidth() != static_cast<uint32_t>(w))
     ResizeImpl(w, h);
+}
+
+void DrapeEngine::SetVisibleViewport(m2::RectD const & rect) const
+{
+  m_threadCommutator->PostMessage(ThreadsCommutator::RenderThread,
+                                  make_unique_dp<SetVisibleViewportMessage>(rect),
+                                  MessagePriority::Normal);
 }
 
 void DrapeEngine::Invalidate()
@@ -106,56 +141,64 @@ void DrapeEngine::Invalidate()
 
 void DrapeEngine::AddTouchEvent(TouchEvent const & event)
 {
-  AddUserEvent(event);
+  AddUserEvent(make_unique_dp<TouchEvent>(event));
 }
 
 void DrapeEngine::Scale(double factor, m2::PointD const & pxPoint, bool isAnim)
 {
-  AddUserEvent(ScaleEvent(factor, pxPoint, isAnim));
+  AddUserEvent(make_unique_dp<ScaleEvent>(factor, pxPoint, isAnim));
 }
 
 void DrapeEngine::SetModelViewCenter(m2::PointD const & centerPt, int zoom, bool isAnim)
 {
-  AddUserEvent(SetCenterEvent(centerPt, zoom, isAnim));
+  AddUserEvent(make_unique_dp<SetCenterEvent>(centerPt, zoom, isAnim));
 }
 
 void DrapeEngine::SetModelViewRect(m2::RectD const & rect, bool applyRotation, int zoom, bool isAnim)
 {
-  AddUserEvent(SetRectEvent(rect, applyRotation, zoom, isAnim));
+  AddUserEvent(make_unique_dp<SetRectEvent>(rect, applyRotation, zoom, isAnim));
 }
 
 void DrapeEngine::SetModelViewAnyRect(m2::AnyRectD const & rect, bool isAnim)
 {
-  AddUserEvent(SetAnyRectEvent(rect, isAnim));
+  AddUserEvent(make_unique_dp<SetAnyRectEvent>(rect, isAnim));
 }
 
-void DrapeEngine::ClearUserMarksLayer(df::TileKey const & tileKey)
+void DrapeEngine::ClearUserMarksLayer(size_t layerId)
 {
   m_threadCommutator->PostMessage(ThreadsCommutator::RenderThread,
-                                  make_unique_dp<ClearUserMarkLayerMessage>(tileKey),
+                                  make_unique_dp<ClearUserMarkLayerMessage>(layerId),
                                   MessagePriority::Normal);
 }
 
-void DrapeEngine::ChangeVisibilityUserMarksLayer(TileKey const & tileKey, bool isVisible)
+void DrapeEngine::ChangeVisibilityUserMarksLayer(size_t layerId, bool isVisible)
 {
   m_threadCommutator->PostMessage(ThreadsCommutator::RenderThread,
-                                  make_unique_dp<ChangeUserMarkLayerVisibilityMessage>(tileKey, isVisible),
+                                  make_unique_dp<ChangeUserMarkLayerVisibilityMessage>(layerId, isVisible),
                                   MessagePriority::Normal);
 }
 
-void DrapeEngine::UpdateUserMarksLayer(TileKey const & tileKey, UserMarksProvider * provider)
+void DrapeEngine::UpdateUserMarksLayer(size_t layerId, UserMarksProvider * provider)
 {
   m_threadCommutator->PostMessage(ThreadsCommutator::ResourceUploadThread,
-                                  make_unique_dp<UpdateUserMarkLayerMessage>(tileKey, provider),
+                                  make_unique_dp<UpdateUserMarkLayerMessage>(layerId, provider),
                                   MessagePriority::Normal);
 }
 
-void DrapeEngine::SetRenderingEnabled(bool const isEnabled)
+void DrapeEngine::SetRenderingEnabled(ref_ptr<dp::OGLContextFactory> contextFactory)
 {
-  m_frontend->SetRenderingEnabled(isEnabled);
-  m_backend->SetRenderingEnabled(isEnabled);
+  m_backend->SetRenderingEnabled(contextFactory);
+  m_frontend->SetRenderingEnabled(contextFactory);
 
-  LOG(LDEBUG, (isEnabled ? "Rendering enabled" : "Rendering disabled"));
+  LOG(LDEBUG, ("Rendering enabled"));
+}
+
+void DrapeEngine::SetRenderingDisabled(bool const destroyContext)
+{
+  m_frontend->SetRenderingDisabled(destroyContext);
+  m_backend->SetRenderingDisabled(destroyContext);
+
+  LOG(LDEBUG, ("Rendering disabled"));
 }
 
 void DrapeEngine::InvalidateRect(m2::RectD const & rect)
@@ -177,13 +220,14 @@ void DrapeEngine::UpdateMapStyle()
   }
 
   // Recache gui after updating of style.
-  {
-    RecacheGui(false);
+  RecacheGui(false);
+}
 
-    m_threadCommutator->PostMessage(ThreadsCommutator::ResourceUploadThread,
-                                    make_unique_dp<GuiLayerLayoutMessage>(m_widgetsLayout),
-                                    MessagePriority::Normal);
-  }
+void DrapeEngine::RecacheMapShapes()
+{
+  m_threadCommutator->PostMessage(ThreadsCommutator::ResourceUploadThread,
+                                  make_unique_dp<MapShapesRecacheMessage>(),
+                                  MessagePriority::Normal);
 }
 
 void DrapeEngine::RecacheGui(bool needResetOldGui)
@@ -193,9 +237,9 @@ void DrapeEngine::RecacheGui(bool needResetOldGui)
                                   MessagePriority::High);
 }
 
-void DrapeEngine::AddUserEvent(UserEvent const & e)
+void DrapeEngine::AddUserEvent(drape_ptr<UserEvent> && e)
 {
-  m_frontend->AddUserEvent(e);
+  m_frontend->AddUserEvent(move(e));
 }
 
 void DrapeEngine::ModelViewChanged(ScreenBase const & screen)
@@ -227,7 +271,7 @@ void DrapeEngine::ResizeImpl(int w, int h)
 {
   gui::DrapeGui::Instance().SetSurfaceSize(m2::PointF(w, h));
   m_viewport.SetViewport(0, 0, w, h);
-  AddUserEvent(ResizeEvent(w, h));
+  AddUserEvent(make_unique_dp<ResizeEvent>(w, h));
 }
 
 void DrapeEngine::SetCompassInfo(location::CompassInfo const & info)
@@ -265,10 +309,10 @@ void DrapeEngine::StopLocationFollow()
                                   MessagePriority::High);
 }
 
-void DrapeEngine::FollowRoute(int preferredZoomLevel, int preferredZoomLevel3d)
+void DrapeEngine::FollowRoute(int preferredZoomLevel, int preferredZoomLevel3d, bool enableAutoZoom)
 {
   m_threadCommutator->PostMessage(ThreadsCommutator::RenderThread,
-                                  make_unique_dp<FollowRouteMessage>(preferredZoomLevel, preferredZoomLevel3d),
+                                  make_unique_dp<FollowRouteMessage>(preferredZoomLevel, preferredZoomLevel3d, enableAutoZoom),
                                   MessagePriority::High);
 }
 
@@ -343,10 +387,11 @@ bool DrapeEngine::GetMyPosition(m2::PointD & myPosition)
 }
 
 void DrapeEngine::AddRoute(m2::PolylineD const & routePolyline, vector<double> const & turns,
-                           df::ColorConstant color, df::RoutePattern pattern)
+                           df::ColorConstant color, vector<traffic::SpeedGroup> const & traffic,
+                           df::RoutePattern pattern)
 {
   m_threadCommutator->PostMessage(ThreadsCommutator::ResourceUploadThread,
-                                  make_unique_dp<AddRouteMessage>(routePolyline, turns, color, pattern),
+                                  make_unique_dp<AddRouteMessage>(routePolyline, turns, color, traffic, pattern),
                                   MessagePriority::Normal);
 }
 
@@ -374,8 +419,21 @@ void DrapeEngine::SetRoutePoint(m2::PointD const & position, bool isStart, bool 
 void DrapeEngine::SetWidgetLayout(gui::TWidgetsLayoutInfo && info)
 {
   m_widgetsLayout = move(info);
+  for (auto const & layout : m_widgetsLayout)
+  {
+    auto const itInfo = m_widgetsInfo.find(layout.first);
+    if (itInfo != m_widgetsInfo.end())
+      itInfo->second.m_pixelPivot = layout.second;
+  }
   m_threadCommutator->PostMessage(ThreadsCommutator::ResourceUploadThread,
                                   make_unique_dp<GuiLayerLayoutMessage>(m_widgetsLayout),
+                                  MessagePriority::Normal);
+}
+
+void DrapeEngine::AllowAutoZoom(bool allowAutoZoom)
+{
+  m_threadCommutator->PostMessage(ThreadsCommutator::RenderThread,
+                                  make_unique_dp<AllowAutoZoomMessage>(allowAutoZoom),
                                   MessagePriority::Normal);
 }
 
@@ -464,6 +522,56 @@ void DrapeEngine::SetDisplacementMode(int mode)
   m_threadCommutator->PostMessage(ThreadsCommutator::RenderThread,
                                   make_unique_dp<SetDisplacementModeMessage>(mode),
                                   MessagePriority::Normal);
+}
+
+void DrapeEngine::RequestSymbolsSize(vector<string> const & symbols,
+                                     TRequestSymbolsSizeCallback const & callback)
+{
+  m_threadCommutator->PostMessage(ThreadsCommutator::ResourceUploadThread,
+                                  make_unique_dp<RequestSymbolsSizeMessage>(symbols, callback),
+                                  MessagePriority::Normal);
+}
+
+void DrapeEngine::EnableTraffic(bool trafficEnabled)
+{
+  m_threadCommutator->PostMessage(ThreadsCommutator::ResourceUploadThread,
+                                  make_unique_dp<EnableTrafficMessage>(trafficEnabled),
+                                  MessagePriority::Normal);
+}
+
+void DrapeEngine::UpdateTraffic(traffic::TrafficInfo const & info)
+{
+  if (info.GetColoring().empty())
+    return;
+
+#ifdef DEBUG
+  for (auto const & segmentPair : info.GetColoring())
+    ASSERT_NOT_EQUAL(segmentPair.second, traffic::SpeedGroup::Unknown, ());
+#endif
+
+  df::TrafficSegmentsColoring segmentsColoring;
+  segmentsColoring.emplace(info.GetMwmId(), info.GetColoring());
+
+  m_threadCommutator->PostMessage(ThreadsCommutator::ResourceUploadThread,
+                                  make_unique_dp<UpdateTrafficMessage>(move(segmentsColoring)),
+                                  MessagePriority::Normal);
+}
+
+void DrapeEngine::ClearTrafficCache(MwmSet::MwmId const & mwmId)
+{
+  m_threadCommutator->PostMessage(ThreadsCommutator::ResourceUploadThread,
+                                  make_unique_dp<ClearTrafficDataMessage>(mwmId),
+                                  MessagePriority::Normal);
+}
+
+void DrapeEngine::SetFontScaleFactor(double scaleFactor)
+{
+  double const kMinScaleFactor = 0.5;
+  double const kMaxScaleFactor = 2.0;
+
+  scaleFactor = my::clamp(scaleFactor, kMinScaleFactor, kMaxScaleFactor);
+
+  VisualParams::Instance().SetFontScale(scaleFactor);
 }
 
 } // namespace df

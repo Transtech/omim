@@ -1,17 +1,17 @@
 #include "indexer/classificator.hpp"
 #include "indexer/feature.hpp"
 
-#include "indexer/classificator.hpp"
 #include "indexer/feature_algo.hpp"
 #include "indexer/feature_impl.hpp"
 #include "indexer/feature_loader_base.hpp"
+#include "indexer/feature_utils.hpp"
 #include "indexer/feature_visibility.hpp"
 #include "indexer/osm_editor.hpp"
 
+#include "platform/preferred_languages.hpp"
+
 #include "geometry/distance.hpp"
 #include "geometry/robust_orientation.hpp"
-
-#include "platform/preferred_languages.hpp"
 
 #include "base/range_iterator.hpp"
 #include "base/stl_helpers.hpp"
@@ -144,21 +144,11 @@ editor::XMLFeature FeatureType::ToXML(bool serializeType) const
     feature::TypesHolder th(*this);
     // TODO(mgsergio): Use correct sorting instead of SortBySpec based on the config.
     th.SortBySpec();
-    Classificator & cl = classif();
-    static const uint32_t internetType = cl.GetTypeByPath({"internet_access"});
     // TODO(mgsergio): Either improve "OSM"-compatible serialization for more complex types,
     // or save all our types directly, to restore and reuse them in migration of modified features.
     for (uint32_t const type : th)
     {
-      { // Avoid serialization of "internet" type, it is set separately in the Editor.
-        // Otherwise we can't reset "internet" to "Unknown" state.
-        uint32_t truncatedType = type;
-        ftype::TruncValue(truncatedType, 1);
-        if (truncatedType == internetType)
-          continue;
-      }
-
-      string const strType = cl.GetReadableObjectName(type);
+      string const strType = classif().GetReadableObjectName(type);
       strings::SimpleTokenizer iter(strType, "-");
       string const k = *iter;
       if (++iter)
@@ -182,6 +172,8 @@ editor::XMLFeature FeatureType::ToXML(bool serializeType) const
 
   for (auto const type : m_metadata.GetPresentTypes())
   {
+    if (m_metadata.IsSponsoredType(static_cast<Metadata::EType>(type)))
+      continue;
     auto const attributeName = DebugPrint(static_cast<Metadata::EType>(type));
     feature.SetTagValue(attributeName, m_metadata.Get(type));
   }
@@ -499,79 +491,34 @@ FeatureType::geom_stat_t FeatureType::GetTrianglesSize(int scale) const
   return geom_stat_t(sz, m_triangles.size());
 }
 
-struct BestMatchedLangNames
+void FeatureType::GetPreferredNames(string & primary, string & secondary) const
 {
-  string m_defaultName;
-  string m_nativeName;
-  string m_intName;
-  string m_englishName;
+  if (!HasName())
+    return;
 
-  bool operator()(int8_t code, string const & name)
-  {
-    int8_t const defaultCode = StringUtf8Multilang::kDefaultCode;
-    static int8_t const nativeCode = StringUtf8Multilang::GetLangIndex(languages::GetCurrentNorm());
-    int8_t const intCode = StringUtf8Multilang::kInternationalCode;
-    int8_t const englishCode = StringUtf8Multilang::kEnglishCode;
+  auto const mwmInfo = GetID().m_mwmId.GetInfo();
 
-    if (code == defaultCode)
-      m_defaultName = name;
-    else if (code == nativeCode)
-      m_nativeName = name;
-    else if (code == intCode)
-    {
-      // There are many "junk" names in Arabian island.
-      m_intName = name.substr(0, name.find_first_of(','));
-      // int_name should be used as name:en when name:en not found
-      if ((nativeCode == englishCode) && m_nativeName.empty())
-        m_nativeName = m_intName;
-    }
-    else if (code == englishCode)
-      m_englishName = name;
-    return true;
-  }
-};
+  if (!mwmInfo)
+    return;
 
-void FeatureType::GetPreferredNames(string & defaultName, string & intName) const
-{
   ParseCommon();
-
-  BestMatchedLangNames matcher;
-  ForEachName(matcher);
-
-  defaultName.swap(matcher.m_defaultName);
-
-  if (!matcher.m_nativeName.empty())
-    intName.swap(matcher.m_nativeName);
-  else if (!matcher.m_intName.empty())
-    intName.swap(matcher.m_intName);
-  else
-    intName.swap(matcher.m_englishName);
-
-  if (defaultName.empty())
-    defaultName.swap(intName);
-  else
-  {
-    // filter out similar intName
-    if (!intName.empty() && defaultName.find(intName) != string::npos)
-      intName.clear();
-  }
+  auto const deviceLang = StringUtf8Multilang::GetLangIndex(languages::GetCurrentNorm());
+  ::GetPreferredNames(mwmInfo->GetRegionData(), GetNames(), deviceLang, primary, secondary);
 }
 
 void FeatureType::GetReadableName(string & name) const
 {
+  if (!HasName())
+    return;
+
+  auto const mwmInfo = GetID().m_mwmId.GetInfo();
+
+  if (!mwmInfo)
+    return;
+
   ParseCommon();
-
-  BestMatchedLangNames matcher;
-  ForEachName(matcher);
-
-  if (!matcher.m_nativeName.empty())
-    name.swap(matcher.m_nativeName);
-  else if (!matcher.m_defaultName.empty())
-    name.swap(matcher.m_defaultName);
-  else if (!matcher.m_intName.empty())
-    name.swap(matcher.m_intName);
-  else
-    name.swap(matcher.m_englishName);
+  auto const deviceLang = StringUtf8Multilang::GetLangIndex(languages::GetCurrentNorm());
+  ::GetReadableName(mwmInfo->GetRegionData(), GetNames(), deviceLang, name);
 }
 
 string FeatureType::GetHouseNumber() const
@@ -603,7 +550,7 @@ uint8_t FeatureType::GetRank() const
   return m_params.rank;
 }
 
-uint32_t FeatureType::GetPopulation() const
+uint64_t FeatureType::GetPopulation() const
 {
   return feature::RankToPopulation(GetRank());
 }

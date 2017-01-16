@@ -1,5 +1,8 @@
 #include "drape_frontend/my_position.hpp"
 #include "drape_frontend/color_constants.hpp"
+#include "drape_frontend/map_shape.hpp"
+#include "drape_frontend/shape_view_params.hpp"
+#include "drape_frontend/tile_utils.hpp"
 
 #include "drape/constants.hpp"
 #include "drape/glsl_func.hpp"
@@ -95,40 +98,47 @@ void MyPosition::SetPositionObsolete(bool obsolete)
   m_arrow3d.SetPositionObsolete(obsolete);
 }
 
-void MyPosition::RenderAccuracy(ScreenBase const & screen,
-                        ref_ptr<dp::GpuProgramManager> mng,
-                        dp::UniformValuesStorage const & commonUniforms)
+void MyPosition::RenderAccuracy(ScreenBase const & screen, int zoomLevel,
+                                ref_ptr<dp::GpuProgramManager> mng,
+                                dp::UniformValuesStorage const & commonUniforms)
 {
   dp::UniformValuesStorage uniforms = commonUniforms;
   m2::PointD accuracyPoint(m_position.x + m_accuracy, m_position.y);
   float pixelAccuracy = (screen.GtoP(accuracyPoint) - screen.GtoP(m_position)).Length();
 
-  uniforms.SetFloatValue("u_position", m_position.x, m_position.y, dp::depth::POSITION_ACCURACY);
+  TileKey const key = GetTileKeyByPoint(m_position, ClipTileZoomByMaxDataZoom(zoomLevel));
+  math::Matrix<float, 4, 4> mv = key.GetTileBasedModelView(screen);
+  uniforms.SetMatrix4x4Value("modelView", mv.m_data);
+
+  m2::PointD const pos = MapShape::ConvertToLocal(m_position, key.GetGlobalRect().Center(), kShapeCoordScalar);
+  uniforms.SetFloatValue("u_position", pos.x, pos.y, 0.0f);
   uniforms.SetFloatValue("u_accuracy", pixelAccuracy);
-  uniforms.SetFloatValue("u_opacity", 1.0);
+  uniforms.SetFloatValue("u_opacity", 1.0f);
   RenderPart(mng, uniforms, MY_POSITION_ACCURACY);
 }
 
-void MyPosition::RenderMyPosition(ScreenBase const & screen,
+void MyPosition::RenderMyPosition(ScreenBase const & screen, int zoomLevel,
                                   ref_ptr<dp::GpuProgramManager> mng,
                                   dp::UniformValuesStorage const & commonUniforms)
 {
-  if (screen.isPerspective() && m_isRoutingMode && m_showAzimuth)
+  if (m_showAzimuth)
   {
     m_arrow3d.SetPosition(m_position);
     m_arrow3d.SetAzimuth(m_azimuth);
-
-    m_arrow3d.Render(screen, mng);
+    m_arrow3d.Render(screen, mng, m_isRoutingMode);
   }
   else
   {
     dp::UniformValuesStorage uniforms = commonUniforms;
-    uniforms.SetFloatValue("u_position", m_position.x, m_position.y, dp::depth::MY_POSITION_MARK);
+    TileKey const key = GetTileKeyByPoint(m_position, ClipTileZoomByMaxDataZoom(zoomLevel));
+    math::Matrix<float, 4, 4> mv = key.GetTileBasedModelView(screen);
+    uniforms.SetMatrix4x4Value("modelView", mv.m_data);
+
+    m2::PointD const pos = MapShape::ConvertToLocal(m_position, key.GetGlobalRect().Center(), kShapeCoordScalar);
+    uniforms.SetFloatValue("u_position", pos.x, pos.y, dp::depth::MY_POSITION_MARK);
     uniforms.SetFloatValue("u_azimut", -(m_azimuth + screen.GetAngle()));
     uniforms.SetFloatValue("u_opacity", 1.0);
-    RenderPart(mng, uniforms, (m_showAzimuth == true) ?
-                              (m_obsoletePosition ? MY_POSITION_ARROW_GRAY : MY_POSITION_ARROW) :
-                              MY_POSITION_POINT);
+    RenderPart(mng, uniforms, MY_POSITION_POINT);
   }
 }
 
@@ -200,22 +210,17 @@ void MyPosition::CacheSymbol(dp::TextureManager::SymbolRegion const & symbol,
 
 void MyPosition::CachePointPosition(ref_ptr<dp::TextureManager> mng)
 {
-  int const kSymbolsCount = 3;
-  dp::TextureManager::SymbolRegion pointSymbol, arrowSymbol, arrowGraySymbol;
+  int const kSymbolsCount = 1;
+  dp::TextureManager::SymbolRegion pointSymbol;
   mng->GetSymbolRegion("current-position", pointSymbol);
-  mng->GetSymbolRegion("current-position-compas", arrowSymbol);
-  mng->GetSymbolRegion("current-position-obsolete", arrowGraySymbol);
 
-  m_arrow3d.SetSize(arrowSymbol.GetPixelSize().x, arrowSymbol.GetPixelSize().y);
   m_arrow3d.SetTexture(mng);
 
-  ASSERT(pointSymbol.GetTexture() == arrowSymbol.GetTexture(), ());
-  ASSERT(pointSymbol.GetTexture() == arrowGraySymbol.GetTexture(), ());
   dp::GLState state(gpu::MY_POSITION_PROGRAM, dp::GLState::OverlayLayer);
   state.SetColorTexture(pointSymbol.GetTexture());
 
-  dp::TextureManager::SymbolRegion * symbols[kSymbolsCount] = { &pointSymbol, &arrowSymbol, &arrowGraySymbol };
-  EMyPositionPart partIndices[kSymbolsCount] = { MY_POSITION_POINT, MY_POSITION_ARROW, MY_POSITION_ARROW_GRAY };
+  dp::TextureManager::SymbolRegion * symbols[kSymbolsCount] = { &pointSymbol };
+  EMyPositionPart partIndices[kSymbolsCount] = { MY_POSITION_POINT };
   {
     dp::Batcher batcher(kSymbolsCount * dp::Batcher::IndexPerQuad, kSymbolsCount * dp::Batcher::VertexPerQuad);
     dp::SessionGuard guard(batcher, [this](dp::GLState const & state, drape_ptr<dp::RenderBucket> && b)
@@ -226,7 +231,7 @@ void MyPosition::CachePointPosition(ref_ptr<dp::TextureManager> mng)
       m_nodes.emplace_back(state, bucket->MoveBuffer());
     });
 
-    int const partIndex = m_nodes.size();
+    int const partIndex = static_cast<int>(m_nodes.size());
     for (int i = 0; i < kSymbolsCount; i++)
     {
       m_parts[partIndices[i]].second = partIndex;
@@ -243,4 +248,4 @@ void MyPosition::RenderPart(ref_ptr<dp::GpuProgramManager> mng,
   m_nodes[p.second].Render(mng, uniforms, p.first);
 }
 
-}
+} // namespace df

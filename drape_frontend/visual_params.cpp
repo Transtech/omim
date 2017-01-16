@@ -8,8 +8,9 @@
 
 #include "indexer/scales.hpp"
 
-#include "std/limits.hpp"
 #include "std/algorithm.hpp"
+#include "std/limits.hpp"
+#include "std/utility.hpp"
 
 namespace df
 {
@@ -32,6 +33,11 @@ static bool g_isInited = false;
 #define ASSERT_INITED
 #endif
 
+double const VisualParams::kMdpiScale = 1.0;
+double const VisualParams::kHdpiScale = 1.5;
+double const VisualParams::kXhdpiScale = 2.0;
+double const VisualParams::k6plusScale = 2.4;
+double const VisualParams::kXxhdpiScale = 3.0;
 
 void VisualParams::Init(double vs, uint32_t tileSize)
 {
@@ -57,6 +63,16 @@ uint32_t VisualParams::GetGlyphBaseSize() const
   return 22;
 }
 
+double VisualParams::GetFontScale() const
+{
+  return m_fontScale;
+}
+
+void VisualParams::SetFontScale(double fontScale)
+{
+  m_fontScale = fontScale;
+}
+
 VisualParams & VisualParams::Instance()
 {
   ASSERT_INITED;
@@ -67,12 +83,11 @@ string const & VisualParams::GetResourcePostfix(double visualScale)
 {
   static visual_scale_t postfixes[] =
   {
-    make_pair("ldpi", 0.75),
-    make_pair("mdpi", 1.0),
-    make_pair("hdpi", 1.5),
-    make_pair("xhdpi", 2.0),
-    make_pair("xxhdpi", 3.0),
-    make_pair("6plus", 2.4),
+    make_pair("mdpi", kMdpiScale),
+    make_pair("hdpi", kHdpiScale),
+    make_pair("xhdpi", kXhdpiScale),
+    make_pair("xxhdpi", kXxhdpiScale),
+    make_pair("6plus", k6plusScale),
   };
 
   // Looking for the nearest available scale.
@@ -133,6 +148,7 @@ VisualParams::GlyphVisualParams const & VisualParams::GetGlyphVisualParams() con
 VisualParams::VisualParams()
   : m_tileSize(0)
   , m_visualScale(0.0)
+  , m_fontScale(1.0)
 {
 }
 
@@ -274,7 +290,14 @@ int GetDrawTileScale(m2::RectD const & r)
 
 double GetZoomLevel(double scale)
 {
-  return my::clamp(fabs(log(scale) / log(2.0)), 1, scales::GetUpperStyleScale());
+  static double const kLog2 = log(2.0);
+  return my::clamp(fabs(log(scale) / kLog2), 1.0, scales::GetUpperStyleScale() + 1.0);
+}
+
+double GetNormalizedZoomLevel(double scale, int minZoom)
+{
+  double const kMaxZoom = scales::GetUpperStyleScale() + 1.0;
+  return my::clamp((GetZoomLevel(scale) - minZoom) / (kMaxZoom - minZoom), 0.0, 1.0);
 }
 
 double GetScale(double zoomLevel)

@@ -3,6 +3,9 @@
 #include "base/string_utils.hpp"
 
 #include "std/algorithm.hpp"
+#include "std/functional.hpp"
+#include "std/string.hpp"
+#include "std/utility.hpp"
 
 namespace search
 {
@@ -48,6 +51,7 @@ bool TokenizeStringAndCheckIfLastTokenIsPrefix(string const & s,
 
 strings::UniString GetStreetNameAsKey(string const & name);
 
+// *NOTE* The argument string must be normalized and simplified.
 bool IsStreetSynonym(strings::UniString const & s);
 bool IsStreetSynonymPrefix(strings::UniString const & s);
 

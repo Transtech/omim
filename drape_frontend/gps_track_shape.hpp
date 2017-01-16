@@ -21,7 +21,7 @@ namespace df
 
 struct GpsTrackRenderData
 {
-  size_t m_pointsCount;
+  uint32_t m_pointsCount;
 
   dp::GLState m_state;
   drape_ptr<dp::RenderBucket> m_bucket;
@@ -61,7 +61,7 @@ public:
 
 private:
   vector<GpsTrackDynamicVertex> m_buffer;
-  bool m_needUpdate;
+  mutable bool m_needUpdate;
 };
 
 class GpsTrackShape

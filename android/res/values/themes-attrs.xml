@@ -23,11 +23,16 @@
     <attr name="ppButtonsBackground" format="color"/>
     <attr name="ppPreviewHeadOpen" format="reference"/>
     <attr name="ppPreviewHeadClosed" format="reference"/>
-    <attr name="ppArrowDrawable" format="reference"/>
+    <attr name="ppRatingBackground" format="color"/>
+    <attr name="ppRatingText" format="color"/>
+    <attr name="ppPositive" format="reference"/>
+    <attr name="ppNegative" format="reference"/>
 
     <attr name="routingSlot" format="reference"/>
     <attr name="routingSlotPressed" format="reference"/>
     <attr name="routingSlotMarker" format="reference"/>
+    <attr name="navNextTurnFrame" format="reference"/>
+    <attr name="navNextNextTurnFrame" format="reference"/>
 
     <attr name="buttonBackground" format="reference"/>
     <attr name="buttonTextColor" format="color"/>
@@ -37,17 +42,42 @@
     <attr name="accentButtonTextColor" format="color"/>
     <attr name="accentButtonTextColorDisabled" format="color"/>
 
+    <attr name="redButtonBackground" format="reference"/>
+    <attr name="redButtonTextColor" format="color"/>
+    <attr name="redButtonTextColorDisabled" format="color"/>
+
+    <attr name="startButtonBackground" format="reference"/>
+
     <attr name="circleAccent" format="reference"/>
 
-    <attr name="menuBackgroundClosed" format="color"/>
+    <attr name="menuBackground" format="color"/>
     <attr name="menuBackgroundOpen" format="color"/>
 
     <attr name="myPositionButtonAnimation" format="reference"/>
     <attr name="wheelPendingAnimation" format="reference"/>
+    <attr name="trafficLoadingAnimation" format="reference"/>
 
+    <attr name="navButtonsTheme" format="reference"/>
     <attr name="downloaderTheme" format="reference"/>
+    <attr name="navigationTheme" format="reference"/>
 
     <attr name="fabAdd" format="reference"/>
+
+    <attr name="routingButtonHint" format="color"/>
+    <attr name="routingButtonPressedHint" format="color"/>
+    <attr name="routingButtonActivatedHint" format="color"/>
+
+    <attr name="bannerText" format="color"/>
+    <attr name="bannerBackground" format="color"/>
+
+    <attr name="steadyIconTint" format="color"/>
+    <attr name="steadyIconBackground" format="color"/>
+    <attr name="activeIconTint" format="color"/>
+    <attr name="activeIconBackground" format="color"/>
+  </declare-styleable>
+
+  <declare-styleable name="ThemeAttrs.NavButtons">
+    <attr name="nav_background" format="reference"/>
   </declare-styleable>
 
   <declare-styleable name="ThemeAttrs.Downloader">
@@ -57,5 +87,10 @@
     <attr name="status_updatable" format="reference"/>
     <attr name="status_folder" format="reference"/>
     <attr name="status_folder_done" format="reference"/>
+  </declare-styleable>
+
+  <declare-styleable name="ThemeAttrs.Navigation">
+    <attr name="newsMarker" format="reference"/>
+    <attr name="searchLayoutBackground" format="reference"/>
   </declare-styleable>
 </resources>

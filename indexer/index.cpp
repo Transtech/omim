@@ -58,6 +58,9 @@ unique_ptr<MwmInfo> Index::CreateInfo(platform::LocalCountryFile const & localFi
   info->m_minScale = static_cast<uint8_t>(scaleR.first);
   info->m_maxScale = static_cast<uint8_t>(scaleR.second);
   info->m_version = value.GetMwmVersion();
+  // Copying to drop the const qualifier.
+  feature::RegionData regionData(value.GetRegionData());
+  info->m_data = regionData;
 
   return unique_ptr<MwmInfo>(move(info));
 }
@@ -131,4 +134,13 @@ bool Index::FeaturesLoaderGuard::GetOriginalFeatureByIndex(uint32_t index, Featu
   m_vector->GetByIndex(index, ft);
   ft.SetID(FeatureID(m_handle.GetId(), index));
   return true;
+}
+
+size_t Index::FeaturesLoaderGuard::GetNumFeatures() const
+{
+  if (!m_handle.IsAlive())
+    return 0;
+
+  ASSERT(m_vector.get(), ());
+  return m_vector->GetNumFeatures();
 }

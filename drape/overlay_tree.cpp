@@ -154,7 +154,8 @@ void OverlayTree::Add(ref_ptr<OverlayHandle> handle)
     }
   }
 
-  int const rank = handle->GetOverlayRank();
+  ASSERT_GREATER_OR_EQUAL(handle->GetOverlayRank(), 0, ());
+  size_t const rank = static_cast<size_t>(handle->GetOverlayRank());
   ASSERT_LESS(rank, m_handles.size(), ());
   m_handles[rank].emplace_back(handle);
 }
@@ -214,7 +215,7 @@ void OverlayTree::InsertHandle(ref_ptr<OverlayHandle> handle,
       bool rejectByDepth = false;
       if (!rejectBySelected && modelView.isPerspective())
       {
-        bool const pathTextComparation = handle->HasDynamicAttributes() || rivalHandle->HasDynamicAttributes();
+        bool const pathTextComparation = handle->HasLinearFeatureShape() || rivalHandle->HasLinearFeatureShape();
         rejectByDepth = !pathTextComparation &&
                         handleToCompare->GetPivot(modelView, true).y > rivalHandle->GetPivot(modelView, true).y;
       }
@@ -363,9 +364,25 @@ bool OverlayTree::CheckHandle(ref_ptr<OverlayHandle> handle, int currentRank,
 void OverlayTree::DeleteHandle(ref_ptr<OverlayHandle> const & handle)
 {
   size_t const deletedCount = m_handlesCache.erase(handle);
-  ASSERT_NOT_EQUAL(deletedCount, 0, ());
   if (deletedCount != 0)
     Erase(handle);
+}
+
+bool OverlayTree::GetSelectedFeatureRect(ScreenBase const & screen, m2::RectD & featureRect)
+{
+  if (!m_selectedFeatureID.IsValid())
+    return false;
+
+  featureRect.MakeEmpty();
+  for (auto const & handle : m_handlesCache)
+  {
+    if (handle->IsVisible() && handle->GetFeatureID() == m_selectedFeatureID)
+    {
+      m2::RectD rect = handle->GetPixelRect(screen, screen.isPerspective());
+      featureRect.Add(rect);
+    }
+  }
+  return true;
 }
 
 void OverlayTree::Select(m2::PointD const & glbPoint, TOverlayContainer & result) const
@@ -379,7 +396,7 @@ void OverlayTree::Select(m2::PointD const & glbPoint, TOverlayContainer & result
 
   for (auto const & handle : m_handlesCache)
   {
-    if (rect.IsPointInside(handle->GetPivot(screen, false)))
+    if (!handle->HasLinearFeatureShape() && rect.IsPointInside(handle->GetPivot(screen, false)))
       result.push_back(handle);
   }
 }
@@ -389,7 +406,7 @@ void OverlayTree::Select(m2::RectD const & rect, TOverlayContainer & result) con
   ScreenBase screen = m_traits.m_modelView;
   ForEachInRect(rect, [&](ref_ptr<OverlayHandle> const & h)
   {
-    if (h->IsVisible() && h->GetFeatureID().IsValid())
+    if (!h->HasLinearFeatureShape() && h->IsVisible() && h->GetFeatureID().IsValid())
     {
       OverlayHandle::Rects shape;
       h->GetPixelShape(screen, screen.isPerspective(), shape);

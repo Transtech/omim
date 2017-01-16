@@ -38,7 +38,7 @@ TypesHolder::TypesHolder(FeatureBase const & f)
 {
   f.ForEachType([this](uint32_t type)
   {
-    this->operator()(type);
+    Add(type);
   });
 }
 
@@ -88,6 +88,8 @@ public:
       { "hwtag" },
       { "psurface" },
       { "internet_access" },
+      { "wheelchair" },
+      { "sponsored" },
     };
 
     AddTypes(arr1);
@@ -99,7 +101,7 @@ public:
       { "amenity", "bench" },
       { "amenity", "shelter" },
       { "building", "address" },
-      { "sponsored", "booking" },
+      { "building", "has_parts" },
     };
 
     AddTypes(arr2);
@@ -127,7 +129,7 @@ public:
 
 namespace feature
 {
-uint8_t CalculateHeader(uint32_t const typesCount, uint8_t const headerGeomType,
+uint8_t CalculateHeader(size_t const typesCount, uint8_t const headerGeomType,
                         FeatureParamsBase const & params)
 {
   ASSERT(typesCount != 0, ("Feature should have at least one type."));
@@ -238,6 +240,11 @@ bool IsDummyName(string const & s)
 /////////////////////////////////////////////////////////////////////////////////////////
 // FeatureParams implementation
 /////////////////////////////////////////////////////////////////////////////////////////
+
+void FeatureParams::ClearName()
+{
+  name.Clear();
+}
 
 bool FeatureParams::AddName(string const & lang, string const & s)
 {

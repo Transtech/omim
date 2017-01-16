@@ -192,6 +192,7 @@
 	<string name="parking">Parkeerplaats</string>
 	<!-- Search Suggestion -->
 	<string name="shop">Winkel</string>
+	<!-- Search Suggestion -->
 	<string name="hotel">Hotel</string>
 	<!-- Search Suggestion -->
 	<string name="tourism">Toerisme</string>
@@ -216,7 +217,7 @@
 	<!-- Notes field in Bookmarks view -->
 	<string name="description">Notities</string>
 	<!-- Button text -->
-	<string name="share_by_email">Delen via e-mail</string>
+	<string name="share_by_email">Delen via email</string>
 	<!-- Email Subject when sharing bookmarks category -->
 	<string name="share_bookmarks_email_subject">Bladwijzers van MAPS.ME met u gedeeld</string>
 	<!-- Email text when sharing bookmarks category -->
@@ -262,7 +263,7 @@
 	<!-- iOS share by Message button text (including SMS) -->
 	<string name="message">Bericht</string>
 	<!-- Share by email button text, also used in editor. -->
-	<string name="email">E-mail</string>
+	<string name="email">Email</string>
 	<!-- Copy Link -->
 	<string name="copy_link">Kopieer koppeling</string>
 	<!-- Text for the button that returns to caller application -->
@@ -271,8 +272,6 @@
 	<string name="copied_to_clipboard">Op het klembord gekopieerd: %1$s</string>
 	<!-- Setting label for statistics turn on/off -->
 	<string name="allow_statistics">Verstuur statistieken</string>
-	<!-- Hint near allow statictics checkbox -->
-	<string name="allow_statistics_hint">Sta ons toe om gebruiksstatistieken te verzamelen om de app te verbeteren</string>
 	<!-- place preview title -->
 	<string name="info">Info</string>
 	<!-- Used for bookmark editing -->
@@ -325,6 +324,7 @@
 	<string name="pref_tts_how_to_set_up_voice">Hoe stel je de stem in</string>
 	<!-- Settings «Map» category: «Record track» title -->
 	<string name="pref_track_record_title">Recente route</string>
+	<string name="pref_map_auto_zoom">Automatisch zoomen</string>
 	<string name="duration_disabled">Uit</string>
 	<string name="duration_1_hour">1 uur</string>
 	<string name="duration_2_hours">2 uur</string>
@@ -397,9 +397,9 @@
 	<!-- About text -->
 	<string name="about_text">MAPS.ME biedt de snelste offline kaarten van alle steden en alle landen ter wereld. Reis vol vertrouwen: waar je ook bent,\n\nMAPS.ME zal je helpen om jezelf op de kaart terug te vinden en het dichstbijzijnde restaurant, hotel, bank, benzinestation etc. te vinden. Er is geen internetverbinding voor nodig.\n\nWe werken voortdurend aan nieuwe functies en we zouden graag van je willen horen hoe we MAPS.ME volgens jou zouden kunnen verbeteren. Als je eventueel problemen hebt met de app, aarzel dan niet om contact met ons op te nemen op support@maps.me. We reageren op elke aanvraag!\n\nVindt je MAPS.ME leuk en wil je ons steunen? Dat kan op een aantal simpele en absoluut gratis manieren:\n- plaats een beoordeling op je App Market\n- like onze Facebook-pagina http://www.facebook.com/mapswithme\n- of vertel gewoon je ma, vrienden en collega’s over MAPS.ME :) Dank je dat je ons steunt. Wij waarderen dit heel erg!\n\nP.S. We halen onze kaartgegevens van OpenStreetMap, een kaartproject dat lijkt op Wikipedia, waarbij gebruikers kaarten kunnen maken en aanpassen. Als je ziet dat er iets ontbreekt of een fout ontdekt in een kaart, dan kun je de kaart direct verbeteren op http://openstreetmap.org, en dan zullen je verbeteringen bij het uitbrengen van de volgende versie in MAPS.ME verschijnen.</string>
 	<!-- Alert text -->
-	<string name="email_error_body">De e-mailcliënt is niet ingesteld. Gelieve de cliënt te configureren of op een andere manier contact met ons op te nemen op %s</string>
+	<string name="email_error_body">De emailcliënt is niet ingesteld. Gelieve de cliënt te configureren of op een andere manier contact met ons op te nemen op %s</string>
 	<!-- Alert title -->
-	<string name="email_error_title">E-mail verzendfout</string>
+	<string name="email_error_title">Email verzendfout</string>
 	<!-- Settings item title -->
 	<string name="pref_calibration_title">Kompascalibratie</string>
 	<!-- Search Suggestion -->
@@ -586,7 +586,6 @@
 	<string name="dialog_routing_send_error">Meld het probleem</string>
 	<string name="dialog_routing_if_get_cross_route">Wilt u een rechtstreeksere route samenstellen die meer dan één kaart beslaat?</string>
 	<string name="dialog_routing_cross_route_is_optimal">Er is een betere route beschikbaar die de grenzen van deze kaart overschrijdt.</string>
-	<string name="dialog_routing_always_cross_that_border">Deze grens altijd overschrijden</string>
 	<string name="not_now">Niet nu</string>
 	<string name="dialog_routing_build_route">Samenstellen</string>
 	<string name="dialog_routing_download_and_build_cross_route">Wilt u de kaart downloaden en een betere route samenstellen die meer dan één kaart beslaat?</string>
@@ -630,7 +629,6 @@
 	<string name="clear_search">Zoekgeschiedenis wissen</string>
 	<!-- Title for settings to enable/disable showcase menu button -->
 	<string name="showcase_settings_title">Aanbiedingen weergeven</string>
-	<string name="showcase_more_apps">Meer My.com apps</string>
 	<string name="p2p_route_planning">Routeberekening</string>
 	<string name="p2p_your_location">Uw locatie</string>
 	<string name="p2p_from">Vertrekpunt</string>
@@ -698,7 +696,7 @@
 	<string name="forgot_password">Wachtwoord vergeten?</string>
 	<!-- Forgot Password dialog title -->
 	<string name="restore_password">Wachtwoord herstellen</string>
-	<string name="enter_email_address_to_reset_password">Voer het e-mailadres in dat u heeft gebruikt tijdens de registratie, dan sturen wij u de link om uw wachtwoord te vernieuwen.</string>
+	<string name="enter_email_address_to_reset_password">Voer het emailadres in dat u heeft gebruikt tijdens de registratie, dan sturen wij u de link om uw wachtwoord te vernieuwen.</string>
 	<string name="reset_password">Wachtwoord resetten</string>
 	<string name="username">Gebruikersnaam</string>
 	<string name="osm_account">OSM-account</string>
@@ -714,9 +712,12 @@
 	<string name="login_with_openstreetmap">Aanmelden met www.openstreetmap.org</string>
 	<string name="edit_place">De locatie bewerken</string>
 	<string name="place_name">Locatienaam</string>
-	<string name="place_name_caption">Voer de naam in zoals die op het bord of naamplaatje wordt weergegeven</string>
 	<!-- title above languages list cells in the editor, below editable name text field. -->
 	<string name="other_languages">Overige talen</string>
+	<!-- small button to open list with names in different languages -->
+	<string name="show_more">Laat meer zien</string>
+	<!-- small button to close list with names in different languages -->
+	<string name="show_less">Laat minder zien</string>
 	<string name="add_language">Een taal toevoegen</string>
 	<string name="street">Straat</string>
 	<!-- Editable House Number text field (in address block). -->
@@ -730,7 +731,7 @@
 	<string name="cuisine">Keuken</string>
 	<string name="select_cuisine">Selecteer Keuken</string>
 	<!-- login text field -->
-	<string name="email_or_username">E-mailadres of gebruikersnaam</string>
+	<string name="email_or_username">Emailadres of gebruikersnaam</string>
 	<string name="phone">Telefoonnummer</string>
 	<string name="please_note">Opgelet</string>
 	<string name="common_no_wifi_dialog">Geen WiFi-verbinding. Wil je doorgaan via mobiele data?</string>
@@ -762,7 +763,6 @@
 	<string name="editor_edit_place_category_title">Categorie</string>
 	<string name="detailed_problem_description">Gedetailleerde probleemomschrijving</string>
 	<string name="editor_report_problem_other_title">Een ander probleem</string>
-	<string name="placepage_add_place_button">Voeg een plaats toe</string>
 	<string name="placepage_report_problem_button">Meld een probleem</string>
 	<string name="placepage_add_business_button">Een organisatie toevoegen</string>
 	<string name="whatsnew_smallmwm_header">Op veler verzoek hebben we het voor elkaar gekregen</string>
@@ -797,6 +797,7 @@
 	<string name="download_over_mobile_message">Met sommige abonnementen of bij roaming kan dit behoorlijk duur zijn.</string>
 	<string name="error_enter_correct_house_number">Een juist huisnummer invoeren</string>
 	<string name="editor_storey_number">Aantal verdiepingen (max. %d)</string>
+	<!-- Error message in Editor when a user tries to set the number of floors for a building higher than 25 -->
 	<string name="error_enter_correct_storey_number">Bewerk het gebouw met maximaal 25 verdiepingen</string>
 	<string name="editor_zip_code">Postcode</string>
 	<string name="error_enter_correct_zip_code">Voer de juiste postcode in</string>
@@ -810,7 +811,6 @@
 	<string name="editor_tag_description">Voer het bedrijf, de organisatie of het individu in dat verantwoordelijk is voor de faciliteiten.</string>
 	<string name="editor_no_local_edits_title">U hebt geen lokale bewerkingen</string>
 	<string name="editor_no_local_edits_description">Dit toont het aantal voorgestelde wijzigingen voor de kaart die momenteel alleen toegankelijk zijn op uw apparaat.</string>
-	<string name="editor_international_names_subtitle">Naam in andere talen</string>
 	<string name="editor_send_to_osm">Naar OSM sturen</string>
 	<string name="editor_remove">Verwijderen</string>
 	<string name="downloader_my_maps_title">Mijn kaarten</string>
@@ -833,7 +833,8 @@
 	<string name="location_services_disabled_message">Schakel de toegang tot geolocaties in in de instellingen van het apparaat</string>
 	<string name="location_services_disabled_1">1. Instellingen openen</string>
 	<string name="location_services_disabled_2">2. Tik op locatie</string>
-	<string name="location_services_disabled_3">3. Selecteer \&#39;Altijd\&#39;</string>
+	<!-- iOS Dialog for the case when the location permission is not granted -->
+	<string name="location_services_disabled_3">3. Selecteer Terwijl Je de App Gebruikt</string>
 	<string name="placepage_parking_surface">Boven de grond</string>
 	<string name="placepage_parking_multistorey">Meerlaags</string>
 	<string name="placepage_parking_underground">Onder de grond</string>
@@ -852,9 +853,16 @@
 	<string name="place_page_starting_from">van %s</string>
 	<string name="meter">m</string>
 	<string name="kilometer">km</string>
+	<string name="kilometers_per_hour">km/h</string>
+	<string name="mile">mijl</string>
+	<string name="foot">voet</string>
+	<string name="miles_per_hour">mph</string>
+	<string name="day">d</string>
+	<string name="hour">u</string>
+	<string name="minute">min</string>
 	<string name="placepage_place_description">Beschrijving</string>
 	<string name="placepage_more_button">Meer</string>
-	<string name="bookingcom_book_button">Boeken</string>
+	<string name="book_button">Boeken</string>
 	<string name="placepage_call_button">Bellen</string>
 	<string name="placepage_edit_bookmark_button">Bladwijzer bewerken</string>
 	<string name="placepage_bookmark_name_hint">Bladwijzernaam</string>
@@ -869,18 +877,167 @@
 	<string name="editor_status_sending">Verzenden…</string>
 	<string name="editor_place_doesnt_exist">Locatie bestaat niet</string>
 	<string name="text_more_button">…meer</string>
-	<string name="error_enter_correct_phone">Voer een telefoonnummer in zonder letters</string>
+	<!-- Phone number error message -->
+	<string name="error_enter_correct_phone">Voer het juiste telefoonnummer in</string>
 	<string name="error_enter_correct_web">Voer een geldig webadres in</string>
-	<string name="error_enter_correct_email">Voer een geldig e-mailadres in</string>
+	<string name="error_enter_correct_email">Voer een geldig emailadres in</string>
 	<string name="error_enter_correct">Voer een geldige waarde in</string>
 	<string name="editor_profile_changes_for_next_place">Wijzigingen tot de volgende positie: %d</string>
 	<string name="editor_profile_rating_place">Positie in klassement</string>
 	<string name="booking_dialog_not_connect_header">Maak verbinding met internet om het hotel te boeken</string>
-	<string name="whatsnew_booking_header">Boek een hotel via de app</string>
-	<string name="whatsnew_booking_message">Als u een hotel zoekt, toont de kaart de prijscategorie en de beoordeling.</string>
 	<string name="button_try">Proberen</string>
-	<string name="whatsnew_cycle_navigation_header">Fietsnavigatie (bèta-versie)</string>
-	<string name="whatsnew_cycle_navigation_message">We testen de fietsnavigatie voor het nieuwe seizoen. Probeer uw favoriete fietsroute met MAPS.ME en deel uw ervaringen met ons.</string>
 	<string name="refresh">Updaten</string>
 	<string name="last_update">Laatste update: %s</string>
+	<string name="booking_checkin">inchecken: %s</string>
+	<string name="booking_checkout">uitchecken: %s</string>
+	<string name="placepage_add_place_button">Een plek toevoegen aan de kaart</string>
+	<!-- Displayed when saving some edits to the map to warn against publishing personal data -->
+	<string name="editor_share_to_all_dialog_title">Wil je het naar alle gebruikers sturen?</string>
+	<!-- iOS Dialog before publishing the modifications to the public map. -->
+	<string name="editor_share_to_all_dialog_message_1">Controleer dat je geen persoonlijke gegevens hebt ingevoerd.</string>
+	<string name="editor_share_to_all_dialog_message_2">We zullen de wijzigingen controleren. Als we nog vragen hebben, zullen we contact met je opnemen via email.</string>
+	<string name="navigation_overview_button">overzicht</string>
+	<string name="navigation_stop_button">stoppen</string>
+	<!-- Text on an empty bookmark page -->
+	<string name="bookmarks_empty_title">Bladwijzers opslaan</string>
+	<string name="bookmarks_empty_message_1">Tik op ★ om favoriete plaatsen op te slaan voor snelle toegang.</string>
+	<string name="bookmarks_empty_message_2">Importeer bladwijzers vanuit email en het internet.</string>
+	<string name="bookmarks_empty_message_3">uitchecken: %s</string>
+	<!-- Name of the group for booked hotels -->
+	<string name="bookmarks_group_name">Geboekte hotels</string>
+	<string name="place_page_button_read_descriprion">Lezen</string>
+	<!-- iOS dialog for the case when recent track recording is on and the app comes back from background -->
+	<string name="recent_track_background_dialog_title">Vastleggen van uw onlangs afgelegde route uitschakelen?</string>
+	<!-- If a hotel is being shared -->
+	<string name="sharing_booking">of boek via booking.com</string>
+	<string name="off_recent_track_background_button">Uitschakelen</string>
+	<!-- For sharing via SMS and so on -->
+	<string name="sharing_call_action_look">Bekijk</string>
+	<string name="continue_recent_track_background_button">Verdergaan</string>
+	<string name="recent_track_background_dialog_message">MAPS.ME gebruikt uw geografische positie op de achtergrond om uw onlangs afgelegde route vast te leggen.</string>
+	<string name="whatsnew_car_navigation_header">Gebruikersvriendelijke voertuignavigatie</string>
+	<string name="whatsnew_car_navigation_message">• De navigatie-elementen nemen minder ruimte in beslag.\n• We tonen de snelheid en hebben automatisch zoomen toegevoegd.</string>
+	<string name="whatsnew_cycle_navigation_2_header">Fietsnavigatie</string>
+	<string name="whatsnew_cycle_navigation_2_message">• Fietsnavigatie houdt rekening met terreingegevens.\n• We maken eenvoudigere routes waarbij rekening wordt gehouden met hellingen.</string>
+	<string name="whatsnew_booking_2_header">Eenvoudig zoeken naar hotels</string>
+	<string name="whatsnew_booking_2_message">De zoekresultaten voor hotels tonen de hotelbeoordeling en prijscategorie.</string>
+	<string name="whatsnew_cycle_navigation_header">Fietsnavigatie (bèta-versie)</string>
+	<string name="whatsnew_cycle_navigation_message">We testen de fietsnavigatie voor het nieuwe seizoen. Probeer uw favoriete fietsroute met MAPS.ME en deel uw ervaringen met ons.</string>
+	<!-- Rate on Google Play (Android only) -->
+	<string name="rate_gp">Beoordeel op Google Play</string>
+	<!-- Share with friends: menu item title -->
+	<string name="tell_friends">Vertel een Vriend</string>
+	<!-- Share with friends: sharing text -->
+	<string name="tell_friends_text">Hallo! Installeer MAPS.ME!</string>
+	<!-- About short text (below logo) -->
+	<string name="about_description">MAPS.ME is een essentiële offline applicatie om te reizen. MAPS.ME is gebaseerd op OpenStreetMap gegevens en laat bewerking toe.</string>
+	<!-- Text in menu -->
+	<string name="blog">Blog</string>
+	<!-- Hint near allow statictics checkbox -->
+	<string name="allow_statistics_hint">Verzamelen van gebruiksstatistieken helpt ons de app te verbeteren.</string>
+	<string name="general_settings">Algemene instellingen</string>
+	<string name="date">Datum %d</string>
+	<!-- "Report a bug" -> "Generaal Feedback" -> "Something is not working" -->
+	<string name="something_is_not_working">Er werkt iets niet</string>
+	<!-- For the first routing -->
+	<string name="accept">Aanvaarden</string>
+	<!-- For the first routing -->
+	<string name="decline">Weigeren</string>
+	<string name="whats_new_route_profile_title">Beter ten halve gekeerd, dan ten hele gedwaald</string>
+	<string name="whats_new_route_profile_message">Voor wandel- en fietsroutes geven we nu het hoogteprofiel weer.</string>
+	<string name="whats_new_booking_improve_title">Bespaar op het boeken van hotels</string>
+	<string name="whats_new_booking_improve_message">Zoekresultaten voor hotels bevatten nu de prijscategorie.\nWe hebben ook meer dan 110.000 hotels toegevoegd.</string>
+	<!-- For place page hotel facilities block -->
+	<string name="placepage_hotel_facilities">Faciliteiten</string>
+	<!-- For place page hotel nearby block -->
+	<string name="placepage_hotel_nearby">In de buurt</string>
+	<!-- For ordering a taxi (as opposed to hotels or other things) -->
+	<string name="taxi_order">Bestel een taxi</string>
+	<!-- How long it is until the taxi arrives -->
+	<string name="taxi_wait">Verwacht binnen %s</string>
+	<!-- When there are no available taxis nearby -->
+	<string name="taxi_not_found">Kon geen taxi vinden in de buurt</string>
+	<string name="install_app">Installeer</string>
+	<!-- `Filter` is a noun here -->
+	<string name="booking_filters">Filter</string>
+	<string name="booking_filters_reset">Resetten</string>
+	<string name="booking_filters_rating">Beoordeling</string>
+	<string name="booking_filters_rating_any">Alle</string>
+	<string name="booking_filters_ragting_good">Goed</string>
+	<string name="booking_filters_rating_very_good">Heel Goed</string>
+	<string name="booking_filters_rating_excellent">Uitstekend</string>
+	<string name="booking_filters_price_category">Prijscategorie</string>
+	<string name="search_no_results_title">Geen Resultaten Gevonden</string>
+	<string name="search_no_results_message">Probeer een meer algemene zoekterm, zoom uit of reset de filter.</string>
+	<string name="search_no_results_expand_area_button">Uitzoomen</string>
+	<string name="search_no_results_reset_button">Filter Resetten</string>
+	<!-- noun -->
+	<string name="search_in_table">Lijst</string>
+	<string name="booking_based_on_reviews">Gebaseerd op %d hotelbeoordelingen</string>
+	<string name="booking_show_more">Meer weergeven</string>
+	<string name="booking_reviews">Beoordelingen</string>
+	<string name="booking_hotel">Hotel</string>
+	<!-- hotel room -->
+	<string name="booking_hotel_room">Kamer</string>
+	<!-- A neologism for a chat based on geographical proximity -->
+	<string name="chat">Geochat</string>
+	<!-- Verb. Text on a button that opens the chat. -->
+	<string name="chat_open">Openen</string>
+	<string name="whatsnew_uber_header">MAPS.ME en Uber</string>
+	<string name="whatsnew_uber_message">Bestel een Uber-taxi rechtstreeks vanuit de app!</string>
+	<string name="dialog_taxi_offline">Het bestellen van een taxi is niet beschikbaar in de offline modus.</string>
+	<string name="dialog_taxi_error">Het bestellen van een taxi is tijdelijk niet beschikbaar.</string>
+	<string name="advertisement">Reclame</string>
+	<string name="mobile_data_dialog">Mobiel internet gebruiken om gedetailleerde informatie weer te geven?</string>
+	<string name="mobile_data_option_always">Altijd Gebruiken</string>
+	<string name="mobile_data_option_today">Enkel Vandaag</string>
+	<string name="mobile_data_option_not_today">Vandaag niet Gebruiken</string>
+	<string name="mobile_data">Mobiel Internet</string>
+	<string name="mobile_data_description">Mobiel internet is vereist voor het weergeven van gedetailleerde informatie over plaatsen, zoals foto\&#39;s, prijzen en beoordelingen.</string>
+	<string name="mobile_data_option_never">Nooit Gebruiken</string>
+	<string name="mobile_data_option_ask">Altijd Vragen</string>
+	<string name="traffic_update_maps_text">Om verkeersgegevens weer te geven, moeten de kaarten bijgewerkt worden.</string>
+	<string name="traffic_outdated">Verkeersgegevens zijn verouderd.</string>
+	<string name="big_font">Grotere labels</string>
+	<string name="traffic_update_app">Gelieve MAPS.ME bij te werken</string>
+	<!-- "traffic" as in road congestion -->
+	<string name="traffic_update_app_message">Om de verkeersgegevens weer te geven, moet de applicatie bijgewerkt worden.</string>
+	<!-- "traffic" as in "road congestion" -->
+	<string name="traffic_data_unavailable">Verkeersgegevens zijn niet beschikbaar</string>
+	<string name="banner_deliveryclub_title">Levering maaltijden</string>
+	<string name="banner_deliveryclub_message">Snelle levering van 4.000 restaurants. Bestel via Delivery Club.</string>
+	<string name="banner_lamoda_title">Online kleding- en schoenenwinkel</string>
+	<string name="banner_lamoda_message">Meer dan 1.000 merken. Tot 70% korting. Gratis levering over het hele land.</string>
+	<string name="banner_tutu_title">Treintickets online</string>
+	<string name="banner_tutu_message">Treintickets naar elke staf online - prijzen, zoeken en reserveren.</string>
+	<string name="banner_geerbest_title">Online elektronicawinkel</string>
+	<string name="banner_geerbest_message">Onmiddellijk zoeken tussen meer dan 50.000 artikelen aan lage prijzen.</string>
+	<string name="banner_rentalcars_title">Online auto\&#39;s huren</string>
+	<string name="banner_rentalcars_message">800 autoverhuurbedrijven in meer dan 49.000 locaties voor autoverhuur.</string>
+	<string name="banner_viator_title">Online tours zoeken</string>
+	<string name="banner_viator_message">Zoek in meer dan 50.000 tours over de hele wereld.</string>
+	<!-- december -->
+	<string name="whatsnew_traffic">Verkeersgegevens in 36 Landen</string>
+	<!-- december -->
+	<string name="whatsnew_traffic_text">Actuele verkeersinformatie, en de snelste reisroutes hierop gebaseerd!</string>
+	<!-- december -->
+	<string name="whatsnew_traffic_roaming">Verkeersinfo in Roaming</string>
+	<!-- december -->
+	<string name="whatsnew_traffic_roaming_text">Vereist minder dan 1 MB mobiele bandbreedte per trip.</string>
+	<!-- december -->
+	<string name="whatsnew_order_taxi">Bestel een Taxi</string>
+	<!-- december -->
+	<string name="whatsnew_order_taxi_text">De meeste locatiepagina\&#39;s bevatten nu een knop om een taxi te bestellen.</string>
+	<!-- january -->
+	<string name="whatsnew_improved_search">Verbeterde Zoekfunctie</string>
+	<!-- january -->
+	<string name="whatsnew_improved_search_text">Zelfs verkeerd gespelde zoekopdrachten geven nauwkeurige zoekresultaten.</string>
+	<!-- january -->
+	<string name="whatsnew_filters_in_search">Zoekfilters</string>
+	<!-- january -->
+	<string name="whatsnew_filters_in_search_text">Hotels zoeken gebaseerd op prijs en rating.</string>
+	<!-- january -->
+	<string name="whatsnew_font_size">Lettergrootte</string>
+	<!-- january -->
+	<string name="whatsnew_font_size_text">Labels op de map kunnen groter gemaakt worden.</string>
 </resources>

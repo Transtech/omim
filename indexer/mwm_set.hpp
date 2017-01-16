@@ -8,6 +8,8 @@
 
 #include "base/macros.hpp"
 
+#include "indexer/feature_meta.hpp"
+
 #include "std/atomic.hpp"
 #include "std/deque.hpp"
 #include "std/map.hpp"
@@ -66,6 +68,8 @@ public:
 
   MwmTypeT GetType() const;
 
+  inline feature::RegionData const & GetRegionData() const { return m_data; }
+
   /// Returns the lock counter value for test needs.
   uint8_t GetNumRefs() const { return m_numRefs; }
 
@@ -76,6 +80,8 @@ protected:
     m_status = status;
     return result;
   }
+
+  feature::RegionData m_data;
 
   platform::LocalCountryFile m_file;  ///< Path to the mwm file.
   atomic<Status> m_status;            ///< Current country status.
@@ -229,15 +235,16 @@ public:
 
     // Called when a map is registered for a first time and can be
     // used.
-    virtual void OnMapRegistered(platform::LocalCountryFile const & localFile) {}
+    virtual void OnMapRegistered(platform::LocalCountryFile const & /*localFile*/) {}
 
     // Called when a map is updated to a newer version. Feel free to
     // treat it as combined OnMapRegistered(newFile) +
     // OnMapRegistered(oldFile).
-    virtual void OnMapUpdated(platform::LocalCountryFile const & newFile, platform::LocalCountryFile const & oldFile) {}
+    virtual void OnMapUpdated(platform::LocalCountryFile const & /*newFile*/,
+                              platform::LocalCountryFile const & /*oldFile*/) {}
 
     // Called when a map is deregistered and can no longer be used.
-    virtual void OnMapDeregistered(platform::LocalCountryFile const & localFile) {}
+    virtual void OnMapDeregistered(platform::LocalCountryFile const & /*localFile*/) {}
   };
 
   /// Registers a new map.

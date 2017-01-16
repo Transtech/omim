@@ -77,7 +77,7 @@ void RenderBucket::RemoveOverlayHandles(ref_ptr<OverlayTree> tree)
     tree->Remove(make_ref(overlayHandle));
 }
 
-void RenderBucket::Render()
+void RenderBucket::Render(bool drawAsLine)
 {
   ASSERT(m_buffer != nullptr, ());
 
@@ -85,7 +85,7 @@ void RenderBucket::Render()
   {
     // in simple case when overlay is symbol each element will be contains 6 indexes
     AttributeBufferMutator attributeMutator;
-    IndexBufferMutator indexMutator(6 * m_overlay.size());
+    IndexBufferMutator indexMutator(static_cast<uint32_t>(6 * m_overlay.size()));
     ref_ptr<IndexBufferMutator> rfpIndex = make_ref(&indexMutator);
     ref_ptr<AttributeBufferMutator> rfpAttrib = make_ref(&attributeMutator);
 
@@ -105,7 +105,7 @@ void RenderBucket::Render()
 
     m_buffer->ApplyMutation(hasIndexMutation ? rfpIndex : nullptr, rfpAttrib);
   }
-  m_buffer->Render();
+  m_buffer->Render(drawAsLine);
 }
 
 void RenderBucket::SetFeatureMinZoom(int minZoom)

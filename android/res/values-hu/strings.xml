@@ -193,6 +193,7 @@
 	<string name="parking">Parkoló</string>
 	<!-- Search Suggestion -->
 	<string name="shop">Bolt</string>
+	<!-- Search Suggestion -->
 	<string name="hotel">Szálloda</string>
 	<!-- Search Suggestion -->
 	<string name="tourism">Látnivaló</string>
@@ -263,7 +264,7 @@
 	<!-- iOS share by Message button text (including SMS) -->
 	<string name="message">Üzenet</string>
 	<!-- Share by email button text, also used in editor. -->
-	<string name="email">E-mail</string>
+	<string name="email">Email</string>
 	<!-- Copy Link -->
 	<string name="copy_link">Hivatkozás másolása</string>
 	<!-- Text for the button that returns to caller application -->
@@ -272,8 +273,6 @@
 	<string name="copied_to_clipboard">A vágólapra másolva: %1$s</string>
 	<!-- Setting label for statistics turn on/off -->
 	<string name="allow_statistics">Statisztika küldése</string>
-	<!-- Hint near allow statictics checkbox -->
-	<string name="allow_statistics_hint">Használati adatok gyűjtésének jóváhagyása a program továbbfejlesztéséhez.</string>
 	<!-- place preview title -->
 	<string name="info">Info</string>
 	<!-- Used for bookmark editing -->
@@ -326,6 +325,7 @@
 	<string name="pref_tts_how_to_set_up_voice">Így állítsd be a hangot</string>
 	<!-- Settings «Map» category: «Record track» title -->
 	<string name="pref_track_record_title">Legutolsó útvonal</string>
+	<string name="pref_map_auto_zoom">Auto-zoom</string>
 	<string name="duration_disabled">Kikapcsolva</string>
 	<string name="duration_1_hour">1 óra</string>
 	<string name="duration_2_hours">2 óra</string>
@@ -396,11 +396,11 @@
 	<!-- Email body -->
 	<string name="subscribe_me_body">Elsőként szeretnék értesülni a legújabb hírekről frissítésekről és promóciókról. A feliratkozásom bármikor törölhetem.</string>
 	<!-- About text -->
-	<string name="about_text">A MAPS.ME kínálja a leggyorsabb offline térképeket, a világ összes városáról és országáról. Utazz magabiztosan: bárhol is vagy, a MAPS.ME segít, hogy megtaláld magad a térképen, valamint segít a legközelebbi étterem, hotel, bank, benzinkút stb. felkutatásában is. Nem igényel internet kapcsolatot.\n\nMindig dolgozunk új fejlesztéseken és örömmel vennénk a te véleményedet is arról, hogyan tudnánk tovább fejleszteni a MAPS.ME-t. Bármely probléma esetén írj nekünk a support@maps.me e-mail címre. Minden levélre válaszolunk!\n\nSzereted a MAPS.ME-t és szeretnél támogatni minket? Van erre pár egyszerű és teljesen ingyenes lehetőséged:\n\n- írj rólunk értékelést az App Market-en\n- kedveld a Facebook oldalunkat: http://www.facebook.com/mapswithme\n- vagy csak mesélj a MAPS.ME-ről anyukádnak, barátaidnak és munkatársaidnak :)\n\nKöszönjük, hogy velünk vagy. Nagyra értékeljük támogatásodat!\n\nU.i: Adatainkat az OpenStreetMap-ről vesszük, ami egy, a Wikipedia-hoz hasonló térképes projekt, ami megengedi felhasználóinak a térképek létrehozását és szerkesztését. Ha bármi hiányzik vagy rossz a térképpel, közvetlenül te is kijavíthatod a http://openstreetmap.org-on és változtatásaid a MAPS.ME következő verziójában már meg fognak jelenni.</string>
+	<string name="about_text">A MAPS.ME kínálja a leggyorsabb offline térképeket, a világ összes városáról és országáról. Utazz magabiztosan: bárhol is vagy, a MAPS.ME segít, hogy megtaláld magad a térképen, valamint segít a legközelebbi étterem, hotel, bank, benzinkút stb. felkutatásában is. Nem igényel internet kapcsolatot.\n\nMindig dolgozunk új fejlesztéseken és örömmel vennénk a te véleményedet is arról, hogyan tudnánk tovább fejleszteni a MAPS.ME-t. Bármely probléma esetén írj nekünk a support@maps.me email címre. Minden levélre válaszolunk!\n\nSzereted a MAPS.ME-t és szeretnél támogatni minket? Van erre pár egyszerű és teljesen ingyenes lehetőséged:\n\n- írj rólunk értékelést az App Market-en\n- kedveld a Facebook oldalunkat: http://www.facebook.com/mapswithme\n- vagy csak mesélj a MAPS.ME-ről anyukádnak, barátaidnak és munkatársaidnak :)\n\nKöszönjük, hogy velünk vagy. Nagyra értékeljük támogatásodat!\n\nU.i: Adatainkat az OpenStreetMap-ről vesszük, ami egy, a Wikipedia-hoz hasonló térképes projekt, ami megengedi felhasználóinak a térképek létrehozását és szerkesztését. Ha bármi hiányzik vagy rossz a térképpel, közvetlenül te is kijavíthatod a http://openstreetmap.org-on és változtatásaid a MAPS.ME következő verziójában már meg fognak jelenni.</string>
 	<!-- Alert text -->
-	<string name="email_error_body">Az e-mail kliens nincs beállítva. Kérjük, konfiguráld vagy próbálj meg valamilyen más módon kapcsolatba lépni velünk a %s e-mail címen keresztül.</string>
+	<string name="email_error_body">Az email kliens nincs beállítva. Kérjük, konfiguráld vagy próbálj meg valamilyen más módon kapcsolatba lépni velünk a %s email címen keresztül.</string>
 	<!-- Alert title -->
-	<string name="email_error_title">Hiba az e-mail küldése során</string>
+	<string name="email_error_title">Hiba az email küldése során</string>
 	<!-- Settings item title -->
 	<string name="pref_calibration_title">Iránytű kalibrálás</string>
 	<!-- Search Suggestion -->
@@ -449,7 +449,7 @@
 	<!-- RouteNotFound -->
 	<string name="routing_failed_route_not_found">Nem találtunk útvonalat a kiválasztott kiindulópont és az úti cél között. Kérjük, válasszon másik kiinduló- vagy végpontot.</string>
 	<!-- InternalError -->
-	<string name="routing_failed_internal_error">Belső hiba történt. Kérjük, próbálja meg kitörölni és újra letölteni a térképet. Ha a probléma továbbra is fennáll, kérjük, vegye fel velünk a kapcsolatot a support@maps.me e-mail címen.</string>
+	<string name="routing_failed_internal_error">Belső hiba történt. Kérjük, próbálja meg kitörölni és újra letölteni a térképet. Ha a probléma továbbra is fennáll, kérjük, vegye fel velünk a kapcsolatot a support@maps.me email címen.</string>
 	<!-- Context menu item for downloader. -->
 	<string name="downloader_download_map_and_routing">Térkép + útvonal letöltése</string>
 	<!-- Context menu item for downloader. -->
@@ -587,7 +587,6 @@
 	<string name="dialog_routing_send_error">Probléma bejelentése</string>
 	<string name="dialog_routing_if_get_cross_route">Szeretne egy közvetlenebb útvonalat létrehozni, amely több, mint egy térképen terül el?</string>
 	<string name="dialog_routing_cross_route_is_optimal">Elérhető egy optimálisabb útvonal, amely áthalad a jelenlegi térkép szélén.</string>
-	<string name="dialog_routing_always_cross_that_border">Mindig haladjon át ezen a határon</string>
 	<string name="not_now">Most nem</string>
 	<string name="dialog_routing_build_route">Létrehozás</string>
 	<string name="dialog_routing_download_and_build_cross_route">Szeretné letölteni a térképet és létrehozni egy optimálisabb útvonalat, amely több, mint egy térképen terül el?</string>
@@ -631,7 +630,6 @@
 	<string name="clear_search">A keresési előzmények törlése</string>
 	<!-- Title for settings to enable/disable showcase menu button -->
 	<string name="showcase_settings_title">Ajánlatok mutatása</string>
-	<string name="showcase_more_apps">Több My.com alkalmazás</string>
 	<string name="p2p_route_planning">Útvonaltervezés</string>
 	<string name="p2p_your_location">Az Ön helyzete</string>
 	<string name="p2p_from">Az indulás helye</string>
@@ -699,7 +697,7 @@
 	<string name="forgot_password">Elfelejtett jelszó?</string>
 	<!-- Forgot Password dialog title -->
 	<string name="restore_password">Jelszó visszaállítása</string>
-	<string name="enter_email_address_to_reset_password">Add meg a regisztrációkor használt e-mail-címedet és elküldjük neked a jelszavad megújításához szükséges linket.</string>
+	<string name="enter_email_address_to_reset_password">Add meg a regisztrációkor használt email-címedet és elküldjük neked a jelszavad megújításához szükséges linket.</string>
 	<string name="reset_password">Jelszó visszaállítása</string>
 	<string name="username">Felhasználónév</string>
 	<string name="osm_account">OSM-felhasználói fiók</string>
@@ -715,9 +713,12 @@
 	<string name="login_with_openstreetmap">Jelentkezz be a www.openstreetmap.org oldalon</string>
 	<string name="edit_place">Hely szerkesztése</string>
 	<string name="place_name">Hely neve</string>
-	<string name="place_name_caption">Adja meg a táblán vagy az utcatáblán megjelenő nevet</string>
 	<!-- title above languages list cells in the editor, below editable name text field. -->
 	<string name="other_languages">Más nyelv</string>
+	<!-- small button to open list with names in different languages -->
+	<string name="show_more">Több mutatása</string>
+	<!-- small button to close list with names in different languages -->
+	<string name="show_less">Kevesebb mutatása</string>
 	<string name="add_language">Nyelv hozzáadása</string>
 	<string name="street">Utca</string>
 	<!-- Editable House Number text field (in address block). -->
@@ -731,7 +732,7 @@
 	<string name="cuisine">Konyha</string>
 	<string name="select_cuisine">Válassz Konyhát</string>
 	<!-- login text field -->
-	<string name="email_or_username">E-mail vagy felhasználónév</string>
+	<string name="email_or_username">Email vagy felhasználónév</string>
 	<string name="phone">Telefonszám</string>
 	<string name="please_note">Megjegyzés</string>
 	<string name="common_no_wifi_dialog">Nincs WiFi-kapcsolat. Szeretnéd folytatni mobil adatforgalom használatával?</string>
@@ -763,7 +764,6 @@
 	<string name="editor_edit_place_category_title">Kategória</string>
 	<string name="detailed_problem_description">A probléma részletes leírása</string>
 	<string name="editor_report_problem_other_title">Különböző probléma</string>
-	<string name="placepage_add_place_button">Hely hozzáadása</string>
 	<string name="placepage_report_problem_button">Hibabejelentés</string>
 	<string name="placepage_add_business_button">Szervezet hozzáadása</string>
 	<string name="whatsnew_smallmwm_header">Te kérted, mi elkészítettük</string>
@@ -798,6 +798,7 @@
 	<string name="download_over_mobile_message">Ez jelentősen drága lehet némely előfizetés vagy roaming keretein belül.</string>
 	<string name="error_enter_correct_house_number">Helyes házszámot adjon meg</string>
 	<string name="editor_storey_number">Az emeletek száma (legfeljebb %d)</string>
+	<!-- Error message in Editor when a user tries to set the number of floors for a building higher than 25 -->
 	<string name="error_enter_correct_storey_number">Legfeljebb 25 emeletes épület szerkesztése</string>
 	<string name="editor_zip_code">Irányítószám</string>
 	<string name="error_enter_correct_zip_code">Írja be a helyes irányítószámot</string>
@@ -811,7 +812,6 @@
 	<string name="editor_tag_description">Írja ide a működtetésért felelős cég, szervezet vagy magánszemély nevét.</string>
 	<string name="editor_no_local_edits_title">Nincsenek helyi módosításai</string>
 	<string name="editor_no_local_edits_description">Itt a pillanatnyilag csak az Ön készülékén elérhető térképek javasolt módosításainak száma látható.</string>
-	<string name="editor_international_names_subtitle">Név más nyelveken</string>
 	<string name="editor_send_to_osm">Küldés az OSM-nek</string>
 	<string name="editor_remove">Eltávolítás</string>
 	<string name="downloader_my_maps_title">Térképeim</string>
@@ -833,7 +833,8 @@
 	<string name="location_services_disabled_message">Kapcsolja be a földrajzi helymeghatározást a készülék beállításaiban</string>
 	<string name="location_services_disabled_1">1. Nyissa meg a Beállításokat</string>
 	<string name="location_services_disabled_2">2. Érintse meg a Helyzet gombot</string>
-	<string name="location_services_disabled_3">3. Válassza ki a Mindig gombot</string>
+	<!-- iOS Dialog for the case when the location permission is not granted -->
+	<string name="location_services_disabled_3">3. Kiválaszt az alkalmazás használata alatt</string>
 	<string name="placepage_parking_surface">Szabadtéri parkoló</string>
 	<string name="placepage_parking_multistorey">Parkolóház</string>
 	<string name="placepage_parking_underground">Föld alatti parkoló</string>
@@ -852,9 +853,16 @@
 	<string name="place_page_starting_from">kezdőár %s</string>
 	<string name="meter">m</string>
 	<string name="kilometer">km</string>
+	<string name="kilometers_per_hour">km/h</string>
+	<string name="mile">mf</string>
+	<string name="foot">l</string>
+	<string name="miles_per_hour">mph</string>
+	<string name="day">n</string>
+	<string name="hour">ó</string>
+	<string name="minute">p</string>
 	<string name="placepage_place_description">Leírás</string>
 	<string name="placepage_more_button">Még</string>
-	<string name="bookingcom_book_button">Foglalás</string>
+	<string name="book_button">Foglalás</string>
 	<string name="placepage_call_button">Hívás</string>
 	<string name="placepage_edit_bookmark_button">Könyvjelző szerkesztése</string>
 	<string name="placepage_bookmark_name_hint">Könyvjelző neve</string>
@@ -869,18 +877,167 @@
 	<string name="editor_status_sending">Küldés…</string>
 	<string name="editor_place_doesnt_exist">A hely nem létezik</string>
 	<string name="text_more_button">…tovább</string>
-	<string name="error_enter_correct_phone">Adj meg egy telefonszámot betűk nélkül</string>
+	<!-- Phone number error message -->
+	<string name="error_enter_correct_phone">Adja meg a helyes telefonszámot</string>
 	<string name="error_enter_correct_web">Adj meg egy érvényes weboldalcímet</string>
-	<string name="error_enter_correct_email">Adj meg egy érvényes e-mail-címet</string>
+	<string name="error_enter_correct_email">Adj meg egy érvényes email-címet</string>
 	<string name="error_enter_correct">Adj meg egy érvényes értéket</string>
 	<string name="editor_profile_changes_for_next_place">Változtatások a jobb helyért: %d</string>
 	<string name="editor_profile_rating_place">Ranglista helyezés</string>
 	<string name="booking_dialog_not_connect_header">A szálloda lefoglalásához csatlakozzon az internethez</string>
-	<string name="whatsnew_booking_header">Szálloda foglalása az alkalmazásból</string>
-	<string name="whatsnew_booking_message">Amikor szállodát keresel, az alkalmazás megjeleníti a hotel árkategóriáját és értékelését.</string>
 	<string name="button_try">Próbáld ki</string>
-	<string name="whatsnew_cycle_navigation_header">Kerékpáros navigáció (béta verzió)</string>
-	<string name="whatsnew_cycle_navigation_message">Most teszteljük a kerékpáros navigációt a következő évszakra. Próbáld ki kedvenc kerékpáros útvonalad a MAPS.ME-vel és oszd meg velünk véleményedet.</string>
 	<string name="refresh">Frissítés</string>
 	<string name="last_update">Utolsó frissítés: %s</string>
+	<string name="booking_checkin">bejelentkezés: %s</string>
+	<string name="booking_checkout">kijelentkezés: %s</string>
+	<string name="placepage_add_place_button">Hely hozzáadása a térképhez</string>
+	<!-- Displayed when saving some edits to the map to warn against publishing personal data -->
+	<string name="editor_share_to_all_dialog_title">Szeretnéd elküldeni az összes felhasználónak?</string>
+	<!-- iOS Dialog before publishing the modifications to the public map. -->
+	<string name="editor_share_to_all_dialog_message_1">Győződj meg arról, hogy nem adsz meg semmilyen személyes információt.</string>
+	<string name="editor_share_to_all_dialog_message_2">Ellenőrizni fogjuk a változásokat. Ha bármilyen kérdésünk van, emailben keresünk.</string>
+	<string name="navigation_overview_button">áttekintés</string>
+	<string name="navigation_stop_button">megállítás</string>
+	<!-- Text on an empty bookmark page -->
+	<string name="bookmarks_empty_title">Könyvjelzők mentése</string>
+	<string name="bookmarks_empty_message_1">Koppintson a ★-ra a kedvenc helyei mentéséhez, gyors eléréséhez.</string>
+	<string name="bookmarks_empty_message_2">Importálja a könyvjelzőket a levelezésből és a böngészőből.</string>
+	<string name="bookmarks_empty_message_3">kijelentkezés: %s</string>
+	<!-- Name of the group for booked hotels -->
+	<string name="bookmarks_group_name">Hotelfoglalások</string>
+	<string name="place_page_button_read_descriprion">Olvassa el</string>
+	<!-- iOS dialog for the case when recent track recording is on and the app comes back from background -->
+	<string name="recent_track_background_dialog_title">Megszakítod a legutóbb megtett utad rögzítését?</string>
+	<!-- If a hotel is being shared -->
+	<string name="sharing_booking">vagy foglaljon a booking.com-on</string>
+	<string name="off_recent_track_background_button">Megszakítás</string>
+	<!-- For sharing via SMS and so on -->
+	<string name="sharing_call_action_look">Tekintse meg</string>
+	<string name="continue_recent_track_background_button">Folytatás</string>
+	<string name="recent_track_background_dialog_message">A MAPS.ME a geopozíciód használatával a háttérben rögzíti a legutóbb megtett utad.</string>
+	<string name="whatsnew_car_navigation_header">Felhasználóbarát járműnavigáció</string>
+	<string name="whatsnew_car_navigation_message">• A navigációs elemek kevesebb helyet foglalnak.\n• Megjelenítjük a sebességet és hozzáadtunk egy automatikus nagyítási lehetőséget is.</string>
+	<string name="whatsnew_cycle_navigation_2_header">Biciklinavigáció</string>
+	<string name="whatsnew_cycle_navigation_2_message">• A biciklinavigáció figyelembe veszi a terepadatokat.\n• Az út meredekségét figyelembe véve alakítjuk ki az könnyebb útvonalat.</string>
+	<string name="whatsnew_booking_2_header">Könnyű szállodakeresés</string>
+	<string name="whatsnew_booking_2_message">A keresési eredmények megjelenítik a szálloda értékelését és árkategóriáját.</string>
+	<string name="whatsnew_cycle_navigation_header">Kerékpáros navigáció (béta verzió)</string>
+	<string name="whatsnew_cycle_navigation_message">Most teszteljük a kerékpáros navigációt a következő évszakra. Próbáld ki kedvenc kerékpáros útvonalad a MAPS.ME-vel és oszd meg velünk véleményedet.</string>
+	<!-- Rate on Google Play (Android only) -->
+	<string name="rate_gp">Arány a Google Play-n</string>
+	<!-- Share with friends: menu item title -->
+	<string name="tell_friends">Mondja el egy ismerősének</string>
+	<!-- Share with friends: sharing text -->
+	<string name="tell_friends_text">Szia! Telepítsd a MAPS.ME alkalmazást!</string>
+	<!-- About short text (below logo) -->
+	<string name="about_description">A MAPS.ME egy nélkülözhetetlen alkalmazás utazáshoz. A MAPS.ME az OpenStreetMap adataira épül, és lehetővé teszi ezek szerkesztését.</string>
+	<!-- Text in menu -->
+	<string name="blog">Blog</string>
+	<!-- Hint near allow statictics checkbox -->
+	<string name="allow_statistics_hint">A használati statisztika gyűjtésével segít nekünk az alkalmazás tökéletesítésében.</string>
+	<string name="general_settings">Általános beállítások</string>
+	<string name="date">Dátum %d</string>
+	<!-- "Report a bug" -> "Generaal Feedback" -> "Something is not working" -->
+	<string name="something_is_not_working">Valami nem működik</string>
+	<!-- For the first routing -->
+	<string name="accept">Elfogadja</string>
+	<!-- For the first routing -->
+	<string name="decline">Elutasítja</string>
+	<string name="whats_new_route_profile_title">Az árkot jobb megkerülni, mint beleesni</string>
+	<string name="whats_new_route_profile_message">A gyalogos és kerékpáros utakat most már emelkedési profillal jelenítjük meg.</string>
+	<string name="whats_new_booking_improve_title">Takarékoskodjon szálláshely foglalásakor</string>
+	<string name="whats_new_booking_improve_message">A szálláshely keresési eredménye már tartalmazza az árkategóriát. \nEmellett kiegészítettük több mint 110.000 szálláshellyel.</string>
+	<!-- For place page hotel facilities block -->
+	<string name="placepage_hotel_facilities">Létesítmények</string>
+	<!-- For place page hotel nearby block -->
+	<string name="placepage_hotel_nearby">Közeli</string>
+	<!-- For ordering a taxi (as opposed to hotels or other things) -->
+	<string name="taxi_order">Taxi rendelés</string>
+	<!-- How long it is until the taxi arrives -->
+	<string name="taxi_wait">Várható %s</string>
+	<!-- When there are no available taxis nearby -->
+	<string name="taxi_not_found">Nem talált taxit a közelben</string>
+	<string name="install_app">Telepítés</string>
+	<!-- `Filter` is a noun here -->
+	<string name="booking_filters">Szűrő</string>
+	<string name="booking_filters_reset">Alaphelyzetbe állítás</string>
+	<string name="booking_filters_rating">Minősítés</string>
+	<string name="booking_filters_rating_any">Bármelyik</string>
+	<string name="booking_filters_ragting_good">Jó</string>
+	<string name="booking_filters_rating_very_good">Nagyon jó</string>
+	<string name="booking_filters_rating_excellent">Kiváló</string>
+	<string name="booking_filters_price_category">Árkategória</string>
+	<string name="search_no_results_title">Nincs találat</string>
+	<string name="search_no_results_message">Próbálkozzon általánosabb kereső kifejezéssel, tágítsa vagy törölje a szűrőt.</string>
+	<string name="search_no_results_expand_area_button">Kicsinyítés</string>
+	<string name="search_no_results_reset_button">Szűrő nullázása</string>
+	<!-- noun -->
+	<string name="search_in_table">Lista</string>
+	<string name="booking_based_on_reviews">%d hotel-értékelés alapján</string>
+	<string name="booking_show_more">Több megjelenítése</string>
+	<string name="booking_reviews">Bírálatok</string>
+	<string name="booking_hotel">Szálloda</string>
+	<!-- hotel room -->
+	<string name="booking_hotel_room">Szoba</string>
+	<!-- A neologism for a chat based on geographical proximity -->
+	<string name="chat">Geochat</string>
+	<!-- Verb. Text on a button that opens the chat. -->
+	<string name="chat_open">Megnyitás</string>
+	<string name="whatsnew_uber_header">MAPS.ME és Uber</string>
+	<string name="whatsnew_uber_message">Hívj Uber-taxit közvetlenül az alkalmazásból!</string>
+	<string name="dialog_taxi_offline">Taxirendelés offline módban nem lehetséges.</string>
+	<string name="dialog_taxi_error">A taxirendelés átmenetileg nem elérhető.</string>
+	<string name="advertisement">Hirdetés</string>
+	<string name="mobile_data_dialog">Részletes információk megjelenítése a mobil internet segítségével?</string>
+	<string name="mobile_data_option_always">Mindig használja</string>
+	<string name="mobile_data_option_today">Csak ma</string>
+	<string name="mobile_data_option_not_today">Ma nem használhatja</string>
+	<string name="mobile_data">Mobil Internet</string>
+	<string name="mobile_data_description">Mobil internetre van szükség helyszínekre vonatkozó részletes információ, mint például fotók, árak és szemlék megjelenítéséhez.</string>
+	<string name="mobile_data_option_never">Soha se használja</string>
+	<string name="mobile_data_option_ask">Mindig kérdezze meg</string>
+	<string name="traffic_update_maps_text">Forgalmi adatok megjelenítéséhez a térképeket frissíteni kell.</string>
+	<string name="traffic_outdated">A forgalmi adatok elavultak.</string>
+	<string name="big_font">Nagyobb címkék</string>
+	<string name="traffic_update_app">Kérjük, frissítse a MAPS.ME alkalmazást</string>
+	<!-- "traffic" as in road congestion -->
+	<string name="traffic_update_app_message">A forgalmi adatok megjelenítéséhez frissíteni kell az alkalmazást.</string>
+	<!-- "traffic" as in "road congestion" -->
+	<string name="traffic_data_unavailable">Forgalmi adatok nem állnak rendelkezésre</string>
+	<string name="banner_deliveryclub_title">Ételfutár</string>
+	<string name="banner_deliveryclub_message">Gyors házhozszállítás 4000 étteremből. Rendelés a Delivery Club-ból.</string>
+	<string name="banner_lamoda_title">Online ruházati és cipő üzlet</string>
+	<string name="banner_lamoda_message">Több mint 1000 márka. Akár 70 % kedvezmény. Ingyenes szállítás az ország egész területén.</string>
+	<string name="banner_tutu_title">Vonatjegy az interneten keresztül</string>
+	<string name="banner_tutu_message">Vonatjegy interneten minden városba - árak, keresés és foglalás.</string>
+	<string name="banner_geerbest_title">Internetes elektronikai áruház</string>
+	<string name="banner_geerbest_message">Több mint 50.000 cikk azonnali keresése alacsony áron.</string>
+	<string name="banner_rentalcars_title">Autóbérlés az interneten</string>
+	<string name="banner_rentalcars_message">800 autókölcsönző cég több mint 49.000 autókölcsönzési helyszínen.</string>
+	<string name="banner_viator_title">Utazások keresése az interneten</string>
+	<string name="banner_viator_message">Több mint 50.000 utazás keresése a világ minden táján.</string>
+	<!-- december -->
+	<string name="whatsnew_traffic">Forgalmi adatok 36 országban</string>
+	<!-- december -->
+	<string name="whatsnew_traffic_text">Aktuális forgalmi információk és a leggyorsabb útvonalak ezek alapján!</string>
+	<!-- december -->
+	<string name="whatsnew_traffic_roaming">Forgalmi információ a barangolásban</string>
+	<!-- december -->
+	<string name="whatsnew_traffic_roaming_text">Utazásonként kevesebb, mint 1 MB mobil sávszélességet igényel.</string>
+	<!-- december -->
+	<string name="whatsnew_order_taxi">Taxi rendelés</string>
+	<!-- december -->
+	<string name="whatsnew_order_taxi_text">A legtöbb helymeghatározó oldalon már megtalálható a taxirendelés gombja.</string>
+	<!-- january -->
+	<string name="whatsnew_improved_search">Továbbfejlesztett keresés</string>
+	<!-- january -->
+	<string name="whatsnew_improved_search_text">Még a hibásan írt lekérdezések is pontos keresési eredményeket adnak.</string>
+	<!-- january -->
+	<string name="whatsnew_filters_in_search">Keresési szűrők</string>
+	<!-- january -->
+	<string name="whatsnew_filters_in_search_text">Szálláshelyek keresése ár és minősítés alapján.</string>
+	<!-- january -->
+	<string name="whatsnew_font_size">Betűméret</string>
+	<!-- january -->
+	<string name="whatsnew_font_size_text">A térképen a címkék lehetnek nagyobbak.</string>
 </resources>

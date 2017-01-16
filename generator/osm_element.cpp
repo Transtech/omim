@@ -3,9 +3,9 @@
 #include "base/string_utils.hpp"
 #include "coding/parse_xml.hpp"
 
-#include "std/cstdio.hpp"
 #include "std/algorithm.hpp"
-
+#include "std/cstdio.hpp"
+#include "std/sstream.hpp"
 
 string DebugPrint(OsmElement::EntityType e)
 {
@@ -121,7 +121,27 @@ string OsmElement::ToString(string const & shift) const
   return ss.str();
 }
 
+string OsmElement::GetTag(string const & key) const
+{
+  auto const it = find_if(begin(m_tags), end(m_tags), [&key](Tag const & tag)
+  {
+    return tag.key == key;
+  });
+
+  if (it == end(m_tags))
+    return {};
+
+  return it->value;
+}
+
 string DebugPrint(OsmElement const & e)
 {
   return e.ToString();
+}
+
+string DebugPrint(OsmElement::Tag const & tag)
+{
+  stringstream ss;
+  ss << tag.key << '=' << tag.value;
+  return ss.str();
 }

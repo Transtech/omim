@@ -4,6 +4,8 @@
 
 #include "std/target_os.hpp"
 
+#import "3party/Alohalytics/src/alohalytics_objc.h"
+
 #include <IOKit/IOKitLib.h>
 #include <Foundation/NSBundle.h>
 #include <Foundation/NSPathUtilities.h>
@@ -19,8 +21,6 @@
 
 Platform::Platform()
 {
-  NSAutoreleasePool * pool = [[NSAutoreleasePool alloc] init];
-
   // get resources directory path
   string const resourcesPath = [[[NSBundle mainBundle] resourcePath] UTF8String];
   string const bundlePath = [[[NSBundle mainBundle] bundlePath] UTF8String];
@@ -78,20 +78,9 @@ Platform::Platform()
   LOG(LDEBUG, ("Writable Directory:", m_writableDir));
   LOG(LDEBUG, ("Tmp Directory:", m_tmpDir));
   LOG(LDEBUG, ("Settings Directory:", m_settingsDir));
-
-  [pool release];
 }
 
-string Platform::UniqueClientId() const
-{
-  io_registry_entry_t ioRegistryRoot = IORegistryEntryFromPath(kIOMasterPortDefault, "IOService:/");
-  CFStringRef uuidCf = (CFStringRef) IORegistryEntryCreateCFProperty(ioRegistryRoot, CFSTR(kIOPlatformUUIDKey), kCFAllocatorDefault, 0);
-  IOObjectRelease(ioRegistryRoot);
-  char uidBuf[513];
-  CFStringGetCString(uuidCf, uidBuf, ARRAY_SIZE(uidBuf) - 1, kCFStringEncodingUTF8);
-  CFRelease(uuidCf);
-  return HashUniqueID(uidBuf);
-}
+string Platform::UniqueClientId() const { return [Alohalytics installationId].UTF8String; }
 
 static void PerformImpl(void * obj)
 {

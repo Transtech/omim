@@ -9,6 +9,8 @@
 #include "routing/turns.hpp"
 #include "routing/turn_candidate.hpp"
 
+#include "traffic/traffic_info.hpp"
+
 #include "std/function.hpp"
 #include "std/utility.hpp"
 #include "std/vector.hpp"
@@ -40,12 +42,15 @@ using TGetIndexFunction = function<size_t(pair<size_t, size_t>)>;
  * \param turnsDir output turns annotation storage.
  * \param times output times annotation storage.
  * \param streets output street names along the path.
+ * \param traffic road traffic information.
  * \return routing operation result code.
  */
 IRouter::ResultCode MakeTurnAnnotation(turns::IRoutingResult const & result,
-                                       RouterDelegate const & delegate, vector<m2::PointD> & points,
+                                       RouterDelegate const & delegate,
+                                       vector<Junction> & points,
                                        Route::TTurns & turnsDir, Route::TTimes & times,
-                                       Route::TStreets & streets);
+                                       Route::TStreets & streets,
+                                       vector<traffic::TrafficInfo::RoadSegmentId> & trafficSegs);
 
 /*!
  * \brief The TurnInfo struct is a representation of a junction.
@@ -72,7 +77,7 @@ double CalculateMercatorDistanceAlongPath(uint32_t startPointIndex, uint32_t end
  * \brief Selects lanes which are recommended for an end user.
  */
 void SelectRecommendedLanes(Route::TTurns & turnsDir);
-void FixupTurns(vector<m2::PointD> const & points, Route::TTurns & turnsDir);
+void FixupTurns(vector<Junction> const & points, Route::TTurns & turnsDir);
 inline size_t GetFirstSegmentPointIndex(pair<size_t, size_t> const & p) { return p.first; }
 
 TurnDirection InvertDirection(TurnDirection dir);
@@ -130,9 +135,10 @@ TurnDirection GetRoundaboutDirection(bool isIngoingEdgeRoundabout, bool isOutgoi
 void GetTurnDirection(IRoutingResult const & result, turns::TurnInfo & turnInfo, TurnItem & turn);
 
 /*!
- * \brief Finds an UTurn that starts from current segment and returns how many segments it lasts.
- * Returns 0 if there is no UTurn.
- * Warning! currentSegment must be greater than 0.
+ * \brief Finds an U-turn that starts from master segment and returns how many segments it lasts.
+ * \returns an index in |segments| that has the opposite direction with master segment
+ * (|segments[currentSegment - 1]|) and 0 if there is no UTurn.
+ * \warning |currentSegment| must be greater than 0.
  */
 size_t CheckUTurnOnRoute(TUnpackedPathSegments const & segments,
                          size_t currentSegment, TurnItem & turn);

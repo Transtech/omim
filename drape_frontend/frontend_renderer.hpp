@@ -12,6 +12,7 @@
 
 #include "drape_frontend/backend_renderer.hpp"
 #include "drape_frontend/base_renderer.hpp"
+#include "drape_frontend/drape_api_renderer.hpp"
 #include "drape_frontend/gps_track_renderer.hpp"
 #include "drape_frontend/my_position_controller.hpp"
 #include "drape_frontend/navigator.hpp"
@@ -20,6 +21,7 @@
 #include "drape_frontend/route_renderer.hpp"
 #include "drape_frontend/threads_commutator.hpp"
 #include "drape_frontend/tile_info.hpp"
+#include "drape_frontend/traffic_renderer.hpp"
 #include "drape_frontend/user_event_stream.hpp"
 
 #include "drape/pointers.hpp"
@@ -37,6 +39,7 @@
 #include "std/function.hpp"
 #include "std/map.hpp"
 #include "std/array.hpp"
+#include "std/unordered_set.hpp"
 
 namespace dp
 {
@@ -83,9 +86,11 @@ public:
            ref_ptr<RequestedTiles> requestedTiles,
            double timeInBackground,
            bool allow3dBuildings,
+           bool trafficEnabled,
            bool blockTapEvents,
            bool firstLaunch,
-           bool isRoutingActive)
+           bool isRoutingActive,
+           bool isAutozoomEnabled)
       : BaseRenderer::Params(commutator, factory, texMng)
       , m_viewport(viewport)
       , m_modelViewChangedFn(modelViewChangedFn)
@@ -96,9 +101,11 @@ public:
       , m_requestedTiles(requestedTiles)
       , m_timeInBackground(timeInBackground)
       , m_allow3dBuildings(allow3dBuildings)
+      , m_trafficEnabled(trafficEnabled)
       , m_blockTapEvents(blockTapEvents)
       , m_firstLaunch(firstLaunch)
       , m_isRoutingActive(isRoutingActive)
+      , m_isAutozoomEnabled(isAutozoomEnabled)
     {}
 
     Viewport m_viewport;
@@ -110,9 +117,11 @@ public:
     ref_ptr<RequestedTiles> m_requestedTiles;
     double m_timeInBackground;
     bool m_allow3dBuildings;
+    bool m_trafficEnabled;
     bool m_blockTapEvents;
     bool m_firstLaunch;
     bool m_isRoutingActive;
+    bool m_isAutozoomEnabled;
   };
 
   FrontendRenderer(Params const & params);
@@ -133,19 +142,23 @@ public:
   void AfterDrawFrame();
 #endif
 
-  void AddUserEvent(UserEvent const & event);
+  void AddUserEvent(drape_ptr<UserEvent> && event);
 
   /// MyPositionController::Listener
   void PositionChanged(m2::PointD const & position) override;
-  void ChangeModelView(m2::PointD const & center, int zoomLevel) override;
-  void ChangeModelView(double azimuth) override;
-  void ChangeModelView(m2::RectD const & rect) override;
-  void ChangeModelView(m2::PointD const & userPos, double azimuth,
-                       m2::PointD const & pxZero, int preferredZoomLevel) override;
+  void ChangeModelView(m2::PointD const & center, int zoomLevel, TAnimationCreator const & parallelAnimCreator) override;
+  void ChangeModelView(double azimuth, TAnimationCreator const & parallelAnimCreator) override;
+  void ChangeModelView(m2::RectD const & rect, TAnimationCreator const & parallelAnimCreator) override;
+  void ChangeModelView(m2::PointD const & userPos, double azimuth, m2::PointD const & pxZero,
+                       int preferredZoomLevel, TAnimationCreator const & parallelAnimCreator) override;
+  void ChangeModelView(double autoScale, m2::PointD const & userPos, double azimuth, m2::PointD const & pxZero,
+                       TAnimationCreator const & parallelAnimCreator) override;
 
 protected:
   void AcceptMessage(ref_ptr<Message> message) override;
   unique_ptr<threads::IRoutine> CreateRoutine() override;
+  void OnContextCreate() override;
+  void OnContextDestroy() override;
 
 private:
   void OnResize(ScreenBase const & screen);
@@ -154,15 +167,17 @@ private:
   void MergeBuckets();
   void RenderSingleGroup(ScreenBase const & modelView, ref_ptr<BaseRenderGroup> group);
   void RefreshProjection(ScreenBase const & screen);
-  void RefreshModelView(ScreenBase const & screen);
+  void RefreshZScale(ScreenBase const & screen);
   void RefreshPivotTransform(ScreenBase const & screen);
   void RefreshBgColor();
 
   //////
   /// Render part of scene
   void Render2dLayer(ScreenBase const & modelView);
-  void Render3dLayer(ScreenBase const & modelView);
+  void Render3dLayer(ScreenBase const & modelView, bool useFramebuffer);
   void RenderOverlayLayer(ScreenBase const & modelView);
+  void RenderUserMarksLayer(ScreenBase const & modelView);
+  void RenderTrafficAndRouteLayer(ScreenBase const & modelView);
   //////
   ScreenBase const & ProcessEvents(bool & modelViewChanged, bool & viewportChanged);
   void PrepareScene(ScreenBase const & modelView);
@@ -193,8 +208,8 @@ private:
   void CorrectGlobalScalePoint(m2::PointD & pt) const override;
   void OnScaleEnded() override;
   void OnAnimatedScaleEnded() override;
-  void OnAnimationStarted(ref_ptr<Animation> anim) override;
   void OnTouchMapAction() override;
+  bool OnNewVisibleViewport(m2::RectD const & oldViewport, m2::RectD const & newViewport, m2::PointD & gOffset) override;
 
   class Routine : public threads::IRoutine
   {
@@ -209,6 +224,7 @@ private:
   };
 
   void ReleaseResources();
+  void UpdateGLResources();
 
   void BeginUpdateOverlayTree(ScreenBase const & modelView);
   void UpdateOverlayTree(ScreenBase const & modelView, drape_ptr<RenderGroup> & renderGroup);
@@ -221,7 +237,7 @@ private:
   using TRenderGroupRemovePredicate = function<bool(drape_ptr<RenderGroup> const &)>;
   void RemoveRenderGroupsLater(TRenderGroupRemovePredicate const & predicate);
 
-  void FollowRoute(int preferredZoomLevel, int preferredZoomLevelIn3d);
+  void FollowRoute(int preferredZoomLevel, int preferredZoomLevelIn3d, bool enableAutoZoom);
   void InvalidateRect(m2::RectD const & gRect);
   bool CheckTileGenerations(TileKey const & tileKey);
   void UpdateCanBeDeletedStatus();
@@ -233,11 +249,13 @@ private:
 
   bool IsPerspective() const;
 
-  void PrepareGpsTrackPoints(size_t pointsCount);
+  void PrepareGpsTrackPoints(uint32_t pointsCount);
 
   void PullToBoundArea(bool randomPlace, bool applyZoom);
 
   void ProcessSelection(ref_ptr<SelectObjectMessage> msg);
+
+  void OnCacheRouteArrows(int routeIndex, vector<ArrowBorders> const & borders);
 
   drape_ptr<dp::GpuProgramManager> m_gpuProgramManager;
 
@@ -261,15 +279,17 @@ private:
 
   array<RenderLayer, RenderLayer::LayerCountID> m_layers;
   vector<drape_ptr<UserMarkRenderGroup>> m_userMarkRenderGroups;
-  set<TileKey> m_userMarkVisibility;
+  unordered_set<size_t> m_userMarkVisibility;
 
   drape_ptr<gui::LayerRenderer> m_guiRenderer;
   drape_ptr<MyPositionController> m_myPositionController;
   drape_ptr<SelectionShape> m_selectionShape;
   drape_ptr<RouteRenderer> m_routeRenderer;
+  drape_ptr<TrafficRenderer> m_trafficRenderer;
   drape_ptr<Framebuffer> m_framebuffer;
   drape_ptr<TransparentLayer> m_transparentLayer;
   drape_ptr<GpsTrackRenderer> m_gpsTrackRenderer;
+  drape_ptr<DrapeApiRenderer> m_drapeApiRenderer;
 
   drape_ptr<dp::OverlayTree> m_overlayTree;
 
@@ -298,16 +318,21 @@ private:
   uint64_t m_maxGeneration;
   int m_mergeBucketsCounter = 0;
 
+  int m_lastRecacheRouteId = 0;
+
   struct FollowRouteData
   {
     FollowRouteData(int preferredZoomLevel,
-                    int preferredZoomLevelIn3d)
+                    int preferredZoomLevelIn3d,
+                    bool enableAutoZoom)
       : m_preferredZoomLevel(preferredZoomLevel)
       , m_preferredZoomLevelIn3d(preferredZoomLevelIn3d)
+      , m_enableAutoZoom(enableAutoZoom)
     {}
 
     int m_preferredZoomLevel;
     int m_preferredZoomLevelIn3d;
+    bool m_enableAutoZoom;
   };
 
   unique_ptr<FollowRouteData> m_pendingFollowRoute;
@@ -315,6 +340,11 @@ private:
   vector<m2::TriangleD> m_dragBoundArea;
 
   drape_ptr<SelectObjectMessage> m_selectObjectMessage;
+
+  bool m_needRestoreSize;
+
+  bool m_needRegenerateTraffic;
+  bool m_trafficEnabled;
 
 #ifdef DEBUG
   bool m_isTeardowned;

@@ -23,9 +23,11 @@ public:
     ClearUserMarkLayer,
     ChangeUserMarkLayerVisibility,
     UpdateUserMarkLayer,
+    FlushUserMarks,
     GuiLayerRecached,
     GuiRecache,
     GuiLayerLayout,
+    MapShapesRecache,
     MapShapes,
     ChangeMyPostitionMode,
     CompassInfo,
@@ -36,9 +38,11 @@ public:
     GetMyPosition,
     AddRoute,
     CacheRouteSign,
+    CacheRouteArrows,
     RemoveRoute,
     FlushRoute,
     FlushRouteSign,
+    FlushRouteArrows,
     FollowRoute,
     DeactivateRouteFollowing,
     UpdateMapStyle,
@@ -56,18 +60,33 @@ public:
     BlockTapEvents,
     SetTimeInBackground,
     SetAddNewPlaceMode,
-    SetDisplacementMode
+    SetDisplacementMode,
+    AllowAutoZoom,
+    RequestSymbolsSize,
+    RecoverGLResources,
+    SetVisibleViewport,
+    EnableTraffic,
+    FlushTrafficGeometry,
+    RegenerateTraffic,
+    UpdateTraffic,
+    FlushTrafficData,
+    ClearTrafficData,
+    DrapeApiAddLines,
+    DrapeApiRemove,
+    DrapeApiFlush,
   };
 
   virtual ~Message() {}
   virtual Type GetType() const { return Unknown; }
+  virtual bool IsGLContextDependent() const { return false; }
 };
 
 enum class MessagePriority
 {
   Normal,
   High,
-  UberHighSingleton
+  UberHighSingleton,
+  Low
 };
 
 } // namespace df

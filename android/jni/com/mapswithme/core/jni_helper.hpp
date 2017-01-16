@@ -11,6 +11,13 @@
 
 extern jclass g_mapObjectClazz;
 extern jclass g_bookmarkClazz;
+extern jclass g_myTrackerClazz;
+extern jclass g_httpClientClazz;
+extern jclass g_httpParamsClazz;
+extern jclass g_httpHeaderClazz;
+extern jclass g_platformSocketClazz;
+extern jclass g_utilsClazz;
+extern jclass g_bannerClazz;
 
 namespace jni
 {
@@ -69,10 +76,10 @@ jobjectArray ToJavaArray(JNIEnv * env, jclass clazz, TIt begin, TIt end, size_t 
 template<typename TContainer, typename TToJavaFn>
 jobjectArray ToJavaArray(JNIEnv * env, jclass clazz, TContainer const & src, TToJavaFn && toJavaFn)
 {
-  return ToJavaArray(env, clazz, begin(src), end(src), src.size(), forward<TToJavaFn>(toJavaFn));
+  return ToJavaArray(env, clazz, begin(src), end(src), src.size(), std::forward<TToJavaFn>(toJavaFn));
 }
 
-jobjectArray ToJavaStringArray(JNIEnv * env, vector<string> const & src);
+jobjectArray ToJavaStringArray(JNIEnv * env, std::vector<std::string> const & src);
 
 void DumpDalvikReferenceTables();
 }  // namespace jni

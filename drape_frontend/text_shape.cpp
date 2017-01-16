@@ -28,10 +28,11 @@ public:
   StraightTextHandle(FeatureID const & id, strings::UniString const & text,
                      dp::Anchor anchor, glsl::vec2 const & pivot,
                      glsl::vec2 const & pxSize, glsl::vec2 const & offset,
-                     uint64_t priority, ref_ptr<dp::TextureManager> textureManager,
+                     uint64_t priority, int fixedHeight,
+                     ref_ptr<dp::TextureManager> textureManager,
                      bool isOptional, bool affectedByZoomPriority,
                      gpu::TTextDynamicVertexBuffer && normals, bool isBillboard = false)
-    : TextHandle(id, text, anchor, priority, textureManager, move(normals), isBillboard)
+    : TextHandle(id, text, anchor, priority, fixedHeight, textureManager, move(normals), isBillboard)
     , m_pivot(glsl::ToPoint(pivot))
     , m_offset(glsl::ToPoint(offset))
     , m_size(glsl::ToPoint(pxSize))
@@ -43,7 +44,7 @@ public:
   {
     m2::PointD pivot = TBase::GetPivot(screen, false);
     if (perspective)
-      pivot = screen.PtoP3d(pivot - m_offset, -m_pivotZ / screen.GetScale()) + m_offset;
+      pivot = screen.PtoP3d(pivot - m_offset, -m_pivotZ) + m_offset;
     return pivot;
   }
 
@@ -54,7 +55,7 @@ public:
       if (IsBillboard())
       {
         m2::PointD const pxPivot = screen.GtoP(m_pivot);
-        m2::PointD const pxPivotPerspective = screen.PtoP3d(pxPivot, -m_pivotZ / screen.GetScale());
+        m2::PointD const pxPivotPerspective = screen.PtoP3d(pxPivot, -m_pivotZ);
 
         m2::RectD pxRectPerspective = GetPixelRect(screen, false);
         pxRectPerspective.Offset(-pxPivot);
@@ -122,28 +123,31 @@ private:
 
 } // namespace
 
-TextShape::TextShape(m2::PointF const & basePoint, TextViewParams const & params,
-                     bool hasPOI, size_t textIndex, bool affectedByZoomPriority,
-                     int displacementMode)
+TextShape::TextShape(m2::PointF const & basePoint, TextViewParams const & params, bool hasPOI,
+                     size_t textIndex, bool affectedByZoomPriority, int displacementMode,
+                     uint16_t specialModePriority)
   : m_basePoint(basePoint)
   , m_params(params)
   , m_hasPOI(hasPOI)
   , m_affectedByZoomPriority(affectedByZoomPriority)
   , m_textIndex(textIndex)
   , m_displacementMode(displacementMode)
+  , m_specialModePriority(specialModePriority)
 {}
 
 void TextShape::Draw(ref_ptr<dp::Batcher> batcher, ref_ptr<dp::TextureManager> textures) const
 {
   ASSERT(!m_params.m_primaryText.empty(), ());
   StraightTextLayout primaryLayout(strings::MakeUniString(m_params.m_primaryText),
-                                   m_params.m_primaryTextFont.m_size, textures, m_params.m_anchor);
+                                   m_params.m_primaryTextFont.m_size, m_params.m_primaryTextFont.m_isSdf,
+                                   textures, m_params.m_anchor);
   glsl::vec2 primaryOffset = glsl::ToVec2(m_params.m_primaryOffset);
 
   if (!m_params.m_secondaryText.empty())
   {
     StraightTextLayout secondaryLayout(strings::MakeUniString(m_params.m_secondaryText),
-                                       m_params.m_secondaryTextFont.m_size, textures, m_params.m_anchor);
+                                       m_params.m_secondaryTextFont.m_size, m_params.m_secondaryTextFont.m_isSdf,
+                                       textures, m_params.m_anchor);
 
     glsl::vec2 secondaryOffset = primaryOffset;
 
@@ -196,14 +200,20 @@ void TextShape::DrawSubStringPlain(StraightTextLayout const & layout, dp::FontDe
   textures->GetColorRegion(font.m_color, color);
   textures->GetColorRegion(font.m_outlineColor, outline);
 
-  layout.Cache(glsl::vec4(glsl::ToVec2(m_basePoint), m_params.m_depth, -m_params.m_posZ),
+  glsl::vec2 const pt = glsl::ToVec2(ConvertToLocal(m_basePoint, m_params.m_tileCenter, kShapeCoordScalar));
+  layout.Cache(glsl::vec4(pt, m_params.m_depth, -m_params.m_posZ),
                baseOffset, color, staticBuffer, dynamicBuffer);
 
-  dp::GLState state(gpu::TEXT_PROGRAM, dp::GLState::OverlayLayer);
-  state.SetProgram3dIndex(gpu::TEXT_BILLBOARD_PROGRAM);
+  bool const isNonSdfText = layout.GetFixedHeight() > 0;
+  dp::GLState state(isNonSdfText ? gpu::TEXT_FIXED_PROGRAM : gpu::TEXT_PROGRAM, dp::GLState::OverlayLayer);
+  state.SetProgram3dIndex(isNonSdfText ? gpu::TEXT_FIXED_BILLBOARD_PROGRAM : gpu::TEXT_BILLBOARD_PROGRAM);
+
   ASSERT(color.GetTexture() == outline.GetTexture(), ());
   state.SetColorTexture(color.GetTexture());
   state.SetMaskTexture(layout.GetMaskTexture());
+
+  if (isNonSdfText)
+    state.SetTextureFilter(gl_const::GLNearest);
 
   gpu::TTextDynamicVertexBuffer initialDynBuffer(dynamicBuffer.size());
 
@@ -216,6 +226,7 @@ void TextShape::DrawSubStringPlain(StraightTextLayout const & layout, dp::FontDe
                                                                            glsl::vec2(pixelSize.x, pixelSize.y),
                                                                            baseOffset,
                                                                            GetOverlayPriority(),
+                                                                           layout.GetFixedHeight(),
                                                                            textures,
                                                                            isOptional,
                                                                            m_affectedByZoomPriority,
@@ -226,7 +237,7 @@ void TextShape::DrawSubStringPlain(StraightTextLayout const & layout, dp::FontDe
   handle->SetOverlayRank(m_hasPOI ? (isPrimary ? dp::OverlayRank1 : dp::OverlayRank2) : dp::OverlayRank0);
   handle->SetExtendingSize(m_params.m_extendingSize);
 
-  dp::AttributeProvider provider(2, staticBuffer.size());
+  dp::AttributeProvider provider(2, static_cast<uint32_t>(staticBuffer.size()));
   provider.InitStream(0, gpu::TextStaticVertex::GetBindingInfo(), make_ref(staticBuffer.data()));
   provider.InitStream(1, gpu::TextDynamicVertex::GetBindingInfo(), make_ref(initialDynBuffer.data()));
   batcher->InsertListOfStrip(state, make_ref(&provider), move(handle), 4);
@@ -243,7 +254,8 @@ void TextShape::DrawSubStringOutlined(StraightTextLayout const & layout, dp::Fon
   textures->GetColorRegion(font.m_color, color);
   textures->GetColorRegion(font.m_outlineColor, outline);
 
-  layout.Cache(glsl::vec4(glsl::ToVec2(m_basePoint), m_params.m_depth, -m_params.m_posZ),
+  glsl::vec2 const pt = glsl::ToVec2(ConvertToLocal(m_basePoint, m_params.m_tileCenter, kShapeCoordScalar));
+  layout.Cache(glsl::vec4(pt, m_params.m_depth, -m_params.m_posZ),
                baseOffset, color, outline, staticBuffer, dynamicBuffer);
 
   dp::GLState state(gpu::TEXT_OUTLINED_PROGRAM, dp::GLState::OverlayLayer);
@@ -263,6 +275,7 @@ void TextShape::DrawSubStringOutlined(StraightTextLayout const & layout, dp::Fon
                                                                            glsl::vec2(pixelSize.x, pixelSize.y),
                                                                            baseOffset,
                                                                            GetOverlayPriority(),
+                                                                           layout.GetFixedHeight(),
                                                                            textures,
                                                                            isOptional,
                                                                            m_affectedByZoomPriority,
@@ -273,7 +286,7 @@ void TextShape::DrawSubStringOutlined(StraightTextLayout const & layout, dp::Fon
   handle->SetOverlayRank(m_hasPOI ? (isPrimary ? dp::OverlayRank1 : dp::OverlayRank2) : dp::OverlayRank0);
   handle->SetExtendingSize(m_params.m_extendingSize);
 
-  dp::AttributeProvider provider(2, staticBuffer.size());
+  dp::AttributeProvider provider(2, static_cast<uint32_t>(staticBuffer.size()));
   provider.InitStream(0, gpu::TextOutlinedStaticVertex::GetBindingInfo(), make_ref(staticBuffer.data()));
   provider.InitStream(1, gpu::TextDynamicVertex::GetBindingInfo(), make_ref(initialDynBuffer.data()));
   batcher->InsertListOfStrip(state, make_ref(&provider), move(handle), 4);
@@ -281,10 +294,14 @@ void TextShape::DrawSubStringOutlined(StraightTextLayout const & layout, dp::Fon
 
 uint64_t TextShape::GetOverlayPriority() const
 {
-  // Set up maximum priority for shapes which created by user in the editor, in case of disabling displacement,
-  // in case of a special displacement mode.
-  if (m_params.m_createdByEditor || m_disableDisplacing || (m_displacementMode & dp::displacement::kDefaultMode) == 0)
+  // Set up maximum priority for shapes which created by user in the editor and in case of disabling
+  // displacement.
+  if (m_params.m_createdByEditor || m_disableDisplacing)
     return dp::kPriorityMaskAll;
+
+  // Special displacement mode.
+  if ((m_displacementMode & dp::displacement::kDefaultMode) == 0)
+    return dp::CalculateSpecialModePriority(m_specialModePriority);
 
   // Set up minimal priority for shapes which belong to areas
   if (m_params.m_hasArea)

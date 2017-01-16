@@ -171,6 +171,7 @@ world  +
     building  +
         address  -
         garage  -
+        has_parts  -
         train_station  -
         {}
     building:part  -
@@ -353,6 +354,7 @@ world  +
         boundary_stone  -
         castle  -
         citywalls  -
+        fort  -
         memorial  -
         monument  -
         museum  -
@@ -366,10 +368,12 @@ world  +
         bidir_bicycle  -
         lit  -
         nobicycle  -
+        nocar  -
         nofoot  -
         oneway  -
         private  -
         yesbicycle  -
+        yescar  -
         yesfoot  -
         {}
     internet_access  +
@@ -531,6 +535,22 @@ world  +
         government  -
         lawyer  -
         telecommunication  -
+        {}
+    olympics  +
+        attraction  -
+        bike_sport  -
+        live_site  -
+        official_building  -
+        stadium  -
+        stadium_main  -
+        transport_airport  -
+        transport_boat  -
+        transport_bus  -
+        transport_cable  -
+        transport_railway  -
+        transport_subway  -
+        transport_tram  -
+        water_sport  -
         {}
     piste:lift  +
         j-bar  -
@@ -789,7 +809,20 @@ world  +
         wine  -
         {}
     sponsored  +
+        banner  +
+            deliveryclub  -
+            geerbest_de  -
+            geerbest_fr  -
+            geerbest_uk  -
+            lamoda_ru  -
+            lamoda_ua  -
+            raileurope  -
+            rentalcars  -
+            tutu  -
+            viator  -
+            {}
         booking  -
+        opentable  -
         {}
     sport  +
         american_football  -
@@ -823,6 +856,7 @@ world  +
         camp_site  -
         caravan_site  -
         chalet  -
+        gallery  -
         guest_house  -
         hostel  -
         hotel  -

@@ -3,11 +3,14 @@
 #include "base/string_utils.hpp"
 #include "base/logging.hpp"
 
-#include "std/iomanip.hpp"
-#include "std/fstream.hpp"
 #include "std/bind.hpp"
+#include "std/fstream.hpp"
+#include "std/iomanip.hpp"
+#include "std/map.hpp"
 #include "std/unordered_map.hpp"
+#include "std/vector.hpp"
 
+#include <sstream>
 
 /// internal function in base
 namespace strings { UniChar LowerUniChar(UniChar c); }
@@ -42,7 +45,7 @@ UNIT_TEST(LowerUniChar)
     if (!semicolon)
       continue;
     string const capital = *semicolon;
-    istringstream stream(capital);
+    std::istringstream stream(capital);
     strings::UniChar uc;
     stream >> hex >> uc;
     ++semicolon;
@@ -206,17 +209,17 @@ UNIT_TEST(to_uint)
 
   s = "-2";
   TEST(!strings::to_uint(s, i), ());
-  
+
   s = "0";
   TEST(strings::to_uint(s, i), ());
   TEST_EQUAL(0, i, ());
-  
+
   s = "123456789123456789123456789";
   TEST(!strings::to_uint(s, i), ());
-  
+
   s = "labuda";
   TEST(!strings::to_uint(s, i), ());
-  
+
   s = "AF";
   TEST(strings::to_uint(s, i, 16), ());
   TEST_EQUAL(175, i, ());
@@ -294,7 +297,7 @@ UNIT_TEST(to_string)
   TEST_EQUAL(strings::to_string(123456789123456789ULL), "123456789123456789", ());
   TEST_EQUAL(strings::to_string(-987654321987654321LL), "-987654321987654321", ());
 
-  uint64_t const n = numeric_limits<uint64_t>::max();
+  uint64_t const n = std::numeric_limits<uint64_t>::max();
   TEST_EQUAL(strings::to_string(n), "18446744073709551615", ());
 }
 
@@ -446,6 +449,15 @@ UNIT_TEST(SimpleTokenizer)
     string const s = ";a;b;;c;d;";
     vector<string> const tokens = {"", "a", "b", "", "c", "d", ""};
     TestIterWithEmptyTokens(s, ";", tokens);
+  }
+}
+
+UNIT_TEST(Tokenize)
+{
+  {
+    std::initializer_list<string> expected{"acb", "def", "ghi"};
+    TEST_EQUAL(strings::Tokenize<std::vector>("acb def ghi", " " /* delims */), std::vector<std::string>(expected), ());
+    TEST_EQUAL(strings::Tokenize<std::set>("acb def ghi", " " /* delims */), std::set<std::string>(expected), ());
   }
 }
 

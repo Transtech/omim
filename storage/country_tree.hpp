@@ -3,6 +3,7 @@
 #include "base/assert.hpp"
 
 #include "std/algorithm.hpp"
+#include "std/map.hpp"
 #include "std/unique_ptr.hpp"
 #include "std/vector.hpp"
 
@@ -153,7 +154,7 @@ public:
   };
 
 private:
-  using TCountryTreeHashTable = unordered_multimap<TKey, Node *>;
+  using TCountryTreeHashTable = multimap<TKey, Node *>;
 
 public:
   bool IsEmpty() const { return m_countryTree == nullptr; }

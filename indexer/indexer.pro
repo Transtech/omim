@@ -10,9 +10,12 @@ ROOT_DIR = ..
 include($$ROOT_DIR/common.pri)
 
 SOURCES += \
+    altitude_loader.cpp \
+    banners.cpp \
     categories_holder.cpp \
     categories_holder_loader.cpp \
     categories_index.cpp \
+    centers_table.cpp \
     classificator.cpp \
     classificator_loader.cpp \
     coding_params.cpp \
@@ -43,6 +46,7 @@ SOURCES += \
     geometry_serialization.cpp \
     index.cpp \
     index_builder.cpp \
+    index_helpers.cpp \
     map_object.cpp \
     map_style.cpp \
     map_style_reader.cpp \
@@ -60,10 +64,13 @@ SOURCES += \
     types_mapping.cpp \
 
 HEADERS += \
+    altitude_loader.hpp \
+    banners.hpp \
     categories_holder.hpp \
     categories_index.hpp \
     cell_coverer.hpp \
     cell_id.hpp \
+    centers_table.hpp \
     classificator.hpp \
     classificator_loader.hpp \
     coding_params.hpp \
@@ -79,6 +86,7 @@ HEADERS += \
     edits_migration.hpp \
     feature.hpp \
     feature_algo.hpp \
+    feature_altitude.hpp \
     feature_covering.hpp \
     feature_data.hpp \
     feature_decl.hpp \
@@ -96,6 +104,7 @@ HEADERS += \
     geometry_serialization.hpp \
     index.hpp \
     index_builder.hpp \
+    index_helpers.hpp \
     interval_index.hpp \
     interval_index_builder.hpp \
     interval_index_iface.hpp \

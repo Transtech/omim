@@ -23,9 +23,8 @@ import com.mapswithme.util.UiUtils;
 
 class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.BaseViewHolder>
 {
-  private static final int TYPE_POPULATE_BUTTON = 0;
-  private static final int TYPE_SUGGEST = 1;
-  private static final int TYPE_RESULT = 2;
+  private static final int TYPE_SUGGEST = 0;
+  private static final int TYPE_RESULT = 1;
 
   private final SearchFragment mSearchFragment;
   private SearchResult[] mResults;
@@ -57,22 +56,6 @@ class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.BaseViewHolder>
     {
       mResult = result;
       mOrder = order;
-    }
-  }
-
-  private class PopulateResultsViewHolder extends BaseViewHolder
-  {
-    PopulateResultsViewHolder(View view)
-    {
-      super(view);
-      view.setOnClickListener(new View.OnClickListener()
-      {
-        @Override
-        public void onClick(View v)
-        {
-          mSearchFragment.showAllResultsOnMap();
-        }
-      });
     }
   }
 
@@ -146,6 +129,7 @@ class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.BaseViewHolder>
     final TextView mDescription;
     final TextView mRegion;
     final TextView mDistance;
+    final TextView mPriceCategory;
 
     @Override
     int getTintAttr()
@@ -160,25 +144,41 @@ class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.BaseViewHolder>
       final SpannableStringBuilder tail = new SpannableStringBuilder();
 
       final int stars = Math.min(result.description.stars, 5);
-      if (stars > 0)
+      if (stars > 0 || !result.description.rating.isEmpty())
       {
-        // Colorize last dimmed stars
-        final SpannableStringBuilder sb = new SpannableStringBuilder("★ ★ ★ ★ ★");
-        if (stars < 5)
+        if (stars > 0)
         {
-          final int start = sb.length() - ((5 - stars) * 2 - 1);
-          sb.setSpan(new ForegroundColorSpan(itemView.getResources().getColor(R.color.search_star_dimmed)),
-                     start, sb.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+          // Colorize last dimmed stars
+          final SpannableStringBuilder sb = new SpannableStringBuilder("★ ★ ★ ★ ★");
+          if (stars < 5)
+          {
+            final int start = sb.length() - ((5 - stars) * 2 - 1);
+            sb.setSpan(new ForegroundColorSpan(itemView.getResources().getColor(R.color.search_star_dimmed)),
+                    start, sb.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+          }
+
+          tail.append(" • ");
+          tail.append(sb);
         }
 
-        tail.append(sb);
+        if (!result.description.rating.isEmpty())
+        {
+          final SpannableStringBuilder sb = new SpannableStringBuilder(
+                  itemView.getResources().getString(R.string.place_page_booking_rating, result.description.rating));
+          sb.setSpan(new ForegroundColorSpan(itemView.getResources().getColor(R.color.base_green)),
+                  0, sb.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+
+          tail
+            .append(" • ")
+            .append(sb);
+        }
       }
       else if (!TextUtils.isEmpty(result.description.cuisine))
-        tail.append(result.description.cuisine);
+      {
+        tail.append(" • " + result.description.cuisine);
+      }
 
-      if (!TextUtils.isEmpty(tail))
-        res.append(" • ")
-           .append(tail);
+      res.append(tail);
 
       return res;
     }
@@ -192,6 +192,7 @@ class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.BaseViewHolder>
       mDescription = (TextView) view.findViewById(R.id.description);
       mRegion = (TextView) view.findViewById(R.id.region);
       mDistance = (TextView) view.findViewById(R.id.distance);
+      mPriceCategory = (TextView) view.findViewById(R.id.price_category);
 
       mClosedMarker.setBackgroundDrawable(mClosedMarkerBackground);
     }
@@ -212,6 +213,7 @@ class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.BaseViewHolder>
       UiUtils.setTextAndHideIfEmpty(mDescription, formatDescription(result));
       UiUtils.setTextAndHideIfEmpty(mRegion, result.description.region);
       UiUtils.setTextAndHideIfEmpty(mDistance, result.description.distance);
+      UiUtils.setTextAndHideIfEmpty(mPriceCategory, result.description.pricing);
     }
 
     @Override
@@ -235,9 +237,6 @@ class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.BaseViewHolder>
 
     switch (viewType)
     {
-    case TYPE_POPULATE_BUTTON:
-      return new PopulateResultsViewHolder(inflater.inflate(R.layout.item_search_populate, parent, false));
-
     case TYPE_SUGGEST:
       return new SuggestViewHolder(inflater.inflate(R.layout.item_search_suggest, parent, false));
 
@@ -252,28 +251,12 @@ class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.BaseViewHolder>
   @Override
   public void onBindViewHolder(BaseViewHolder holder, int position)
   {
-    if (showPopulateButton())
-    {
-      if (position == 0)
-        return;
-
-      position--;
-    }
-
     holder.bind(mResults[position], position);
   }
 
   @Override
   public int getItemViewType(int position)
   {
-    if (showPopulateButton())
-    {
-      if (position == 0)
-        return TYPE_POPULATE_BUTTON;
-
-      position--;
-    }
-
     switch (mResults[position].type)
     {
     case SearchResult.TYPE_SUGGEST:
@@ -287,7 +270,7 @@ class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.BaseViewHolder>
     }
   }
 
-  private boolean showPopulateButton()
+  boolean showPopulateButton()
   {
     return (!RoutingController.get().isWaitingPoiPick() &&
             mResults != null &&
@@ -307,9 +290,6 @@ class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.BaseViewHolder>
     int res = 0;
     if (mResults == null)
       return res;
-
-    if (showPopulateButton())
-      res++;
 
     res += mResults.length;
     return res;

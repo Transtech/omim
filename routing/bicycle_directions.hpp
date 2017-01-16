@@ -22,21 +22,22 @@ public:
     size_t m_ingoingTurnsCount;
   };
 
-  using TAdjacentEdgesMap = map<TNodeId, AdjacentEdges>;
+  using AdjacentEdgesMap = map<UniNodeId, AdjacentEdges>;
 
   BicycleDirectionsEngine(Index const & index);
 
   // IDirectionsEngine override:
   void Generate(IRoadGraph const & graph, vector<Junction> const & path, Route::TTimes & times,
-                Route::TTurns & turns, vector<m2::PointD> & routeGeometry,
+                Route::TTurns & turns, vector<Junction> & routeGeometry,
+                vector<traffic::TrafficInfo::RoadSegmentId> & trafficSegs,
                 my::Cancellable const & cancellable) override;
 
 private:
   Index::FeaturesLoaderGuard & GetLoader(MwmSet::MwmId const & id);
-  void LoadPathGeometry(FeatureID const & featureId, vector<m2::PointD> const & path,
+  void LoadPathGeometry(UniNodeId const & uniNodeId, vector<Junction> const & path,
                         LoadedPathSegment & pathSegment);
 
-  TAdjacentEdgesMap m_adjacentEdges;
+  AdjacentEdgesMap m_adjacentEdges;
   TUnpackedPathSegments m_pathSegments;
   Index const & m_index;
   unique_ptr<Index::FeaturesLoaderGuard> m_loader;

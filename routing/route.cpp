@@ -1,5 +1,7 @@
-#include "route.hpp"
-#include "turns_generator.hpp"
+#include "routing/route.hpp"
+#include "routing/turns_generator.hpp"
+
+#include "traffic/speed_groups.hpp"
 
 #include "geometry/mercator.hpp"
 
@@ -12,6 +14,8 @@
 #include "base/logging.hpp"
 
 #include "std/numeric.hpp"
+
+using namespace traffic;
 
 namespace routing
 {
@@ -41,6 +45,8 @@ void Route::Swap(Route & rhs)
   swap(m_times, rhs.m_times);
   swap(m_streets, rhs.m_streets);
   m_absentCountries.swap(rhs.m_absentCountries);
+  m_altitudes.swap(rhs.m_altitudes);
+  m_traffic.swap(rhs.m_traffic);
 }
 
 void Route::AddAbsentCountry(string const & name)
@@ -353,9 +359,108 @@ void Route::Update()
   m_currentTime = 0.0;
 }
 
+void Route::AppendTraffic(Route const & route)
+{
+  CHECK(route.IsValid(), ());
+
+  if (GetTraffic().empty() && route.GetTraffic().empty())
+    return;
+
+  if (!IsValid())
+  {
+    m_traffic = route.GetTraffic();
+    return;
+  }
+
+  // Note. At this point the last item of |m_poly| should be removed.
+  // So the size of |m_traffic| should be equal to size of |m_poly|.
+  if (GetTraffic().empty())
+    m_traffic.resize(m_poly.GetPolyline().GetSize(), SpeedGroup::Unknown);
+
+  CHECK_EQUAL(GetTraffic().size(), m_poly.GetPolyline().GetSize(), ());
+
+  if (route.GetTraffic().empty())
+  {
+    CHECK_GREATER_OR_EQUAL(route.m_poly.GetPolyline().GetSize(), 1, ());
+    // Note. It's necessary to deduct 1 because size of |route.m_poly|
+    // is one less then number of segments of |route.m_poly|. And if |route.m_traffic|
+    // were not empty it would had had route.m_poly.GetPolyline().GetSize() - 1 items.
+    m_traffic.insert(m_traffic.end(),
+                     route.m_poly.GetPolyline().GetSize() - 1 /* number of segments is less by one */,
+                     SpeedGroup::Unknown);
+  }
+  else
+  {
+    m_traffic.insert(m_traffic.end(), route.GetTraffic().cbegin(), route.GetTraffic().cend());
+  }
+}
+
+void Route::AppendRoute(Route const & route)
+{
+  if (!route.IsValid())
+    return;
+
+  double const estimatedTime = m_times.empty() ? 0.0 : m_times.back().second;
+  if (m_poly.GetPolyline().GetSize() != 0)
+  {
+    ASSERT(!m_turns.empty(), ());
+    ASSERT(!m_times.empty(), ());
+    if (!m_streets.empty())
+      ASSERT_LESS(m_streets.back().first + 1, m_poly.GetPolyline().GetSize(), ());
+
+    // Remove road end point and turn instruction.
+    ASSERT_LESS(MercatorBounds::DistanceOnEarth(m_poly.End().m_pt, route.m_poly.Begin().m_pt),
+                2 /* meters */, ());
+    m_poly.PopBack();
+    CHECK(!m_turns.empty(), ());
+    ASSERT_EQUAL(m_turns.back().m_turn, turns::TurnDirection::ReachedYourDestination, ());
+    m_turns.pop_back();
+    CHECK(!m_times.empty(), ());
+    m_times.pop_back();
+  }
+
+  size_t const indexOffset = m_poly.GetPolyline().GetSize();
+
+  // Appending turns.
+  for (auto t : route.m_turns)
+  {
+    if (t.m_index == 0)
+      continue;
+    t.m_index += indexOffset;
+    m_turns.push_back(move(t));
+  }
+
+  // Appending street names.
+  for (auto s : route.m_streets)
+  {
+    if (s.first == 0)
+      continue;
+    s.first += indexOffset;
+    m_streets.push_back(move(s));
+  }
+
+  // Appending times.
+  for (auto t : route.m_times)
+  {
+    if (t.first == 0)
+      continue;
+    t.first += indexOffset;
+    t.second += estimatedTime;
+    m_times.push_back(move(t));
+  }
+
+  AppendTraffic(route);
+
+  m_poly.Append(route.m_poly);
+  if (!GetTraffic().empty())
+  {
+    CHECK_EQUAL(GetTraffic().size() + 1, m_poly.GetPolyline().GetSize(), ());
+  }
+  Update();
+}
+
 string DebugPrint(Route const & r)
 {
   return DebugPrint(r.m_poly.GetPolyline());
 }
-
 } // namespace routing

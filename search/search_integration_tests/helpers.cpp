@@ -1,9 +1,11 @@
 #include "search/search_integration_tests/helpers.hpp"
 
+#include "search/editor_delegate.hpp"
 #include "search/processor_factory.hpp"
 #include "search/search_tests_support/test_search_request.hpp"
 
 #include "indexer/classificator_loader.hpp"
+#include "indexer/indexer_tests_support/helpers.hpp"
 #include "indexer/map_style.hpp"
 #include "indexer/map_style_reader.hpp"
 #include "indexer/scales.hpp"
@@ -26,6 +28,7 @@ SearchTest::SearchTest()
   , m_engine(make_unique<storage::CountryInfoGetterForTesting>(), make_unique<ProcessorFactory>(),
              Engine::Params())
 {
+  indexer::tests_support::SetUpEditorForTesting(make_unique<EditorDelegate>(m_engine));
 }
 
 SearchTest::~SearchTest()
@@ -52,7 +55,7 @@ bool SearchTest::ResultsMatch(string const & query,
                               vector<shared_ptr<tests_support::MatchingRule>> const & rules)
 {
   tests_support::TestSearchRequest request(m_engine, query, locale, Mode::Everywhere, m_viewport);
-  request.Wait();
+  request.Run();
   return MatchResults(m_engine, rules, request.Results());
 }
 
@@ -60,7 +63,7 @@ bool SearchTest::ResultsMatch(string const & query, Mode mode,
                               vector<shared_ptr<tests_support::MatchingRule>> const & rules)
 {
   tests_support::TestSearchRequest request(m_engine, query, "en", mode, m_viewport);
-  request.Wait();
+  request.Run();
   return MatchResults(m_engine, rules, request.Results());
 }
 

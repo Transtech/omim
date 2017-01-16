@@ -87,13 +87,27 @@ bool Matches(Context & context, Sample::Result const & golden, search::Result co
   if (!context.GetFeature(actual.GetFeatureID(), ft))
     return false;
 
-  string name;
-  if (!ft.GetName(FeatureType::DEFAULT_LANG, name))
-    name.clear();
   auto const houseNumber = ft.GetHouseNumber();
   auto const center = feature::GetCenter(ft);
 
-  return golden.m_name == strings::MakeUniString(name) && golden.m_houseNumber == houseNumber &&
+  bool nameMatches = false;
+  if (golden.m_name.empty())
+  {
+    nameMatches = true;
+  }
+  else
+  {
+    ft.ForEachName([&golden, &nameMatches](int8_t /* lang */, string const & name) {
+      if (golden.m_name == strings::MakeUniString(name))
+      {
+        nameMatches = true;
+        return false;  // breaks the loop
+      }
+      return true;  // continues the loop
+    });
+  }
+
+  return nameMatches && golden.m_houseNumber == houseNumber &&
          MercatorBounds::DistanceOnEarth(golden.m_pos, center) < kToleranceMeters;
 }
 
@@ -250,11 +264,11 @@ int main(int argc, char * argv[])
     search::SearchParams params;
     params.m_query = strings::ToUtf8(sample.m_query);
     params.m_inputLocale = sample.m_locale;
-    params.SetMode(Mode::Everywhere);
+    params.m_mode = Mode::Everywhere;
     params.SetPosition(latLon.lat, latLon.lon);
-    params.SetSuggestsEnabled(false);
+    params.m_suggestsEnabled = false;
     TestSearchRequest request(engine, params, sample.m_viewport);
-    request.Wait();
+    request.Run();
 
     auto const & results = request.Results();
 

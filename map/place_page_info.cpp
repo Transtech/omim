@@ -1,8 +1,12 @@
-#include "place_page_info.hpp"
+#include "map/place_page_info.hpp"
+#include "map/reachable_by_taxi_checker.hpp"
 
+#include "indexer/feature_utils.hpp"
 #include "indexer/osm_editor.hpp"
 
+#include "platform/measurement_utils.hpp"
 #include "platform/preferred_languages.hpp"
+#include "platform/settings.hpp"
 
 namespace place_page
 {
@@ -13,10 +17,14 @@ char const * const Info::kEmptyRatingSymbol = "-";
 char const * const Info::kPricingSymbol = "$";
 
 bool Info::IsFeature() const { return m_featureID.IsValid(); }
-bool Info::IsBookmark() const { return m_bac != MakeEmptyBookmarkAndCategory(); }
+bool Info::IsBookmark() const { return m_bac.IsValid(); }
 bool Info::IsMyPosition() const { return m_isMyPosition; }
-bool Info::IsSponsoredHotel() const { return m_isSponsoredHotel; }
-bool Info::IsHotel() const { return m_isHotel; }
+bool Info::IsSponsored() const { return m_sponsoredType != SponsoredType::None; }
+bool Info::IsNotEditableSponsored() const
+{
+  return m_sponsoredType != SponsoredType::None && m_sponsoredType != SponsoredType::Opentable;
+}
+
 bool Info::ShouldShowAddPlace() const
 {
   auto const isPointOrBuilding = IsPointType() || IsBuilding();
@@ -35,6 +43,13 @@ bool Info::ShouldShowEditPlace() const
 bool Info::HasApiUrl() const { return !m_apiUrl.empty(); }
 bool Info::HasWifi() const { return GetInternet() == osm::Internet::Wlan; }
 
+bool Info::HasBanner() const
+{
+  bool adForbidden = false;
+  UNUSED_VALUE(settings::Get("AdForbidden", adForbidden));
+  return !adForbidden && !m_banner.IsEmpty() && m_banner.IsActive();
+}
+
 string Info::FormatNewBookmarkName() const
 {
   string const title = GetTitle();
@@ -48,16 +63,15 @@ string Info::GetTitle() const
   if (!m_customName.empty())
     return m_customName;
 
-  // Prefer names in native language over default ones.
-  int8_t const langCode = StringUtf8Multilang::GetLangIndex(languages::GetCurrentNorm());
-  if (langCode != StringUtf8Multilang::kUnsupportedLanguageCode)
-  {
-    string native;
-    if (m_name.GetString(langCode, native))
-      return native;
-  }
+  string name;
+  auto const deviceLang = StringUtf8Multilang::GetLangIndex(languages::GetCurrentNorm());
 
-  return GetDefaultName();
+  auto const mwmInfo = GetID().m_mwmId.GetInfo();
+
+  if (mwmInfo)
+    feature::GetReadableName(mwmInfo->GetRegionData(), m_name, deviceLang, name);
+
+  return name;
 }
 
 string Info::GetSubtitle() const
@@ -77,6 +91,11 @@ string Info::GetSubtitle() const
 
   // Type.
   values.push_back(GetLocalizedType());
+
+  // Flats.
+  string const flats = GetFlats();
+  if (!flats.empty())
+    values.push_back(flats);
 
   // Cuisines.
   for (string const & cuisine : GetLocalizedCuisines())
@@ -110,17 +129,23 @@ string Info::FormatStars() const
   return stars;
 }
 
+string Info::GetFormattedCoordinate(bool isDMS) const
+{
+  auto const & ll = GetLatLon();
+  return isDMS ? measurement_utils::FormatLatLon(ll.lat, ll.lon)
+               : measurement_utils::FormatLatLonAsDMS(ll.lat, ll.lon, 2);
+}
+
 string Info::GetCustomName() const { return m_customName; }
 BookmarkAndCategory Info::GetBookmarkAndCategory() const { return m_bac; }
 string Info::GetBookmarkCategoryName() const { return m_bookmarkCategoryName; }
 string const & Info::GetApiUrl() const { return m_apiUrl; }
-
-string const & Info::GetSponsoredBookingUrl() const { return m_sponsoredBookingUrl; }
-string const & Info::GetSponsoredDescriptionUrl() const {return m_sponsoredDescriptionUrl; }
+string const & Info::GetSponsoredUrl() const { return m_sponsoredUrl; }
+string const & Info::GetSponsoredDescriptionUrl() const { return m_sponsoredDescriptionUrl; }
 
 string Info::GetRatingFormatted() const
 {
-  if (!IsSponsoredHotel())
+  if (!IsSponsored())
     return string();
 
   auto const r = GetMetadata().Get(feature::Metadata::FMD_RATING);
@@ -139,7 +164,7 @@ string Info::GetRatingFormatted() const
 
 string Info::GetApproximatePricing() const
 {
-  if (!IsSponsoredHotel())
+  if (!IsSponsored())
     return string();
 
   int pricing;
@@ -151,5 +176,46 @@ string Info::GetApproximatePricing() const
   return result;
 }
 
+string Info::GetBannerTitleId() const
+{
+  if (m_banner.IsEmpty())
+    return {};
+  return m_banner.GetMessageBase() + "_title";
+}
+
+string Info::GetBannerMessageId() const
+{
+  if (m_banner.IsEmpty())
+    return {};
+  return m_banner.GetMessageBase() + "_message";
+}
+
+string Info::GetBannerIconId() const
+{
+  if (m_banner.IsEmpty())
+    return {};
+  return m_banner.GetIconName();
+}
+
+string Info::GetBannerUrl() const
+{
+  if (m_banner.IsEmpty())
+    return {};
+  return m_banner.GetFormattedUrl(m_metadata.Get(feature::Metadata::FMD_BANNER_URL));
+}
+
+string Info::GetBannerId() const
+{
+  if (m_banner.IsEmpty())
+    return {};
+  return m_banner.GetId();
+}
+
+bool Info::IsReachableByTaxi() const
+{
+  return IsReachableByTaxiChecker::Instance()(m_types);
+}
+
 void Info::SetMercator(m2::PointD const & mercator) { m_mercator = mercator; }
+vector<string> Info::GetRawTypes() const { return m_types.ToObjectNames(); }
 }  // namespace place_page

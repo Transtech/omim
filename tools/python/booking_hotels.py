@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # coding: utf8
 from __future__ import print_function
 
@@ -6,6 +6,7 @@ from collections import defaultdict
 from datetime import datetime
 import argparse
 import base64
+import eviltransform
 import json
 import logging
 import os
@@ -88,7 +89,8 @@ def download(user, password, path):
 
             # Check for error.
             if hotels is None:
-                exit(1)
+                logging.critical('No hotels downloaded for country {0}'.format(country['name']))
+                break
 
             for h in hotels:
                 allhotels[h['hotel_id']] = h
@@ -96,6 +98,9 @@ def download(user, password, path):
             # If hotels in answer less then maxrows, we reach end of data.
             if len(hotels) < maxrows:
                 break
+
+        if not hotels:
+            continue
 
         # Now the same for hotel translations
         offset = 0
@@ -126,13 +131,24 @@ def translate(source, output):
     '''
     Reads *.pkl files and produces a single list of hotels as tab separated values.
     '''
-    files = [filename for filename in os.listdir(source) if filename.endswith('.pkl')]
+    files = [os.path.join(source, filename)
+             for filename in os.listdir(source) if filename.endswith('.pkl')]
 
     data = []
     for filename in sorted(files):
         logging.info('Processing {0}'.format(filename))
         with open(filename, 'rb') as fd:
             data += pickle.load(fd)
+
+    # Fix chinese coordinates
+    for hotel in data:
+        if hotel['countrycode'] == 'cn' and 'location' in hotel:
+            try:
+                hotel['location']['latitude'], hotel['location']['longitude'] = eviltransform.gcj2wgs_exact(
+                    float(hotel['location']['latitude']), float(hotel['location']['longitude']))
+            except ValueError:
+                # We don't care if there were errors converting coordinates to float
+                pass
 
     # Dict of dicts city_id -> { currency -> [prices] }
     cities = defaultdict(lambda: defaultdict(list))
@@ -172,7 +188,11 @@ def translate(source, output):
                 return ''
         elif field in hotel:
             return hotel[field]
-        raise ValueError('Unknown hotel field: {0}'.format(field))
+        elif field == 'ranking':
+            # This field is not used yet, and booking.com sometimes blocks it.
+            return ''
+        logging.error('Unknown hotel field: {0}, URL: {1}'.format(field, hotel['url']))
+        return ''
 
     with open(output, 'w') as fd:
         for hotel in data:
@@ -207,6 +227,7 @@ def process_options():
     if not options.download and not options.translate:
         parser.print_help()
 
+    # TODO(mgsergio): implpement it with argparse facilities.
     if options.translate and not options.output:
         print("--output isn't set")
         parser.print_help()

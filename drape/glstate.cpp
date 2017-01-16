@@ -52,8 +52,9 @@ GLState::GLState(uint32_t gpuProgramIndex, DepthLayer depthLayer)
   , m_textureFilter(gl_const::GLLinear)
   , m_colorTexture(nullptr)
   , m_maskTexture(nullptr)
-{
-}
+  , m_drawAsLine(false)
+  , m_lineWidth(1)
+{}
 
 glConst GLState::GetDepthFunction() const
 {
@@ -75,6 +76,26 @@ void GLState::SetTextureFilter(glConst filter)
   m_textureFilter = filter;
 }
 
+bool GLState::GetDrawAsLine() const
+{
+  return m_drawAsLine;
+}
+
+void GLState::SetDrawAsLine(bool drawAsLine)
+{
+  m_drawAsLine = drawAsLine;
+}
+
+int GLState::GetLineWidth() const
+{
+  return m_lineWidth;
+}
+
+void GLState::SetLineWidth(int width)
+{
+  m_lineWidth = width;
+}
+
 bool GLState::operator<(GLState const & other) const
 {
   if (m_depthLayer != other.m_depthLayer)
@@ -89,8 +110,14 @@ bool GLState::operator<(GLState const & other) const
     return m_depthFunction < other.m_depthFunction;
   if (m_colorTexture != other.m_colorTexture)
     return m_colorTexture < other.m_colorTexture;
+  if (m_maskTexture != other.m_maskTexture)
+    return m_maskTexture < other.m_maskTexture;
+  if (m_textureFilter != other.m_textureFilter)
+    return m_textureFilter < other.m_textureFilter;
+  if (m_drawAsLine != other.m_drawAsLine)
+    return m_drawAsLine < other.m_drawAsLine;
 
-  return m_maskTexture < other.m_maskTexture;
+  return m_lineWidth < other.m_lineWidth;
 }
 
 bool GLState::operator==(GLState const & other) const
@@ -100,7 +127,11 @@ bool GLState::operator==(GLState const & other) const
          m_gpuProgram3dIndex == other.m_gpuProgram3dIndex &&
          m_blending == other.m_blending &&
          m_colorTexture == other.m_colorTexture &&
-         m_maskTexture == other.m_maskTexture;
+         m_maskTexture == other.m_maskTexture &&
+         m_textureFilter == other.m_textureFilter &&
+         m_depthFunction == other.m_depthFunction &&
+         m_drawAsLine == other.m_drawAsLine &&
+         m_lineWidth == other.m_lineWidth;
 }
 
 bool GLState::operator!=(GLState const & other) const
@@ -124,16 +155,12 @@ struct UniformApplyer
 
 } // namespace
 
-void ApplyUniforms(UniformValuesStorage const & uniforms, ref_ptr<GpuProgram> program)
-{
-  static UniformApplyer applyer;
-  applyer.m_program = program;
-  uniforms.ForeachValue(applyer);
-  applyer.m_program = nullptr;
-}
+uint8_t TextureState::m_usedSlots = 0;
 
-void ApplyTextures(GLState state, ref_ptr<GpuProgram> program)
+void TextureState::ApplyTextures(GLState state, ref_ptr<GpuProgram> program)
 {
+  m_usedSlots = 0;
+
   ref_ptr<Texture> tex = state.GetColorTexture();
   int8_t colorTexLoc = -1;
   if (tex != nullptr && (colorTexLoc = program->GetUniformLocation("u_colorTex")) >= 0)
@@ -142,19 +169,7 @@ void ApplyTextures(GLState state, ref_ptr<GpuProgram> program)
     tex->Bind();
     GLFunctions::glUniformValuei(colorTexLoc, 0);
     tex->SetFilter(state.GetTextureFilter());
-  }
-  else
-  {
-    // Some Android devices (Galaxy Nexus) require to reset texture state explicitly.
-    // It's caused by a bug in OpenGL driver (for Samsung Nexus, maybe others). Normally 
-    // we don't need to explicitly call glBindTexture(GL_TEXTURE2D, 0) after glUseProgram
-    // in case of the GPU-program doesn't use textures. Here we have to do it to work around
-    // graphics artefacts. The overhead isn't significant, we don't know on which devices 
-    // it may happen so do it for all Android devices.
-#ifdef OMIM_OS_ANDROID
-    GLFunctions::glActiveTexture(gl_const::GLTexture0);
-    GLFunctions::glBindTexture(0);
-#endif
+    m_usedSlots++;
   }
 
   tex = state.GetMaskTexture();
@@ -165,16 +180,21 @@ void ApplyTextures(GLState state, ref_ptr<GpuProgram> program)
     tex->Bind();
     GLFunctions::glUniformValuei(maskTexLoc, 1);
     tex->SetFilter(state.GetTextureFilter());
+    m_usedSlots++;
   }
-  else
-  {
-    // Some Android devices (Galaxy Nexus) require to reset texture state explicitly.
-    // See detailed description above.
-#ifdef OMIM_OS_ANDROID
-    GLFunctions::glActiveTexture(gl_const::GLTexture0 + 1);
-    GLFunctions::glBindTexture(0);
-#endif
-  }
+}
+
+uint8_t TextureState::GetLastUsedSlots()
+{
+  return m_usedSlots;
+}
+
+void ApplyUniforms(UniformValuesStorage const & uniforms, ref_ptr<GpuProgram> program)
+{
+  static UniformApplyer applyer;
+  applyer.m_program = program;
+  uniforms.ForeachValue(applyer);
+  applyer.m_program = nullptr;
 }
 
 void ApplyBlending(GLState state, ref_ptr<GpuProgram> program)
@@ -184,9 +204,10 @@ void ApplyBlending(GLState state, ref_ptr<GpuProgram> program)
 
 void ApplyState(GLState state, ref_ptr<GpuProgram> program)
 {
-  ApplyTextures(state, program);
+  TextureState::ApplyTextures(state, program);
   ApplyBlending(state, program);
   GLFunctions::glDepthFunc(state.GetDepthFunction());
+  GLFunctions::glLineWidth(state.GetLineWidth());
 }
 
 }

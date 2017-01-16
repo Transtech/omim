@@ -18,7 +18,7 @@ data/*.mwmmeta
 data/[!W]*.mwm
 
 # Compiled Python
-crawler/*.pyc
+*.pyc
 
 # Symbian
 .obj/*
@@ -54,12 +54,11 @@ iphone/*/*.xcodeproj/*.mode1v3
 iphone/*/*.xcodeproj/*.pbxuser
 iphone/*/*.xcodeproj/*.perspectivev3
 iphone/*/*.xcodeproj/project.xcworkspace/*
-iphone/*/*.xcodeproj/xcuserdata/*
 iphone/*/build/*
-xcode/**/xcuserdata
-xcode/**/xcshareddata
 tools/emacsmode/build
 **/DerivedData/*
+**/xcshareddata
+**/xcuserdata
 
 # GeneratedFiles
 version/version.hpp
@@ -69,6 +68,7 @@ GeneratedFiles
 # data
 data/intermediate_data
 data/[0-9][0-9][0-9][0-9][0-9][0-9]
+data/gps_track.dat
 # temporary files for downloader
 data/*.mwm.downloading2
 data/*.mwm.resume2
@@ -133,3 +133,7 @@ android/fabric.properties
 android/pushwoosh.properties
 android/res/values/google-service.xml
 server
+
+*.li
+
+*.autosave

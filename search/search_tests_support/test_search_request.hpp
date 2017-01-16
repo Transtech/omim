@@ -2,8 +2,8 @@
 
 #include "geometry/rect2d.hpp"
 
-#include "search/params.hpp"
 #include "search/result.hpp"
+#include "search/search_params.hpp"
 
 #include "std/condition_variable.hpp"
 #include "std/mutex.hpp"
@@ -28,16 +28,31 @@ public:
                     Mode mode, m2::RectD const & viewport);
   TestSearchRequest(TestSearchEngine & engine, SearchParams params, m2::RectD const & viewport);
 
-  void Wait();
+  // Initiates the search and waits for it to finish.
+  void Run();
 
   // Call these functions only after call to Wait().
   steady_clock::duration ResponseTime() const;
   vector<search::Result> const & Results() const;
 
-private:
-  void SetUpCallbacks(SearchParams & params);
+protected:
+  TestSearchRequest(TestSearchEngine & engine, string const & query, string const & locale,
+                    Mode mode, m2::RectD const & viewport, SearchParams::TOnStarted onStarted,
+                    SearchParams::TOnResults onResults);
+
+  // Initiates the search.
+  void Start();
+
+  // Waits for the search to finish.
+  void Wait();
+
+  void SetUpCallbacks();
+
   void OnStarted();
   void OnResults(search::Results const & results);
+
+  // Overrides the default onResults callback.
+  void SetCustomOnResults(SearchParams::TOnResults const & onResults);
 
   condition_variable m_cv;
   mutable mutex m_mu;
@@ -48,6 +63,10 @@ private:
   my::Timer m_timer;
   steady_clock::duration m_startTime;
   steady_clock::duration m_endTime;
+
+  TestSearchEngine & m_engine;
+  SearchParams m_params;
+  m2::RectD m_viewport;
 };
 }  // namespace tests_support
 }  // namespace search

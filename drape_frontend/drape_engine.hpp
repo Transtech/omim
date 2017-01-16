@@ -10,6 +10,8 @@
 #include "drape/pointers.hpp"
 #include "drape/texture_manager.hpp"
 
+#include "traffic/traffic_info.hpp"
+
 #include "platform/location.hpp"
 
 #include "geometry/polyline2d.hpp"
@@ -40,27 +42,33 @@ public:
            Viewport const & viewport,
            MapDataProvider const & model,
            double vs,
+           double fontsScaleFactor,
            gui::TWidgetsInitInfo && info,
            pair<location::EMyPositionMode, bool> const & initialMyPositionMode,
            bool allow3dBuildings,
+           bool trafficEnabled,
            bool blockTapEvents,
            bool showChoosePositionMark,
            vector<m2::TriangleD> && boundAreaTriangles,
            bool firstLaunch,
-           bool isRoutingActive)
+           bool isRoutingActive,
+           bool isAutozoomEnabled)
       : m_factory(factory)
       , m_stringsBundle(stringBundle)
       , m_viewport(viewport)
       , m_model(model)
       , m_vs(vs)
+      , m_fontsScaleFactor(fontsScaleFactor)
       , m_info(move(info))
       , m_initialMyPositionMode(initialMyPositionMode)
       , m_allow3dBuildings(allow3dBuildings)
+      , m_trafficEnabled(trafficEnabled)
       , m_blockTapEvents(blockTapEvents)
       , m_showChoosePositionMark(showChoosePositionMark)
       , m_boundAreaTriangles(move(boundAreaTriangles))
       , m_isFirstLaunch(firstLaunch)
       , m_isRoutingActive(isRoutingActive)
+      , m_isAutozoomEnabled(isAutozoomEnabled)
     {}
 
     ref_ptr<dp::OGLContextFactory> m_factory;
@@ -68,21 +76,28 @@ public:
     Viewport m_viewport;
     MapDataProvider m_model;
     double m_vs;
+    double m_fontsScaleFactor;
     gui::TWidgetsInitInfo m_info;
     pair<location::EMyPositionMode, bool> m_initialMyPositionMode;
     bool m_allow3dBuildings;
+    bool m_trafficEnabled;
     bool m_blockTapEvents;
     bool m_showChoosePositionMark;
     vector<m2::TriangleD> m_boundAreaTriangles;
     bool m_isFirstLaunch;
     bool m_isRoutingActive;
+    bool m_isAutozoomEnabled;
   };
 
   DrapeEngine(Params && params);
   ~DrapeEngine();
 
+  void Update(int w, int h);
+
   void Resize(int w, int h);
   void Invalidate();
+
+  void SetVisibleViewport(m2::RectD const & rect) const;
 
   void AddTouchEvent(TouchEvent const & event);
   void Scale(double factor, m2::PointD const & pxPoint, bool isAnim);
@@ -95,11 +110,12 @@ public:
   using TModelViewListenerFn = FrontendRenderer::TModelViewChanged;
   void SetModelViewListener(TModelViewListenerFn && fn);
 
-  void ClearUserMarksLayer(TileKey const & tileKey);
-  void ChangeVisibilityUserMarksLayer(TileKey const & tileKey, bool isVisible);
-  void UpdateUserMarksLayer(TileKey const & tileKey, UserMarksProvider * provider);
+  void ClearUserMarksLayer(size_t layerId);
+  void ChangeVisibilityUserMarksLayer(size_t layerId, bool isVisible);
+  void UpdateUserMarksLayer(size_t layerId, UserMarksProvider * provider);
 
-  void SetRenderingEnabled(bool const isEnabled);
+  void SetRenderingEnabled(ref_ptr<dp::OGLContextFactory> contextFactory = nullptr);
+  void SetRenderingDisabled(bool const destroyContext);
   void InvalidateRect(m2::RectD const & rect);
   void UpdateMapStyle();
 
@@ -122,13 +138,16 @@ public:
   SelectionShape::ESelectedObject GetSelectedObject();
 
   void AddRoute(m2::PolylineD const & routePolyline, vector<double> const & turns,
-                df::ColorConstant color, df::RoutePattern pattern = df::RoutePattern());
+                df::ColorConstant color, vector<traffic::SpeedGroup> const & traffic,
+                df::RoutePattern pattern = df::RoutePattern());
   void RemoveRoute(bool deactivateFollowing);
-  void FollowRoute(int preferredZoomLevel, int preferredZoomLevel3d);
+  void FollowRoute(int preferredZoomLevel, int preferredZoomLevel3d, bool enableAutoZoom);
   void DeactivateRouteFollowing();
   void SetRoutePoint(m2::PointD const & position, bool isStart, bool isValid);
 
   void SetWidgetLayout(gui::TWidgetsLayoutInfo && info);
+
+  void AllowAutoZoom(bool allowAutoZoom);
 
   void Allow3dMode(bool allowPerspectiveInNavigation, bool allow3dBuildings);
   void EnablePerspective();
@@ -146,8 +165,19 @@ public:
 
   void SetDisplacementMode(int mode);
 
+  using TRequestSymbolsSizeCallback = function<void(vector<m2::PointU> const &)>;
+
+  void RequestSymbolsSize(vector<string> const & symbols,
+                          TRequestSymbolsSizeCallback const & callback);
+
+  void EnableTraffic(bool trafficEnabled);
+  void UpdateTraffic(traffic::TrafficInfo const & info);
+  void ClearTrafficCache(MwmSet::MwmId const & mwmId);
+
+  void SetFontScaleFactor(double scaleFactor);
+
 private:
-  void AddUserEvent(UserEvent const & e);
+  void AddUserEvent(drape_ptr<UserEvent> && e);
   void ModelViewChanged(ScreenBase const & screen);
 
   void MyPositionModeChanged(location::EMyPositionMode mode, bool routingActive);
@@ -156,6 +186,7 @@ private:
 
   void ResizeImpl(int w, int h);
   void RecacheGui(bool needResetOldGui);
+  void RecacheMapShapes();
 
 private:
   drape_ptr<FrontendRenderer> m_frontend;
@@ -176,6 +207,8 @@ private:
 
   bool m_choosePositionMode = false;
   bool m_kineticScrollEnabled = true;
+
+  friend class DrapeApi;
 };
 
 } // namespace df

@@ -3,6 +3,7 @@
 #include "base/logging.hpp"
 
 #include "std/bind.hpp"
+#include "std/vector.hpp"
 #include "std/weak_ptr.hpp"
 
 namespace df
@@ -28,9 +29,9 @@ public:
         return;
       }
 
-      if (value.m_type == Animation::PropertyValue::ValueD)
+      if (value.m_type == Animation::PropertyValue::Type::ValueD)
         m_value.m_valueD += value.m_valueD;
-      else if (value.m_type == Animation::PropertyValue::ValuePointD)
+      else if (value.m_type == Animation::PropertyValue::Type::ValuePointD)
         m_value.m_valuePointD += value.m_valuePointD;
     }
     else
@@ -47,9 +48,9 @@ public:
 
     double const scalar = 1.0 / m_counter;
     m_counter = 0;
-    if (m_value.m_type == Animation::PropertyValue::ValueD)
+    if (m_value.m_type == Animation::PropertyValue::Type::ValueD)
       m_value.m_valueD *= scalar;
-    else if (m_value.m_type == Animation::PropertyValue::ValuePointD)
+    else if (m_value.m_type == Animation::PropertyValue::Type::ValuePointD)
       m_value.m_valuePointD *= scalar;
 
     return m_value;
@@ -93,13 +94,13 @@ bool AnimationSystem::GetScreen(ScreenBase const & currentScreen, TGetPropertyFn
   m2::PointD pos = currentScreen.GlobalRect().GlobalZero();
 
   Animation::PropertyValue value;
-  if (getPropertyFn(Animation::MapPlane, Animation::Scale, value))
+  if (getPropertyFn(Animation::Object::MapPlane, Animation::ObjectProperty::Scale, value))
     scale = value.m_valueD;
 
-  if (getPropertyFn(Animation::MapPlane, Animation::Angle, value))
+  if (getPropertyFn(Animation::Object::MapPlane, Animation::ObjectProperty::Angle, value))
     angle = value.m_valueD;
 
-  if (getPropertyFn(Animation::MapPlane, Animation::Position, value))
+  if (getPropertyFn(Animation::Object::MapPlane, Animation::ObjectProperty::Position, value))
     pos = value.m_valuePointD;
 
   screen = currentScreen;
@@ -111,7 +112,7 @@ bool AnimationSystem::GetScreen(ScreenBase const & currentScreen, TGetPropertyFn
 bool AnimationSystem::GetArrowPosition(m2::PointD & position)
 {
   Animation::PropertyValue value;
-  if (GetProperty(Animation::MyPositionArrow, Animation::Position, value))
+  if (GetProperty(Animation::Object::MyPositionArrow, Animation::ObjectProperty::Position, value))
   {
     position = value.m_valuePointD;
     return true;
@@ -122,7 +123,7 @@ bool AnimationSystem::GetArrowPosition(m2::PointD & position)
 bool AnimationSystem::GetArrowAngle(double & angle)
 {
   Animation::PropertyValue value;
-  if (GetProperty(Animation::MyPositionArrow, Animation::Angle, value))
+  if (GetProperty(Animation::Object::MyPositionArrow, Animation::ObjectProperty::Angle, value))
   {
     angle = value.m_valueD;
     return true;
@@ -130,7 +131,7 @@ bool AnimationSystem::GetArrowAngle(double & angle)
   return false;
 }
 
-bool AnimationSystem::AnimationExists(Animation::TObject object) const
+bool AnimationSystem::AnimationExists(Animation::Object object) const
 {
   if (!m_animationChain.empty())
   {
@@ -159,7 +160,7 @@ AnimationSystem & AnimationSystem::Instance()
   return animSystem;
 }
 
-void AnimationSystem::CombineAnimation(drape_ptr<Animation> animation)
+void AnimationSystem::CombineAnimation(drape_ptr<Animation> && animation)
 {
 #ifdef DEBUG_ANIMATIONS
   LOG(LINFO, ("Combine animation", animation->GetType()));
@@ -233,7 +234,7 @@ void AnimationSystem::CombineAnimation(drape_ptr<Animation> animation)
   PushAnimation(move(animation));
 }
 
-void AnimationSystem::PushAnimation(drape_ptr<Animation> animation)
+void AnimationSystem::PushAnimation(drape_ptr<Animation> && animation)
 {
 #ifdef DEBUG_ANIMATIONS
   LOG(LINFO, ("Push animation", animation->GetType()));
@@ -270,7 +271,8 @@ void AnimationSystem::FinishAnimations(function<bool(shared_ptr<Animation> const
     if (predicate(anim))
     {
 #ifdef DEBUG_ANIMATIONS
-      LOG(LINFO, ("Finish animation", anim->GetType(), ", rewind:", rewind));
+      LOG(LINFO, ("Finish animation", anim->GetType(), ", rewind:", rewind,
+                  ", couldBeRewinded:", anim->CouldBeRewinded()));
       changed = true;
 #endif
       finishAnimations.splice(finishAnimations.end(), frontList, it++);
@@ -291,7 +293,8 @@ void AnimationSystem::FinishAnimations(function<bool(shared_ptr<Animation> const
         if (predicate(*it))
         {
 #ifdef DEBUG_ANIMATIONS
-          LOG(LINFO, ("Finish animation", (*it)->GetType(), ", rewind:", rewind));
+          LOG(LINFO, ("Finish animation", (*it)->GetType(), ", rewind:", rewind,
+                      ", couldBeRewinded:", (*it)->CouldBeRewinded()));
           changed = true;
 #endif
           it = lst.erase(it);
@@ -306,7 +309,7 @@ void AnimationSystem::FinishAnimations(function<bool(shared_ptr<Animation> const
 
   for (auto & anim : finishAnimations)
   {
-    if (rewind)
+    if (rewind && anim->CouldBeRewinded())
       anim->Finish();
     SaveAnimationResult(*anim);
   }
@@ -334,7 +337,7 @@ void AnimationSystem::FinishAnimations(Animation::Type type, string const & cust
   }, rewind, finishAll);
 }
 
-void AnimationSystem::FinishObjectAnimations(Animation::TObject object, bool rewind, bool finishAll)
+void AnimationSystem::FinishObjectAnimations(Animation::Object object, bool rewind, bool finishAll)
 {
   FinishAnimations([&object](shared_ptr<Animation> const & anim) { return anim->HasObject(object); },
                    rewind, finishAll);
@@ -389,7 +392,7 @@ void AnimationSystem::Print()
 }
 #endif
 
-bool AnimationSystem::GetProperty(Animation::TObject object, Animation::TProperty property,
+bool AnimationSystem::GetProperty(Animation::Object object, Animation::ObjectProperty property,
                                   Animation::PropertyValue & value) const
 {
   if (!m_animationChain.empty())
@@ -421,7 +424,7 @@ bool AnimationSystem::GetProperty(Animation::TObject object, Animation::TPropert
   return false;
 }
 
-bool AnimationSystem::GetTargetProperty(Animation::TObject object, Animation::TProperty property,
+bool AnimationSystem::GetTargetProperty(Animation::Object object, Animation::ObjectProperty property,
                                         Animation::PropertyValue & value) const
 {
   if (!m_animationChain.empty())
@@ -478,12 +481,14 @@ void AnimationSystem::StartNextAnimations()
     for (auto & anim : *(m_animationChain.front()))
       startedAnimations.push_back(anim);
 
-    //TODO (in future): use propertyCache to load start values to the next animations
     for (auto & weak_anim : startedAnimations)
     {
       shared_ptr<Animation> anim = weak_anim.lock();
       if (anim != nullptr)
+      {
+        anim->Init(m_lastScreen, m_propertyCache);
         anim->OnStart();
+      }
     }
   }
 }

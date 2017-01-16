@@ -67,6 +67,11 @@ public:
   glConst GetTextureFilter() const;
   void SetTextureFilter(glConst filter);
 
+  bool GetDrawAsLine() const;
+  void SetDrawAsLine(bool drawAsLine);
+  int GetLineWidth() const;
+  void SetLineWidth(int width);
+
   bool operator<(GLState const & other) const;
   bool operator==(GLState const & other) const;
   bool operator!=(GLState const & other) const;
@@ -81,11 +86,23 @@ private:
 
   ref_ptr<Texture> m_colorTexture;
   ref_ptr<Texture> m_maskTexture;
+
+  bool m_drawAsLine;
+  int m_lineWidth;
+};
+
+class TextureState
+{
+public:
+  static void ApplyTextures(GLState state, ref_ptr<GpuProgram> program);
+  static uint8_t GetLastUsedSlots();
+
+private:
+  static uint8_t m_usedSlots;
 };
 
 void ApplyUniforms(UniformValuesStorage const & uniforms, ref_ptr<GpuProgram> program);
 void ApplyState(GLState state, ref_ptr<GpuProgram> program);
-void ApplyTextures(GLState state, ref_ptr<GpuProgram> program);
 void ApplyBlending(GLState state, ref_ptr<GpuProgram> program);
 
 } // namespace dp

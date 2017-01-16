@@ -194,6 +194,7 @@
 	<string name="parking">주차</string>
 	<!-- Search Suggestion -->
 	<string name="shop">쇼핑</string>
+	<!-- Search Suggestion -->
 	<string name="hotel">호텔</string>
 	<!-- Search Suggestion -->
 	<string name="tourism">관광</string>
@@ -273,8 +274,6 @@
 	<string name="copied_to_clipboard">클립보드에 복사됨: %1$s</string>
 	<!-- Setting label for statistics turn on/off -->
 	<string name="allow_statistics">통계 보내기</string>
-	<!-- Hint near allow statictics checkbox -->
-	<string name="allow_statistics_hint">앱을 개선하기 위해 사용 통계를 수집하도록 허용</string>
 	<!-- place preview title -->
 	<string name="info">정보</string>
 	<!-- Used for bookmark editing -->
@@ -321,6 +320,7 @@
 	<string name="pref_tts_how_to_set_up_voice">음성 설정 방법</string>
 	<!-- Settings «Map» category: «Record track» title -->
 	<string name="pref_track_record_title">최근 추적</string>
+	<string name="pref_map_auto_zoom">자동 줌</string>
 	<string name="duration_disabled">선택 안 함</string>
 	<string name="duration_1_hour">1시간</string>
 	<string name="duration_2_hours">2시간</string>
@@ -582,7 +582,6 @@
 	<string name="dialog_routing_send_error">문제 신고</string>
 	<string name="dialog_routing_if_get_cross_route">두 개 이상의 지도를 통과하는 더 직접적인 경로를 설정하시겠습니까?</string>
 	<string name="dialog_routing_cross_route_is_optimal">이 지도의 경계를 통과하는 더 최적화된 경로를 사용할 수 있습니다.</string>
-	<string name="dialog_routing_always_cross_that_border">항상 이 경계 통과</string>
 	<string name="not_now">나중에</string>
 	<string name="dialog_routing_build_route">만들기</string>
 	<string name="dialog_routing_download_and_build_cross_route">지도를 다운로드하여, 두 개 이상의 지도를 통과하는 더 최적화된 경로를 설정하시겠습니까?</string>
@@ -626,7 +625,6 @@
 	<string name="clear_search">이력 검색 지우기</string>
 	<!-- Title for settings to enable/disable showcase menu button -->
 	<string name="showcase_settings_title">추천 보기</string>
-	<string name="showcase_more_apps">기타 My.com 앱</string>
 	<string name="p2p_route_planning">경로 계획 중</string>
 	<string name="p2p_your_location">위치</string>
 	<string name="p2p_from">출발 지점</string>
@@ -710,9 +708,12 @@
 	<string name="login_with_openstreetmap">www.openstreetmap.org에 로그인</string>
 	<string name="edit_place">장소 편집</string>
 	<string name="place_name">지명</string>
-	<string name="place_name_caption">기호 또는 이름판으로 이름 입력</string>
 	<!-- title above languages list cells in the editor, below editable name text field. -->
 	<string name="other_languages">다른 언어</string>
+	<!-- small button to open list with names in different languages -->
+	<string name="show_more">더 많이 표시</string>
+	<!-- small button to close list with names in different languages -->
+	<string name="show_less">더 적게 표시</string>
 	<string name="add_language">언어 추가</string>
 	<string name="street">거리</string>
 	<!-- Editable House Number text field (in address block). -->
@@ -758,7 +759,6 @@
 	<string name="editor_edit_place_category_title">범주</string>
 	<string name="detailed_problem_description">문제에 대한 자세한 설명</string>
 	<string name="editor_report_problem_other_title">다른 문제</string>
-	<string name="placepage_add_place_button">장소 추가</string>
 	<string name="placepage_report_problem_button">문제 신고</string>
 	<string name="placepage_add_business_button">조직 추가</string>
 	<string name="whatsnew_smallmwm_header">여러분이 요청한 것을 저희가 해냈습니다</string>
@@ -793,6 +793,7 @@
 	<string name="download_over_mobile_message">이는 일부 플랜이나 로밍할 경우에 비싸다고 간주될 수 있습니다.</string>
 	<string name="error_enter_correct_house_number">올바른 집 번호 입력</string>
 	<string name="editor_storey_number">층 수(최대 %d)</string>
+	<!-- Error message in Editor when a user tries to set the number of floors for a building higher than 25 -->
 	<string name="error_enter_correct_storey_number">최대 25층까지 입력하세요</string>
 	<string name="editor_zip_code">우편번호</string>
 	<string name="error_enter_correct_zip_code">올바른 우편번호를 입력하세요</string>
@@ -806,7 +807,6 @@
 	<string name="editor_tag_description">회사, 조직 또는 시설 책임자를 입력하세요.</string>
 	<string name="editor_no_local_edits_title">편집한 지역정보가 없습니다</string>
 	<string name="editor_no_local_edits_description">이는 현재 귀하의 장치에서만 액세스할 수 있으며, 지도에서 만든 변경사항를 보여줍니다.</string>
-	<string name="editor_international_names_subtitle">다른 언어로된 이름</string>
 	<string name="editor_send_to_osm">OSM에 전송</string>
 	<string name="editor_remove">삭제</string>
 	<string name="downloader_my_maps_title">내 지도</string>
@@ -829,7 +829,8 @@
 	<string name="location_services_disabled_message">장치 설정에서 위치 정보에 액세스할 수 있음</string>
 	<string name="location_services_disabled_1">1. 설정 열기</string>
 	<string name="location_services_disabled_2">2. 위치 누르기</string>
-	<string name="location_services_disabled_3">3. 항상 선택</string>
+	<!-- iOS Dialog for the case when the location permission is not granted -->
+	<string name="location_services_disabled_3">3. 앱 사용 중에 선택</string>
 	<string name="placepage_parking_surface">주차공간</string>
 	<string name="placepage_parking_multistorey">주차장 건물</string>
 	<string name="placepage_parking_underground">지하</string>
@@ -848,9 +849,16 @@
 	<string name="place_page_starting_from">%s에서</string>
 	<string name="meter">m</string>
 	<string name="kilometer">km</string>
+	<string name="kilometers_per_hour">km/시</string>
+	<string name="mile">mi</string>
+	<string name="foot">ft</string>
+	<string name="miles_per_hour">mph</string>
+	<string name="day">d</string>
+	<string name="hour">t</string>
+	<string name="minute">min</string>
 	<string name="placepage_place_description">설명</string>
 	<string name="placepage_more_button">자세히</string>
-	<string name="bookingcom_book_button">예약</string>
+	<string name="book_button">예약</string>
 	<string name="placepage_call_button">전화</string>
 	<string name="placepage_edit_bookmark_button">즐겨찾기 편집</string>
 	<string name="placepage_bookmark_name_hint">즐겨찾기 이름</string>
@@ -865,18 +873,167 @@
 	<string name="editor_status_sending">보내는 중…</string>
 	<string name="editor_place_doesnt_exist">존재하지 않는 장소입니다.</string>
 	<string name="text_more_button">…기타</string>
-	<string name="error_enter_correct_phone">문자없이 전화 번호 입력</string>
+	<!-- Phone number error message -->
+	<string name="error_enter_correct_phone">올바른 전화 번호 입력</string>
 	<string name="error_enter_correct_web">유효한 웹 주소 입력</string>
 	<string name="error_enter_correct_email">유효한 이메일 주소 입력</string>
 	<string name="error_enter_correct">유효한 값 입력</string>
 	<string name="editor_profile_changes_for_next_place">다음 장소 변경: %d</string>
 	<string name="editor_profile_rating_place">평가 순위</string>
 	<string name="booking_dialog_not_connect_header">호텔을 예약하려면 인터넷에 연결하세요</string>
-	<string name="whatsnew_booking_header">앱에서 호텔 예약하기</string>
-	<string name="whatsnew_booking_message">호텔을 검색하면 가격대와 등급이 함께 표시됩니다.</string>
 	<string name="button_try">시도해보세요</string>
-	<string name="whatsnew_cycle_navigation_header">자전거 네비게이션 (베타 버전)</string>
-	<string name="whatsnew_cycle_navigation_message">저희는 새로운 시즌을 맞이하여 자전거 네비게이션을 테스트하고 있습니다. MAPS.ME에서 귀하가 자주 이용하는 자전거 경로를 사용해 보고, 사용 소감을 알려주세요.</string>
 	<string name="refresh">최신 정보</string>
 	<string name="last_update">마지막 업데이트: %s</string>
+	<string name="booking_checkin">체크인: %s</string>
+	<string name="booking_checkout">체크아웃: %s</string>
+	<string name="placepage_add_place_button">지도에 장소 추가</string>
+	<!-- Displayed when saving some edits to the map to warn against publishing personal data -->
+	<string name="editor_share_to_all_dialog_title">이를 모든 사용자에게 전송하시겠습니까?</string>
+	<!-- iOS Dialog before publishing the modifications to the public map. -->
+	<string name="editor_share_to_all_dialog_message_1">개인 정보를 입력하지 않았는지 확인하십시오.</string>
+	<string name="editor_share_to_all_dialog_message_2">저희가 변경 사항을 확인할 것입니다. 질문이 있으신 경우, 저희에게 이메일을 통해 연락하십시오.</string>
+	<string name="navigation_overview_button">개요</string>
+	<string name="navigation_stop_button">중지</string>
+	<!-- Text on an empty bookmark page -->
+	<string name="bookmarks_empty_title">북마크 저장</string>
+	<string name="bookmarks_empty_message_1">빠른 액세스를 위해 즐겨찾는 장소에 저장하기 위해 ★를 누릅니다.</string>
+	<string name="bookmarks_empty_message_2">이메일 및 웹에서 북마크를 가져옵니다.</string>
+	<string name="bookmarks_empty_message_3">체크아웃: %s</string>
+	<!-- Name of the group for booked hotels -->
+	<string name="bookmarks_group_name">호텔 예약함</string>
+	<string name="place_page_button_read_descriprion">읽기</string>
+	<!-- iOS dialog for the case when recent track recording is on and the app comes back from background -->
+	<string name="recent_track_background_dialog_title">최근 여행한 경로 녹음을 비활성화하시겠습니까?</string>
+	<!-- If a hotel is being shared -->
+	<string name="sharing_booking">또는 booking.com에서 예약</string>
+	<string name="off_recent_track_background_button">비활성화</string>
+	<!-- For sharing via SMS and so on -->
+	<string name="sharing_call_action_look">체크아웃</string>
+	<string name="continue_recent_track_background_button">계속</string>
+	<string name="recent_track_background_dialog_message">MAPS.ME는 최근 여행한 경로를 녹음하기 위해 배경 화면에서 지역 위치 서비스를 사용합니다.</string>
+	<string name="whatsnew_car_navigation_header">사용자 친화적인 차량 네비게이션</string>
+	<string name="whatsnew_car_navigation_message">• 탐색 요소는 더 적은 공간을 차지합니다.\n• 저희는 속도를 표시하고 자동 줌을 추가했습니다.</string>
+	<string name="whatsnew_cycle_navigation_2_header">자전거 네비게이션</string>
+	<string name="whatsnew_cycle_navigation_2_message">• 자전거 탐색은 계정 지형 데이터를 고려합니다.\n• 저희는 계정 도로 경사를 고려하여 쉽게 경로를 만들 수 있습니다.</string>
+	<string name="whatsnew_booking_2_header">쉬운 호텔 검색</string>
+	<string name="whatsnew_booking_2_message">검색 결과는 호텔 평가 및 가격 범주를 표시합니다.</string>
+	<string name="whatsnew_cycle_navigation_header">자전거 네비게이션 (베타 버전)</string>
+	<string name="whatsnew_cycle_navigation_message">저희는 새로운 시즌을 맞이하여 자전거 네비게이션을 테스트하고 있습니다. MAPS.ME에서 귀하가 자주 이용하는 자전거 경로를 사용해 보고, 사용 소감을 알려주세요.</string>
+	<!-- Rate on Google Play (Android only) -->
+	<string name="rate_gp">Google Play에서 평가</string>
+	<!-- Share with friends: menu item title -->
+	<string name="tell_friends">친구에게 알려주기</string>
+	<!-- Share with friends: sharing text -->
+	<string name="tell_friends_text">안녕하세요! MAPS.ME를 설치하세요!</string>
+	<!-- About short text (below logo) -->
+	<string name="about_description">MAPS.ME는 여행용 필수 오프라인 응용 프로그램입니다. MAPS.ME는 OpenStreetMap 데이터를 기반으로 하며 이 데이터 편집을 허용합니다.</string>
+	<!-- Text in menu -->
+	<string name="blog">블로그</string>
+	<!-- Hint near allow statictics checkbox -->
+	<string name="allow_statistics_hint">사용량 통계 수집을 통해 앱을 개선할 수 있습니다.</string>
+	<string name="general_settings">일반 설정</string>
+	<string name="date">날짜 %d</string>
+	<!-- "Report a bug" -> "Generaal Feedback" -> "Something is not working" -->
+	<string name="something_is_not_working">문제가 발생했습니다.</string>
+	<!-- For the first routing -->
+	<string name="accept">동의</string>
+	<!-- For the first routing -->
+	<string name="decline">거부</string>
+	<string name="whats_new_route_profile_title">문제가 있으면 계속 어려움을 겪는 것보다 그만두는 게 낫습니다.</string>
+	<string name="whats_new_route_profile_message">보행자 및 자전거 도로를 위해 이제 고도 단면을 표시합니다.</string>
+	<string name="whats_new_booking_improve_title">호텔 예약 시 절약</string>
+	<string name="whats_new_booking_improve_message">이제 가격 범주를 포함하는 호텔에 대한 결과를 검색하세요.\n또한 110,000곳 이상의 호텔이 추가되었습니다.</string>
+	<!-- For place page hotel facilities block -->
+	<string name="placepage_hotel_facilities">시설</string>
+	<!-- For place page hotel nearby block -->
+	<string name="placepage_hotel_nearby">근처</string>
+	<!-- For ordering a taxi (as opposed to hotels or other things) -->
+	<string name="taxi_order">택시 주문</string>
+	<!-- How long it is until the taxi arrives -->
+	<string name="taxi_wait">%s 예상</string>
+	<!-- When there are no available taxis nearby -->
+	<string name="taxi_not_found">근처에서 택시를 찾을 수 없음</string>
+	<string name="install_app">설치</string>
+	<!-- `Filter` is a noun here -->
+	<string name="booking_filters">필터</string>
+	<string name="booking_filters_reset">재설정</string>
+	<string name="booking_filters_rating">평가</string>
+	<string name="booking_filters_rating_any">모두</string>
+	<string name="booking_filters_ragting_good">양호</string>
+	<string name="booking_filters_rating_very_good">매우 양호</string>
+	<string name="booking_filters_rating_excellent">탁월</string>
+	<string name="booking_filters_price_category">가격 범주</string>
+	<string name="search_no_results_title">결과 찾지 못함</string>
+	<string name="search_no_results_message">보다 일반적인 검색어로 시도하거나, 축소하거나, 필터를 재설정하세요.</string>
+	<string name="search_no_results_expand_area_button">축소</string>
+	<string name="search_no_results_reset_button">필터 재설정</string>
+	<!-- noun -->
+	<string name="search_in_table">목록</string>
+	<string name="booking_based_on_reviews">%d개 호텔 리뷰 기반</string>
+	<string name="booking_show_more">자세히 표시</string>
+	<string name="booking_reviews">리뷰</string>
+	<string name="booking_hotel">호텔</string>
+	<!-- hotel room -->
+	<string name="booking_hotel_room">객실</string>
+	<!-- A neologism for a chat based on geographical proximity -->
+	<string name="chat">Geochat</string>
+	<!-- Verb. Text on a button that opens the chat. -->
+	<string name="chat_open">열기</string>
+	<string name="whatsnew_uber_header">MAPS.ME &amp; Uber</string>
+	<string name="whatsnew_uber_message">Uber 택시를 직접 앱에서 예약하세요.</string>
+	<string name="dialog_taxi_offline">오프라인 모드에서는 택시를 예약할 수 없습니다.</string>
+	<string name="dialog_taxi_error">일시적으로 택시를 예약할 수 없습니다.</string>
+	<string name="advertisement">광고</string>
+	<string name="mobile_data_dialog">모바일 인터넷을 사용하여 자세한 정보를 표시하시겠습니까?</string>
+	<string name="mobile_data_option_always">항상 사용</string>
+	<string name="mobile_data_option_today">오늘만</string>
+	<string name="mobile_data_option_not_today">오늘 사용 안 함</string>
+	<string name="mobile_data">모바일 인터넷</string>
+	<string name="mobile_data_description">모바일 인터넷은 사진, 가격, 리뷰 등 장소에 대한 자세한 정보를 표시하는 데 필요합니다.</string>
+	<string name="mobile_data_option_never">전혀 사용 안 함</string>
+	<string name="mobile_data_option_ask">항상 표시</string>
+	<string name="traffic_update_maps_text">교통 데이터를 표시하려면 지도를 업데이트해야 합니다.</string>
+	<string name="traffic_outdated">교통 데이터가 오래되었습니다.</string>
+	<string name="big_font">더 큰 레이블</string>
+	<string name="traffic_update_app">MAPS.ME를 업데이트하세요.</string>
+	<!-- "traffic" as in road congestion -->
+	<string name="traffic_update_app_message">교통 데이터를 표시하려면 응용 프로그램을 업데이트해야 합니다.</string>
+	<!-- "traffic" as in "road congestion" -->
+	<string name="traffic_data_unavailable">교통 데이터를 사용할 수 없습니다</string>
+	<string name="banner_deliveryclub_title">음식 배달</string>
+	<string name="banner_deliveryclub_message">4,000곳의 레스토랑에서 신속하게 배달합니다. Delivery Club에서 주문하세요.</string>
+	<string name="banner_lamoda_title">온라인 의류 및 신발 스토어</string>
+	<string name="banner_lamoda_message">1,000개 이상의 브랜드. 최대 70% 할인. 전국 무료 배송.</string>
+	<string name="banner_tutu_title">온라인 기차표</string>
+	<string name="banner_tutu_message">온라인으로 이용하는 모든 도시행 기차표 - 가격, 검색 및 예약.</string>
+	<string name="banner_geerbest_title">온라인 전자 기기 스토어</string>
+	<string name="banner_geerbest_message">저렴한 가격의 50,000개 이상 품목에서 즉시 검색.</string>
+	<string name="banner_rentalcars_title">온라인 자동차 렌트</string>
+	<string name="banner_rentalcars_message">800개의 자동차 렌트 회사와 49,000곳 이상의 자동차 렌트 지점</string>
+	<string name="banner_viator_title">온라인 투어 검색</string>
+	<string name="banner_viator_message">전 세계 50,000개 이상의 투어에서 검색하세요.</string>
+	<!-- december -->
+	<string name="whatsnew_traffic">36개국의 교통 데이터</string>
+	<!-- december -->
+	<string name="whatsnew_traffic_text">최신 교통 정보 및 이 정보에 따른 가장 빠른 운전 경로!</string>
+	<!-- december -->
+	<string name="whatsnew_traffic_roaming">로밍의 교통 정보</string>
+	<!-- december -->
+	<string name="whatsnew_traffic_roaming_text">승차당 모바일 대역폭 1MB 미만이 필요합니다.</string>
+	<!-- december -->
+	<string name="whatsnew_order_taxi">택시 주문</string>
+	<!-- december -->
+	<string name="whatsnew_order_taxi_text">이제 대부분의 위치 페이지에 택시 주문을 위한 버튼이 포함되어 있습니다.</string>
+	<!-- january -->
+	<string name="whatsnew_improved_search">향상된 검색</string>
+	<!-- january -->
+	<string name="whatsnew_improved_search_text">철자가 틀린 쿼리도 정확한 검색 결과를 표시합니다.</string>
+	<!-- january -->
+	<string name="whatsnew_filters_in_search">검색 필터</string>
+	<!-- january -->
+	<string name="whatsnew_filters_in_search_text">가격 및 등급에 따라 호텔을 검색합니다.</string>
+	<!-- january -->
+	<string name="whatsnew_font_size">글꼴 크기</string>
+	<!-- january -->
+	<string name="whatsnew_font_size_text">지도의 레이블을 더 크게 할 수 있습니다.</string>
 </resources>

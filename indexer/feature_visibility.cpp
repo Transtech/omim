@@ -214,6 +214,10 @@ namespace
     static const uint32_t hwtag = classif().GetTypeByPath({ "hwtag" });
     static const uint32_t psurface = classif().GetTypeByPath({ "psurface" });
     static const uint32_t wheelchair = classif().GetTypeByPath({ "wheelchair" });
+    static const uint32_t sponsored = classif().GetTypeByPath({ "sponsored" });
+
+    // Caching type length to exclude generic [wheelchair].
+    uint8_t const typeLength = ftype::GetLevel(type);
 
     if (g == GEOM_LINE || g == GEOM_UNDEFINED)
     {
@@ -230,7 +234,10 @@ namespace
 
     // We're okay with the type being already truncated above.
     ftype::TruncValue(type, 1);
-    if (wheelchair == type)
+    if (wheelchair == type && typeLength == 2)
+      return true;
+
+    if (sponsored == type)
       return true;
 
     return false;

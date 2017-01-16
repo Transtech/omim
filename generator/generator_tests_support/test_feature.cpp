@@ -3,14 +3,19 @@
 #include "generator/feature_builder.hpp"
 
 #include "indexer/classificator.hpp"
+#include "indexer/editable_map_object.hpp"
 #include "indexer/feature.hpp"
 #include "indexer/feature_algo.hpp"
+#include "indexer/feature_decl.hpp"
 #include "indexer/feature_meta.hpp"
 #include "indexer/ftypes_matcher.hpp"
+#include "indexer/mwm_set.hpp"
+#include "indexer/osm_editor.hpp"
 
 #include "coding/multilang_utf8_string.hpp"
 
 #include "base/assert.hpp"
+#include "base/string_utils.hpp"
 
 #include "std/atomic.hpp"
 #include "std/sstream.hpp"
@@ -49,7 +54,9 @@ bool TestFeature::Matches(FeatureType const & feature) const
 
 void TestFeature::Serialize(FeatureBuilder1 & fb) const
 {
-  fb.SetTestId(m_id);
+  auto & metadata = fb.GetMetadataForTesting();
+  metadata.Set(feature::Metadata::FMD_TEST_ID, strings::to_string(m_id));
+
   if (m_hasCenter)
     fb.SetCenter(m_center);
   if (!m_name.empty())
@@ -160,6 +167,24 @@ TestPOI::TestPOI(m2::PointD const & center, string const & name, string const & 
   : TestFeature(center, name, lang)
 {
   m_types = {{"railway", "station"}};
+}
+
+// static
+pair<TestPOI, FeatureID> TestPOI::AddWithEditor(osm::Editor & editor, MwmSet::MwmId const & mwmId,
+                                                string const & enName, m2::PointD const & pt)
+{
+  TestPOI poi(pt, enName, "en");
+
+  osm::EditableMapObject emo;
+  editor.CreatePoint(classif().GetTypeByPath({"shop", "bakery"}), pt, mwmId, emo);
+
+  StringUtf8Multilang names;
+  names.AddString(StringUtf8Multilang::GetLangIndex("en"), enName);
+  emo.SetName(names);
+  emo.SetTestId(poi.GetId());
+
+  editor.SaveEditedFeature(emo);
+  return {poi, emo.GetID()};
 }
 
 void TestPOI::Serialize(FeatureBuilder1 & fb) const

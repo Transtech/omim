@@ -1,5 +1,3 @@
-#import "Macros.h"
-
 static inline CGPoint SubtractCGPoint(CGPoint p1, CGPoint p2)
 {
   return CGPointMake(p1.x - p2.x, p1.y - p2.y);
@@ -57,12 +55,6 @@ static inline CGFloat LengthCGPoint(CGPoint point)
 @interface UIView (Refresh)
 
 - (void)mwm_refreshUI;
-
-@end
-
-@interface UIImageView (IOS7Workaround)
-
-- (void)makeImageAlwaysTemplate;
 
 @end
 

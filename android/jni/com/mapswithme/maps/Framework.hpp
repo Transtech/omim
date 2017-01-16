@@ -27,6 +27,11 @@
 #include "std/unique_ptr.hpp"
 #include "std/cstdint.hpp"
 
+namespace search
+{
+struct EverywhereSearchParams;
+}
+
 namespace android
 {
   class Framework
@@ -40,7 +45,11 @@ namespace android
 
     string m_searchQuery;
 
+    bool m_isContextDestroyed;
+
     map<gui::EWidget, gui::Position> m_guiPositions;
+
+    void TrafficStateChanged(TrafficManager::TrafficState state);
 
     void MyPositionModeChanged(location::EMyPositionMode mode, bool routingActive);
     void SetMyPositionMode(location::EMyPositionMode mode);
@@ -49,6 +58,8 @@ namespace android
     location::EMyPositionMode m_currentMode;
     bool m_isCurrentModeInitialized;
 
+    TrafficManager::TrafficStateChangedFn m_onTrafficStateChangedFn;
+
     bool m_isChoosePositionMode;
 
     place_page::Info m_info;
@@ -56,7 +67,7 @@ namespace android
   public:
     Framework();
 
-    storage::Storage & Storage();
+    storage::Storage & GetStorage();
 
     void ShowNode(storage::TCountryId const & countryId, bool zoomToDownloadButton);
 
@@ -68,11 +79,10 @@ namespace android
     void Invalidate();
 
     bool CreateDrapeEngine(JNIEnv * env, jobject jSurface, int densityDpi, bool firstLaunch);
-    void DeleteDrapeEngine();
     bool IsDrapeEngineCreated();
 
-    void DetachSurface();
-    void AttachSurface(JNIEnv * env, jobject jSurface);
+    void DetachSurface(bool destroyContext);
+    bool AttachSurface(JNIEnv * env, jobject jSurface);
 
     void SetMapStyle(MapStyle mapStyle);
     void MarkMapStyle(MapStyle mapStyle);
@@ -103,7 +113,7 @@ namespace android
 
     void Touch(int action, Finger const & f1, Finger const & f2, uint8_t maskedPointer);
 
-    bool Search(search::SearchParams const & params);
+    bool Search(search::EverywhereSearchParams const & params);
     string GetLastSearchQuery() { return m_searchQuery; }
     void ClearLastSearchQuery() { m_searchQuery.clear(); }
 
@@ -137,6 +147,10 @@ namespace android
     void OnMyPositionModeChanged(location::EMyPositionMode mode);
     void SwitchMyPositionNextMode();
 
+    void SetTrafficStateListener(TrafficManager::TrafficStateChangedFn const & fn);
+    void EnableTraffic();
+    void DisableTraffic();
+
     void Save3dMode(bool allow3d, bool allow3dBuildings);
     void Set3dMode(bool allow3d, bool allow3dBuildings);
     void Get3dMode(bool & allow3d, bool & allow3dBuildings);
@@ -148,13 +162,11 @@ namespace android
     void ApplyWidgets();
     void CleanWidgets();
 
-    using TDrapeTask = function<void()>;
-    // Posts a task which must be executed when Drape Engine is alive.
-    void PostDrapeTask(TDrapeTask && task);
-
     void SetPlacePageInfo(place_page::Info const & info);
     place_page::Info & GetPlacePageInfo();
     void RequestBookingMinPrice(string const & hotelId, string const & currency, function<void(string const &, string const &)> const & callback);
+    void RequestBookingInfo(string const & hotelId, string const & lang,
+                            function<void(BookingApi::HotelInfo const &)> const & callback);
 
     bool HasSpaceForMigration();
     storage::TCountryId PreMigrate(ms::LatLon const & position, storage::Storage::TChangeCountryFunction const & statusChangeListener,
@@ -165,12 +177,10 @@ namespace android
     bool IsDownloadOn3gEnabled();
     void EnableDownloadOn3g();
 
-  private:
-    vector<TDrapeTask> m_drapeTasksQueue;
-    mutex m_drapeQueueMutex;
-
-    // This method must be executed under mutex m_drapeQueueMutex.
-    void ExecuteDrapeTasks();
+    uint64_t RequestUberProducts(ms::LatLon const & from, ms::LatLon const & to,
+                                 uber::ProductsCallback const & callback,
+                                 uber::ErrorCallback const & errorCallback);
+    static uber::RideRequestLinks GetUberLinks(string const & productId, ms::LatLon const & from, ms::LatLon const & to);
   };
 }
 

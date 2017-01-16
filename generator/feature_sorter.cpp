@@ -1,8 +1,9 @@
 #include "generator/feature_sorter.hpp"
-#include "generator/feature_generator.hpp"
 #include "generator/feature_builder.hpp"
-#include "generator/tesselator.hpp"
+#include "generator/feature_generator.hpp"
 #include "generator/gen_mwm_info.hpp"
+#include "generator/region_meta.hpp"
+#include "generator/tesselator.hpp"
 
 #include "defines.hpp"
 
@@ -111,14 +112,16 @@ namespace feature
     vector<pair<uint32_t, uint32_t>> m_metadataIndex;
 
     DataHeader m_header;
+    RegionData m_regionData;
     uint32_t m_versionDate;
 
     gen::OsmID2FeatureID m_osm2ft;
 
   public:
-    FeaturesCollector2(string const & fName, DataHeader const & header, uint32_t versionDate)
+    FeaturesCollector2(string const & fName, DataHeader const & header,
+                       RegionData const & regionData, uint32_t versionDate)
       : FeaturesCollector(fName + DATA_FILE_TAG), m_writer(fName),
-        m_header(header), m_versionDate(versionDate)
+        m_header(header), m_regionData(regionData), m_versionDate(versionDate)
     {
       for (size_t i = 0; i < m_header.GetScalesCount(); ++i)
       {
@@ -145,6 +148,12 @@ namespace feature
       {
         FileWriter w = m_writer.GetWriter(HEADER_FILE_TAG);
         m_header.Save(w);
+      }
+
+      // write region info
+      {
+        FileWriter w = m_writer.GetWriter(REGION_INFO_FILE_TAG);
+        m_regionData.Serialize(w);
       }
 
       // assume like we close files
@@ -437,7 +446,7 @@ namespace feature
     bool IsCountry() const { return m_header.GetType() == feature::DataHeader::country; }
 
   public:
-    void operator() (FeatureBuilder2 & fb)
+    uint32_t operator()(FeatureBuilder2 & fb)
     {
       GeometryHolder holder(*this, fb, m_header);
 
@@ -511,11 +520,12 @@ namespace feature
         }
       }
 
+      uint32_t featureId = kInvalidFeatureId;
       if (fb.PreSerialize(holder.m_buffer))
       {
         fb.Serialize(holder.m_buffer, m_header.GetDefCodingParams());
 
-        uint32_t const ftID = WriteFeatureBase(holder.m_buffer.m_buffer, fb);
+        featureId = WriteFeatureBase(holder.m_buffer.m_buffer, fb);
 
         fb.GetAddressData().Serialize(*(m_helperFile[SEARCH_TOKENS]));
 
@@ -526,14 +536,15 @@ namespace feature
           uint64_t const offset = w->Pos();
           ASSERT_LESS_OR_EQUAL(offset, numeric_limits<uint32_t>::max(), ());
 
-          m_metadataIndex.emplace_back(ftID, static_cast<uint32_t>(offset));
+          m_metadataIndex.emplace_back(featureId, static_cast<uint32_t>(offset));
           fb.GetMetadata().Serialize(*w);
         }
 
         uint64_t const osmID = fb.GetWayIDForRouting();
         if (osmID != 0)
-          m_osm2ft.Add(make_pair(osmID, ftID));
-      }
+          m_osm2ft.Add(make_pair(osmID, featureId));
+      };
+      return featureId;
     }
   };
 
@@ -542,22 +553,6 @@ namespace feature
   {
     return static_cast<FeatureBuilder2 &>(fb);
   }
-
-  class DoStoreLanguages
-  {
-    DataHeader & m_header;
-  public:
-    DoStoreLanguages(DataHeader & header) : m_header(header) {}
-    void operator() (string const & s)
-    {
-      int8_t const i = StringUtf8Multilang::GetLangIndex(s);
-      if (i > 0)
-      {
-        // 0 index is always 'default'
-        m_header.AddLanguage(i);
-      }
-    }
-  };
 
   bool GenerateFinalFeatures(feature::GenerateInfo const & info, string const & name, int mapType)
   {
@@ -596,23 +591,15 @@ namespace feature
       // type
       header.SetType(static_cast<DataHeader::MapType>(mapType));
 
-      // languages
-      try
-      {
-        FileReader reader(info.m_targetDir + "metainfo/" + name + ".meta");
-        string buffer;
-        reader.ReadAsString(buffer);
-        strings::Tokenize(buffer, "|", DoStoreLanguages(header));
-      }
-      catch (Reader::Exception const &)
-      {
-        LOG(LWARNING, ("No language file for country:", name));
-      }
+      // region data
+      RegionData regionData;
+      if (!ReadRegionData(name, regionData))
+        LOG(LWARNING, ("No extra data for country:", name));
 
       // Transform features from raw format to optimized format.
       try
       {
-        FeaturesCollector2 collector(datFilePath, header, info.m_versionDate);
+        FeaturesCollector2 collector(datFilePath, header, regionData, info.m_versionDate);
 
         for (size_t i = 0; i < midPoints.m_vec.size(); ++i)
         {

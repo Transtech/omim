@@ -78,6 +78,7 @@ trap "rm -rf \"${INTDIR}\"" EXIT SIGINT SIGTERM
 # Create MWM file
 INTDIR_FLAG="--intermediate_data_path=$INTDIR/ --node_storage=map"
 GENERATE_EVERYTHING='--generate_features=true --generate_geometry=true --generate_index=true --generate_search_index=true'
+[ -n "${HOTELS-}" ] && GENERATE_EVERYTHING="$GENERATE_EVERYTHING --booking_data=$HOTELS"
 COASTS="${COASTS-WorldCoasts.geom}"
 if [ -f "$COASTS" ]; then
   if [ ! -f "$TBORDERS/$BASE_NAME.poly" ]; then
@@ -112,7 +113,7 @@ fi
 [ -n "${CLEAN_BORDERS-}" ] && rm -r "$TBORDERS"
 
 if [ $# -gt 1 ]; then
-  # Create .mwm.routing file
+  # Create .mwm with routing index and a .mwm.norouting file
   OSRM_PATH="${OSRM_PATH:-$OMIM_PATH/3party/osrm/osrm-backend}"
   OSRM_BUILD_PATH="${OSRM_BUILD_PATH:-$OMIM_PATH/../osrm-backend-release}"
   [ ! -x "$OSRM_BUILD_PATH/osrm-extract" -a -x "$SCRIPT_PATH/bin/osrm-extract" ] && OSRM_BUILD_PATH="$SCRIPT_PATH/bin"
@@ -157,3 +158,5 @@ fi
 rm -f "$TARGET/$BASE_NAME.mwm.osm2ft"
 # Remove temporary offsets table
 [ -d "$TARGET/$BASE_NAME" ] && rm -r "$TARGET/$BASE_NAME"
+
+exit 0 #added so that the exit code of the script is 0, and not whatever the [ -d ] returns

@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-             android:layout_width="match_parent"
-             android:layout_height="wrap_content">
+<FrameLayout
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  android:layout_width="match_parent"
+  android:layout_height="wrap_content">
   <com.mapswithme.maps.widget.ObservableScrollView
     android:id="@+id/pp__details"
     android:layout_width="match_parent"
@@ -12,22 +13,24 @@
     <RelativeLayout
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
+      android:paddingLeft="@dimen/margin_base_plus"
+      android:paddingRight="@dimen/margin_base_plus"
       android:clipChildren="false">
 
-      <View
+      <include
+        layout="@layout/divider_horizontal"/>
+
+      <include
+        layout="@layout/place_page_bookmark_details"
         android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="?attr/dividerHorizontal"
-        android:paddingLeft="@dimen/margin_base_plus"
-        android:paddingRight="@dimen/margin_base_plus"/>
+        android:layout_height="wrap_content"/>
 
       <RelativeLayout
         android:id="@+id/rl__details_attrs"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:paddingBottom="@dimen/margin_half"
-        android:paddingLeft="@dimen/margin_base_plus"
-        android:paddingRight="@dimen/margin_base_plus"
+        android:layout_below="@id/bookmark_frame"
         android:paddingTop="@dimen/margin_half">
 
         <View
@@ -44,6 +47,12 @@
           android:layout_toLeftOf="@id/anchor_center"
           android:layout_toStartOf="@id/anchor_center"
           android:orientation="vertical">
+          <include layout="@layout/place_page_hotel_gallery"/>
+
+          <include layout="@layout/place_page_hotel_facilities"/>
+
+          <include layout="@layout/place_page_hotel_description"/>
+
           <include layout="@layout/place_page_placename"/>
 
           <include layout="@layout/place_page_entrance"/>
@@ -71,25 +80,28 @@
 
           <include layout="@layout/place_page_opening_hours"/>
 
-          <include layout="@layout/place_page_latlon"/>
-
           <include layout="@layout/place_page_wifi"/>
 
           <include layout="@layout/place_page_operator"/>
 
           <include layout="@layout/place_page_cuisine"/>
 
+          <include layout="@layout/place_page_latlon"/>
+
+          <include layout="@layout/divider_horizontal"/>
+
+          <include layout="@layout/place_page_taxi"/>
+
+          <include layout="@layout/place_page_hotel_nearby"/>
+
+          <include layout="@layout/place_page_hotel_rating"/>
+
+          <!--TODO: remove this after booking_api.cpp will be done-->
           <include layout="@layout/place_page_more"/>
+
         </LinearLayout>
       </RelativeLayout>
 
-      <include
-        layout="@layout/place_page_bookmark_details"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/rl__details_attrs"
-        android:layout_marginLeft="@dimen/margin_base_plus"
-        android:layout_marginRight="@dimen/margin_base_plus"/>
     </RelativeLayout>
   </com.mapswithme.maps.widget.ObservableScrollView>
 

@@ -1,16 +1,18 @@
 #pragma once
 
 #include "platform/country_defines.hpp"
+#include "platform/marketing_service.hpp"
 
 #include "coding/reader.hpp"
 
 #include "base/exception.hpp"
 
-#include "std/string.hpp"
-#include "std/vector.hpp"
-#include "std/utility.hpp"
-#include "std/function.hpp"
 #include "std/bitset.hpp"
+#include "std/function.hpp"
+#include "std/map.hpp"
+#include "std/string.hpp"
+#include "std/utility.hpp"
+#include "std/vector.hpp"
 
 #include "defines.hpp"
 
@@ -80,11 +82,11 @@ protected:
   /// Uses m_writeableDir [w], m_resourcesDir [r], m_settingsDir [s].
   string ReadPathForFile(string const & file, string searchScope = string()) const;
 
-  /// Hash some unique string into uniform format.
-  static string HashUniqueID(string const & s);
-
   /// Returns last system call error as EError.
   static EError ErrnoToError();
+
+  /// Platform-dependent marketing services.
+  MarketingService m_marketingService;
 
 public:
   Platform();
@@ -223,6 +225,8 @@ public:
   static bool IsConnected() { return ConnectionStatus() != EConnectionType::CONNECTION_NONE; }
 
   void SetupMeasurementSystem() const;
+
+  MarketingService & GetMarketingService() { return m_marketingService; }
 
 private:
   void GetSystemFontNames(FilesList & res) const;

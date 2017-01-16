@@ -1,15 +1,20 @@
+#include "routing/road_graph_router.hpp"
+
 #include "routing/bicycle_directions.hpp"
 #include "routing/bicycle_model.hpp"
+#include "routing/car_model.hpp"
 #include "routing/features_road_graph.hpp"
 #include "routing/nearest_edge_finder.hpp"
 #include "routing/pedestrian_directions.hpp"
 #include "routing/pedestrian_model.hpp"
-#include "routing/road_graph_router.hpp"
 #include "routing/route.hpp"
+#include "routing/routing_helpers.hpp"
+#include "routing/single_mwm_router.hpp"
 
 #include "coding/reader_wrapper.hpp"
 
 #include "indexer/feature.hpp"
+#include "indexer/feature_altitude.hpp"
 #include "indexer/ftypes_matcher.hpp"
 #include "indexer/index.hpp"
 
@@ -19,6 +24,7 @@
 
 #include "geometry/distance.hpp"
 
+#include "std/algorithm.hpp"
 #include "std/queue.hpp"
 #include "std/set.hpp"
 
@@ -39,7 +45,7 @@ size_t constexpr kTestConnectivityVisitJunctionsLimit = 25;
 uint64_t constexpr kMinPedestrianMwmVersion = 150713;
 
 // Check if the found edges lays on mwm with pedestrian routing support.
-bool CheckMwmVersion(vector<pair<Edge, m2::PointD>> const & vicinities, vector<string> & mwmNames)
+bool CheckMwmVersion(vector<pair<Edge, Junction>> const & vicinities, vector<string> & mwmNames)
 {
   mwmNames.clear();
   for (auto const & vicinity : vicinities)
@@ -67,49 +73,66 @@ bool CheckGraphConnectivity(IRoadGraph const & graph, Junction const & junction,
   q.push(junction);
 
   set<Junction> visited;
+  visited.insert(junction);
 
   vector<Edge> edges;
-  while (!q.empty())
+  while (!q.empty() && visited.size() < limit)
   {
-    Junction const node = q.front();
+    Junction const u = q.front();
     q.pop();
 
-    if (visited.find(node) != visited.end())
-      continue;
-    visited.insert(node);
-
-    if (limit == visited.size())
-      return true;
-
     edges.clear();
-    graph.GetOutgoingEdges(node, edges);
-    for (Edge const & e : edges)
-      q.push(e.GetEndJunction());
+    graph.GetOutgoingEdges(u, edges);
+    for (Edge const & edge : edges)
+    {
+      Junction const & v = edge.GetEndJunction();
+      if (visited.count(v) == 0)
+      {
+        q.push(v);
+        visited.insert(v);
+      }
+    }
   }
 
-  return false;
+  return visited.size() >= limit;
 }
 
 // Find closest candidates in the world graph
 void FindClosestEdges(IRoadGraph const & graph, m2::PointD const & point,
-                      vector<pair<Edge, m2::PointD>> & vicinity)
+                      vector<pair<Edge, Junction>> & vicinity)
 {
-  // WARNING: Take only one vicinity
-  // It is an oversimplification that is not as easily
-  // solved as tuning up this constant because if you set it too high
-  // you risk to find a feature that you cannot in fact reach because of
-  // an obstacle.  Using only the closest feature minimizes (but not
-  // eliminates) this risk.
-
-  vector<pair<Edge, m2::PointD>> candidates;
+  // WARNING: Take only one vicinity, with, maybe, its inverse.  It is
+  // an oversimplification that is not as easily solved as tuning up
+  // this constant because if you set it too high you risk to find a
+  // feature that you cannot in fact reach because of an obstacle.
+  // Using only the closest feature minimizes (but not eliminates)
+  // this risk.
+  vector<pair<Edge, Junction>> candidates;
   graph.FindClosestEdges(point, kMaxRoadCandidates, candidates);
 
   vicinity.clear();
   for (auto const & candidate : candidates)
   {
-    if (CheckGraphConnectivity(graph, candidate.first.GetStartJunction(), kTestConnectivityVisitJunctionsLimit))
+    auto const & edge = candidate.first;
+    if (CheckGraphConnectivity(graph, edge.GetEndJunction(), kTestConnectivityVisitJunctionsLimit))
     {
       vicinity.emplace_back(candidate);
+
+      // Need to add a reverse edge, if exists, because fake edges
+      // must be added for reverse edge too.
+      IRoadGraph::TEdgeVector revEdges;
+      graph.GetOutgoingEdges(edge.GetEndJunction(), revEdges);
+      for (auto const & revEdge : revEdges)
+      {
+        if (revEdge.GetFeatureId() == edge.GetFeatureId() &&
+            revEdge.GetEndJunction() == edge.GetStartJunction() &&
+            revEdge.GetSegId() == edge.GetSegId())
+        {
+          vicinity.emplace_back(revEdge, candidate.second);
+          break;
+        }
+      }
+
       break;
     }
   }
@@ -117,10 +140,9 @@ void FindClosestEdges(IRoadGraph const & graph, m2::PointD const & point,
 }  // namespace
 
 RoadGraphRouter::~RoadGraphRouter() {}
-
 RoadGraphRouter::RoadGraphRouter(string const & name, Index const & index,
                                  TCountryFileFn const & countryFileFn, IRoadGraph::Mode mode,
-                                 unique_ptr<IVehicleModelFactory> && vehicleModelFactory,
+                                 unique_ptr<VehicleModelFactory> && vehicleModelFactory,
                                  unique_ptr<IRoutingAlgorithm> && algorithm,
                                  unique_ptr<IDirectionsEngine> && directionsEngine)
   : m_name(name)
@@ -156,7 +178,7 @@ IRouter::ResultCode RoadGraphRouter::CalculateRoute(m2::PointD const & startPoin
   if (!CheckMapExistence(startPoint, route) || !CheckMapExistence(finalPoint, route))
     return IRouter::RouteFileNotExist;
 
-  vector<pair<Edge, m2::PointD>> finalVicinity;
+  vector<pair<Edge, Junction>> finalVicinity;
   FindClosestEdges(*m_roadGraph, finalPoint, finalVicinity);
 
   if (finalVicinity.empty())
@@ -170,7 +192,7 @@ IRouter::ResultCode RoadGraphRouter::CalculateRoute(m2::PointD const & startPoin
       route.AddAbsentCountry(name);
   }
 
-  vector<pair<Edge, m2::PointD>> startVicinity;
+  vector<pair<Edge, Junction>> startVicinity;
   FindClosestEdges(*m_roadGraph, startPoint, startVicinity);
 
   if (startVicinity.empty())
@@ -186,8 +208,10 @@ IRouter::ResultCode RoadGraphRouter::CalculateRoute(m2::PointD const & startPoin
   if (!route.GetAbsentCountries().empty())
     return IRouter::FileTooOld;
 
-  Junction const startPos(startPoint);
-  Junction const finalPos(finalPoint);
+  // Let us assume that the closest to startPoint/finalPoint feature point has the same altitude
+  // with startPoint/finalPoint.
+  Junction const startPos(startPoint, startVicinity.front().second.GetAltitude());
+  Junction const finalPos(finalPoint, finalVicinity.front().second.GetAltitude());
 
   m_roadGraph->ResetFakes();
   m_roadGraph->AddFakeEdges(startPos, startVicinity);
@@ -203,7 +227,10 @@ IRouter::ResultCode RoadGraphRouter::CalculateRoute(m2::PointD const & startPoin
     ASSERT_EQUAL(result.path.front(), startPos, ());
     ASSERT_EQUAL(result.path.back(), finalPos, ());
     ASSERT_GREATER(result.distance, 0., ());
-    ReconstructRoute(move(result.path), route, delegate);
+
+    CHECK(m_directionsEngine, ());
+    ReconstructRoute(*m_directionsEngine, *m_roadGraph, nullptr /* trafficColoring */,
+                     delegate, result.path, route);
   }
 
   m_roadGraph->ResetFakes();
@@ -224,36 +251,9 @@ IRouter::ResultCode RoadGraphRouter::CalculateRoute(m2::PointD const & startPoin
   return IRouter::RouteNotFound;
 }
 
-void RoadGraphRouter::ReconstructRoute(vector<Junction> && path, Route & route,
-                                       my::Cancellable const & cancellable) const
-{
-  CHECK(!path.empty(), ("Can't reconstruct route from an empty list of positions."));
-
-  // By some reason there're two adjacent positions on a road with
-  // the same end-points. This could happen, for example, when
-  // direction on a road was changed.  But it doesn't matter since
-  // this code reconstructs only geometry of a route.
-  path.erase(unique(path.begin(), path.end()), path.end());
-  if (path.size() == 1)
-    path.emplace_back(path.back());
-
-  Route::TTimes times;
-  Route::TTurns turnsDir;
-  vector<m2::PointD> geometry;
-  // @TODO(bykoianko) streetNames is not filled in Generate(). It should be done.
-  Route::TStreets streetNames;
-  if (m_directionsEngine)
-    m_directionsEngine->Generate(*m_roadGraph, path, times, turnsDir, geometry, cancellable);
-
-  route.SetGeometry(geometry.begin(), geometry.end());
-  route.SetSectionTimes(times);
-  route.SetTurnInstructions(turnsDir);
-  route.SetStreetNames(streetNames);
-}
-
 unique_ptr<IRouter> CreatePedestrianAStarRouter(Index & index, TCountryFileFn const & countryFileFn)
 {
-  unique_ptr<IVehicleModelFactory> vehicleModelFactory(new PedestrianModelFactory());
+  unique_ptr<VehicleModelFactory> vehicleModelFactory(new PedestrianModelFactory());
   unique_ptr<IRoutingAlgorithm> algorithm(new AStarRoutingAlgorithm());
   unique_ptr<IDirectionsEngine> directionsEngine(new PedestrianDirectionsEngine());
   unique_ptr<IRouter> router(new RoadGraphRouter(
@@ -264,7 +264,7 @@ unique_ptr<IRouter> CreatePedestrianAStarRouter(Index & index, TCountryFileFn co
 
 unique_ptr<IRouter> CreatePedestrianAStarBidirectionalRouter(Index & index, TCountryFileFn const & countryFileFn)
 {
-  unique_ptr<IVehicleModelFactory> vehicleModelFactory(new PedestrianModelFactory());
+  unique_ptr<VehicleModelFactory> vehicleModelFactory(new PedestrianModelFactory());
   unique_ptr<IRoutingAlgorithm> algorithm(new AStarBidirectionalRoutingAlgorithm());
   unique_ptr<IDirectionsEngine> directionsEngine(new PedestrianDirectionsEngine());
   unique_ptr<IRouter> router(new RoadGraphRouter(
@@ -275,7 +275,7 @@ unique_ptr<IRouter> CreatePedestrianAStarBidirectionalRouter(Index & index, TCou
 
 unique_ptr<IRouter> CreateBicycleAStarBidirectionalRouter(Index & index, TCountryFileFn const & countryFileFn)
 {
-  unique_ptr<IVehicleModelFactory> vehicleModelFactory(new BicycleModelFactory());
+  unique_ptr<VehicleModelFactory> vehicleModelFactory(new BicycleModelFactory());
   unique_ptr<IRoutingAlgorithm> algorithm(new AStarBidirectionalRoutingAlgorithm());
   unique_ptr<IDirectionsEngine> directionsEngine(new BicycleDirectionsEngine(index));
   unique_ptr<IRouter> router(new RoadGraphRouter(

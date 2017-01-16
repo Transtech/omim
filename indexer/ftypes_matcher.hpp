@@ -32,6 +32,12 @@ public:
   bool operator() (vector<uint32_t> const & types) const;
 
   static uint32_t PrepareToMatch(uint32_t type, uint8_t level);
+
+  template <typename TFn>
+  void ForEachType(TFn && fn) const
+  {
+    for_each(m_types.cbegin(), m_types.cend(), forward<TFn>(fn));
+  }
 };
 
 class IsPeakChecker : public BaseChecker
@@ -73,12 +79,6 @@ class IsStreetChecker : public BaseChecker
 {
   IsStreetChecker();
 public:
-  template <typename TFn>
-  void ForEachType(TFn && fn) const
-  {
-    for_each(m_types.cbegin(), m_types.cend(), forward<TFn>(fn));
-  }
-
   static IsStreetChecker const & Instance();
 };
 
@@ -94,12 +94,6 @@ class IsVillageChecker : public BaseChecker
   IsVillageChecker();
 
 public:
-  template <typename TFn>
-  void ForEachType(TFn && fn) const
-  {
-    for_each(m_types.cbegin(), m_types.cend(), forward<TFn>(fn));
-  }
-
   static IsVillageChecker const & Instance();
 };
 
@@ -173,6 +167,31 @@ public:
   static vector<string> const & GetHotelTags();
 };
 
+// WiFi is a type in classificator.txt,
+// it should be checked for filling metadata in MapObject.
+class IsWifiChecker : public BaseChecker
+{
+  IsWifiChecker();
+
+public:
+  static IsWifiChecker const & Instance();
+};
+
+class IsFoodChecker : public BaseChecker
+{
+  IsFoodChecker();
+public:
+  static IsFoodChecker const & Instance();
+};
+
+class IsOpentableChecker : public BaseChecker
+{
+  IsOpentableChecker();
+
+public:
+  static IsOpentableChecker const & Instance();
+};
+
 /// Type of locality (do not change values and order - they have detalization order)
 /// COUNTRY < STATE < CITY < ...
 enum Type { NONE = -1, COUNTRY = 0, STATE, CITY, TOWN, VILLAGE, LOCALITY_COUNT };
@@ -191,7 +210,7 @@ public:
 /// @name Get city radius and population.
 /// @param r Radius in meters.
 //@{
-uint32_t GetPopulation(FeatureType const & ft);
+uint64_t GetPopulation(FeatureType const & ft);
 double GetRadiusByPopulation(uint32_t p);
 uint32_t GetPopulationByRadius(double r);
 //@}

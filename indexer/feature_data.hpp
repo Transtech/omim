@@ -66,10 +66,11 @@ namespace feature
     }
 
     /// Accumulation function.
-    inline void operator() (uint32_t type)
+    void Add(uint32_t type)
     {
       ASSERT_LESS(m_size, kMaxTypesCount, ());
-      m_types[m_size++] = type;
+      if (m_size < kMaxTypesCount)
+        m_types[m_size++] = type;
     }
 
     /// @name Selectors.
@@ -121,7 +122,7 @@ namespace feature
 
   string DebugPrint(TypesHolder const & holder);
 
-  uint8_t CalculateHeader(uint32_t const typesCount, uint8_t const headerGeomType,
+  uint8_t CalculateHeader(size_t const typesCount, uint8_t const headerGeomType,
                           FeatureParamsBase const & params);
 }  // namespace feature
 
@@ -221,6 +222,8 @@ public:
   bool m_reverseGeometry;
 
   FeatureParams() : m_geomType(0xFF), m_reverseGeometry(false) {}
+
+  void ClearName();
 
   bool AddName(string const & lang, string const & s);
   bool AddHouseName(string const & s);

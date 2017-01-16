@@ -29,7 +29,7 @@ SUBDIRS = 3party base coding geometry editor indexer routing search
   SUBDIRS *= platform stats storage
 
   CONFIG(desktop) {
-    SUBDIRS *= generator
+    SUBDIRS *= traffic generator
 
     generator_tool.subdir = generator/generator_tool
     generator_tool.depends = $$SUBDIRS
@@ -40,6 +40,16 @@ SUBDIRS = 3party base coding geometry editor indexer routing search
   # TODO(AlexZ): Avoid duplication for routing_integration_tests.
   CONFIG(gtool):!CONFIG(no-tests) {
     SUBDIRS *= map
+
+    # Booking quality check
+    booking_quality_check.subdir = generator/booking_quality_check
+    booking_quality_check.depends = $$SUBDIRS
+    SUBDIRS *= booking_quality_check
+
+    # restaraunts_info
+    restaurants_info.subdir = generator/restaurants_info
+    restaurants_info.depends = $$SUBDIRS
+    SUBDIRS *= restaurants_info
 
     routing_integration_tests.subdir = routing/routing_integration_tests
     routing_integration_tests.depends = $$SUBDIRS
@@ -54,7 +64,7 @@ SUBDIRS = 3party base coding geometry editor indexer routing search
 }
 
 !CONFIG(gtool):!CONFIG(osrm) {
-  SUBDIRS *= drape drape_frontend map
+  SUBDIRS *= drape drape_frontend partners_api tracking traffic map
 
   CONFIG(map_designer):CONFIG(desktop) {
     SUBDIRS *= skin_generator
@@ -85,6 +95,13 @@ SUBDIRS = 3party base coding geometry editor indexer routing search
     search_tests_support.subdir = search/search_tests_support
     SUBDIRS *= search_tests_support
 
+    # Desktop-only library, can be used as a search interface for Python2.7.
+    CONFIG(search_engine_pylib) {
+      search_engine_pylib.subdir = search/search_engine_pylib
+      search_engine_pylib.depends = $$SUBDIRS
+      SUBDIRS *= search_engine_pylib
+    }
+
     search_quality.subdir = search/search_quality
     search_quality.depends = $$SUBDIRS
     SUBDIRS *= search_quality
@@ -95,13 +112,19 @@ SUBDIRS = 3party base coding geometry editor indexer routing search
     features_collector_tool.subdir = search/search_quality/features_collector_tool
     features_collector_tool.depends = $$SUBDIRS
 
-    SUBDIRS *= search_quality_tool features_collector_tool
+    feature_list.subdir = feature_list
+    feature_list.depends = $$SUBDIRS
+
+    SUBDIRS *= feature_list features_collector_tool search_quality_tool
   }
 
   CONFIG(desktop):!CONFIG(no-tests) {
     # Additional desktop-only, tests-only libraries.
     platform_tests_support.subdir = platform/platform_tests_support
     SUBDIRS *= platform_tests_support
+
+    indexer_tests_support.subdir = indexer/indexer_tests_support
+    SUBDIRS *= indexer_tests_support
 
     # Tests binaries.
     base_tests.subdir = base/base_tests
@@ -117,16 +140,20 @@ SUBDIRS = 3party base coding geometry editor indexer routing search
     SUBDIRS *= geometry_tests
 
     indexer_tests.subdir = indexer/indexer_tests
-    indexer_tests.depends = 3party base coding geometry indexer editor
+    indexer_tests.depends = 3party base coding geometry platform editor storage routing indexer \
+                            platform_tests_support search_tests_support generator_tests_support \
+                            indexer_tests_support
+
     SUBDIRS *= indexer_tests
 
     platform_tests.subdir = platform/platform_tests
     platform_tests.depends = 3party base coding platform platform_tests_support
     SUBDIRS *= platform_tests
 
-    downloader_tests.subdir = platform/downloader_tests
-    downloader_tests.depends = 3party base coding platform platform_tests_support
-    SUBDIRS *= downloader_tests
+#   Uncomment after replace hash function
+#    downloader_tests.subdir = platform/downloader_tests
+#    downloader_tests.depends = 3party base coding platform platform_tests_support
+#    SUBDIRS *= downloader_tests
 
     search_tests.subdir = search/search_tests
     search_tests.depends = 3party base coding geometry platform indexer search
@@ -180,9 +207,9 @@ SUBDIRS = 3party base coding geometry editor indexer routing search
     feature_segments_checker.depends = $$MapDepLibs routing
     SUBDIRS *= feature_segments_checker
 
-    # TODO(AlexZ): Move pedestrian tests into routing dir.
-    pedestrian_routing_tests.depends = $$MapDepLibs routing
-    SUBDIRS *= pedestrian_routing_tests
+    routing_benchmarks.subdir = routing/routing_benchmarks
+    routing_benchmarks.depends = $$MapDepLibs routing
+    SUBDIRS *= routing_benchmarks
 
     search_tests_support.subdir = search/search_tests_support
     search_tests_support.depends = $$MapDepLibs
@@ -190,7 +217,7 @@ SUBDIRS = 3party base coding geometry editor indexer routing search
 
     search_integration_tests.subdir = search/search_integration_tests
     search_integration_tests.depends = $$MapDepLibs search_tests_support \
-                                       generator_tests_support generator
+                                       generator_tests_support indexer_tests_support generator
     SUBDIRS *= search_integration_tests
 
     search_quality_tests.subdir = search/search_quality/search_quality_tests
@@ -205,6 +232,10 @@ SUBDIRS = 3party base coding geometry editor indexer routing search
     editor_tests.depends = 3party base coding geometry platform editor
     SUBDIRS *= editor_tests
 
+    osm_auth_tests.subdir = editor/osm_auth_tests
+    osm_auth_tests.depends = 3party base coding geometry platform editor
+    SUBDIRS *= osm_auth_tests
+
     SUBDIRS *= qt_tstfrm
 
     drape_tests.subdir = drape/drape_tests
@@ -214,5 +245,17 @@ SUBDIRS = 3party base coding geometry editor indexer routing search
     drape_frontend_tests.subdir = drape_frontend/drape_frontend_tests
     drape_frontend_tests.depends = 3party base coding platform drape drape_frontend
     SUBDIRS *= drape_frontend_tests
+
+    partners_api_tests.subdir = partners_api/partners_api_tests
+    partners_api_tests.depends = base platform partners_api
+    SUBDIRS *= partners_api_tests
+
+    tracking_tests.subdir = tracking/tracking_tests
+    tracking_tests.depends = 3party base routing tracking platform_tests_support platform coding geometry 
+    SUBDIRS *= tracking_tests
+
+    traffic_tests.subdir = traffic/traffic_tests
+    traffic_tests.depends = 3party base routing traffic platform_tests_support platform coding geometry
+    SUBDIRS *= traffic_tests
   } # !no-tests
 } # !gtool

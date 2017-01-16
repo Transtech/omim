@@ -1,4 +1,5 @@
 #include "routing/osrm_path_segment_factory.hpp"
+#include "routing/road_graph.hpp"
 #include "routing/routing_mapping.hpp"
 
 #include "indexer/feature.hpp"
@@ -56,13 +57,13 @@ void LoadPathGeometry(buffer_vector<TSeg, 8> const & buffer, size_t startIndex,
     if (startIdx < endIdx)
     {
       for (auto idx = startIdx; idx <= endIdx; ++idx)
-        loadPathGeometry.m_path.push_back(ft.GetPoint(idx));
+        loadPathGeometry.m_path.emplace_back(ft.GetPoint(idx), feature::kDefaultAltitudeMeters);
     }
     else
     {
       // I use big signed type because endIdx can be 0.
       for (int64_t idx = startIdx; idx >= static_cast<int64_t>(endIdx); --idx)
-        loadPathGeometry.m_path.push_back(ft.GetPoint(idx));
+        loadPathGeometry.m_path.emplace_back(ft.GetPoint(idx), feature::kDefaultAltitudeMeters);
     }
 
     // Load lanes if it is a last segment before junction.
@@ -101,7 +102,7 @@ void OsrmPathSegmentFactory(RoutingMapping & mapping, Index const & index,
   buffer_vector<TSeg, 8> buffer;
   mapping.m_segMapping.ForEachFtSeg(osrmPathSegment.node, MakeBackInsertFunctor(buffer));
   loadedPathSegment.m_weight = osrmPathSegment.segmentWeight * kOSRMWeightToSecondsMultiplier;
-  loadedPathSegment.m_nodeId = osrmPathSegment.node;
+  loadedPathSegment.m_nodeId = UniNodeId(osrmPathSegment.node);
   if (buffer.empty())
   {
     LOG(LERROR, ("Can't unpack geometry for map:", mapping.GetCountryName(), " node: ",
@@ -124,7 +125,7 @@ void OsrmPathSegmentFactory(RoutingMapping & mapping, Index const & index, RawPa
   ASSERT(isStartNode || isEndNode, ("This function process only corner cases."));
   loadedPathSegment.Clear();
 
-  loadedPathSegment.m_nodeId = osrmPathSegment.node;
+  loadedPathSegment.m_nodeId = UniNodeId(osrmPathSegment.node);
   if (!startGraphNode.segment.IsValid() || !endGraphNode.segment.IsValid())
     return;
   buffer_vector<TSeg, 8> buffer;

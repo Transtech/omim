@@ -1,7 +1,9 @@
 #include "drape_frontend/rule_drawer.hpp"
-#include "drape_frontend/stylist.hpp"
-#include "drape_frontend/engine_context.hpp"
+
 #include "drape_frontend/apply_feature_functors.hpp"
+#include "drape_frontend/engine_context.hpp"
+#include "drape_frontend/stylist.hpp"
+#include "drape_frontend/traffic_renderer.hpp"
 #include "drape_frontend/visual_params.hpp"
 
 #include "indexer/feature.hpp"
@@ -24,7 +26,14 @@
 #include "base/string_utils.hpp"
 #endif
 
-namespace {
+namespace
+{
+int constexpr kOutlineMinZoomLevel = 16;
+
+// The first zoom level in kAverageSegmentsCount.
+int constexpr kFirstZoomInAverageSegments = 10;
+//                                             10     11    12     13    14    15    16    17    18   19
+vector<size_t> const kAverageSegmentsCount = { 10000, 5000, 10000, 5000, 2500, 5000, 2000, 1000, 500, 500 };
 
 df::BaseApplyFeature::HotelData ExtractHotelData(FeatureType const & f)
 {
@@ -39,23 +48,82 @@ df::BaseApplyFeature::HotelData ExtractHotelData(FeatureType const & f)
   return result;
 }
 
-} // namespace
+void ExtractTrafficGeometry(FeatureType const & f, df::RoadClass const & roadClass,
+                            m2::PolylineD const & polyline, bool oneWay, int zoomLevel,
+                            double pixelToGlobalScale, df::TrafficSegmentsGeometry & geometry)
+{
+  if (polyline.GetSize() < 2)
+    return;
+
+  auto const & regionData = f.GetID().m_mwmId.GetInfo()->GetRegionData();
+  bool const isLeftHandTraffic = regionData.Get(feature::RegionData::RD_DRIVING) == "l";
+
+  // Calculate offset between road lines in mercator for two-way roads.
+  double twoWayOffset = 0.0;
+  if (!oneWay)
+    twoWayOffset = pixelToGlobalScale * df::TrafficRenderer::GetTwoWayOffset(roadClass, zoomLevel);
+
+  static vector<uint8_t> directions = {traffic::TrafficInfo::RoadSegmentId::kForwardDirection,
+                                       traffic::TrafficInfo::RoadSegmentId::kReverseDirection};
+  auto & segments = geometry[f.GetID().m_mwmId];
+
+  int const index = zoomLevel - kFirstZoomInAverageSegments;
+  ASSERT_GREATER_OR_EQUAL(index, 0, ());
+  ASSERT_LESS(index, kAverageSegmentsCount.size(), ());
+  segments.reserve(kAverageSegmentsCount[index]);
+
+  for (uint16_t segIndex = 0; segIndex + 1 < static_cast<uint16_t>(polyline.GetSize()); ++segIndex)
+  {
+    for (size_t dirIndex = 0; dirIndex < directions.size(); ++dirIndex)
+    {
+      if (oneWay && dirIndex > 0)
+        break;
+
+      auto const sid = traffic::TrafficInfo::RoadSegmentId(f.GetID().m_index, segIndex, directions[dirIndex]);
+      bool isReversed = (directions[dirIndex] == traffic::TrafficInfo::RoadSegmentId::kReverseDirection);
+
+      auto const segment = polyline.ExtractSegment(segIndex, isReversed);
+      ASSERT_EQUAL(segment.size(), 2, ());
+
+      // Skip zero-length segments.
+      double const kEps = 1e-5;
+      if (segment[0].EqualDxDy(segment[1], kEps))
+        break;
+
+      if (!oneWay)
+      {
+        m2::PointD const tangent = (segment[1] - segment[0]).Normalize();
+        m2::PointD const normal = isLeftHandTraffic ? m2::PointD(-tangent.y, tangent.x) :
+                                                      m2::PointD(tangent.y, -tangent.x);
+        m2::PolylineD segmentPolyline(vector<m2::PointD>{segment[0] + normal * twoWayOffset,
+                                                         segment[1] + normal * twoWayOffset});
+        segments.emplace_back(sid, df::TrafficSegmentGeometry(move(segmentPolyline), roadClass));
+      }
+      else
+      {
+        m2::PolylineD segmentPolyline(vector<m2::PointD>{segment[0], segment[1]});
+        segments.emplace_back(sid, df::TrafficSegmentGeometry(move(segmentPolyline), roadClass));
+      }
+    }
+  }
+}
+
+} //  namespace
 
 namespace df
 {
 
-int const kLineSimplifyLevelStart = 10;
-int const kLineSimplifyLevelEnd = 12;
-
 RuleDrawer::RuleDrawer(TDrawerCallback const & fn,
                        TCheckCancelledCallback const & checkCancelled,
                        TIsCountryLoadedByNameFn const & isLoadedFn,
-                       ref_ptr<EngineContext> context, bool is3dBuildings)
+                       ref_ptr<EngineContext> context,
+                       bool is3dBuildings, bool trafficEnabled)
   : m_callback(fn)
   , m_checkCancelled(checkCancelled)
   , m_isLoadedFn(isLoadedFn)
   , m_context(context)
   , m_is3dBuidings(is3dBuildings)
+  , m_trafficEnabled(trafficEnabled)
   , m_wasCancelled(false)
 {
   ASSERT(m_callback != nullptr, ());
@@ -63,12 +131,20 @@ RuleDrawer::RuleDrawer(TDrawerCallback const & fn,
 
   m_globalRect = m_context->GetTileKey().GetGlobalRect();
 
-  int32_t tileSize = df::VisualParams::Instance().GetTileSize();
+  auto & vparams = df::VisualParams::Instance();
+  int32_t tileSize = vparams.GetTileSize();
   m2::RectD const r = m_context->GetTileKey().GetGlobalRect(false /* clipByDataMaxZoom */);
   ScreenBase geometryConvertor;
   geometryConvertor.OnSize(0, 0, tileSize, tileSize);
   geometryConvertor.SetFromRect(m2::AnyRectD(r));
   m_currentScaleGtoP = 1.0f / geometryConvertor.GetScale();
+
+  // Here we support only two virtual tile size: 2048 px for high resolution and 1024 px for others.
+  // It helps to render traffic the same on wide range of devices.
+  uint32_t const kTrafficTileSize = vparams.GetVisualScale() < df::VisualParams::kXxhdpiScale ? 1024 : 2048;
+  geometryConvertor.OnSize(0, 0, kTrafficTileSize, kTrafficTileSize);
+  geometryConvertor.SetFromRect(m2::AnyRectD(r));
+  m_trafficScalePtoG = geometryConvertor.GetScale();
 
   int const kAverageOverlaysCount = 200;
   m_mapShapes[df::OverlayType].reserve(kAverageOverlaysCount);
@@ -88,6 +164,8 @@ RuleDrawer::~RuleDrawer()
     overlayShapes.swap(m_mapShapes[df::OverlayType]);
     m_context->FlushOverlays(move(overlayShapes));
   }
+
+  m_context->FlushTrafficGeometry(move(m_trafficGeometry));
 }
 
 bool RuleDrawer::CheckCancelled()
@@ -155,16 +233,17 @@ void RuleDrawer::operator()(FeatureType const & f)
 
   if (s.AreaStyleExists())
   {
-    bool is3dBuilding = false;
-    if (m_is3dBuidings && f.GetLayer() >= 0)
+    bool isBuilding = false;
+    if (f.GetLayer() >= 0)
     {
       // Looks like nonsense, but there are some osm objects with types
       // highway-path-bridge and building (sic!) at the same time (pedestrian crossing).
-      is3dBuilding = (ftypes::IsBuildingChecker::Instance()(f) ||
-                      ftypes::IsBuildingPartChecker::Instance()(f)) &&
-          !ftypes::IsBridgeChecker::Instance()(f) &&
-          !ftypes::IsTunnelChecker::Instance()(f);
+      isBuilding = (ftypes::IsBuildingChecker::Instance()(f) ||
+                    ftypes::IsBuildingPartChecker::Instance()(f)) &&
+                    !ftypes::IsBridgeChecker::Instance()(f) &&
+                    !ftypes::IsTunnelChecker::Instance()(f);
     }
+    bool const is3dBuilding = m_is3dBuidings && isBuilding;
 
     m2::PointD featureCenter;
 
@@ -220,8 +299,10 @@ void RuleDrawer::operator()(FeatureType const & f)
     if (applyPointStyle || is3dBuilding)
       minVisibleScale = feature::GetMinDrawableScale(f);
 
-    ApplyAreaFeature apply(insertShape, f.GetID(), m_globalRect, areaMinHeight, areaHeight,
-                           minVisibleScale, f.GetRank(), s.GetCaptionDescription());
+    bool const generateOutline = (zoomLevel >= kOutlineMinZoomLevel);
+    ApplyAreaFeature apply(m_globalRect.Center(), insertShape, f.GetID(), m_globalRect,
+                           isBuilding, areaMinHeight, areaHeight, minVisibleScale,
+                           f.GetRank(), generateOutline, s.GetCaptionDescription());
     f.ForEachTriangle(apply, zoomLevel);
     apply.SetHotelData(ExtractHotelData(f));
     if (applyPointStyle)
@@ -235,10 +316,9 @@ void RuleDrawer::operator()(FeatureType const & f)
   }
   else if (s.LineStyleExists())
   {
-    ApplyLineFeature apply(insertShape, f.GetID(), m_globalRect, minVisibleScale, f.GetRank(),
-                           s.GetCaptionDescription(), m_currentScaleGtoP,
-                           zoomLevel >= kLineSimplifyLevelStart && zoomLevel <= kLineSimplifyLevelEnd,
-                           f.GetPointsCount());
+    ApplyLineFeature apply(m_globalRect.Center(), m_currentScaleGtoP, insertShape, f.GetID(),
+                           m_globalRect, minVisibleScale, f.GetRank(), s.GetCaptionDescription(),
+                           zoomLevel, f.GetPointsCount());
     f.ForEachPoint(apply, zoomLevel);
 
     if (CheckCancelled())
@@ -247,13 +327,50 @@ void RuleDrawer::operator()(FeatureType const & f)
     if (apply.HasGeometry())
       s.ForEachRule(bind(&ApplyLineFeature::ProcessRule, &apply, _1));
     apply.Finish();
+
+    if (m_trafficEnabled && zoomLevel >= kRoadClass0ZoomLevel)
+    {
+      struct Checker
+      {
+        vector<ftypes::HighwayClass> m_highwayClasses;
+        int m_zoomLevel;
+        df::RoadClass m_roadClass;
+      };
+      static Checker const checkers[] = {
+        {{ftypes::HighwayClass::Trunk, ftypes::HighwayClass::Primary},
+         kRoadClass0ZoomLevel, df::RoadClass::Class0},
+        {{ftypes::HighwayClass::Secondary, ftypes::HighwayClass::Tertiary},
+         kRoadClass1ZoomLevel, df::RoadClass::Class1},
+        {{ftypes::HighwayClass::LivingStreet, ftypes::HighwayClass::Service},
+         kRoadClass2ZoomLevel, df::RoadClass::Class2}
+      };
+
+      bool const oneWay = ftypes::IsOneWayChecker::Instance()(f);
+      auto const highwayClass = ftypes::GetHighwayClass(f);
+      for (size_t i = 0; i < ARRAY_SIZE(checkers); ++i)
+      {
+        auto const & classes = checkers[i].m_highwayClasses;
+        if (find(classes.begin(), classes.end(), highwayClass) != classes.end() &&
+            zoomLevel >= checkers[i].m_zoomLevel)
+        {
+          vector<m2::PointD> points;
+          points.reserve(f.GetPointsCount());
+          f.ResetGeometry();
+          f.ForEachPoint([&points](m2::PointD const & p) { points.emplace_back(p); },
+                         FeatureType::BEST_GEOMETRY);
+          ExtractTrafficGeometry(f, checkers[i].m_roadClass, m2::PolylineD(points), oneWay,
+                                 zoomLevel, m_trafficScalePtoG, m_trafficGeometry);
+          break;
+        }
+      }
+    }
   }
   else
   {
     ASSERT(s.PointStyleExists(), ());
 
     minVisibleScale = feature::GetMinDrawableScale(f);
-    ApplyPointFeature apply(insertShape, f.GetID(), minVisibleScale, f.GetRank(),
+    ApplyPointFeature apply(m_globalRect.Center(), insertShape, f.GetID(), minVisibleScale, f.GetRank(),
                             s.GetCaptionDescription(), 0.0f /* posZ */);
     apply.SetHotelData(ExtractHotelData(f));
     f.ForEachPoint([&apply](m2::PointD const & pt) { apply(pt, false /* hasArea */); }, zoomLevel);
@@ -277,6 +394,7 @@ void RuleDrawer::operator()(FeatureType const & f)
 
   m2::SharedSpline spline(path);
   df::LineViewParams p;
+  p.m_tileCenter = m_globalRect.Center();
   p.m_baseGtoPScale = 1.0;
   p.m_cap = dp::ButtCap;
   p.m_color = dp::Color::Red();
@@ -287,6 +405,7 @@ void RuleDrawer::operator()(FeatureType const & f)
   insertShape(make_unique_dp<LineShape>(spline, p));
 
   df::TextViewParams tp;
+  tp.m_tileCenter = m_globalRect.Center();
   tp.m_anchor = dp::Center;
   tp.m_depth = 20000;
   tp.m_primaryText = strings::to_string(key.m_x) + " " +
@@ -294,7 +413,7 @@ void RuleDrawer::operator()(FeatureType const & f)
                      strings::to_string(key.m_zoomLevel);
 
   tp.m_primaryTextFont = dp::FontDecl(dp::Color::Red(), 30);
-
+  tp.m_primaryOffset = {0.f, 0.f};
   drape_ptr<TextShape> textShape = make_unique_dp<TextShape>(r.Center(), tp, false, 0, false);
   textShape->DisableDisplacing();
   insertShape(move(textShape));

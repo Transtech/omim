@@ -188,7 +188,8 @@ bool Navigator::ScaleImpl(m2::PointD const & newPt1, m2::PointD const & newPt2,
                                                       doRotateScreen);
   ScreenBase tmp = screen;
   tmp.SetGtoPMatrix(newM);
-  tmp.MatchGandP3d(centerG, center3d);
+  if (tmp.isPerspective())
+    tmp.MatchGandP3d(centerG, center3d);
 
   if (!skipMinScaleAndBordersCheck && !CheckMinScale(tmp))
     return false;

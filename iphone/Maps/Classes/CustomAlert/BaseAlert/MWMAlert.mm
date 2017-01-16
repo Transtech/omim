@@ -1,5 +1,5 @@
-#import "Common.h"
 #import "MWMAlert.h"
+#import "MWMCommon.h"
 #import "MWMAlertViewController.h"
 #import "MWMDefaultAlert.h"
 #import "MWMDownloadTransitMapAlert.h"
@@ -7,68 +7,34 @@
 #import "MWMFacebookAlert.h"
 #import "MWMLocationAlert.h"
 #import "MWMOsmAuthAlert.h"
-#import "MWMPedestrianShareAlert.h"
 #import "MWMPlaceDoesntExistAlert.h"
 #import "MWMRateAlert.h"
 #import "MWMRoutingDisclaimerAlert.h"
 
 @implementation MWMAlert
 
-+ (MWMAlert *)rateAlert
-{
-  return [MWMRateAlert alert];
-}
-
-+ (MWMAlert *)locationAlert
-{
-  return [MWMLocationAlert alert];
-}
-
-+ (MWMAlert *)facebookAlert
-{
-  return [MWMFacebookAlert alert];
-}
-
++ (MWMAlert *)rateAlert { return [MWMRateAlert alert]; }
++ (MWMAlert *)locationAlert { return [MWMLocationAlert alert]; }
++ (MWMAlert *)facebookAlert { return [MWMFacebookAlert alert]; }
 + (MWMAlert *)point2PointAlertWithOkBlock:(TMWMVoidBlock)block needToRebuild:(BOOL)needToRebuild
 {
   return [MWMDefaultAlert point2PointAlertWithOkBlock:block needToRebuild:needToRebuild];
 }
 
-+ (MWMAlert *)routingDisclaimerAlertWithInitialOrientation:(UIInterfaceOrientation)orientation
++ (MWMAlert *)routingDisclaimerAlertWithOkBlock:(TMWMVoidBlock)block
 {
-  return [MWMRoutingDisclaimerAlert alertWithInitialOrientation:orientation];
+  return [MWMRoutingDisclaimerAlert alertWithOkBlock:block];
 }
 
-+ (MWMAlert *)routingBicycleDisclaimerAlert
-{
-  return [MWMDefaultAlert routingBicycleDisclaimerAlert];
-}
-
-+ (MWMAlert *)disabledLocationAlert
-{
-  return [MWMDefaultAlert disabledLocationAlert];
-}
-
++ (MWMAlert *)disabledLocationAlert { return [MWMDefaultAlert disabledLocationAlert]; }
 + (MWMAlert *)noWiFiAlertWithOkBlock:(TMWMVoidBlock)okBlock
 {
   return [MWMDefaultAlert noWiFiAlertWithOkBlock:okBlock];
 }
 
-+ (MWMAlert *)noConnectionAlert
-{
-  return [MWMDefaultAlert noConnectionAlert];
-}
-
-+ (MWMAlert *)migrationProhibitedAlert
-{
-  return [MWMDefaultAlert migrationProhibitedAlert];
-}
-
-+ (MWMAlert *)deleteMapProhibitedAlert
-{
-  return [MWMDefaultAlert deleteMapProhibitedAlert];
-}
-
++ (MWMAlert *)noConnectionAlert { return [MWMDefaultAlert noConnectionAlert]; }
++ (MWMAlert *)migrationProhibitedAlert { return [MWMDefaultAlert migrationProhibitedAlert]; }
++ (MWMAlert *)deleteMapProhibitedAlert { return [MWMDefaultAlert deleteMapProhibitedAlert]; }
 + (MWMAlert *)unsavedEditsAlertWithOkBlock:(TMWMVoidBlock)okBlock
 {
   return [MWMDefaultAlert unsavedEditsAlertWithOkBlock:okBlock];
@@ -77,11 +43,6 @@
 + (MWMAlert *)locationServiceNotSupportedAlert
 {
   return [MWMDefaultAlert locationServiceNotSupportedAlert];
-}
-
-+ (MWMAlert *)locationNotFoundAlertWithOkBlock:(TMWMVoidBlock)okBlock
-{
-  return [MWMDefaultAlert locationNotFoundAlertWithOkBlock:okBlock];
 }
 
 + (MWMAlert *)routingMigrationAlertWithOkBlock:(TMWMVoidBlock)okBlock
@@ -106,32 +67,19 @@
 {
   switch (type)
   {
-    case routing::IRouter::NoCurrentPosition:
-      return [MWMDefaultAlert noCurrentPositionAlert];
-    case routing::IRouter::StartPointNotFound:
-      return [MWMDefaultAlert startPointNotFoundAlert];
-    case routing::IRouter::EndPointNotFound:
-      return [MWMDefaultAlert endPointNotFoundAlert];
-    case routing::IRouter::PointsInDifferentMWM:
-      return [MWMDefaultAlert pointsInDifferentMWMAlert];
-    case routing::IRouter::RouteNotFound:
-    case routing::IRouter::InconsistentMWMandRoute:
-      return [MWMDefaultAlert routeNotFoundAlert];
-    case routing::IRouter::RouteFileNotExist:
-    case routing::IRouter::FileTooOld:
-      return [MWMDefaultAlert routeFileNotExistAlert];
-    case routing::IRouter::InternalError:
-      return [MWMDefaultAlert internalRoutingErrorAlert];
-    case routing::IRouter::Cancelled:
-    case routing::IRouter::NoError:
-    case routing::IRouter::NeedMoreMaps:
-      return nil;
+  case routing::IRouter::NoCurrentPosition: return [MWMDefaultAlert noCurrentPositionAlert];
+  case routing::IRouter::StartPointNotFound: return [MWMDefaultAlert startPointNotFoundAlert];
+  case routing::IRouter::EndPointNotFound: return [MWMDefaultAlert endPointNotFoundAlert];
+  case routing::IRouter::PointsInDifferentMWM: return [MWMDefaultAlert pointsInDifferentMWMAlert];
+  case routing::IRouter::RouteNotFound:
+  case routing::IRouter::InconsistentMWMandRoute: return [MWMDefaultAlert routeNotFoundAlert];
+  case routing::IRouter::RouteFileNotExist:
+  case routing::IRouter::FileTooOld: return [MWMDefaultAlert routeFileNotExistAlert];
+  case routing::IRouter::InternalError: return [MWMDefaultAlert internalRoutingErrorAlert];
+  case routing::IRouter::Cancelled:
+  case routing::IRouter::NoError:
+  case routing::IRouter::NeedMoreMaps: return nil;
   }
-}
-
-+ (MWMAlert *)pedestrianToastShareAlert:(BOOL)isFirstLaunch
-{
-  return [MWMPedestrianShareAlert alert:isFirstLaunch];
 }
 
 + (MWMAlert *)incorrectFeauturePositionAlert
@@ -139,16 +87,8 @@
   return [MWMDefaultAlert incorrectFeauturePositionAlert];
 }
 
-+ (MWMAlert *)internalErrorAlert
-{
-  return [MWMDefaultAlert internalErrorAlert];
-}
-
-+ (MWMAlert *)notEnoughSpaceAlert
-{
-  return [MWMDefaultAlert notEnoughSpaceAlert];
-}
-
++ (MWMAlert *)internalErrorAlert { return [MWMDefaultAlert internalErrorAlert]; }
++ (MWMAlert *)notEnoughSpaceAlert { return [MWMDefaultAlert notEnoughSpaceAlert]; }
 + (MWMAlert *)invalidUserNameOrPasswordAlert
 {
   return [MWMDefaultAlert invalidUserNameOrPasswordAlert];
@@ -159,7 +99,8 @@
   return [MWMDefaultAlert disableAutoDownloadAlertWithOkBlock:okBlock];
 }
 
-+ (MWMAlert *)downloaderNoConnectionAlertWithOkBlock:(TMWMVoidBlock)okBlock cancelBlock:(TMWMVoidBlock)cancelBlock
++ (MWMAlert *)downloaderNoConnectionAlertWithOkBlock:(TMWMVoidBlock)okBlock
+                                         cancelBlock:(TMWMVoidBlock)cancelBlock
 {
   return [MWMDefaultAlert downloaderNoConnectionAlertWithOkBlock:okBlock cancelBlock:cancelBlock];
 }
@@ -169,7 +110,8 @@
   return [MWMDefaultAlert downloaderNotEnoughSpaceAlert];
 }
 
-+ (MWMAlert *)downloaderInternalErrorAlertWithOkBlock:(TMWMVoidBlock)okBlock cancelBlock:(TMWMVoidBlock)cancelBlock
++ (MWMAlert *)downloaderInternalErrorAlertWithOkBlock:(TMWMVoidBlock)okBlock
+                                          cancelBlock:(TMWMVoidBlock)cancelBlock
 {
   return [MWMDefaultAlert downloaderInternalErrorAlertWithOkBlock:okBlock cancelBlock:cancelBlock];
 }
@@ -194,69 +136,43 @@
   return [MWMDefaultAlert deleteFeatureAlertWithBlock:block];
 }
 
-+ (MWMAlert *)editorViralAlert
++ (MWMAlert *)editorViralAlert { return [MWMEditorViralAlert alert]; }
++ (MWMAlert *)osmAuthAlert { return [MWMOsmAuthAlert alert]; }
++ (MWMAlert *)personalInfoWarningAlertWithBlock:(TMWMVoidBlock)block
 {
-  return [MWMEditorViralAlert alert];
+  return [MWMDefaultAlert personalInfoWarningAlertWithBlock:block];
 }
 
-+ (MWMAlert *)osmAuthAlert
++ (MWMAlert *)trackWarningAlertWithCancelBlock:(TMWMVoidBlock)block
 {
-  return [MWMOsmAuthAlert alert];
+  return [MWMDefaultAlert trackWarningAlertWithCancelBlock:block];
 }
 
 - (void)willRotateToInterfaceOrientation:(UIInterfaceOrientation)orientation
 {
-// Should override this method if you want custom relayout after rotation.
+  // Should override this method if you want custom relayout after rotation.
 }
 
-- (void)close
-{
-  [self.alertController closeAlert];
-}
-
+- (void)close:(TMWMVoidBlock)completion { [self.alertController closeAlert:completion]; }
 - (void)setNeedsCloseAlertAfterEnterBackground
 {
-  [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(applicationDidEnterBackground) name:UIApplicationDidEnterBackgroundNotification object:nil];
+  [[NSNotificationCenter defaultCenter] addObserver:self
+                                           selector:@selector(applicationDidEnterBackground)
+                                               name:UIApplicationDidEnterBackgroundNotification
+                                             object:nil];
 }
 
-- (void)dealloc
-{
-  [[NSNotificationCenter defaultCenter] removeObserver:self];
-}
-
+- (void)dealloc { [[NSNotificationCenter defaultCenter] removeObserver:self]; }
 - (void)applicationDidEnterBackground
 {
-// Should close alert when application entered background.
-  [self close];
+  // Should close alert when application entered background.
+  [self close:nil];
 }
 
 - (void)rotate:(UIInterfaceOrientation)toInterfaceOrientation duration:(NSTimeInterval)duration
 {
-  if (isIOS7 && [self respondsToSelector:@selector(setTransform:)])
-  {
-    [UIView animateWithDuration:duration animations:^
-    {
-      self.transform = rotation(toInterfaceOrientation);
-    }];
-  }
   if ([self respondsToSelector:@selector(willRotateToInterfaceOrientation:)])
     [self willRotateToInterfaceOrientation:toInterfaceOrientation];
-}
-
-CGAffineTransform rotation(UIInterfaceOrientation orientation)
-{
-  switch (orientation)
-  {
-    case UIInterfaceOrientationLandscapeLeft:
-      return CGAffineTransformMakeRotation(-M_PI_2);
-    case UIInterfaceOrientationLandscapeRight:
-      return CGAffineTransformMakeRotation(M_PI_2);
-    case UIInterfaceOrientationPortraitUpsideDown:
-      return CGAffineTransformMakeRotation(M_PI);
-    case UIInterfaceOrientationUnknown:
-    case UIInterfaceOrientationPortrait:
-      return CGAffineTransformIdentity;
-  }
 }
 
 - (void)addControllerViewToWindow
@@ -271,13 +187,21 @@ CGAffineTransform rotation(UIInterfaceOrientation orientation)
 {
   _alertController = alertController;
   UIView * view = alertController.view;
-  UIView * ownerView = alertController.ownerViewController.view;
-  view.frame = ownerView.bounds;
-  [alertController.ownerViewController.view addSubview:view];
+  UIViewController * ownerViewController = alertController.ownerViewController;
+  view.frame = ownerViewController.view.bounds;
+  [ownerViewController.view addSubview:view];
   [self addControllerViewToWindow];
-  [self rotate:alertController.ownerViewController.interfaceOrientation duration:0.0];
+  auto const orientation = [[UIApplication sharedApplication] statusBarOrientation];
+  [self rotate:orientation duration:0.0];
   [view addSubview:self];
   self.frame = view.bounds;
+}
+
+- (void)layoutSubviews
+{
+  [super layoutSubviews];
+  self.frame = self.superview.bounds;
+  [super layoutSubviews];
 }
 
 @end

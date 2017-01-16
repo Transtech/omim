@@ -1,8 +1,8 @@
 #include "search/engine.hpp"
 
 #include "search/geometry_utils.hpp"
-#include "search/params.hpp"
 #include "search/processor.hpp"
+#include "search/search_params.hpp"
 
 #include "storage/country_info_getter.hpp"
 
@@ -227,7 +227,7 @@ void Engine::PostMessage(TArgs &&... args)
 void Engine::DoSearch(SearchParams const & params, m2::RectD const & viewport,
                       shared_ptr<ProcessorHandle> handle, Processor & processor)
 {
-  bool const viewportSearch = params.GetMode() == Mode::Viewport;
+  bool const viewportSearch = params.m_mode == Mode::Viewport;
 
   processor.Reset();
   processor.Init(viewportSearch);
@@ -240,7 +240,13 @@ void Engine::DoSearch(SearchParams const & params, m2::RectD const & viewport,
   // Early exit when query processing is cancelled.
   if (processor.IsCancelled())
   {
-    params.m_onResults(Results::GetEndMarker(true /* isCancelled */));
+    Results results;
+    results.SetEndMarker(true /* isCancelled */);
+
+    if (params.m_onResults)
+      params.m_onResults(results);
+    else
+      LOG(LERROR, ("OnResults is not set."));
     return;
   }
 

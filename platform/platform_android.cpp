@@ -260,6 +260,9 @@ void Platform::SetupMeasurementSystem() const
   settings::Set(settings::kMeasurementUnits, units);
 }
 
+/// @see implementation of methods below in android/jni/com/.../Platform.cpp
+// void Platform::RunOnGuiThread(TFunctor const & fn){}
+
 namespace
 {
 class FunctorWrapper : public threads::IRoutine

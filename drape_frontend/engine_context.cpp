@@ -35,6 +35,13 @@ void EngineContext::FlushOverlays(TMapShapes && shapes)
   PostMessage(make_unique_dp<OverlayMapShapeReadedMessage>(m_tileKey, move(shapes)));
 }
 
+void EngineContext::FlushTrafficGeometry(TrafficSegmentsGeometry && geometry)
+{
+  m_commutator->PostMessage(ThreadsCommutator::ResourceUploadThread,
+                            make_unique_dp<FlushTrafficGeometryMessage>(m_tileKey, move(geometry)),
+                            MessagePriority::Low);
+}
+
 void EngineContext::EndReadTile()
 {
   PostMessage(make_unique_dp<TileReadEndMessage>(m_tileKey));

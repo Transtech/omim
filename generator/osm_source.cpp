@@ -1,4 +1,3 @@
-#include "generator/booking_dataset.hpp"
 #include "generator/coastlines_generator.hpp"
 #include "generator/feature_generator.hpp"
 #include "generator/intermediate_data.hpp"
@@ -13,15 +12,20 @@
 #include "generator/towns_dumper.hpp"
 #include "generator/world_map_generator.hpp"
 
+#include "generator/booking_dataset.hpp"
+#include "generator/opentable_dataset.hpp"
+
 #include "indexer/classificator.hpp"
 
 #include "platform/platform.hpp"
 
 #include "geometry/mercator.hpp"
+#include "geometry/tree4d.hpp"
 
+#include "base/stl_helpers.hpp"
+
+#include "coding/file_name_utils.hpp"
 #include "coding/parse_xml.hpp"
-
-#include "std/fstream.hpp"
 
 #include "defines.hpp"
 
@@ -49,7 +53,6 @@ uint64_t SourceReader::Read(char * buffer, uint64_t bufferSize)
   m_file->read(buffer, bufferSize);
   return m_file->gcount();
 }
-
 
 namespace
 {
@@ -133,9 +136,12 @@ public:
   void AddRelation(TKey id, RelationElement const & e)
   {
     string const & relationType = e.GetType();
-    if (!(relationType == "multipolygon" || relationType == "route" ||
-          relationType == "boundary" || relationType == "associatedStreet"))
+    if (!(relationType == "multipolygon" || relationType == "route" || relationType == "boundary" ||
+          relationType == "associatedStreet" || relationType == "building" ||
+          relationType == "restriction"))
+    {
       return;
+    }
 
     m_relations.Write(id, e);
     AddToIndex(m_nodeToRelations, id, e.nodes);
@@ -182,18 +188,104 @@ public:
   }
 };
 
-class MainFeaturesEmitter
+/// Used to make a "good" node for a highway graph with OSRM for low zooms.
+class Place
+{
+public:
+  Place(FeatureBuilder1 const & ft, uint32_t type) : m_ft(ft), m_pt(ft.GetKeyPoint()), m_type(type)
+  {
+    using namespace ftypes;
+
+    switch (IsLocalityChecker::Instance().GetType(m_type))
+    {
+    case COUNTRY: m_thresholdM = 300000.0; break;
+    case STATE: m_thresholdM = 100000.0; break;
+    case CITY: m_thresholdM = 30000.0; break;
+    case TOWN: m_thresholdM = 20000.0; break;
+    case VILLAGE: m_thresholdM = 10000.0; break;
+    default: m_thresholdM = 10000.0; break;
+    }
+  }
+
+  FeatureBuilder1 const & GetFeature() const { return m_ft; }
+
+  m2::RectD GetLimitRect() const
+  {
+    return MercatorBounds::RectByCenterXYAndSizeInMeters(m_pt, m_thresholdM);
+  }
+
+  bool IsEqual(Place const & r) const
+  {
+    return (AreTypesEqual(m_type, r.m_type) &&
+            m_ft.GetName() == r.m_ft.GetName() &&
+            (IsPoint() || r.IsPoint()) &&
+            MercatorBounds::DistanceOnEarth(m_pt, r.m_pt) < m_thresholdM);
+  }
+
+  /// Check whether we need to replace place @r with place @this.
+  bool IsBetterThan(Place const & r) const
+  {
+    // Check ranks.
+    uint8_t const r1 = m_ft.GetRank();
+    uint8_t const r2 = r.m_ft.GetRank();
+    if (r1 != r2)
+      return r1 > r2;
+
+    // Check types length.
+    // ("place-city-capital-2" is better than "place-city").
+    uint8_t const l1 = ftype::GetLevel(m_type);
+    uint8_t const l2 = ftype::GetLevel(r.m_type);
+    if (l1 != l2)
+      return l1 > l2;
+
+    // Assume that area places has better priority than point places at the very end ...
+    /// @todo It was usefull when place=XXX type has any area fill style.
+    /// Need to review priority logic here (leave the native osm label).
+    return !IsPoint();
+  }
+
+private:
+  bool IsPoint() const { return (m_ft.GetGeomType() == feature::GEOM_POINT); }
+
+  static bool AreTypesEqual(uint32_t t1, uint32_t t2)
+  {
+    // Use 2-arity places comparison for filtering.
+    // ("place-city-capital-2" is equal to "place-city")
+    ftype::TruncValue(t1, 2);
+    ftype::TruncValue(t2, 2);
+    return (t1 == t2);
+  }
+
+  FeatureBuilder1 m_ft;
+  m2::PointD m_pt;
+  uint32_t m_type;
+  double m_thresholdM;
+
+};
+
+class MainFeaturesEmitter : public EmitterBase
 {
   using TWorldGenerator = WorldMapGenerator<feature::FeaturesCollector>;
   using TCountriesGenerator = CountryMapGenerator<feature::Polygonizer<feature::FeaturesCollector>>;
+
   unique_ptr<TCountriesGenerator> m_countries;
   unique_ptr<TWorldGenerator> m_world;
 
   unique_ptr<CoastlineFeaturesGenerator> m_coasts;
   unique_ptr<feature::FeaturesCollector> m_coastsHolder;
 
+  string const m_skippedElementsPath;
+  ostringstream m_skippedElements;
+
   string m_srcCoastsFile;
   bool m_failOnCoasts;
+
+  generator::BookingDataset m_bookingDataset;
+  generator::OpentableDataset m_opentableDataset;
+
+  /// Used to prepare a list of cities to serve as a list of nodes
+  /// for building a highway graph with OSRM for low zooms.
+  m4::Tree<Place> m_places;
 
   enum TypeIndex
   {
@@ -210,7 +302,10 @@ class MainFeaturesEmitter
 
 public:
   MainFeaturesEmitter(feature::GenerateInfo const & info)
-  : m_failOnCoasts(info.m_failOnCoasts)
+    : m_skippedElementsPath(info.GetIntermediateFileName("skipped_elements", ".lst"))
+    , m_failOnCoasts(info.m_failOnCoasts)
+    , m_bookingDataset(info.m_bookingDatafileName, info.m_bookingReferenceDir)
+    , m_opentableDataset(info.m_opentableDatafileName, info.m_opentableReferenceDir)
   {
     Classificator const & c = classif();
 
@@ -241,53 +336,72 @@ public:
           new feature::FeaturesCollector(info.GetTmpFileName(WORLD_COASTS_FILE_NAME)));
 
     if (info.m_splitByPolygons || !info.m_fileName.empty())
-      m_countries.reset(new TCountriesGenerator(info));
+      m_countries = make_unique<TCountriesGenerator>(info);
 
     if (info.m_createWorld)
       m_world.reset(new TWorldGenerator(info));
   }
 
-  void operator()(FeatureBuilder1 fb)
+  void operator()(FeatureBuilder1 & fb) override
   {
-    uint32_t const coastType = Type(NATURAL_COASTLINE);
-    bool const hasCoast = fb.HasType(coastType);
+    static uint32_t const placeType = classif().GetTypeByPath({"place"});
+    uint32_t const type = fb.GetParams().FindType(placeType, 1);
 
-    if (m_coasts)
+    // TODO(mgserigio): Would it be better to have objects that store callback
+    // and can be piped: action-if-cond1 | action-if-cond-2 | ... ?
+    // The first object which perform action terminates the cahin.
+    if (type != ftype::GetEmptyValue() && !fb.GetName().empty())
     {
-      if (hasCoast)
+      m_places.ReplaceEqualInRect(
+          Place(fb, type),
+          [](Place const & p1, Place const & p2) { return p1.IsEqual(p2); },
+          [](Place const & p1, Place const & p2) { return p1.IsBetterThan(p2); });
+      return;
+    }
+
+    auto const bookingObjId = m_bookingDataset.FindMatchingObjectId(fb);
+    if (bookingObjId != generator::BookingHotel::InvalidObjectId())
+    {
+      m_bookingDataset.PreprocessMatchedOsmObject(bookingObjId, fb, [this, bookingObjId](FeatureBuilder1 & fb)
       {
-        CHECK(fb.GetGeomType() != feature::GEOM_POINT, ());
-        // leave only coastline type
-        fb.SetType(coastType);
-        (*m_coasts)(fb);
-      }
+        m_skippedElements << "BOOKING\t" << DebugPrint(fb.GetMostGenericOsmId())
+                          << '\t' << bookingObjId.Get() << endl;
+        Emit(fb);
+      });
       return;
     }
 
-    if (hasCoast)
+    auto const opentableObjId = m_opentableDataset.FindMatchingObjectId(fb);
+    if (opentableObjId != generator::OpentableRestaurant::InvalidObjectId())
     {
-      fb.PopExactType(Type(NATURAL_LAND));
-      fb.PopExactType(coastType);
-    }
-    else if ((fb.HasType(Type(PLACE_ISLAND)) || fb.HasType(Type(PLACE_ISLET))) &&
-             fb.GetGeomType() == feature::GEOM_AREA)
-    {
-      fb.AddType(Type(NATURAL_LAND));
-    }
-
-    if (!fb.RemoveInvalidTypes())
+      m_opentableDataset.PreprocessMatchedOsmObject(opentableObjId, fb, [this, opentableObjId](FeatureBuilder1 & fb)
+      {
+        m_skippedElements << "OPENTABLE\t" << DebugPrint(fb.GetMostGenericOsmId())
+                          << '\t' << opentableObjId.Get() << endl;
+        Emit(fb);
+      });
       return;
+    }
 
-    if (m_world)
-      (*m_world)(fb);
-
-    if (m_countries)
-      (*m_countries)(fb);
+    Emit(fb);
   }
 
   /// @return false if coasts are not merged and FLAG_fail_on_coasts is set
-  bool Finish()
+  bool Finish() override
   {
+    DumpSkippedElements();
+
+    // Emit all required booking objects to the map.
+    m_bookingDataset.BuildOsmObjects([this](FeatureBuilder1 & fb) { Emit(fb); });
+    // No opentable objects should be emitted. Opentable data enriches some data
+    // with a link to a restaurant's reservation page.
+
+    m_places.ForEach([this](Place const & p)
+    {
+      // m_places are no longer used after this point.
+      Emit(const_cast<FeatureBuilder1 &>(p.GetFeature()));
+    });
+
     if (m_world)
       m_world->DoMerge();
 
@@ -339,16 +453,82 @@ public:
     return true;
   }
 
-  inline void GetNames(vector<string> & names) const
+  void GetNames(vector<string> & names) const override
   {
     if (m_countries)
       names = m_countries->Parent().Names();
     else
       names.clear();
   }
+
+private:
+  void Emit(FeatureBuilder1 & fb)
+  {
+    uint32_t const coastType = Type(NATURAL_COASTLINE);
+    bool const hasCoast = fb.HasType(coastType);
+
+    if (m_coasts)
+    {
+      if (hasCoast)
+      {
+        CHECK(fb.GetGeomType() != feature::GEOM_POINT, ());
+        // leave only coastline type
+        fb.SetType(coastType);
+        (*m_coasts)(fb);
+      }
+      return;
+    }
+
+    if (hasCoast)
+    {
+      fb.PopExactType(Type(NATURAL_LAND));
+      fb.PopExactType(coastType);
+    }
+    else if ((fb.HasType(Type(PLACE_ISLAND)) || fb.HasType(Type(PLACE_ISLET))) &&
+             fb.GetGeomType() == feature::GEOM_AREA)
+    {
+      fb.AddType(Type(NATURAL_LAND));
+    }
+
+    if (!fb.RemoveInvalidTypes())
+      return;
+
+    if (m_world)
+      (*m_world)(fb);
+
+    if (m_countries)
+      (*m_countries)(fb);
+  }
+
+  void DumpSkippedElements()
+  {
+    auto const skippedElements = m_skippedElements.str();
+
+    if (skippedElements.empty())
+    {
+      LOG(LINFO, ("No osm object was skipped."));
+      return;
+    }
+
+    ofstream file(m_skippedElementsPath, ios_base::app);
+    if (file.is_open())
+    {
+      file << m_skippedElements.str();
+      LOG(LINFO, ("Saving skipped elements to", m_skippedElementsPath, "done."));
+    }
+    else
+    {
+      LOG(LERROR, ("Can't output into", m_skippedElementsPath));
+    }
+  }
 };
 }  // anonymous namespace
 
+unique_ptr<EmitterBase> MakeMainFeatureEmitter(feature::GenerateInfo const & info)
+{
+  LOG(LINFO, ("Processing booking data from", info.m_bookingDatafileName, "done."));
+  return make_unique<MainFeaturesEmitter>(info);
+}
 
 template <typename TElement, typename TCache>
 void AddElementToCache(TCache & cache, TElement const & em)
@@ -495,7 +675,7 @@ void ProcessOsmElementsFromO5M(SourceReader & stream, function<void(OsmElement *
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 template <class TNodesHolder>
-bool GenerateFeaturesImpl(feature::GenerateInfo & info)
+bool GenerateFeaturesImpl(feature::GenerateInfo & info, EmitterBase & emitter)
 {
   try
   {
@@ -505,33 +685,23 @@ bool GenerateFeaturesImpl(feature::GenerateInfo & info)
     TDataCache cache(nodes, info);
     cache.LoadIndex();
 
-    MainFeaturesEmitter bucketer(info);
-    OsmToFeatureTranslator<MainFeaturesEmitter, TDataCache> parser(
-        bucketer, cache, info.m_makeCoasts ? classif().GetCoastType() : 0,
-        info.GetAddressesFileName());
+    // TODO(mgsergio): Get rid of EmitterBase template parameter.
+    OsmToFeatureTranslator<EmitterBase, TDataCache> parser(
+        emitter, cache, info.m_makeCoasts ? classif().GetCoastType() : 0,
+        info.GetAddressesFileName(), info.GetIntermediateFileName(RESTRICTIONS_FILENAME, ""));
 
     TagAdmixer tagAdmixer(info.GetIntermediateFileName("ways", ".csv"),
                           info.GetIntermediateFileName("towns", ".csv"));
     TagReplacer tagReplacer(GetPlatform().ResourcesDir() + REPLACED_TAGS_FILE);
+    OsmTagMixer osmTagMixer(GetPlatform().ResourcesDir() + MIXED_TAGS_FILE);
 
-    // If info.m_bookingDatafileName is empty then no data will be loaded.
-    generator::BookingDataset bookingDataset(info.m_bookingDatafileName,
-                                             info.m_bookingReferenceDir);
-
-    stringstream skippedElements;
-    
-    // Here we can add new tags to element!!!
+    // Here we can add new tags to the elements!
     auto const fn = [&](OsmElement * e)
     {
       tagReplacer(e);
       tagAdmixer(e);
+      osmTagMixer(e);
 
-      if (bookingDataset.BookingFilter(*e))
-      {
-        skippedElements << e->id << endl;
-        return;
-      }
-      
       parser.EmitElement(e);
     };
 
@@ -548,30 +718,11 @@ bool GenerateFeaturesImpl(feature::GenerateInfo & info)
 
     LOG(LINFO, ("Processing", info.m_osmFileName, "done."));
 
-    if (!info.m_bookingDatafileName.empty())
-    {
-      bookingDataset.BuildFeatures([&](OsmElement * e) { parser.EmitElement(e); });
-      LOG(LINFO, ("Processing booking data from", info.m_bookingDatafileName, "done."));
-      string skippedElementsPath = info.GetIntermediateFileName("skipped_elements", ".lst");
-      ofstream file(skippedElementsPath);
-      if (file.is_open())
-      {
-        file << skippedElements.str();
-        LOG(LINFO, ("Saving skipped elements to", skippedElementsPath, "done."));
-      }
-      else
-      {
-        LOG(LERROR, ("Can't output into", skippedElementsPath));
-      }
-    }
-    
-    parser.Finish();
-
     // Stop if coasts are not merged and FLAG_fail_on_coasts is set
-    if (!bucketer.Finish())
+    if (!emitter.Finish())
       return false;
 
-    bucketer.GetNames(info.m_bucketNames);
+    emitter.GetNames(info.m_bucketNames);
   }
   catch (Reader::Exception const & ex)
   {
@@ -616,16 +767,17 @@ bool GenerateIntermediateDataImpl(feature::GenerateInfo & info)
   return true;
 }
 
-bool GenerateFeatures(feature::GenerateInfo & info)
+bool GenerateFeatures(feature::GenerateInfo & info, EmitterFactory factory)
 {
+  auto emitter = factory(info);
   switch (info.m_nodeStorageType)
   {
     case feature::GenerateInfo::NodeStorageType::File:
-      return GenerateFeaturesImpl<cache::RawFilePointStorage<cache::EMode::Read>>(info);
+      return GenerateFeaturesImpl<cache::RawFilePointStorage<cache::EMode::Read>>(info, *emitter);
     case feature::GenerateInfo::NodeStorageType::Index:
-      return GenerateFeaturesImpl<cache::MapFilePointStorage<cache::EMode::Read>>(info);
+      return GenerateFeaturesImpl<cache::MapFilePointStorage<cache::EMode::Read>>(info, *emitter);
     case feature::GenerateInfo::NodeStorageType::Memory:
-      return GenerateFeaturesImpl<cache::RawMemPointStorage<cache::EMode::Read>>(info);
+      return GenerateFeaturesImpl<cache::RawMemPointStorage<cache::EMode::Read>>(info, *emitter);
   }
   return false;
 }

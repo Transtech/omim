@@ -3,6 +3,9 @@
 
 #include "base/logging.hpp"
 
+#include "std/algorithm.hpp"
+#include "std/vector.hpp"
+
 #include "3party/Alohalytics/src/alohalytics.h"
 
 namespace dp
@@ -43,6 +46,9 @@ void SupportManager::Init()
   m_isTegra = (renderer.find("Tegra") != string::npos);
   if (m_isTegra)
     LOG(LINFO, ("NVidia Tegra device detected."));
+
+  m_maxLineWidth = max(1, GLFunctions::glGetMaxLineWidth());
+  LOG(LINFO, ("Max line width =", m_maxLineWidth));
 }
 
 bool SupportManager::IsSamsungGoogleNexus() const
@@ -58,6 +64,11 @@ bool SupportManager::IsAdreno200Device() const
 bool SupportManager::IsTegraDevice() const
 {
   return m_isTegra;
+}
+
+int SupportManager::GetMaxLineWidth() const
+{
+  return m_maxLineWidth;
 }
 
 SupportManager & SupportManager::Instance()

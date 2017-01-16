@@ -3,6 +3,8 @@
 #include "drape/drape_global.hpp"
 #include "drape/glsl_types.hpp"
 
+#include "geometry/rect2d.hpp"
+
 #include "std/vector.hpp"
 
 namespace df
@@ -34,6 +36,7 @@ struct LineSegment
   glsl::vec2 m_rightWidthScalar[PointsCount];
   bool m_hasLeftJoin[PointsCount];
   bool m_generateJoin;
+  glsl::vec4 m_color;
 
   LineSegment(glsl::vec2 const & p1, glsl::vec2 const & p2)
   {
@@ -42,6 +45,7 @@ struct LineSegment
     m_leftWidthScalar[StartPoint] = m_leftWidthScalar[EndPoint] = glsl::vec2(1.0f, 0.0f);
     m_rightWidthScalar[StartPoint] = m_rightWidthScalar[EndPoint] = glsl::vec2(1.0f, 0.0f);
     m_hasLeftJoin[StartPoint] = m_hasLeftJoin[EndPoint] = true;
+    m_color = glsl::vec4(0.0f, 0.0f, 0.0f, 0.0f);
     m_generateJoin = true;
   }
 };
@@ -50,15 +54,18 @@ void CalculateTangentAndNormals(glsl::vec2 const & pt0, glsl::vec2 const & pt1,
                                 glsl::vec2 & tangent, glsl::vec2 & leftNormal,
                                 glsl::vec2 & rightNormal);
 
-void ConstructLineSegments(vector<m2::PointD> const & path, vector<LineSegment> & segments);
+void ConstructLineSegments(vector<m2::PointD> const & path, vector<glsl::vec4> const & segmentsColors,
+                           vector<LineSegment> & segments);
 
 void UpdateNormals(LineSegment * segment, LineSegment * prevSegment, LineSegment * nextSegment);
 
 void GenerateJoinNormals(dp::LineJoin joinType, glsl::vec2 const & normal1, glsl::vec2 const & normal2,
-                         float halfWidth, bool isLeft, float widthScalar, vector<glsl::vec2> & normals);
+                         float halfWidth, bool isLeft, float widthScalar, vector<glsl::vec2> & normals,
+                         vector<glsl::vec2> * uv = nullptr);
 
 void GenerateCapNormals(dp::LineCap capType, glsl::vec2 const & normal1, glsl::vec2 const & normal2,
-                        glsl::vec2 const & direction, float halfWidth, bool isStart, vector<glsl::vec2> & normals);
+                        glsl::vec2 const & direction, float halfWidth, bool isStart, vector<glsl::vec2> & normals,
+                        int segmentsCount = 8);
 
 glsl::vec2 GetNormal(LineSegment const & segment, bool isLeft, ENormalType normalType);
 

@@ -1,5 +1,4 @@
 #include "drape_frontend/apply_feature_functors.hpp"
-#include "drape_frontend/shape_view_params.hpp"
 #include "drape_frontend/visual_params.hpp"
 
 #include "drape_frontend/area_shape.hpp"
@@ -12,6 +11,7 @@
 
 #include "indexer/drawing_rules.hpp"
 #include "indexer/drules_include.hpp"
+#include "indexer/map_style_reader.hpp"
 #include "indexer/osm_editor.hpp"
 
 #include "geometry/clipping.hpp"
@@ -37,6 +37,9 @@ double const kMinVisibleFontSize = 8.0;
 
 string const kStarSymbol = "★";
 string const kPriceSymbol = "$";
+
+int const kLineSimplifyLevelStart = 10;
+int const kLineSimplifyLevelEnd = 12;
 
 dp::Color ToDrapeColor(uint32_t src)
 {
@@ -108,8 +111,7 @@ private:
 };
 #endif
 
-void Extract(::LineDefProto const * lineRule,
-             df::LineViewParams & params)
+void Extract(::LineDefProto const * lineRule, df::LineViewParams & params)
 {
   float const scale = df::VisualParams::Instance().GetVisualScale();
   params.m_color = ToDrapeColor(lineRule->color());
@@ -152,11 +154,14 @@ void Extract(::LineDefProto const * lineRule,
 
 void CaptionDefProtoToFontDecl(CaptionDefProto const * capRule, dp::FontDecl &params)
 {
+  double const vs = df::VisualParams::Instance().GetVisualScale();
   params.m_color = ToDrapeColor(capRule->color());
-  params.m_size = max(kMinVisibleFontSize, capRule->height() * df::VisualParams::Instance().GetVisualScale());
+  params.m_size = max(kMinVisibleFontSize, capRule->height() * vs);
 
   if (capRule->has_stroke_color())
     params.m_outlineColor = ToDrapeColor(capRule->stroke_color());
+  else if (vs < df::VisualParams::kHdpiScale)
+    params.m_isSdf = false;
 }
 
 void ShieldRuleProtoToFontDecl(ShieldRuleProto const * shieldRule, dp::FontDecl &params)
@@ -183,7 +188,6 @@ dp::Anchor GetAnchor(CaptionDefProto const * capRule)
       return dp::Right;
     else
       return dp::Left;
-
   }
 
   return dp::Center;
@@ -201,15 +205,36 @@ m2::PointF GetOffset(CaptionDefProto const * capRule)
   return result;
 }
 
+uint16_t CalculateHotelOverlayPriority(BaseApplyFeature::HotelData const & data)
+{
+  // NOTE: m_rating is in format X[.Y], where X = [0;10], Y = [0;9], e.g. 8.7
+  string s = data.m_rating;
+  s.erase(remove(s.begin(), s.end(), '.'), s.end());
+  s.erase(remove(s.begin(), s.end(), ','), s.end());
+  if (s.empty())
+    return 0;
+
+  // Special case for integer ratings.
+  if (s.length() == data.m_rating.length())
+    s += '0';
+
+  uint result = 0;
+  if (strings::to_uint(s, result))
+    return static_cast<uint16_t>(result);
+  return 0;
+}
+
 } // namespace
 
-BaseApplyFeature::BaseApplyFeature(TInsertShapeFn const & insertShape, FeatureID const & id,
-                                   int minVisibleScale, uint8_t rank, CaptionDescription const & caption)
+BaseApplyFeature::BaseApplyFeature(m2::PointD const & tileCenter,
+                                   TInsertShapeFn const & insertShape, FeatureID const & id,
+                                   int minVisibleScale, uint8_t rank, CaptionDescription const & captions)
   : m_insertShape(insertShape)
   , m_id(id)
-  , m_captions(caption)
+  , m_captions(captions)
   , m_minVisibleScale(minVisibleScale)
   , m_rank(rank)
+  , m_tileCenter(tileCenter)
 {
   ASSERT(m_insertShape != nullptr, ());
 }
@@ -247,7 +272,7 @@ string BaseApplyFeature::ExtractHotelInfo() const
     return "";
 
   ostringstream out;
-  if (!m_hotelData.m_rating.empty())
+  if (!m_hotelData.m_rating.empty() && m_hotelData.m_rating != "0")
   {
     out << m_hotelData.m_rating << kStarSymbol;
     if (m_hotelData.m_priceCategory != 0)
@@ -264,10 +289,11 @@ void BaseApplyFeature::SetHotelData(HotelData && hotelData)
   m_hotelData = move(hotelData);
 }
 
-ApplyPointFeature::ApplyPointFeature(TInsertShapeFn const & insertShape, FeatureID const & id,
+ApplyPointFeature::ApplyPointFeature(m2::PointD const & tileCenter,
+                                     TInsertShapeFn const & insertShape, FeatureID const & id,
                                      int minVisibleScale, uint8_t rank, CaptionDescription const & captions,
                                      float posZ)
-  : TBase(insertShape, id, minVisibleScale, rank, captions)
+  : TBase(tileCenter, insertShape, id, minVisibleScale, rank, captions)
   , m_posZ(posZ)
   , m_hasPoint(false)
   , m_hasArea(false)
@@ -319,6 +345,7 @@ void ApplyPointFeature::ProcessRule(Stylist::TRuleWrapper const & rule)
   if (capRule && isNode)
   {
     TextViewParams params;
+    params.m_tileCenter = m_tileCenter;
     ExtractCaptionParams(capRule, pRule->GetCaption(1), depth, params);
     params.m_minVisibleScale = m_minVisibleScale;
     params.m_rank = m_rank;
@@ -341,14 +368,16 @@ void ApplyPointFeature::ProcessRule(Stylist::TRuleWrapper const & rule)
     {
       params.m_primaryOptional = false;
       params.m_primaryTextFont.m_size *= 1.2;
-      params.m_primaryTextFont.m_outlineColor = dp::Color(255, 255, 255, 153);
+      auto const style = GetStyleReader().GetCurrentStyle();
+      params.m_primaryTextFont.m_outlineColor = (style == MapStyle::MapStyleDark) ?
+                                                dp::Color(0, 0, 0, 153) : dp::Color(255, 255, 255, 153);
       params.m_secondaryTextFont = params.m_primaryTextFont;
       params.m_secondaryText = ExtractHotelInfo();
       params.m_secondaryOptional = false;
-      m_insertShape(make_unique_dp<TextShape>(m_centerPoint, params,
-                                              hasPOI, 0 /* textIndex */,
+      uint16_t const priority = CalculateHotelOverlayPriority(m_hotelData);
+      m_insertShape(make_unique_dp<TextShape>(m_centerPoint, params, hasPOI, 0 /* textIndex */,
                                               true /* affectedByZoomPriority */,
-                                              dp::displacement::kHotelMode));
+                                              dp::displacement::kHotelMode, priority));
     }
   }
 }
@@ -362,6 +391,7 @@ void ApplyPointFeature::Finish()
   else if (m_circleRule)
   {
     CircleViewParams params(m_id);
+    params.m_tileCenter = m_tileCenter;
     params.m_depth = m_circleDepth;
     params.m_minVisibleScale = m_minVisibleScale;
     params.m_rank = m_rank;
@@ -369,11 +399,12 @@ void ApplyPointFeature::Finish()
     params.m_radius = m_circleRule->radius();
     params.m_hasArea = m_hasArea;
     params.m_createdByEditor = m_createdByEditor;
-    m_insertShape(make_unique_dp<CircleShape>(m_centerPoint, params));
+    m_insertShape(make_unique_dp<CircleShape>(m_centerPoint, params, true /* need overlay */));
   }
   else if (m_symbolRule)
   {
     PoiSymbolViewParams params(m_id);
+    params.m_tileCenter = m_tileCenter;
     params.m_depth = m_symbolDepth;
     params.m_minVisibleScale = m_minVisibleScale;
     params.m_rank = m_rank;
@@ -389,16 +420,24 @@ void ApplyPointFeature::Finish()
                                                  m_hotelData.m_isHotel ? dp::displacement::kDefaultMode :
                                                                          dp::displacement::kAllModes));
     if (m_hotelData.m_isHotel)
-      m_insertShape(make_unique_dp<PoiSymbolShape>(m_centerPoint, params, dp::displacement::kHotelMode));
+    {
+      uint16_t const priority = CalculateHotelOverlayPriority(m_hotelData);
+      m_insertShape(make_unique_dp<PoiSymbolShape>(m_centerPoint, params,
+                                                   dp::displacement::kHotelMode, priority));
+    }
   }
 }
 
-ApplyAreaFeature::ApplyAreaFeature(TInsertShapeFn const & insertShape, FeatureID const & id, m2::RectD tileRect, float minPosZ,
-                                   float posZ, int minVisibleScale, uint8_t rank, CaptionDescription const & captions)
-  : TBase(insertShape, id, minVisibleScale, rank, captions, posZ)
+ApplyAreaFeature::ApplyAreaFeature(m2::PointD const & tileCenter,
+                                   TInsertShapeFn const & insertShape, FeatureID const & id,
+                                   m2::RectD const & clipRect, bool isBuilding, float minPosZ,
+                                   float posZ, int minVisibleScale, uint8_t rank, bool generateOutline,
+                                   CaptionDescription const & captions)
+  : TBase(tileCenter, insertShape, id, minVisibleScale, rank, captions, posZ)
   , m_minPosZ(minPosZ)
-  , m_isBuilding(posZ > 0.0f)
-  , m_tileRect(tileRect)
+  , m_isBuilding(isBuilding)
+  , m_clipRect(clipRect)
+  , m_generateOutline(generateOutline)
 {}
 
 void ApplyAreaFeature::operator()(m2::PointD const & p1, m2::PointD const & p2, m2::PointD const & p3)
@@ -427,9 +466,9 @@ void ApplyAreaFeature::operator()(m2::PointD const & p1, m2::PointD const & p2, 
   };
 
   if (m2::CrossProduct(p2 - p1, p3 - p1) < 0)
-    m2::ClipTriangleByRect(m_tileRect, p1, p2, p3, clipFunctor);
+    m2::ClipTriangleByRect(m_clipRect, p1, p2, p3, clipFunctor);
   else
-    m2::ClipTriangleByRect(m_tileRect, p1, p3, p2, clipFunctor);
+    m2::ClipTriangleByRect(m_clipRect, p1, p3, p2, clipFunctor);
 }
 
 void ApplyAreaFeature::ProcessBuildingPolygon(m2::PointD const & p1, m2::PointD const & p2,
@@ -465,19 +504,13 @@ void ApplyAreaFeature::ProcessBuildingPolygon(m2::PointD const & p1, m2::PointD 
 
 int ApplyAreaFeature::GetIndex(m2::PointD const & pt)
 {
-  int maxIndex = -1;
-  for (auto it = m_indices.begin(); it != m_indices.end(); ++it)
+  for (size_t i = 0; i < m_points.size(); i++)
   {
-    if (it->first > maxIndex)
-      maxIndex = it->first;
-
-    if (pt.EqualDxDy(it->second, 1e-7))
-      return it->first;
+    if (pt.EqualDxDy(m_points[i], 1e-7))
+      return static_cast<int>(i);
   }
-
-  int const newIndex = maxIndex + 1;
-  m_indices.insert(make_pair(newIndex, pt));
-  return newIndex;
+  m_points.push_back(pt);
+  return static_cast<int>(m_points.size()) - 1;
 }
 
 bool ApplyAreaFeature::EqualEdges(TEdge const & edge1, TEdge const & edge2) const
@@ -529,17 +562,27 @@ void ApplyAreaFeature::BuildEdges(int vertexIndex1, int vertexIndex2, int vertex
     m_edges.push_back(make_pair(move(edge3), vertexIndex2));
 }
 
-void ApplyAreaFeature::CalculateBuildingEdges(vector<BuildingEdge> & edges)
+void ApplyAreaFeature::CalculateBuildingOutline(bool calculateNormals, BuildingOutline & outline)
 {
+  outline.m_vertices = move(m_points);
+  outline.m_indices.reserve(m_edges.size() * 2);
+  if (calculateNormals)
+    outline.m_normals.reserve(m_edges.size());
+
   for (auto & e : m_edges)
   {
     if (e.second < 0)
       continue;
-    BuildingEdge edge;
-    edge.m_startVertex = m_indices[e.first.first];
-    edge.m_endVertex = m_indices[e.first.second];
-    edge.m_normal = CalculateNormal(edge.m_startVertex, edge.m_endVertex, m_indices[e.second]);
-    edges.push_back(move(edge));
+
+    outline.m_indices.push_back(e.first.first);
+    outline.m_indices.push_back(e.first.second);
+
+    if (calculateNormals)
+    {
+      outline.m_normals.emplace_back(CalculateNormal(outline.m_vertices[e.first.first],
+                                                     outline.m_vertices[e.first.second],
+                                                     outline.m_vertices[e.second]));
+    }
   }
 }
 
@@ -552,6 +595,7 @@ void ApplyAreaFeature::ProcessRule(Stylist::TRuleWrapper const & rule)
   if (areaRule && !m_triangles.empty())
   {
     AreaViewParams params;
+    params.m_tileCenter = m_tileCenter;
     params.m_depth = depth;
     params.m_color = ToDrapeColor(areaRule->color());
     params.m_minVisibleScale = m_minVisibleScale;
@@ -559,30 +603,36 @@ void ApplyAreaFeature::ProcessRule(Stylist::TRuleWrapper const & rule)
     params.m_minPosZ = m_minPosZ;
     params.m_posZ = m_posZ;
 
-    vector<BuildingEdge> edges;
+    BuildingOutline outline;
     if (m_isBuilding)
     {
-      edges.reserve(m_edges.size());
-      CalculateBuildingEdges(edges);
+      outline.m_generateOutline = m_generateOutline;
+      bool const calculateNormals = m_posZ > 0.0;
+      CalculateBuildingOutline(calculateNormals, outline);
+      params.m_is3D = !outline.m_indices.empty() && calculateNormals;
     }
 
-    m_insertShape(make_unique_dp<AreaShape>(move(m_triangles), move(edges), params));
+    m_insertShape(make_unique_dp<AreaShape>(move(m_triangles), move(outline), params));
   }
   else
+  {
     TBase::ProcessRule(rule);
+  }
 }
 
-ApplyLineFeature::ApplyLineFeature(TInsertShapeFn const & insertShape, FeatureID const & id, m2::RectD tileRect,
-                                   int minVisibleScale, uint8_t rank, CaptionDescription const & captions,
-                                   double currentScaleGtoP, bool simplify, size_t pointsCount)
-  : TBase(insertShape, id, minVisibleScale, rank, captions)
+ApplyLineFeature::ApplyLineFeature(m2::PointD const & tileCenter, double currentScaleGtoP,
+                                   TInsertShapeFn const & insertShape, FeatureID const & id,
+                                   m2::RectD const & clipRect, int minVisibleScale, uint8_t rank,
+                                   CaptionDescription const & captions, int zoomLevel, size_t pointsCount)
+  : TBase(tileCenter, insertShape, id, minVisibleScale, rank, captions)
   , m_currentScaleGtoP(currentScaleGtoP)
   , m_sqrScale(math::sqr(m_currentScaleGtoP))
-  , m_simplify(simplify)
+  , m_simplify(zoomLevel >= kLineSimplifyLevelStart && zoomLevel <= kLineSimplifyLevelEnd)
+  , m_zoomLevel(zoomLevel)
   , m_initialPointsCount(pointsCount)
   , m_shieldDepth(0.0)
   , m_shieldRule(nullptr)
-  , m_tileRect(tileRect)
+  , m_clipRect(move(clipRect))
 #ifdef CALC_FILTERED_POINTS
   , m_readedCount(0)
 #endif
@@ -636,7 +686,7 @@ void ApplyLineFeature::ProcessRule(Stylist::TRuleWrapper const & rule)
   LineDefProto const * pLineRule = pRule->GetLine();
   ShieldRuleProto const * pShieldRule = pRule->GetShield();
 
-  m_clippedSplines = m2::ClipSplineByRect(m_tileRect, m_spline);
+  m_clippedSplines = m2::ClipSplineByRect(m_clipRect, m_spline);
 
   if (m_clippedSplines.empty())
     return;
@@ -648,6 +698,7 @@ void ApplyLineFeature::ProcessRule(Stylist::TRuleWrapper const & rule)
     CaptionDefProtoToFontDecl(pCaptionRule, fontDecl);
 
     PathTextViewParams params;
+    params.m_tileCenter = m_tileCenter;
     params.m_featureID = m_id;
     params.m_depth = depth;
     params.m_minVisibleScale = m_minVisibleScale;
@@ -666,6 +717,7 @@ void ApplyLineFeature::ProcessRule(Stylist::TRuleWrapper const & rule)
     {
       PathSymProto const & symRule = pLineRule->pathsym();
       PathSymbolViewParams params;
+      params.m_tileCenter = m_tileCenter;
       params.m_depth = depth;
       params.m_minVisibleScale = m_minVisibleScale;
       params.m_rank = m_rank;
@@ -681,11 +733,13 @@ void ApplyLineFeature::ProcessRule(Stylist::TRuleWrapper const & rule)
     else
     {
       LineViewParams params;
+      params.m_tileCenter = m_tileCenter;
       Extract(pLineRule, params);
       params.m_depth = depth;
       params.m_minVisibleScale = m_minVisibleScale;
       params.m_rank = m_rank;
       params.m_baseGtoPScale = m_currentScaleGtoP;
+      params.m_zoomLevel = m_zoomLevel;
 
       for (auto const & spline : m_clippedSplines)
         m_insertShape(make_unique_dp<LineShape>(spline, params));
@@ -718,6 +772,7 @@ void ApplyLineFeature::Finish()
   float const mainScale = df::VisualParams::Instance().GetVisualScale();
 
   TextViewParams viewParams;
+  viewParams.m_tileCenter = m_tileCenter;
   viewParams.m_depth = m_shieldDepth;
   viewParams.m_minVisibleScale = m_minVisibleScale;
   viewParams.m_rank = m_rank;
@@ -754,6 +809,11 @@ void ApplyLineFeature::Finish()
       }
     }
   }
+}
+
+m2::PolylineD ApplyLineFeature::GetPolyline() const
+{
+  return HasGeometry() ? m2::PolylineD(m_spline->GetPath()) : m2::PolylineD();
 }
 
 } // namespace df

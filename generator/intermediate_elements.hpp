@@ -10,7 +10,9 @@
 #include "std/algorithm.hpp"
 #include "std/bind.hpp"
 #include "std/limits.hpp"
+#include "std/map.hpp"
 #include "std/string.hpp"
+#include "std/sstream.hpp"
 #include "std/utility.hpp"
 #include "std/vector.hpp"
 
@@ -108,6 +110,22 @@ public:
   {
     for (size_t i = 0; i < ways.size(); ++i)
       toDo(ways[i].first, ways[i].second);
+  }
+
+  string GetNodeRole(uint64_t const id) const
+  {
+    for (size_t i = 0; i < nodes.size(); ++i)
+      if (nodes[i].first == id)
+        return nodes[i].second;
+    return string();
+  }
+
+  string GetWayRole(uint64_t const id) const
+  {
+    for (size_t i = 0; i < ways.size(); ++i)
+      if (ways[i].first == id)
+        return ways[i].second;
+    return string();
   }
 
   void Swap(RelationElement & rhs)

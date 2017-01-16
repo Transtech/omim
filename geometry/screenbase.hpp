@@ -140,6 +140,9 @@ public:
   double GetMaxRotationAngle() const { return m_3dMaxAngleX; }
   double GetAngleFOV() const { return m_3dFOV; }
   double GetScale3d() const { return m_3dScale; }
+  double GetZScale() const;
+
+  double GetDepth3d() const { return m_3dFarZ - m_3dNearZ; }
 
   m2::PointD P3dtoP(m2::PointD const & pt) const;
 
@@ -153,7 +156,7 @@ public:
   m2::PointD PtoP3d(m2::PointD const & pt) const;
   m2::PointD PtoP3d(m2::PointD const & pt, double ptZ) const;
 
-  m2::RectD PixelRectIn3d() const
+  m2::RectD const & PixelRectIn3d() const
   {
     return m_ViewportRect;
   }
@@ -162,7 +165,11 @@ public:
   m2::RectD CalculatePixelRect(double scale) const;
   double CalculatePerspectiveAngle(double scale) const;
 
+  Matrix3dT GetModelView() const;
+  Matrix3dT GetModelView(m2::PointD const & pivot, double scalar) const;
+
   static double CalculateAutoPerspectiveAngle(double scale);
+  static double GetStartPerspectiveScale();
 
   /// Compute arbitrary pixel transformation, that translates the (oldPt1, oldPt2) -> (newPt1, newPt2)
   static MatrixT const CalcTransform(m2::PointD const & oldPt1, m2::PointD const & oldPt2,

@@ -43,10 +43,12 @@ SOURCES += \
     arrow3d.cpp \
     backend_renderer.cpp \
     base_renderer.cpp \
-    batchers_pool.cpp \
     batch_merge_helper.cpp \
     circle_shape.cpp \
     color_constants.cpp \
+    drape_api.cpp \
+    drape_api_builder.cpp \
+    drape_api_renderer.cpp \
     drape_engine.cpp \
     engine_context.cpp \
     framebuffer.cpp \
@@ -85,6 +87,8 @@ SOURCES += \
     tile_info.cpp \
     tile_key.cpp \
     tile_utils.cpp \
+    traffic_generator.cpp \
+    traffic_renderer.cpp \
     transparent_layer.cpp \
     user_event_stream.cpp \
     user_mark_shapes.cpp \
@@ -141,6 +145,9 @@ HEADERS += \
     batch_merge_helper.hpp \
     circle_shape.hpp \
     color_constants.hpp \
+    drape_api.hpp \
+    drape_api_builder.hpp \
+    drape_api_renderer.hpp \
     drape_engine.hpp \
     engine_context.hpp \
     framebuffer.hpp \
@@ -185,6 +192,8 @@ HEADERS += \
     tile_info.hpp \
     tile_key.hpp \
     tile_utils.hpp \
+    traffic_generator.hpp \
+    traffic_renderer.hpp \
     transparent_layer.hpp \
     user_event_stream.hpp \
     user_mark_shapes.hpp \

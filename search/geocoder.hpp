@@ -1,10 +1,14 @@
 #pragma once
 
 #include "search/cancel_exception.hpp"
+#include "search/categories_cache.hpp"
+#include "search/cbv.hpp"
+#include "search/feature_offset_match.hpp"
 #include "search/features_layer.hpp"
 #include "search/features_layer_path_finder.hpp"
 #include "search/geocoder_context.hpp"
 #include "search/geometry_cache.hpp"
+#include "search/hotels_filter.hpp"
 #include "search/mode.hpp"
 #include "search/model.hpp"
 #include "search/mwm_context.hpp"
@@ -25,6 +29,8 @@
 
 #include "base/buffer_vector.hpp"
 #include "base/cancellable.hpp"
+#include "base/dfa_helpers.hpp"
+#include "base/levenshtein_dfa.hpp"
 #include "base/macros.hpp"
 #include "base/string_utils.hpp"
 
@@ -76,6 +82,7 @@ public:
 
     Mode m_mode;
     m2::RectD m_pivot;
+    shared_ptr<hotels_filter::Rule> m_hotelsFilter;
   };
 
   enum RegionType
@@ -135,7 +142,8 @@ public:
   };
 
   Geocoder(Index const & index, storage::CountryInfoGetter const & infoGetter,
-           PreRanker & preRanker, my::Cancellable const & cancellable);
+           PreRanker & preRanker, VillagesCache & villagesCache,
+           my::Cancellable const & cancellable);
 
   ~Geocoder();
 
@@ -177,10 +185,6 @@ private:
   using TLocalitiesCache = map<pair<size_t, size_t>, vector<TLocality>>;
 
   QueryParams::TSynonymsVector const & GetTokens(size_t i) const;
-
-  // Fills |m_retrievalParams| with [curToken, endToken) subsequence
-  // of search query tokens.
-  void PrepareRetrievalParams(size_t curToken, size_t endToken);
 
   // Creates a cache of posting lists corresponding to features in m_context
   // for each token and saves it to m_addressFeatures.
@@ -243,24 +247,19 @@ private:
 
   // Finds all paths through layers and emits reachable features from
   // the lowest layer.
-  void FindPaths();
+  void FindPaths(BaseContext const & ctx);
 
   // Forms result and feeds it to |m_preRanker|.
-  void EmitResult(MwmSet::MwmId const & mwmId, uint32_t ftId, SearchModel::SearchType type,
-                  size_t startToken, size_t endToken);
-  void EmitResult(Region const & region, size_t startToken, size_t endToken);
-  void EmitResult(City const & city, size_t startToken, size_t endToken);
+  void EmitResult(BaseContext const & ctx, MwmSet::MwmId const & mwmId, uint32_t ftId,
+                  SearchModel::SearchType type, size_t startToken, size_t endToken);
+  void EmitResult(BaseContext const & ctx, Region const & region, size_t startToken,
+                  size_t endToken);
+  void EmitResult(BaseContext const & ctx, City const & city, size_t startToken, size_t endToken);
 
   // Tries to match unclassified objects from lower layers, like
   // parks, forests, lakes, rivers, etc. This method finds all
   // UNCLASSIFIED objects that match to all currently unused tokens.
   void MatchUnclassified(BaseContext & ctx, size_t curToken);
-
-  CBV LoadCategories(MwmContext & context, vector<strings::UniString> const & categories);
-
-  CBV LoadStreets(MwmContext & context);
-
-  CBV LoadVillages(MwmContext & context);
 
   // A wrapper around RetrievePostcodeFeatures.
   CBV RetrievePostcodeFeatures(MwmContext const & context, TokenSlice const & slice);
@@ -270,11 +269,17 @@ private:
 
   // This is a faster wrapper around SearchModel::GetSearchType(), as
   // it uses pre-loaded lists of streets and villages.
-  SearchModel::SearchType GetSearchTypeInGeocoding(BaseContext const & ctx, uint32_t featureId);
+  WARN_UNUSED_RESULT bool GetSearchTypeInGeocoding(BaseContext const & ctx, uint32_t featureId,
+                                                   SearchModel::SearchType & searchType);
 
   Index const & m_index;
 
   storage::CountryInfoGetter const & m_infoGetter;
+
+  StreetsCache m_streetsCache;
+  VillagesCache & m_villagesCache;
+  HotelsCache m_hotelsCache;
+  hotels_filter::HotelsFilter m_hotelsFilter;
 
   my::Cancellable const & m_cancellable;
 
@@ -304,9 +309,6 @@ private:
   PivotRectsCache m_pivotRectsCache;
   LocalityRectsCache m_localityRectsCache;
 
-  // Cache of street ids in mwms.
-  map<MwmSet::MwmId, CBV> m_streetsCache;
-
   // Postcodes features in the mwm that is currently being processed.
   Postcodes m_postcodes;
 
@@ -321,7 +323,8 @@ private:
   FeaturesLayerPathFinder m_finder;
 
   // Search query params prepared for retrieval.
-  QueryParams m_retrievalParams;
+  vector<SearchTrieRequest<strings::LevenshteinDFA>> m_tokenRequests;
+  SearchTrieRequest<strings::PrefixDFAModifier<strings::LevenshteinDFA>> m_prefixTokenRequest;
 
   // Pointer to the most nested region filled during geocoding.
   Region const * m_lastMatchedRegion;

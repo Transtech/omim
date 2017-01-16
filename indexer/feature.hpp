@@ -1,5 +1,6 @@
 #pragma once
 #include "indexer/cell_id.hpp"
+#include "indexer/feature_altitude.hpp"
 #include "indexer/feature_data.hpp"
 
 #include "geometry/point2d.hpp"
@@ -9,6 +10,7 @@
 
 #include "editor/xml_feature.hpp"
 
+#include "std/iterator.hpp"
 #include "std/string.hpp"
 #include "std/utility.hpp"
 
@@ -292,7 +294,7 @@ public:
   //@}
 
   uint8_t GetRank() const;
-  uint32_t GetPopulation() const;
+  uint64_t GetPopulation() const;
   string GetRoadNumber() const;
 
   inline feature::Metadata const & GetMetadata() const

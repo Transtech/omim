@@ -57,7 +57,7 @@ public:
     if (p->IsDrawableAny())
     {
       TypesHolder holder(m_geomType);
-      holder(type);
+      holder.Add(type);
 
       pair<int, int> const range = GetDrawableScaleRangeForRules(holder, m_rules);
       if (range.first == -1 || range.second == -1)
@@ -158,10 +158,6 @@ void CheckPriority(vector<StringIL> const & arrT, vector<size_t> const & arrI, d
 
   styles::RunForEveryMapStyle([&](MapStyle style)
   {
-    // Not testing priorities in the legacy style, since it is not maintained anymore.
-    if (style == MapStyleLight)
-      return;
-
     types.clear();
 
     size_t ind = 0;

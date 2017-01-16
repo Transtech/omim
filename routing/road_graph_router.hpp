@@ -24,8 +24,7 @@ class RoadGraphRouter : public IRouter
 {
 public:
   RoadGraphRouter(string const & name, Index const & index, TCountryFileFn const & countryFileFn,
-                  IRoadGraph::Mode mode,
-                  unique_ptr<IVehicleModelFactory> && vehicleModelFactory,
+                  IRoadGraph::Mode mode, unique_ptr<VehicleModelFactory> && vehicleModelFactory,
                   unique_ptr<IRoutingAlgorithm> && algorithm,
                   unique_ptr<IDirectionsEngine> && directionsEngine);
   ~RoadGraphRouter() override;
@@ -38,9 +37,6 @@ public:
                             Route & route) override;
 
 private:
-  void ReconstructRoute(vector<Junction> && junctions, Route & route,
-                        my::Cancellable const & cancellable) const;
-
   /// Checks existance and add absent maps to route.
   /// Returns true if map exists
   bool CheckMapExistence(m2::PointD const & point, Route & route) const;

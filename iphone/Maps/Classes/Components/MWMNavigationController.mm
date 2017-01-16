@@ -1,7 +1,8 @@
-#import "MapsAppDelegate.h"
-#import "MWMController.h"
 #import "MWMNavigationController.h"
-#import "UIColor+MapsMeColor.h"
+#import "MWMCommon.h"
+#import "MWMController.h"
+#import "MWMToast.h"
+#import "MapsAppDelegate.h"
 #import "UIViewController+Navigation.h"
 
 #import <SafariServices/SafariServices.h>
@@ -14,6 +15,9 @@
 
 - (UIStatusBarStyle)preferredStatusBarStyle
 {
+  if ([MWMToast affectsStatusBar])
+    return [MWMToast preferredStatusBarStyle];
+  setStatusBarBackgroundColor([UIColor clearColor]);
   return UIStatusBarStyleLightContent;
 }
 

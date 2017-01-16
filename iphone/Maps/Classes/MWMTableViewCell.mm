@@ -1,5 +1,4 @@
 #import "MWMTableViewCell.h"
-#import "UIColor+MapsMeColor.h"
 
 @implementation MWMTableViewCell
 
@@ -13,6 +12,7 @@
 
 - (void)awakeFromNib
 {
+  [super awakeFromNib];
   [self configure];
 }
 

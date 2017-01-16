@@ -9,17 +9,18 @@
 #include "generator/generator_tests_support/test_mwm_builder.hpp"
 
 #include "indexer/classificator.hpp"
+#include "indexer/feature_meta.hpp"
 
 #include "geometry/point2d.hpp"
 #include "geometry/rect2d.hpp"
+
+#include "base/string_utils.hpp"
 
 #include "std/shared_ptr.hpp"
 #include "std/vector.hpp"
 
 using namespace generator::tests_support;
 using namespace search::tests_support;
-
-using TRules = vector<shared_ptr<MatchingRule>>;
 
 namespace search
 {
@@ -36,7 +37,7 @@ public:
   // TestFeature overrides:
   void Serialize(FeatureBuilder1 & fb) const override
   {
-    fb.SetTestId(m_id);
+    fb.GetMetadataForTesting().Set(feature::Metadata::FMD_TEST_ID, strings::to_string(m_id));
     fb.SetCenter(m_center);
 
     if (!m_name.empty())
@@ -101,17 +102,17 @@ UNIT_CLASS_TEST(SmokeTest, NotPrefixFreeNames)
   m2::RectD const viewport(m2::PointD(0, 0), m2::PointD(100, 100));
   {
     TestSearchRequest request(m_engine, "a ", "en", Mode::Viewport, viewport);
-    request.Wait();
+    request.Run();
     TEST_EQUAL(1, request.Results().size(), ());
   }
   {
     TestSearchRequest request(m_engine, "aa ", "en", Mode::Viewport, viewport);
-    request.Wait();
+    request.Run();
     TEST_EQUAL(2, request.Results().size(), ());
   }
   {
     TestSearchRequest request(m_engine, "aaa ", "en", search::Mode::Viewport, viewport);
-    request.Wait();
+    request.Run();
     TEST_EQUAL(3, request.Results().size(), ());
   }
 }

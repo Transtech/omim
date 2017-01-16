@@ -1,29 +1,20 @@
+#import "MWMCircularProgress.h"
+#import "MWMNavigationDashboardInfoProtocol.h"
 #import "MWMNavigationView.h"
 
 #include "routing/router.hpp"
 
-@protocol MWMRoutePreviewDataSource <NSObject>
-
-@required
-- (NSString *)source;
-- (NSString *)destination;
-
-@end
-
 @class MWMNavigationDashboardEntity;
-@class MWMRouteTypeButton;
 @class MWMNavigationDashboardManager;
-@class MWMCircularProgress;
+@class MWMTaxiCollectionView;
 
-@interface MWMRoutePreview : MWMNavigationView
+@interface MWMRoutePreview : MWMNavigationView<MWMNavigationDashboardInfoProtocol>
 
-@property (weak, nonatomic, readonly) IBOutlet UIButton * extendButton;
-@property (weak, nonatomic) id<MWMRoutePreviewDataSource> dataSource;
-@property (weak, nonatomic) MWMNavigationDashboardManager * dashboardManager;
+@property(weak, nonatomic, readonly) IBOutlet UIButton * extendButton;
+@property(weak, nonatomic, readonly) IBOutlet MWMTaxiCollectionView * taxiCollectionView;
+@property(weak, nonatomic) MWMNavigationDashboardManager * dashboardManager;
 
-- (void)configureWithEntity:(MWMNavigationDashboardEntity *)entity;
 - (void)statePrepare;
-- (void)statePlanning;
 - (void)stateError;
 - (void)stateReady;
 - (void)reloadData;

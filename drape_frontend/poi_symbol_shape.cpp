@@ -96,8 +96,11 @@ void Batch<MV>(ref_ptr<dp::Batcher> batcher, drape_ptr<dp::OverlayHandle> && han
 namespace df
 {
 PoiSymbolShape::PoiSymbolShape(m2::PointF const & mercatorPt, PoiSymbolViewParams const & params,
-                               int displacementMode)
-  : m_pt(mercatorPt), m_params(params), m_displacementMode(displacementMode)
+                               int displacementMode, uint16_t specialModePriority)
+  : m_pt(mercatorPt)
+  , m_params(params)
+  , m_displacementMode(displacementMode)
+  , m_specialModePriority(specialModePriority)
 {}
 
 void PoiSymbolShape::Draw(ref_ptr<dp::Batcher> batcher, ref_ptr<dp::TextureManager> textures) const
@@ -105,7 +108,8 @@ void PoiSymbolShape::Draw(ref_ptr<dp::Batcher> batcher, ref_ptr<dp::TextureManag
   dp::TextureManager::SymbolRegion region;
   textures->GetSymbolRegion(m_params.m_symbolName, region);
 
-  glsl::vec4 const position = glsl::vec4(glsl::ToVec2(m_pt), m_params.m_depth, -m_params.m_posZ);
+  glsl::vec2 const pt = glsl::ToVec2(ConvertToLocal(m_pt, m_params.m_tileCenter, kShapeCoordScalar));
+  glsl::vec4 const position = glsl::vec4(pt, m_params.m_depth, -m_params.m_posZ);
   m2::PointU const pixelSize = region.GetPixelSize();
 
   drape_ptr<dp::OverlayHandle> handle = make_unique_dp<dp::SquareHandle>(m_params.m_id,
@@ -132,10 +136,13 @@ void PoiSymbolShape::Draw(ref_ptr<dp::Batcher> batcher, ref_ptr<dp::TextureManag
 
 uint64_t PoiSymbolShape::GetOverlayPriority() const
 {
-  // Set up maximum priority for shapes which created by user in the editor
-  // and in case of a special displacement mode.
-  if (m_params.m_createdByEditor || (m_displacementMode & dp::displacement::kDefaultMode) == 0)
+  // Set up maximum priority for shapes which created by user in the editor.
+  if (m_params.m_createdByEditor)
     return dp::kPriorityMaskAll;
+
+  // Special displacement mode.
+  if ((m_displacementMode & dp::displacement::kDefaultMode) == 0)
+    return dp::CalculateSpecialModePriority(m_specialModePriority);
 
   // Set up minimal priority for shapes which belong to areas.
   if (m_params.m_hasArea)

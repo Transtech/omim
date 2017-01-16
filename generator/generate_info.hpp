@@ -11,7 +11,6 @@
 
 namespace feature
 {
-
 struct GenerateInfo
 {
   enum class NodeStorageType
@@ -27,7 +26,6 @@ struct GenerateInfo
     O5M
   };
 
-
   // Directory for .mwm.tmp files.
   string m_tmpDir;
   // Directory for result .mwm files.
@@ -41,9 +39,11 @@ struct GenerateInfo
   NodeStorageType m_nodeStorageType;
   OsmSourceType m_osmFileType;
   string m_osmFileName;
-  
+
   string m_bookingDatafileName;
   string m_bookingReferenceDir;
+  string m_opentableDatafileName;
+  string m_opentableReferenceDir;
 
   uint32_t m_versionDate = 0;
 
@@ -86,18 +86,20 @@ struct GenerateInfo
   {
     return my::JoinFoldersToPath(m_tmpDir, fileName + ext);
   }
+
   string GetTargetFileName(string const & fileName, char const * ext = DATA_FILE_EXTENSION) const
   {
     return my::JoinFoldersToPath(m_targetDir, fileName + ext);
   }
+
   string GetIntermediateFileName(string const & fileName, char const * ext = DATA_FILE_EXTENSION) const
   {
     return my::JoinFoldersToPath(m_intermediateDir, fileName + ext);
   }
+
   string GetAddressesFileName() const
   {
     return ((m_genAddresses && !m_fileName.empty()) ? GetTargetFileName(m_fileName, ADDR_FILE_EXTENSION) : string());
   }
 };
-
-} // namespace feature
+}  // namespace feature

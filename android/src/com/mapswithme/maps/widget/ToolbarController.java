@@ -14,23 +14,46 @@ public class ToolbarController
 {
   protected final Activity mActivity;
   protected final Toolbar mToolbar;
+  private final View.OnClickListener mNavigationClickListener = new View.OnClickListener()
+  {
+    @Override
+    public void onClick(View view)
+    {
+      onUpClick();
+    }
+  };
 
   public ToolbarController(View root, Activity activity)
   {
     mActivity = activity;
     mToolbar = (Toolbar) root.findViewById(getToolbarId());
-    UiUtils.showHomeUpButton(mToolbar);
-    mToolbar.setNavigationOnClickListener(new View.OnClickListener()
-    {
-      @Override
-      public void onClick(View v)
-      {
-        onUpClick();
-      }
-    });
+
+    if (useExtendedToolbar())
+      UiUtils.extendViewWithStatusBar(mToolbar);
+    setupNavigationListener();
   }
 
-  protected @IdRes int getToolbarId()
+  protected boolean useExtendedToolbar()
+  {
+    return true;
+  }
+
+  private void setupNavigationListener()
+  {
+    View customNavigationButton = mToolbar.findViewById(R.id.back);
+    if (customNavigationButton != null)
+    {
+      customNavigationButton.setOnClickListener(mNavigationClickListener);
+    }
+    else
+    {
+      UiUtils.showHomeUpButton(mToolbar);
+      mToolbar.setNavigationOnClickListener(mNavigationClickListener);
+    }
+  }
+
+  @IdRes
+  private int getToolbarId()
   {
     return R.id.toolbar;
   }

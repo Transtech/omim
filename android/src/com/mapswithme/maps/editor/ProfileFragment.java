@@ -1,11 +1,13 @@
 package com.mapswithme.maps.editor;
 
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.DrawableRes;
 import android.support.annotation.Nullable;
 import android.support.annotation.StringRes;
+import android.support.v7.app.AlertDialog;
 import android.text.format.DateUtils;
 import android.view.View;
 import android.widget.ImageView;
@@ -23,8 +25,6 @@ import com.mapswithme.util.UiUtils;
 
 public class ProfileFragment extends AuthFragment implements View.OnClickListener, OsmOAuth.OnUserStatsChanged
 {
-  private View mLocalBlock;
-  private TextView mEditsLocal;
   private View mSentBlock;
   private TextView mEditsSent;
   private TextView mEditsSentDate;
@@ -39,10 +39,22 @@ public class ProfileFragment extends AuthFragment implements View.OnClickListene
     LOGOUT(R.drawable.ic_logout, R.string.logout)
     {
       @Override
-      void invoke(ProfileFragment fragment)
+      void invoke(final ProfileFragment fragment)
       {
-        OsmOAuth.clearAuthorization();
-        fragment.refreshViews();
+        new AlertDialog.Builder(fragment.getContext())
+            .setMessage(R.string.are_you_sure)
+            .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener()
+            {
+              @Override
+              public void onClick(DialogInterface dialog, int which)
+              {
+                OsmOAuth.clearAuthorization();
+                fragment.refreshViews();
+              }
+            })
+            .setNegativeButton(android.R.string.no, null)
+            .create()
+            .show();
       }
     },
 
@@ -84,9 +96,6 @@ public class ProfileFragment extends AuthFragment implements View.OnClickListene
     mMore.setOnClickListener(this);
     View editsBlock = view.findViewById(R.id.block_edits);
     UiUtils.show(editsBlock);
-    mLocalBlock = editsBlock.findViewById(R.id.local_edits);
-    ((ImageView) mLocalBlock.findViewById(R.id.image)).setImageResource(R.drawable.ic_device);
-    mEditsLocal = (TextView) mLocalBlock.findViewById(R.id.title);
     mSentBlock = editsBlock.findViewById(R.id.sent_edits);
     mEditsSent = (TextView) mSentBlock.findViewById(R.id.edits_count);
     mEditsSentDate = (TextView) mSentBlock.findViewById(R.id.date_sent);
@@ -109,18 +118,6 @@ public class ProfileFragment extends AuthFragment implements View.OnClickListene
     {
       UiUtils.show(mAuthBlock);
       UiUtils.hide(mMore, mRatingBlock, mSentBlock);
-    }
-
-    final long[] stats = Editor.nativeGetStats();
-    final long localCount = stats[0] - stats[1];
-    if (localCount == 0)
-    {
-      UiUtils.hide(mLocalBlock);
-    }
-    else
-    {
-      UiUtils.show(mLocalBlock);
-      mEditsLocal.setText(String.format(Locale.US, "%s %d", getString(R.string.editor_profile_unsent_changes), localCount));
     }
 
     refreshRatings(0, 0, 0, "");

@@ -45,7 +45,7 @@ void CheckSpeed(initializer_list<uint32_t> const & types, double expectedSpeed)
   TestVehicleModel vehicleModel;
   feature::TypesHolder h;
   for (uint32_t t : types)
-    h(t);
+    h.Add(t);
 
   TEST_EQUAL(vehicleModel.GetMinTypeSpeed(h), expectedSpeed, ());
 }
@@ -55,7 +55,7 @@ void CheckOneWay(initializer_list<uint32_t> const & types, bool expectedValue)
   TestVehicleModel vehicleModel;
   feature::TypesHolder h;
   for (uint32_t t : types)
-    h(t);
+    h.Add(t);
 
   TEST_EQUAL(vehicleModel.HasOneWayType(h), expectedValue, ());
 }
@@ -74,7 +74,6 @@ UNIT_TEST(VehicleModel_Speed)
   CheckSpeed({GetType("highway", "secondary", "bridge")}, 80.0);
   CheckSpeed({GetType("highway", "secondary", "tunnel")}, 80.0);
   CheckSpeed({GetType("highway", "secondary")}, 80.0);
-  CheckSpeed({GetType("highway")}, 0.0);
 
   CheckSpeed({GetType("highway", "trunk")}, 150.0);
   CheckSpeed({GetType("highway", "primary")}, 120.0);
@@ -90,7 +89,6 @@ UNIT_TEST(VehicleModel_Speed_MultiTypes)
   CheckSpeed({typeTunnel, typeSecondary}, 80.0);
   CheckSpeed({typeTunnel, typeHighway}, 80.0);
   CheckSpeed({typeHighway, typeTunnel}, 80.0);
-  CheckSpeed({typeHighway, typeHighway}, 0.0);
 }
 
 UNIT_TEST(VehicleModel_OneWay)
@@ -103,7 +101,6 @@ UNIT_TEST(VehicleModel_OneWay)
   CheckSpeed({typeOneway, typeBridge}, 80.0);
   CheckOneWay({typeOneway, typeBridge}, true);
 
-  CheckSpeed({typeOneway}, 0.0);
   CheckOneWay({typeOneway}, true);
 }
 

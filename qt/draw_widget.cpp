@@ -44,8 +44,7 @@ bool IsLeftButton(Qt::MouseButtons buttons)
 {
   return buttons & Qt::LeftButton;
 }
-
-bool IsLeftButton(QMouseEvent * e)
+bool IsLeftButton(QMouseEvent const * const e)
 {
   return IsLeftButton(e->button()) || IsLeftButton(e->buttons());
 }
@@ -54,37 +53,25 @@ bool IsRightButton(Qt::MouseButtons buttons)
 {
   return buttons & Qt::RightButton;
 }
-
-bool IsRightButton(QMouseEvent * e)
+bool IsRightButton(QMouseEvent const * const e)
 {
   return IsRightButton(e->button()) || IsRightButton(e->buttons());
 }
 
-bool IsRotation(QMouseEvent * e)
-{
-  return e->modifiers() & Qt::ControlModifier;
-}
-
-bool IsRouting(QMouseEvent * e)
-{
-  return e->modifiers() & Qt::ShiftModifier;
-}
-
-bool IsLocationEmulation(QMouseEvent * e)
-{
-  return e->modifiers() & Qt::AltModifier;
-}
-
+bool IsCommandModifier(QMouseEvent const * const e) { return e->modifiers() & Qt::ControlModifier; }
+bool IsShiftModifier(QMouseEvent const * const e) { return e->modifiers() & Qt::ShiftModifier; }
+bool IsAltModifier(QMouseEvent const * const e) { return e->modifiers() & Qt::AltModifier; }
 } // namespace
 
 DrawWidget::DrawWidget(QWidget * parent)
-  : TBase(parent),
-    m_contextFactory(nullptr),
-    m_framework(new Framework()),
-    m_ratio(1.0),
-    m_pScale(nullptr),
-    m_enableScaleUpdate(true),
-    m_emulatingLocation(false)
+  : TBase(parent)
+  , m_contextFactory(nullptr)
+  , m_framework(new Framework())
+  , m_ratio(1.0)
+  , m_pScale(nullptr)
+  , m_rubberBand(nullptr)
+  , m_enableScaleUpdate(true)
+  , m_emulatingLocation(false)
 {
   m_framework->SetMapSelectionListeners([this](place_page::Info const & info)
   {
@@ -115,6 +102,8 @@ DrawWidget::DrawWidget(QWidget * parent)
 
 DrawWidget::~DrawWidget()
 {
+  delete m_rubberBand;
+
   m_framework->EnterBackground();
   m_framework.reset();
 }
@@ -124,14 +113,14 @@ void DrawWidget::UpdateCountryStatus(storage::TCountryId const & countryId)
   if (m_currentCountryChanged != nullptr)
   {
     string countryName = countryId;
-    auto status = m_framework->Storage().CountryStatusEx(countryId);
+    auto status = m_framework->GetStorage().CountryStatusEx(countryId);
 
     uint8_t progressInPercentage = 0;
     storage::MapFilesDownloader::TProgress progressInByte = make_pair(0, 0);
     if (!countryId.empty())
     {
       storage::NodeAttrs nodeAttrs;
-      m_framework->Storage().GetNodeAttrs(countryId, nodeAttrs);
+      m_framework->GetStorage().GetNodeAttrs(countryId, nodeAttrs);
       progressInByte = nodeAttrs.m_downloadingProgress;
       if (progressInByte.second != 0)
         progressInPercentage = static_cast<int8_t>(100 * progressInByte.first / progressInByte.second);
@@ -155,7 +144,7 @@ void DrawWidget::SetCurrentCountryChangedListener(DrawWidget::TCurrentCountryCha
 
 void DrawWidget::DownloadCountry(storage::TCountryId const & countryId)
 {
-  m_framework->Storage().DownloadNode(countryId);
+  m_framework->GetStorage().DownloadNode(countryId);
   if (!m_countryId.empty())
     UpdateCountryStatus(m_countryId);
 }
@@ -364,6 +353,7 @@ void DrawWidget::resizeGL(int width, int height)
   float w = m_ratio * width;
   float h = m_ratio * height;
   m_framework->OnSize(w, h);
+  m_framework->SetVisibleViewport(m2::RectD(0, 0, w, h));
   if (m_skin)
   {
     m_skin->Resize(w, h);
@@ -386,15 +376,28 @@ void DrawWidget::mousePressEvent(QMouseEvent * e)
 
   if (IsLeftButton(e))
   {
-    if (IsRouting(e))
+    if (IsShiftModifier(e))
       SubmitRoutingPoint(pt);
-    else if (IsLocationEmulation(e))
+    else if (IsAltModifier(e))
       SubmitFakeLocationPoint(pt);
     else
       m_framework->TouchEvent(GetTouchEvent(e, df::TouchEvent::TOUCH_DOWN));
   }
   else if (IsRightButton(e))
-    ShowInfoPopup(e, pt);
+  {
+    if (!m_selectionMode || IsCommandModifier(e))
+    {
+      ShowInfoPopup(e, pt);
+    }
+    else
+    {
+      m_rubberBandOrigin = e->pos();
+      if (m_rubberBand == nullptr)
+        m_rubberBand = new QRubberBand(QRubberBand::Rectangle, this);
+      m_rubberBand->setGeometry(QRect(m_rubberBandOrigin, QSize()));
+      m_rubberBand->show();
+    }
+  }
 }
 
 void DrawWidget::mouseDoubleClickEvent(QMouseEvent * e)
@@ -407,15 +410,33 @@ void DrawWidget::mouseDoubleClickEvent(QMouseEvent * e)
 void DrawWidget::mouseMoveEvent(QMouseEvent * e)
 {
   TBase::mouseMoveEvent(e);
-  if (IsLeftButton(e) && !IsLocationEmulation(e))
+  if (IsLeftButton(e) && !IsAltModifier(e))
     m_framework->TouchEvent(GetTouchEvent(e, df::TouchEvent::TOUCH_MOVE));
+
+  if (m_selectionMode && m_rubberBand != nullptr && m_rubberBand->isVisible())
+  {
+    m_rubberBand->setGeometry(QRect(m_rubberBandOrigin, e->pos()).normalized());
+  }
 }
 
 void DrawWidget::mouseReleaseEvent(QMouseEvent * e)
 {
   TBase::mouseReleaseEvent(e);
-  if (IsLeftButton(e) && !IsLocationEmulation(e))
+  if (IsLeftButton(e) && !IsAltModifier(e))
+  {
     m_framework->TouchEvent(GetTouchEvent(e, df::TouchEvent::TOUCH_UP));
+  }
+  else if (m_selectionMode && IsRightButton(e) && m_rubberBand != nullptr &&
+           m_rubberBand->isVisible())
+  {
+    QPoint const lt = m_rubberBand->geometry().topLeft();
+    QPoint const rb = m_rubberBand->geometry().bottomRight();
+    m2::RectD rect;
+    rect.Add(m_framework->PtoG(m2::PointD(L2D(lt.x()), L2D(lt.y()))));
+    rect.Add(m_framework->PtoG(m2::PointD(L2D(rb.x()), L2D(rb.y()))));
+    m_framework->VizualizeRoadsInRect(rect);
+    m_rubberBand->hide();
+  }
 }
 
 void DrawWidget::keyPressEvent(QKeyEvent * e)
@@ -425,10 +446,12 @@ void DrawWidget::keyPressEvent(QKeyEvent * e)
       e->key() == Qt::Key_Control)
   {
     df::TouchEvent event;
-    event.m_type = df::TouchEvent::TOUCH_DOWN;
-    event.m_touches[0].m_id = 0;
-    event.m_touches[0].m_location = m2::PointD(L2D(QCursor::pos().x()), L2D(QCursor::pos().y()));
-    event.m_touches[1] = GetSymmetrical(event.m_touches[0]);
+    event.SetTouchType(df::TouchEvent::TOUCH_DOWN);
+    df::Touch touch;
+    touch.m_id = 0;
+    touch.m_location = m2::PointD(L2D(QCursor::pos().x()), L2D(QCursor::pos().y()));
+    event.SetFirstTouch(touch);
+    event.SetSecondTouch(GetSymmetrical(touch));
 
     m_framework->TouchEvent(event);
   }
@@ -442,10 +465,12 @@ void DrawWidget::keyReleaseEvent(QKeyEvent * e)
       e->key() == Qt::Key_Control)
   {
     df::TouchEvent event;
-    event.m_type = df::TouchEvent::TOUCH_UP;
-    event.m_touches[0].m_id = 0;
-    event.m_touches[0].m_location = m2::PointD(L2D(QCursor::pos().x()), L2D(QCursor::pos().y()));
-    event.m_touches[1] = GetSymmetrical(event.m_touches[0]);
+    event.SetTouchType(df::TouchEvent::TOUCH_UP);
+    df::Touch touch;
+    touch.m_id = 0;
+    touch.m_location = m2::PointD(L2D(QCursor::pos().x()), L2D(QCursor::pos().y()));
+    event.SetFirstTouch(touch);
+    event.SetSecondTouch(GetSymmetrical(touch));
 
     m_framework->TouchEvent(event);
   }
@@ -458,13 +483,9 @@ void DrawWidget::wheelEvent(QWheelEvent * e)
   m_framework->Scale(exp(e->delta() / 360.0), m2::PointD(L2D(e->x()), L2D(e->y())), false);
 }
 
-bool DrawWidget::Search(search::SearchParams params)
+bool DrawWidget::Search(search::EverywhereSearchParams const & params)
 {
-  double lat, lon;
-  if (m_framework->GetCurrentPosition(lat, lon))
-    params.SetPosition(lat, lon);
-
-  return m_framework->Search(params);
+  return m_framework->SearchEverywhere(params);
 }
 
 string DrawWidget::GetDistance(search::Result const & res) const
@@ -649,10 +670,10 @@ df::Touch DrawWidget::GetSymmetrical(df::Touch const & touch)
 df::TouchEvent DrawWidget::GetTouchEvent(QMouseEvent * e, df::TouchEvent::ETouchType type)
 {
   df::TouchEvent event;
-  event.m_type = type;
-  event.m_touches[0] = GetTouch(e);
-  if (IsRotation(e))
-    event.m_touches[1] = GetSymmetrical(event.m_touches[0]);
+  event.SetTouchType(type);
+  event.SetFirstTouch(GetTouch(e));
+  if (IsCommandModifier(e))
+    event.SetSecondTouch(GetSymmetrical(event.GetFirstTouch()));
 
   return event;
 }
@@ -666,5 +687,5 @@ void DrawWidget::SetRouter(routing::RouterType routerType)
 {
   m_framework->SetRouter(routerType);
 }
-
+void DrawWidget::SetSelectionMode(bool mode) { m_selectionMode = mode; }
 }

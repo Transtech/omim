@@ -13,29 +13,38 @@ namespace tests_support
 {
 TestSearchRequest::TestSearchRequest(TestSearchEngine & engine, string const & query,
                                      string const & locale, Mode mode, m2::RectD const & viewport)
+  : m_engine(engine), m_viewport(viewport)
 {
-  SearchParams params;
-  params.m_query = query;
-  params.m_inputLocale = locale;
-  params.SetMode(mode);
-  SetUpCallbacks(params);
-  engine.Search(params, viewport);
+  m_params.m_query = query;
+  m_params.m_inputLocale = locale;
+  m_params.m_mode = mode;
+  SetUpCallbacks();
 }
 
 TestSearchRequest::TestSearchRequest(TestSearchEngine & engine, SearchParams params,
                                      m2::RectD const & viewport)
+  : m_engine(engine), m_params(params), m_viewport(viewport)
 {
-  SetUpCallbacks(params);
-  engine.Search(params, viewport);
+  SetUpCallbacks();
 }
 
-void TestSearchRequest::Wait()
+TestSearchRequest::TestSearchRequest(TestSearchEngine & engine, string const & query,
+                                     string const & locale, Mode mode, m2::RectD const & viewport,
+                                     SearchParams::TOnStarted onStarted,
+                                     SearchParams::TOnResults onResults)
+  : m_engine(engine), m_viewport(viewport)
 {
-  unique_lock<mutex> lock(m_mu);
-  m_cv.wait(lock, [this]()
-  {
-    return m_done;
-  });
+  m_params.m_query = query;
+  m_params.m_inputLocale = locale;
+  m_params.m_mode = mode;
+  m_params.m_onStarted = move(onStarted);
+  m_params.m_onResults = move(onResults);
+}
+
+void TestSearchRequest::Run()
+{
+  Start();
+  Wait();
 }
 
 steady_clock::duration TestSearchRequest::ResponseTime() const
@@ -52,10 +61,21 @@ vector<search::Result> const & TestSearchRequest::Results() const
   return m_results;
 }
 
-void TestSearchRequest::SetUpCallbacks(SearchParams & params)
+void TestSearchRequest::Start()
 {
-  params.m_onStarted = bind(&TestSearchRequest::OnStarted, this);
-  params.m_onResults = bind(&TestSearchRequest::OnResults, this, _1);
+  m_engine.Search(m_params, m_viewport);
+}
+
+void TestSearchRequest::Wait()
+{
+  unique_lock<mutex> lock(m_mu);
+  m_cv.wait(lock, [this]() { return m_done; });
+}
+
+void TestSearchRequest::SetUpCallbacks()
+{
+  m_params.m_onStarted = bind(&TestSearchRequest::OnStarted, this);
+  m_params.m_onResults = bind(&TestSearchRequest::OnResults, this, _1);
 }
 
 void TestSearchRequest::OnStarted()
@@ -75,8 +95,13 @@ void TestSearchRequest::OnResults(search::Results const & results)
   }
   else
   {
-    m_results.assign(results.Begin(), results.End());
+    m_results.assign(results.begin(), results.end());
   }
+}
+
+void TestSearchRequest::SetCustomOnResults(SearchParams::TOnResults const & onResults)
+{
+  m_params.m_onResults = onResults;
 }
 }  // namespace tests_support
 }  // namespace search

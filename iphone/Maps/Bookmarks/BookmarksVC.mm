@@ -1,16 +1,16 @@
 #import "BookmarksVC.h"
 #import "CircleView.h"
 #import "ColorPickerView.h"
-#import "Common.h"
-#import "MapsAppDelegate.h"
-#import "MapViewController.h"
 #import "MWMBookmarkNameCell.h"
+#import "MWMCommon.h"
 #import "MWMLocationHelpers.h"
 #import "MWMLocationManager.h"
+#import "MWMLocationObserver.h"
+#import "MWMMailViewController.h"
 #import "MWMMapViewControlsManager.h"
+#import "MapViewController.h"
+#import "MapsAppDelegate.h"
 #import "Statistics.h"
-#import "UIColor+MapsMeColor.h"
-#import <MessageUI/MFMailComposeViewController.h>
 
 #include "Framework.h"
 
@@ -38,7 +38,7 @@ extern NSString * const kBookmarksChangedNotification = @"BookmarksChangedNotifi
 
 @implementation BookmarksVC
 
-- (instancetype)initWithCategory:(size_t)index
+- (instancetype)initWithCategory:(NSUInteger)index
 {
   self = [super initWithStyle:UITableViewStyleGrouped];
   if (self)
@@ -140,7 +140,7 @@ extern NSString * const kBookmarksChangedNotification = @"BookmarksChangedNotifi
     string dist;
     if (measurement_utils::FormatDistance(tr->GetLengthMeters(), dist))
       //Change Length before release!!!
-      cell.detailTextLabel.text = [NSString stringWithFormat:@"%@ %@", L(@"length"), [NSString  stringWithUTF8String:dist.c_str()]];
+      cell.detailTextLabel.text = [NSString stringWithFormat:@"%@ %@", L(@"length"), @(dist.c_str())];
     else
       cell.detailTextLabel.text = nil;
     const dp::Color c = tr->GetColor(0);
@@ -236,7 +236,7 @@ extern NSString * const kBookmarksChangedNotification = @"BookmarksChangedNotifi
         // Same as "Close".
         MapViewController * mapVC = self.navigationController.viewControllers.firstObject;
         mapVC.controlsManager.searchHidden = YES;
-        f.ShowBookmark(BookmarkAndCategory(m_categoryIndex, indexPath.row));
+        f.ShowBookmark({static_cast<size_t>(indexPath.row), m_categoryIndex});
         [self.navigationController popToRootViewControllerAnimated:YES];
       }
     }
@@ -247,9 +247,9 @@ extern NSString * const kBookmarksChangedNotification = @"BookmarksChangedNotifi
     if (cat)
     {
       [Statistics logEvent:kStatEventName(kStatBookmarks, kStatExport)];
-      NSMutableString * catName = [NSMutableString stringWithUTF8String:cat->GetName().c_str()];
+      NSString * catName = @(cat->GetName().c_str());
       if (![catName length])
-        [catName setString:@"MapsMe"];
+        catName = @"MapsMe";
 
       NSString * filePath = @(cat->GetFileName().c_str());
       NSMutableString * kmzFile = [NSMutableString stringWithString:filePath];
@@ -294,7 +294,7 @@ extern NSString * const kBookmarksChangedNotification = @"BookmarksChangedNotifi
         }
         else
         {
-          BookmarkAndCategory bookmarkAndCategory = BookmarkAndCategory(m_categoryIndex, indexPath.row);
+          BookmarkAndCategory bookmarkAndCategory{static_cast<size_t>(indexPath.row), m_categoryIndex};
           NSValue * value = [NSValue valueWithBytes:&bookmarkAndCategory objCType:@encode(BookmarkAndCategory)];
           [[NSNotificationCenter defaultCenter] postNotificationName:BOOKMARK_DELETED_NOTIFICATION object:value];
           BookmarkCategory::Guard guard(*cat);
@@ -309,7 +309,7 @@ extern NSString * const kBookmarksChangedNotification = @"BookmarksChangedNotifi
       [self calculateSections];
       //We can delete the row with animation, if number of sections stay the same.
       if (previousNumberOfSections == m_numberOfSections)
-        [self.tableView deleteRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationFade];
+        [self.tableView deleteRowsAtIndexPaths:@[ indexPath ] withRowAnimation:UITableViewRowAnimationFade];
       else
         [self.tableView reloadData];
       if (cat->GetUserMarkCount() + cat->GetTracksCount() == 0)
@@ -405,7 +405,7 @@ extern NSString * const kBookmarksChangedNotification = @"BookmarksChangedNotifi
 
 - (void)sendBookmarksWithExtension:(NSString *)fileExtension andType:(NSString *)mimeType andFile:(NSString *)filePath andCategory:(NSString *)catName
 {
-  MFMailComposeViewController * mailVC = [[MFMailComposeViewController alloc] init];
+  MWMMailViewController * mailVC = [[MWMMailViewController alloc] init];
   mailVC.mailComposeDelegate = self;
   [mailVC setSubject:L(@"share_bookmarks_email_subject")];
   NSData * myData = [[NSData alloc] initWithContentsOfFile:filePath];
@@ -426,7 +426,7 @@ extern NSString * const kBookmarksChangedNotification = @"BookmarksChangedNotifi
     m_bookmarkSection = index++;
   else
     m_bookmarkSection = EMPTY_SECTION;
-  if ([MFMailComposeViewController canSendMail])
+  if ([MWMMailViewController canSendMail])
     m_shareSection = index++;
   else
     m_shareSection = EMPTY_SECTION;

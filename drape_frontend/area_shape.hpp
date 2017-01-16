@@ -11,24 +11,30 @@
 namespace df
 {
 
-struct BuildingEdge
+struct BuildingOutline
 {
-  m2::PointD m_startVertex;
-  m2::PointD m_endVertex;
-  m2::PointD m_normal;
+  buffer_vector<m2::PointD, kBuildingOutlineSize> m_vertices;
+  vector<int> m_indices;
+  vector<m2::PointD> m_normals;
+  bool m_generateOutline = false;
 };
 
 class AreaShape : public MapShape
 {
 public:
-  AreaShape(vector<m2::PointF> && triangleList, vector<BuildingEdge> && buildingEdges,
+  AreaShape(vector<m2::PointD> && triangleList, BuildingOutline && buildingOutline,
             AreaViewParams const & params);
 
   void Draw(ref_ptr<dp::Batcher> batcher, ref_ptr<dp::TextureManager> textures) const override;
 
 private:
-  vector<m2::PointF> m_vertexes;
-  vector<BuildingEdge> m_buildingEdges;
+  void DrawArea(ref_ptr<dp::Batcher> batcher, m2::PointD const & colorUv,
+                m2::PointD const & outlineUv, ref_ptr<dp::Texture> texture) const;
+  void DrawArea3D(ref_ptr<dp::Batcher> batcher, m2::PointD const & colorUv,
+                  m2::PointD const & outlineUv, ref_ptr<dp::Texture> texture) const;
+
+  vector<m2::PointD> m_vertexes;
+  BuildingOutline m_buildingOutline;
   AreaViewParams m_params;
 };
 

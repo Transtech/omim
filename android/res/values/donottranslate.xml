@@ -47,8 +47,7 @@
   <string name="pref_track_record" translatable="false">TrackRecord</string>
   <string name="pref_showcase_switched_on" translatable="false">DisplayShowcase</string>
   <string name="pref_osm_profile" translatable="false">Osm profile</string>
-  <string name="pref_demo_gps" translatable="false">DemoGPS</string>
-  <string name="pref_route_network" translatable="false">GHProfile</string>
+  <string name="pref_auto_zoom" translatable="false">AutoZoom</string>
 
   <string name="notification_ticker_ltr" translatable="false">%1$s: %2$s</string>
   <string name="notification_ticker_rtl" translatable="false">%2$s :%1$s</string>

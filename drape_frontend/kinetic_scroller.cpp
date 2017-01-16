@@ -17,11 +17,7 @@ double const kKineticMaxSpeedEnd = 10000.0; // pixels per second
 
 double CalculateKineticMaxSpeed(ScreenBase const & modelView)
 {
-  double const kMinZoom = 1.0;
-  double const kMaxZoom = scales::UPPER_STYLE_SCALE + 1.0;
-  double const zoomLevel = my::clamp(fabs(log(modelView.GetScale()) / log(2.0)), kMinZoom, kMaxZoom);
-  double const lerpCoef = 1.0 - ((zoomLevel - kMinZoom) / (kMaxZoom - kMinZoom));
-
+  double const lerpCoef = 1.0 - GetNormalizedZoomLevel(modelView.GetScale());
   return (kKineticMaxSpeedStart * lerpCoef + kKineticMaxSpeedEnd * (1.0 - lerpCoef)) * VisualParams::Instance().GetVisualScale();
 }
 
@@ -38,29 +34,29 @@ public:
     , m_elapsedTime(0.0)
   {
     SetInterruptedOnCombine(true);
-    m_objects.insert(Animation::MapPlane);
-    m_properties.insert(Animation::Position);
+    m_objects.insert(Animation::Object::MapPlane);
+    m_properties.insert(Animation::ObjectProperty::Position);
   }
 
-  Animation::Type GetType() const override { return Animation::KineticScroll; }
+  Animation::Type GetType() const override { return Animation::Type::KineticScroll; }
 
   TAnimObjects const & GetObjects() const override
   {
     return m_objects;
   }
 
-  bool HasObject(TObject object) const override
+  bool HasObject(Object object) const override
   {
     return m_objects.find(object) != m_objects.end();
   }
 
-  TObjectProperties const & GetProperties(TObject object) const override
+  TObjectProperties const & GetProperties(Object object) const override
   {
     ASSERT(HasObject(object), ());
     return m_properties;
   }
 
-  bool HasProperty(TObject object, TProperty property) const override
+  bool HasProperty(Object object, ObjectProperty property) const override
   {
     return HasObject(object) && m_properties.find(property) != m_properties.end();
   }
@@ -85,7 +81,7 @@ public:
     Animation::Finish();
   }
 
-  bool GetProperty(TObject object, TProperty property, PropertyValue & value) const override
+  bool GetProperty(Object object, ObjectProperty property, PropertyValue & value) const override
   {
     ASSERT(HasProperty(object, property), ());
     // Current position = target position - amplutide * e ^ (elapsed / duration).
@@ -94,7 +90,7 @@ public:
     return true;
   }
 
-  bool GetTargetProperty(TObject object, TProperty property, PropertyValue & value) const override
+  bool GetTargetProperty(Object object, ObjectProperty property, PropertyValue & value) const override
   {
     ASSERT(HasProperty(object, property), ());
     value = PropertyValue(m_endPos);

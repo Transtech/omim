@@ -192,6 +192,7 @@
 	<string name="parking">Parkir</string>
 	<!-- Search Suggestion -->
 	<string name="shop">Toko</string>
+	<!-- Search Suggestion -->
 	<string name="hotel">Hotel</string>
 	<!-- Search Suggestion -->
 	<string name="tourism">Pemandangan</string>
@@ -271,8 +272,6 @@
 	<string name="copied_to_clipboard">Telah Disalin ke Papan Klip: %1$s</string>
 	<!-- Setting label for statistics turn on/off -->
 	<string name="allow_statistics">Kirimkan Statistik</string>
-	<!-- Hint near allow statictics checkbox -->
-	<string name="allow_statistics_hint">Izinkan kami mengumpulkan statistik penggunaan untuk mengembangkan aplikasi</string>
 	<!-- place preview title -->
 	<string name="info">Info</string>
 	<!-- Used for bookmark editing -->
@@ -325,6 +324,7 @@
 	<string name="pref_tts_how_to_set_up_voice">Cara mengatur suara</string>
 	<!-- Settings «Map» category: «Record track» title -->
 	<string name="pref_track_record_title">Jalur terkini</string>
+	<string name="pref_map_auto_zoom">Perbesar otomatis</string>
 	<string name="duration_disabled">Nonaktif</string>
 	<string name="duration_1_hour">1 jam</string>
 	<string name="duration_2_hours">2 jam</string>
@@ -585,7 +585,6 @@
 	<string name="dialog_routing_send_error">Laporkan Masalah</string>
 	<string name="dialog_routing_if_get_cross_route">Apakah Anda ingin membuat rute yang lebih langsung yang meliputi lebih dari satu peta?</string>
 	<string name="dialog_routing_cross_route_is_optimal">Ada rute yang lebih optimal yang melewati ujung peta ini.</string>
-	<string name="dialog_routing_always_cross_that_border">Selalu lewati batas ini</string>
 	<string name="not_now">Jangan Sekarang</string>
 	<string name="dialog_routing_build_route">Buat</string>
 	<string name="dialog_routing_download_and_build_cross_route">Apakah Anda ingin mengunduh peta dan membuat rute yang lebih optimal yang meliputi lebih dari satu peta?</string>
@@ -629,7 +628,6 @@
 	<string name="clear_search">Bersihkan riwayat pencarian</string>
 	<!-- Title for settings to enable/disable showcase menu button -->
 	<string name="showcase_settings_title">Tampilkan penawaran</string>
-	<string name="showcase_more_apps">Lebih Banyak Aplikasi My.com</string>
 	<string name="p2p_route_planning">Perencana Rute</string>
 	<string name="p2p_your_location">Lokasi Anda</string>
 	<string name="p2p_from">Titik keberangkatan</string>
@@ -713,9 +711,12 @@
 	<string name="login_with_openstreetmap">Masuk menggunakan www.openstreetmap.org</string>
 	<string name="edit_place">Sunting tempat</string>
 	<string name="place_name">Nama tempat</string>
-	<string name="place_name_caption">Masukkan nama seperti pada tanda atau pelat nama</string>
 	<!-- title above languages list cells in the editor, below editable name text field. -->
 	<string name="other_languages">Bahasa lainnya</string>
+	<!-- small button to open list with names in different languages -->
+	<string name="show_more">Tampilkan lebih banyak</string>
+	<!-- small button to close list with names in different languages -->
+	<string name="show_less">Tampilkan lebih sedikit</string>
 	<string name="add_language">Tambahkan bahasa</string>
 	<string name="street">Jalan</string>
 	<!-- Editable House Number text field (in address block). -->
@@ -761,7 +762,6 @@
 	<string name="editor_edit_place_category_title">Kategori</string>
 	<string name="detailed_problem_description">Gambaran terperinci tentang masalah</string>
 	<string name="editor_report_problem_other_title">Masalah yang berbeda</string>
-	<string name="placepage_add_place_button">Tambahkan tempat</string>
 	<string name="placepage_report_problem_button">Laporkan masalah</string>
 	<string name="placepage_add_business_button">Tambahkan organisasi</string>
 	<string name="whatsnew_smallmwm_header">Anda memintanya dan kami telah malakukannya</string>
@@ -796,6 +796,7 @@
 	<string name="download_over_mobile_message">Ini bisa menjadi jauh mahal pada beberapa paket atau jika roaming.</string>
 	<string name="error_enter_correct_house_number">Masukkan nomor rumah yang benar</string>
 	<string name="editor_storey_number">Jumlah lantai (maksimum %d)</string>
+	<!-- Error message in Editor when a user tries to set the number of floors for a building higher than 25 -->
 	<string name="error_enter_correct_storey_number">Edit bangunan dengan maksimum 25 lantai</string>
 	<string name="editor_zip_code">Kode Pos</string>
 	<string name="error_enter_correct_zip_code">Masukkan Kode Pos yang benar</string>
@@ -809,7 +810,6 @@
 	<string name="editor_tag_description">Masukkan perusahaan, organisasi, atau individu yang bertanggung jawab atas fasilitas tersebut.</string>
 	<string name="editor_no_local_edits_title">Anda tidak memiliki pengeditan lokal</string>
 	<string name="editor_no_local_edits_description">Ini menunjukkan jumlah saran perubahan dalam peta yang saat ini hanya dapat diakses di perangkat Anda.</string>
-	<string name="editor_international_names_subtitle">Nama dalam bahasa lain</string>
 	<string name="editor_send_to_osm">Kirim ke OSM</string>
 	<string name="editor_remove">Hapus</string>
 	<string name="downloader_my_maps_title">Peta saya</string>
@@ -832,7 +832,8 @@
 	<string name="location_services_disabled_message">Izinkan akses ke geolokasi pada pengaturan perangkat</string>
 	<string name="location_services_disabled_1">1. Buka Pengaturan</string>
 	<string name="location_services_disabled_2">2. Ketuk Lokasi</string>
-	<string name="location_services_disabled_3">3. Pilih Selalu</string>
+	<!-- iOS Dialog for the case when the location permission is not granted -->
+	<string name="location_services_disabled_3">3. Pilih While Using the App</string>
 	<string name="placepage_parking_surface">Parkir Luar</string>
 	<string name="placepage_parking_multistorey">Bertingkat</string>
 	<string name="placepage_parking_underground">Bawah Tanah</string>
@@ -851,9 +852,16 @@
 	<string name="place_page_starting_from">dari %s</string>
 	<string name="meter">m</string>
 	<string name="kilometer">km</string>
+	<string name="kilometers_per_hour">km/j</string>
+	<string name="mile">mil</string>
+	<string name="foot">kaki</string>
+	<string name="miles_per_hour">mpj</string>
+	<string name="day">h</string>
+	<string name="hour">j</string>
+	<string name="minute">mnt</string>
 	<string name="placepage_place_description">Deskripsi</string>
 	<string name="placepage_more_button">Lainnya</string>
-	<string name="bookingcom_book_button">Pesan</string>
+	<string name="book_button">Pesan</string>
 	<string name="placepage_call_button">Hubungi</string>
 	<string name="placepage_edit_bookmark_button">Edit Bookmark</string>
 	<string name="placepage_bookmark_name_hint">Nama Bookmark</string>
@@ -868,18 +876,167 @@
 	<string name="editor_status_sending">Mengirim…</string>
 	<string name="editor_place_doesnt_exist">Tempat tidak ada</string>
 	<string name="text_more_button">…selebihnya</string>
-	<string name="error_enter_correct_phone">Masukkan nomor telepon tanpa huruf</string>
+	<!-- Phone number error message -->
+	<string name="error_enter_correct_phone">Masukkan nomor telepon yang benar</string>
 	<string name="error_enter_correct_web">Masukkan alamat web valid</string>
 	<string name="error_enter_correct_email">Masukkan surel valid</string>
 	<string name="error_enter_correct">Masukkan nilai valid</string>
 	<string name="editor_profile_changes_for_next_place">Perubahan terhadap tempat selanjutnya: %d</string>
 	<string name="editor_profile_rating_place">Posisi peringkat</string>
 	<string name="booking_dialog_not_connect_header">Untuk memesan hotel, aktifkan koneksi internet Anda</string>
-	<string name="whatsnew_booking_header">Pesan hotel dari aplikasi</string>
-	<string name="whatsnew_booking_message">Saat Anda mencari hotel, peta akan menampilkan kategori harga dan nilai hotel.</string>
 	<string name="button_try">Cobalah</string>
-	<string name="whatsnew_cycle_navigation_header">Navigasi bersepeda (versi beta)</string>
-	<string name="whatsnew_cycle_navigation_message">Kami sedang menguji navigasi bersepeda untuk musim baru. Coba rute bersepeda favorit Anda dengan MAPS.ME dan sampaikan pendapat Anda.</string>
 	<string name="refresh">Memperbarui</string>
 	<string name="last_update">Pembaruan terakhir: %s</string>
+	<string name="booking_checkin">check-in: %s</string>
+	<string name="booking_checkout">check-out: %s</string>
+	<string name="placepage_add_place_button">Tambahkan tempat ke peta</string>
+	<!-- Displayed when saving some edits to the map to warn against publishing personal data -->
+	<string name="editor_share_to_all_dialog_title">Apakah Anda ingin mengirimkannya ke semua pengguna?</string>
+	<!-- iOS Dialog before publishing the modifications to the public map. -->
+	<string name="editor_share_to_all_dialog_message_1">Pastikan Anda tidak memasukkan data pribadi apa pun.</string>
+	<string name="editor_share_to_all_dialog_message_2">Kami akan memeriksa perubahan tersebut. Jika kami memiliki pertanyaan maka kami akan menghubungi Anda melalui surel.</string>
+	<string name="navigation_overview_button">ikhtisar</string>
+	<string name="navigation_stop_button">berhenti</string>
+	<!-- Text on an empty bookmark page -->
+	<string name="bookmarks_empty_title">Simpan Penanda</string>
+	<string name="bookmarks_empty_message_1">Ketuk pada ★ untuk menyimpan tempat-tempat favorit untuk akses cepat.</string>
+	<string name="bookmarks_empty_message_2">Impor penanda dari email dan web.</string>
+	<string name="bookmarks_empty_message_3">check-out: %s</string>
+	<!-- Name of the group for booked hotels -->
+	<string name="bookmarks_group_name">Hotel yang dipesan</string>
+	<string name="place_page_button_read_descriprion">Baca</string>
+	<!-- iOS dialog for the case when recent track recording is on and the app comes back from background -->
+	<string name="recent_track_background_dialog_title">Nonaktifkan rekaman dari rute yang baru Anda lalui?</string>
+	<!-- If a hotel is being shared -->
+	<string name="sharing_booking">atau pesan di booking.com</string>
+	<string name="off_recent_track_background_button">Nonaktifkan</string>
+	<!-- For sharing via SMS and so on -->
+	<string name="sharing_call_action_look">Lihat</string>
+	<string name="continue_recent_track_background_button">Teruskan</string>
+	<string name="recent_track_background_dialog_message">MAPS.ME menggunakan geoposisi di latar belakang untuk merekam rute yang baru Anda lalui.</string>
+	<string name="whatsnew_car_navigation_header">Navigasi kendaraan yang mudah digunakan</string>
+	<string name="whatsnew_car_navigation_message">• Elemen-elemen navigasi membutuhkan ruang lebih sedikit\n• Kami menampilkan kecepatan dan telah menambahkan zoom otomatis</string>
+	<string name="whatsnew_cycle_navigation_2_header">Navigasi sepeda</string>
+	<string name="whatsnew_cycle_navigation_2_message">• Navigasi sepeda menghitung data medan\n• Kami membuat rute lebih mudah dengan menghitung kemiringan jalan</string>
+	<string name="whatsnew_booking_2_header">Pencarian hotel mudah</string>
+	<string name="whatsnew_booking_2_message">Hasil pencarian menampilkan kategori peringkat dan harga hotel</string>
+	<string name="whatsnew_cycle_navigation_header">Navigasi bersepeda (versi beta)</string>
+	<string name="whatsnew_cycle_navigation_message">Kami sedang menguji navigasi bersepeda untuk musim baru. Coba rute bersepeda favorit Anda dengan MAPS.ME dan sampaikan pendapat Anda.</string>
+	<!-- Rate on Google Play (Android only) -->
+	<string name="rate_gp">Beri nilai di Google Play</string>
+	<!-- Share with friends: menu item title -->
+	<string name="tell_friends">Beri Tahu Teman</string>
+	<!-- Share with friends: sharing text -->
+	<string name="tell_friends_text">Hai! Instal MAPS.ME yuk!</string>
+	<!-- About short text (below logo) -->
+	<string name="about_description">MAPS.ME adalah aplikasi offline yang sangat berguna untuk bepergian. MAPS.ME didasarkan pada data OpenStreetMap dan memungkinkan kita untuk mengeditnya.</string>
+	<!-- Text in menu -->
+	<string name="blog">Blog</string>
+	<!-- Hint near allow statictics checkbox -->
+	<string name="allow_statistics_hint">Pengumpulan statistik penggunaan akan membantu kami meningkatkan aplikasi.</string>
+	<string name="general_settings">Setelan umum</string>
+	<string name="date">Tanggal %d</string>
+	<!-- "Report a bug" -> "Generaal Feedback" -> "Something is not working" -->
+	<string name="something_is_not_working">Ada yang tidak berfungsi</string>
+	<!-- For the first routing -->
+	<string name="accept">Terima</string>
+	<!-- For the first routing -->
+	<string name="decline">Tolak</string>
+	<string name="whats_new_route_profile_title">Jalan-jalan dengan lebih aman dan nyaman</string>
+	<string name="whats_new_route_profile_message">Untuk rute pejalan kaki dan sepeda, kami kini menampilkan profil elevasi.</string>
+	<string name="whats_new_booking_improve_title">Berhemat saat memesan hotel</string>
+	<string name="whats_new_booking_improve_message">Hasil pencarian untuk hotel kini disertai kategori harga.\nKami juga menambahkan lebih dari 110.000 hotel.</string>
+	<!-- For place page hotel facilities block -->
+	<string name="placepage_hotel_facilities">Fasilitas</string>
+	<!-- For place page hotel nearby block -->
+	<string name="placepage_hotel_nearby">Dekat</string>
+	<!-- For ordering a taxi (as opposed to hotels or other things) -->
+	<string name="taxi_order">Pesan taksi</string>
+	<!-- How long it is until the taxi arrives -->
+	<string name="taxi_wait">Diharapkan dalam %s</string>
+	<!-- When there are no available taxis nearby -->
+	<string name="taxi_not_found">Tidak dapat menemukan taksi di dekat lokasi</string>
+	<string name="install_app">Pasang</string>
+	<!-- `Filter` is a noun here -->
+	<string name="booking_filters">Filter</string>
+	<string name="booking_filters_reset">Atur ulang</string>
+	<string name="booking_filters_rating">Peringkat</string>
+	<string name="booking_filters_rating_any">Apa saja</string>
+	<string name="booking_filters_ragting_good">Bagus</string>
+	<string name="booking_filters_rating_very_good">Sangat Bagus</string>
+	<string name="booking_filters_rating_excellent">Luar Biasa</string>
+	<string name="booking_filters_price_category">Kategori Harga</string>
+	<string name="search_no_results_title">Tidak Ada Hasil</string>
+	<string name="search_no_results_message">Cobalah dengan istilah pencarian yang lebih umum, perkecil atau atur ulang filter.</string>
+	<string name="search_no_results_expand_area_button">Perkecil</string>
+	<string name="search_no_results_reset_button">Atur Ulang Filter</string>
+	<!-- noun -->
+	<string name="search_in_table">Daftar</string>
+	<string name="booking_based_on_reviews">Berdasarkan %d ulasan hotel</string>
+	<string name="booking_show_more">Selengkapnya</string>
+	<string name="booking_reviews">Ulasan</string>
+	<string name="booking_hotel">Hotel</string>
+	<!-- hotel room -->
+	<string name="booking_hotel_room">Kamar</string>
+	<!-- A neologism for a chat based on geographical proximity -->
+	<string name="chat">Geochat</string>
+	<!-- Verb. Text on a button that opens the chat. -->
+	<string name="chat_open">Buka</string>
+	<string name="whatsnew_uber_header">MAPS.ME &amp; Uber</string>
+	<string name="whatsnew_uber_message">Pesan taksi Uber langsung dari aplikasi!</string>
+	<string name="dialog_taxi_offline">Memesan taksi tidak tersedia dalam modus offline.</string>
+	<string name="dialog_taxi_error">Memesan taksi untuk sementara tidak tersedia.</string>
+	<string name="advertisement">Iklan</string>
+	<string name="mobile_data_dialog">Gunakan internet seluler untuk memperlihatkan informasi terperinci?</string>
+	<string name="mobile_data_option_always">Selalu Gunakan</string>
+	<string name="mobile_data_option_today">Hanya Hari Ini</string>
+	<string name="mobile_data_option_not_today">Jangan Gunakan Hari Ini</string>
+	<string name="mobile_data">Internet Seluler</string>
+	<string name="mobile_data_description">Internet seluler diperlukan untuk menampilkan informasi terperinci tentang tempat, seperti foto, harga, dan ulasan.</string>
+	<string name="mobile_data_option_never">Jangan Gunakan</string>
+	<string name="mobile_data_option_ask">Selalu Tanya</string>
+	<string name="traffic_update_maps_text">Untuk memperlihatkan data lalu lintas, peta harus diperbarui.</string>
+	<string name="traffic_outdated">Data lalu lintas belum diperbarui.</string>
+	<string name="big_font">Label yang lebih besar</string>
+	<string name="traffic_update_app">Perbarui MAPS.ME</string>
+	<!-- "traffic" as in road congestion -->
+	<string name="traffic_update_app_message">Untuk menampilkan data lalu lintas, aplikasi ini harus diperbarui.</string>
+	<!-- "traffic" as in "road congestion" -->
+	<string name="traffic_data_unavailable">Data lalu lintas tidak tersedia</string>
+	<string name="banner_deliveryclub_title">Pengiriman makanan</string>
+	<string name="banner_deliveryclub_message">Pengiriman cepat dari 4.000 restoran. Pesan dari Delivery Club.</string>
+	<string name="banner_lamoda_title">Toko pakaian dan sepatu online</string>
+	<string name="banner_lamoda_message">Lebih dari 1.000 merek. Diskon hingga 70%f. Gratis pengiriman ke seluruh negeri.</string>
+	<string name="banner_tutu_title">Tiket kereta api online</string>
+	<string name="banner_tutu_message">Tiket kereta ke setiap kota online - harga, pencarian, dan pemesanan.</string>
+	<string name="banner_geerbest_title">Toko elektronik online</string>
+	<string name="banner_geerbest_message">Cari cepat di antara lebih dari 50.000 barang berharga murah.</string>
+	<string name="banner_rentalcars_title">Penyewaan mobil online</string>
+	<string name="banner_rentalcars_message">800 perusahaan penyewaan mobil di lebih dari 49.000 lokasi penyewaan mobil.</string>
+	<string name="banner_viator_title">Pencarian wisata online</string>
+	<string name="banner_viator_message">Cari di antara lebih dari 50.000 wisata di seluruh dunia.</string>
+	<!-- december -->
+	<string name="whatsnew_traffic">Data Lalu Lintas di 36 Negara</string>
+	<!-- december -->
+	<string name="whatsnew_traffic_text">Info lalu lintas terbaru dan rute berkendara tercepat berdasarkan ini!</string>
+	<!-- december -->
+	<string name="whatsnew_traffic_roaming">Info Lalu Lintas saat Roaming</string>
+	<!-- december -->
+	<string name="whatsnew_traffic_roaming_text">Memerlukan kurang dari 1 MB dari bandwidth seluler perjalanan.</string>
+	<!-- december -->
+	<string name="whatsnew_order_taxi">Pesan Taksi</string>
+	<!-- december -->
+	<string name="whatsnew_order_taxi_text">Sebagian besar halaman lokasi sekarang mempunyai tombol untuk memesan taksi.</string>
+	<!-- january -->
+	<string name="whatsnew_improved_search">Pencarian yang Diperbagus</string>
+	<!-- january -->
+	<string name="whatsnew_improved_search_text">Bahkan pertanyaan dengan kesalahan eja akan memberikan hasil pencarian yang akurat.</string>
+	<!-- january -->
+	<string name="whatsnew_filters_in_search">Filter Pencarian</string>
+	<!-- january -->
+	<string name="whatsnew_filters_in_search_text">Cari hotel berdasarkan harga dan peringkat.</string>
+	<!-- january -->
+	<string name="whatsnew_font_size">Ukuran Huruf</string>
+	<!-- january -->
+	<string name="whatsnew_font_size_text">Label pada peta bisa dijadikan lebih besar.</string>
 </resources>

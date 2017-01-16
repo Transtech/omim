@@ -193,6 +193,7 @@
 	<string name="parking">駐車場</string>
 	<!-- Search Suggestion -->
 	<string name="shop">買い物</string>
+	<!-- Search Suggestion -->
 	<string name="hotel">ホテル</string>
 	<!-- Search Suggestion -->
 	<string name="tourism">観光</string>
@@ -270,8 +271,6 @@
 	<string name="copied_to_clipboard">クリップボードにコピーしました: %1$s</string>
 	<!-- Setting label for statistics turn on/off -->
 	<string name="allow_statistics">統計を送信</string>
-	<!-- Hint near allow statictics checkbox -->
-	<string name="allow_statistics_hint">アプリを向上できるよう、使用状況の統計を収集させてください</string>
 	<!-- place preview title -->
 	<string name="info">情報</string>
 	<!-- Used for bookmark editing -->
@@ -318,6 +317,7 @@
 	<string name="pref_tts_how_to_set_up_voice">音声設定の仕方</string>
 	<!-- Settings «Map» category: «Record track» title -->
 	<string name="pref_track_record_title">最近のルート</string>
+	<string name="pref_map_auto_zoom">自動ズーム</string>
 	<string name="duration_disabled">オフ</string>
 	<string name="duration_1_hour">1時間</string>
 	<string name="duration_2_hours">2時間</string>
@@ -585,7 +585,6 @@
 	<string name="dialog_routing_send_error">問題を報告する</string>
 	<string name="dialog_routing_if_get_cross_route">複数マップを利用してより最適なルートを作成しますか？</string>
 	<string name="dialog_routing_cross_route_is_optimal">このマップの境界を越えて複数マップを利用すると、より最適なルートを作成できます。</string>
-	<string name="dialog_routing_always_cross_that_border">常にこの境界を越える</string>
 	<string name="not_now">あとで</string>
 	<string name="dialog_routing_build_route">作成する</string>
 	<string name="dialog_routing_download_and_build_cross_route">マップをダウンロードし、複数マップを利用してより最適なルートを作成しますか？</string>
@@ -629,7 +628,6 @@
 	<string name="clear_search">検索履歴を消去</string>
 	<!-- Title for settings to enable/disable showcase menu button -->
 	<string name="showcase_settings_title">オファーを表示</string>
-	<string name="showcase_more_apps">他のMy.comアプリ</string>
 	<string name="p2p_route_planning">ルート作成</string>
 	<string name="p2p_your_location">現在位置</string>
 	<string name="p2p_from">出発地</string>
@@ -713,9 +711,12 @@
 	<string name="login_with_openstreetmap">www.openstreetmap.orgでログインしてください</string>
 	<string name="edit_place">場所を編集</string>
 	<string name="place_name">場所の名前</string>
-	<string name="place_name_caption">標識や表札の地名を入力</string>
 	<!-- title above languages list cells in the editor, below editable name text field. -->
 	<string name="other_languages">その他の言語</string>
+	<!-- small button to open list with names in different languages -->
+	<string name="show_more">もっと表示</string>
+	<!-- small button to close list with names in different languages -->
+	<string name="show_less">少なく表示</string>
 	<string name="add_language">言語を追加</string>
 	<string name="street">通り</string>
 	<!-- Editable House Number text field (in address block). -->
@@ -761,7 +762,6 @@
 	<string name="editor_edit_place_category_title">カテゴリ</string>
 	<string name="detailed_problem_description">問題の詳細な説明</string>
 	<string name="editor_report_problem_other_title">異なる問題</string>
-	<string name="placepage_add_place_button">場所を追加</string>
 	<string name="placepage_report_problem_button">問題を報告</string>
 	<string name="placepage_add_business_button">団体を追加</string>
 	<string name="whatsnew_smallmwm_header">皆様のご要望にお応えして、実現を果たしました</string>
@@ -796,6 +796,7 @@
 	<string name="download_over_mobile_message">プランによって、またはローミングしている場合、非常に高額になる可能性があります。</string>
 	<string name="error_enter_correct_house_number">正しい番地を入力してください</string>
 	<string name="editor_storey_number">フロアの数（最大%d）</string>
+	<!-- Error message in Editor when a user tries to set the number of floors for a building higher than 25 -->
 	<string name="error_enter_correct_storey_number">最高25階までのビルを編集</string>
 	<string name="editor_zip_code">郵便番号</string>
 	<string name="error_enter_correct_zip_code">正しい郵便番号を入力してください</string>
@@ -809,7 +810,6 @@
 	<string name="editor_tag_description">施設を管理する企業、組織または個人を入力してください。</string>
 	<string name="editor_no_local_edits_title">ローカル編集はできません</string>
 	<string name="editor_no_local_edits_description">これは、現在お使いのデバイスでのみアクセス可能な、マップ上に提案された変更の数を示しています。</string>
-	<string name="editor_international_names_subtitle">他の言語での名前</string>
 	<string name="editor_send_to_osm">OSMに送信</string>
 	<string name="editor_remove">削除</string>
 	<string name="downloader_my_maps_title">マイマップ</string>
@@ -832,7 +832,8 @@
 	<string name="location_services_disabled_message">デバイスの設定で位置情報へのアクセスを有効にしてください</string>
 	<string name="location_services_disabled_1">1. 設定を開きます</string>
 	<string name="location_services_disabled_2">2. 位置情報をタップします</string>
-	<string name="location_services_disabled_3">3. 「常時」を選択します</string>
+	<!-- iOS Dialog for the case when the location permission is not granted -->
+	<string name="location_services_disabled_3">3. アプリの使用中を選択してください</string>
 	<string name="placepage_parking_surface">表面</string>
 	<string name="placepage_parking_multistorey">複数階</string>
 	<string name="placepage_parking_underground">地下</string>
@@ -851,9 +852,16 @@
 	<string name="place_page_starting_from">%sから</string>
 	<string name="meter">m</string>
 	<string name="kilometer">km</string>
+	<string name="kilometers_per_hour">キロメートル毎時</string>
+	<string name="mile">マイル</string>
+	<string name="foot">フィート</string>
+	<string name="miles_per_hour">マイル毎時</string>
+	<string name="day">日</string>
+	<string name="hour">時間</string>
+	<string name="minute">分</string>
 	<string name="placepage_place_description">説明</string>
 	<string name="placepage_more_button">さらに詳しく</string>
-	<string name="bookingcom_book_button">書籍</string>
+	<string name="book_button">予約</string>
 	<string name="placepage_call_button">コール</string>
 	<string name="placepage_edit_bookmark_button">ブックマークを編集</string>
 	<string name="placepage_bookmark_name_hint">ブックマーク名</string>
@@ -868,18 +876,167 @@
 	<string name="editor_status_sending">送信中…</string>
 	<string name="editor_place_doesnt_exist">存在しない場所</string>
 	<string name="text_more_button">…続き</string>
-	<string name="error_enter_correct_phone">文字なしで電話番号を入力してください</string>
+	<!-- Phone number error message -->
+	<string name="error_enter_correct_phone">正しい電話番号を入力してください</string>
 	<string name="error_enter_correct_web">有効なウェブアドレスを入力してください</string>
 	<string name="error_enter_correct_email">有効なメールアドレスを入力してください</string>
 	<string name="error_enter_correct">有効な値を入力してください</string>
 	<string name="editor_profile_changes_for_next_place">次の場所への変更：%d</string>
 	<string name="editor_profile_rating_place">ランキングポジション</string>
 	<string name="booking_dialog_not_connect_header">ホテルを予約するには、インターネット接続を有効にしてください</string>
-	<string name="whatsnew_booking_header">アプリからホテルを予約する</string>
-	<string name="whatsnew_booking_message">ホテルを探すと、地図にホテルの価格帯と評価が表示されます。</string>
 	<string name="button_try">試してみる</string>
-	<string name="whatsnew_cycle_navigation_header">バイクナビゲーション（ベータ版）</string>
-	<string name="whatsnew_cycle_navigation_message">新シーズンに向けてバイクナビゲーションをテスト中です。MAPS.MEで、お気に入りのサイクリングルートを試してみませんか。ご感想をお待ちしています。</string>
 	<string name="refresh">更新</string>
 	<string name="last_update">最終更新日: %s</string>
+	<string name="booking_checkin">チェックイン：%s</string>
+	<string name="booking_checkout">チェックアウト：%s</string>
+	<string name="placepage_add_place_button">地図上に場所を追加</string>
+	<!-- Displayed when saving some edits to the map to warn against publishing personal data -->
+	<string name="editor_share_to_all_dialog_title">全てのユーザーに送信しますか？</string>
+	<!-- iOS Dialog before publishing the modifications to the public map. -->
+	<string name="editor_share_to_all_dialog_message_1">個人情報を入力していないことを確認してください。</string>
+	<string name="editor_share_to_all_dialog_message_2">弊社で変更を確認します。質問がある場合はメールでご連絡します。</string>
+	<string name="navigation_overview_button">概要</string>
+	<string name="navigation_stop_button">停止</string>
+	<!-- Text on an empty bookmark page -->
+	<string name="bookmarks_empty_title">ブックマークを保存</string>
+	<string name="bookmarks_empty_message_1">★をタップしてお気に入りの場所にクイックアクセス。</string>
+	<string name="bookmarks_empty_message_2">メールやウェブからブックマークをインポートする。</string>
+	<string name="bookmarks_empty_message_3">チェックアウト：%s</string>
+	<!-- Name of the group for booked hotels -->
+	<string name="bookmarks_group_name">予約したホテル</string>
+	<string name="place_page_button_read_descriprion">詳細</string>
+	<!-- iOS dialog for the case when recent track recording is on and the app comes back from background -->
+	<string name="recent_track_background_dialog_title">最近の走行ルートの記録を無効にしますか？</string>
+	<!-- If a hotel is being shared -->
+	<string name="sharing_booking">またはbooking.comで予約</string>
+	<string name="off_recent_track_background_button">無効にする</string>
+	<!-- For sharing via SMS and so on -->
+	<string name="sharing_call_action_look">ご覧ください</string>
+	<string name="continue_recent_track_background_button">続行</string>
+	<string name="recent_track_background_dialog_message">MAPS.MEは、あなたの位置情報をバックグラウンドで使用して最近の走行ルートを記録します。</string>
+	<string name="whatsnew_car_navigation_header">ユーザーフレンドリーなカーナビゲーション</string>
+	<string name="whatsnew_car_navigation_message">• ナビゲーションエレメントに必要なスペースが削減されました。\n• 速度の表示と自動ズームが追加されました。</string>
+	<string name="whatsnew_cycle_navigation_2_header">自転車用ナビゲーション</string>
+	<string name="whatsnew_cycle_navigation_2_message">• 自転車用ナビゲーションはサイクリングコースのデータも使用します。\n• 道の傾斜を考え、最も走りやすいルートを作成します。</string>
+	<string name="whatsnew_booking_2_header">簡単ホテル検索</string>
+	<string name="whatsnew_booking_2_message">検索結果にホテルの評価と宿泊料カテゴリーが表示されます。</string>
+	<string name="whatsnew_cycle_navigation_header">バイクナビゲーション（ベータ版）</string>
+	<string name="whatsnew_cycle_navigation_message">新シーズンに向けてバイクナビゲーションをテスト中です。MAPS.MEで、お気に入りのサイクリングルートを試してみませんか。ご感想をお待ちしています。</string>
+	<!-- Rate on Google Play (Android only) -->
+	<string name="rate_gp">Google Play で評価</string>
+	<!-- Share with friends: menu item title -->
+	<string name="tell_friends">友達に教える</string>
+	<!-- Share with friends: sharing text -->
+	<string name="tell_friends_text">こんにちは！MAPS.ME をインストールしましょう！</string>
+	<!-- About short text (below logo) -->
+	<string name="about_description">MAPS.ME は旅に必要不可欠なオフラインアプリケーションです。MAPS.ME は OpenStreetMap データに基づいており、データを編集することができます。</string>
+	<!-- Text in menu -->
+	<string name="blog">ブログ</string>
+	<!-- Hint near allow statictics checkbox -->
+	<string name="allow_statistics_hint">収集した使用統計データは当社がアプリを改善するために役立ちます。</string>
+	<string name="general_settings">一般設定</string>
+	<string name="date">日付 %d</string>
+	<!-- "Report a bug" -> "Generaal Feedback" -> "Something is not working" -->
+	<string name="something_is_not_working">動作が変です</string>
+	<!-- For the first routing -->
+	<string name="accept">了解</string>
+	<!-- For the first routing -->
+	<string name="decline">拒否</string>
+	<string name="whats_new_route_profile_title">時は金なり。古きを捨て新しきを得よう。</string>
+	<string name="whats_new_route_profile_message">歩行者とバイク用のルートに高度プロファイルが表示されるようになりました。</string>
+	<string name="whats_new_booking_improve_title">ホテル予約時に節約しましょう</string>
+	<string name="whats_new_booking_improve_message">ホテルの検索結果に価格のカテゴリーが表示されるようになりました。\nさらに、 110,000 軒を超えるホテルを追加しました。</string>
+	<!-- For place page hotel facilities block -->
+	<string name="placepage_hotel_facilities">施設</string>
+	<!-- For place page hotel nearby block -->
+	<string name="placepage_hotel_nearby">近隣</string>
+	<!-- For ordering a taxi (as opposed to hotels or other things) -->
+	<string name="taxi_order">タクシーを呼ぶ</string>
+	<!-- How long it is until the taxi arrives -->
+	<string name="taxi_wait">%s 後に到着予定</string>
+	<!-- When there are no available taxis nearby -->
+	<string name="taxi_not_found">近隣にタクシーは見つかりませんでした</string>
+	<string name="install_app">インストール</string>
+	<!-- `Filter` is a noun here -->
+	<string name="booking_filters">フィルター</string>
+	<string name="booking_filters_reset">リセット</string>
+	<string name="booking_filters_rating">評価</string>
+	<string name="booking_filters_rating_any">すべて</string>
+	<string name="booking_filters_ragting_good">良い</string>
+	<string name="booking_filters_rating_very_good">非常に良い</string>
+	<string name="booking_filters_rating_excellent">最高</string>
+	<string name="booking_filters_price_category">価格帯</string>
+	<string name="search_no_results_title">結果が見つかりません</string>
+	<string name="search_no_results_message">一般的な検索語句や、フィルター範囲を広げたりリセットしたりしてください。</string>
+	<string name="search_no_results_expand_area_button">広げる</string>
+	<string name="search_no_results_reset_button">フィルターをリセット</string>
+	<!-- noun -->
+	<string name="search_in_table">一覧</string>
+	<string name="booking_based_on_reviews">%d 件のホテルのレビューに基づいています</string>
+	<string name="booking_show_more">さらに表示</string>
+	<string name="booking_reviews">レビュー</string>
+	<string name="booking_hotel">ホテル</string>
+	<!-- hotel room -->
+	<string name="booking_hotel_room">部屋</string>
+	<!-- A neologism for a chat based on geographical proximity -->
+	<string name="chat">ジオチャット</string>
+	<!-- Verb. Text on a button that opens the chat. -->
+	<string name="chat_open">開始</string>
+	<string name="whatsnew_uber_header">MAPS.ME &amp; Uber</string>
+	<string name="whatsnew_uber_message">アプリから直接Uberの配車リクエストができます！</string>
+	<string name="dialog_taxi_offline">タクシーの予約がオフラインモードでは使用できません。</string>
+	<string name="dialog_taxi_error">タクシーの予約が一時的に使用できません。</string>
+	<string name="advertisement">広告</string>
+	<string name="mobile_data_dialog">モバイルインターネットを使用して詳細な情報を表示しますか？</string>
+	<string name="mobile_data_option_always">常に使用</string>
+	<string name="mobile_data_option_today">今日だけ</string>
+	<string name="mobile_data_option_not_today">今日は使用しない</string>
+	<string name="mobile_data">モバイルインターネット</string>
+	<string name="mobile_data_description">モバイルインターネットは場所、写真、価格やレビューのような詳細情報を表示するのに必要です。</string>
+	<string name="mobile_data_option_never">使用しない</string>
+	<string name="mobile_data_option_ask">常に確認</string>
+	<string name="traffic_update_maps_text">交通データを表示するには、地図を更新する必要があります。</string>
+	<string name="traffic_outdated">交通データが古くなっています。</string>
+	<string name="big_font">大きなラベル</string>
+	<string name="traffic_update_app">MAPS.ME をアップデートしてください</string>
+	<!-- "traffic" as in road congestion -->
+	<string name="traffic_update_app_message">交通データを表示するには、アプリケーションをアップデートする必要があります。</string>
+	<!-- "traffic" as in "road congestion" -->
+	<string name="traffic_data_unavailable">交通データは利用できません</string>
+	<string name="banner_deliveryclub_title">出前・宅配</string>
+	<string name="banner_deliveryclub_message">4,000 軒のレストランから迅速にお届けします。Delivery Club からご注文ください。</string>
+	<string name="banner_lamoda_title">衣料品と靴のオンライン店舗</string>
+	<string name="banner_lamoda_message">1,000 件を超えるブランド。最大 70% オフ。全国無料配送。</string>
+	<string name="banner_tutu_title">オンライン鉄道チケット</string>
+	<string name="banner_tutu_message">どんな都市への鉄道チケットもオンラインで。価格を検索して、予約しましょう。</string>
+	<string name="banner_geerbest_title">オンライン家電量販店</string>
+	<string name="banner_geerbest_message">低価格で 50,000 件を超えるアイテムを素早く検索。</string>
+	<string name="banner_rentalcars_title">オンラインでレンタカーを予約</string>
+	<string name="banner_rentalcars_message">800 社のレンタカー会社による 49,000 カ所を超えるレンタカー店舗をご利用いただけます。</string>
+	<string name="banner_viator_title">オンラインツアー検索</string>
+	<string name="banner_viator_message">世界中から 50,000 件を超えるツアーを検索してください。</string>
+	<!-- december -->
+	<string name="whatsnew_traffic">36か国の交通データ</string>
+	<!-- december -->
+	<string name="whatsnew_traffic_text">最新の交通データと、データに基づく最速のドライブルートをご提供致します！</string>
+	<!-- december -->
+	<string name="whatsnew_traffic_roaming">ローミング中の交通情報</string>
+	<!-- december -->
+	<string name="whatsnew_traffic_roaming_text">移動毎に 1 MB 未満のモバイル帯域幅が必要です。</string>
+	<!-- december -->
+	<string name="whatsnew_order_taxi">タクシーの呼び出し</string>
+	<!-- december -->
+	<string name="whatsnew_order_taxi_text">ほとんど場所のページに、タクシーを呼ぶためのボタンが表示されるようになりました。</string>
+	<!-- january -->
+	<string name="whatsnew_improved_search">検索機能の向上</string>
+	<!-- january -->
+	<string name="whatsnew_improved_search_text">スペルミスのある検索を行なっても、正確な検索結果を表示します。</string>
+	<!-- january -->
+	<string name="whatsnew_filters_in_search">検索フィルター</string>
+	<!-- january -->
+	<string name="whatsnew_filters_in_search_text">価格と評価に基づくホテルの検索。</string>
+	<!-- january -->
+	<string name="whatsnew_font_size">フォントサイズ</string>
+	<!-- january -->
+	<string name="whatsnew_font_size_text">地図上のラベルを大きくすることができます。</string>
 </resources>

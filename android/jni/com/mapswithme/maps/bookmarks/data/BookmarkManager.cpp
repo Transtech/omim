@@ -36,11 +36,8 @@ JNIEXPORT void JNICALL
 Java_com_mapswithme_maps_bookmarks_data_BookmarkManager_nativeShowBookmarkOnMap(
     JNIEnv * env, jobject thiz, jint c, jint b)
 {
-  BookmarkAndCategory bnc = BookmarkAndCategory(c,b);
-  g_framework->PostDrapeTask([bnc]()
-  {
-    frm()->ShowBookmark(bnc);
-  });
+  BookmarkAndCategory bnc = BookmarkAndCategory(b, c);
+  frm()->ShowBookmark(bnc);
 }
 
 JNIEXPORT void JNICALL
@@ -112,7 +109,7 @@ Java_com_mapswithme_maps_bookmarks_data_BookmarkManager_nativeAddBookmarkToLastE
   size_t const lastEditedCategory = f->LastEditedBMCategory();
   size_t const createdBookmarkIndex = f->AddBookmark(lastEditedCategory, glbPoint, bmkData);
   place_page::Info & info = g_framework->GetPlacePageInfo();
-  info.m_bac = {lastEditedCategory, createdBookmarkIndex};
+  info.m_bac = {createdBookmarkIndex, lastEditedCategory};
   return usermark_helper::CreateMapObject(env, info);
 }
 

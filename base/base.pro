@@ -10,14 +10,14 @@ include($$ROOT_DIR/common.pri)
 SOURCES += \
     base.cpp \
     condition.cpp \
-    gmtime.cpp \
     deferred_task.cpp \
     exception.cpp \
+    gmtime.cpp \
     internal/message.cpp \
+    levenshtein_dfa.cpp \
     logging.cpp \
     lower_case.cpp \
     normalize_unicode.cpp \
-    object_tracker.cpp \
     shared_buffer_manager.cpp \
     src_point.cpp \
     string_format.cpp \
@@ -30,6 +30,7 @@ SOURCES += \
     threaded_container.cpp \
     timegm.cpp \
     timer.cpp \
+    uni_string_dfa.cpp \
 
 HEADERS += \
     SRC_FIRST.hpp \
@@ -40,13 +41,15 @@ HEADERS += \
     buffer_vector.hpp \
     cache.hpp \
     cancellable.hpp \
+    checked_cast.hpp \
     collection_cast.hpp \
     condition.hpp \
-    const_helper.hpp \
     deferred_task.hpp \
+    dfa_helpers.hpp \
     exception.hpp \
     gmtime.hpp \
-    internal/messagex.hpp \
+    internal/message.hpp \
+    levenshtein_dfa.hpp \
     limited_priority_queue.hpp \
     logging.hpp \
     macros.hpp \
@@ -54,7 +57,7 @@ HEADERS += \
     matrix.hpp \
     mem_trie.hpp \
     mutex.hpp \
-    object_tracker.hpp \
+    newtype.hpp \
     observer_list.hpp \
     range_iterator.hpp \
     ref_counted.hpp \
@@ -73,7 +76,6 @@ HEADERS += \
     string_utils.hpp \
     strings_bundle.hpp \
     sunrise_sunset.hpp \
-    swap.hpp \
     thread.hpp \
     thread_checker.hpp \
     thread_pool.hpp \
@@ -82,4 +84,4 @@ HEADERS += \
     threaded_priority_queue.hpp \
     timegm.hpp \
     timer.hpp \
-    worker_thread.hpp \
+    uni_string_dfa.hpp \

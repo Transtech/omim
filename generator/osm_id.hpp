@@ -21,7 +21,9 @@ public:
   static Id Relation(uint64_t osmId);
 
   uint64_t OsmId() const;
+  bool IsNode() const;
   bool IsWay() const;
+  bool IsRelation() const;
 
   /// For debug output
   string Type() const;
@@ -32,5 +34,4 @@ public:
 };
 
 string DebugPrint(osm::Id const & id);
-
 } // namespace osm

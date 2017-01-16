@@ -1,10 +1,14 @@
 #pragma once
+#include "search/categories_cache.hpp"
+#include "search/categories_set.hpp"
+#include "search/emitter.hpp"
 #include "search/geocoder.hpp"
+#include "search/hotels_filter.hpp"
 #include "search/mode.hpp"
-#include "search/params.hpp"
 #include "search/pre_ranker.hpp"
-#include "search/ranker.hpp"
 #include "search/rank_table_cache.hpp"
+#include "search/ranker.hpp"
+#include "search/search_params.hpp"
 #include "search/search_trie.hpp"
 #include "search/suggest.hpp"
 #include "search/token_slice.hpp"
@@ -23,9 +27,10 @@
 
 #include "std/function.hpp"
 #include "std/map.hpp"
+#include "std/shared_ptr.hpp"
 #include "std/string.hpp"
-#include "std/unordered_set.hpp"
 #include "std/unique_ptr.hpp"
+#include "std/unordered_set.hpp"
 #include "std/vector.hpp"
 
 class FeatureType;
@@ -84,7 +89,11 @@ public:
   inline void SetMode(Mode mode) { m_mode = mode; }
   inline void SetSuggestsEnabled(bool enabled) { m_suggestsEnabled = enabled; }
   inline void SetPosition(m2::PointD const & position) { m_position = position; }
-  inline void SetOnResults(TOnResults const & onResults) { m_onResults = onResults; }
+  inline void SetMinDistanceOnMapBetweenResults(double distance)
+  {
+    m_minDistanceOnMapBetweenResults = distance;
+  }
+  inline void SetOnResults(SearchParams::TOnResults const & onResults) { m_onResults = onResults; }
   inline string const & GetPivotRegion() const { return m_region; }
   inline m2::PointD const & GetPosition() const { return m_position; }
 
@@ -95,12 +104,14 @@ public:
   void Search(SearchParams const & params, m2::RectD const & viewport);
 
   // Tries to generate a (lat, lon) result from |m_query|.
-  void SearchCoordinates(Results & res) const;
+  void SearchCoordinates();
 
   void InitParams(QueryParams & params);
+
   void InitGeocoder(Geocoder::Params & params);
-  void InitPreRanker();
-  void InitRanker();
+  void InitPreRanker(Geocoder::Params const & geocoderParams);
+  void InitRanker(Geocoder::Params const & geocoderParams);
+  void InitEmitter();
 
   void ClearCaches();
 
@@ -150,9 +161,11 @@ protected:
   m2::RectD m_viewport[COUNT_V];
   m2::PointD m_pivot;
   m2::PointD m_position;
+  double m_minDistanceOnMapBetweenResults;
   Mode m_mode;
   bool m_suggestsEnabled;
-  TOnResults m_onResults;
+  shared_ptr<hotels_filter::Rule> m_hotelsFilter;
+  SearchParams::TOnResults m_onResults;
 
   /// @name Get ranking params.
   //@{
@@ -168,8 +181,11 @@ protected:
 protected:
   bool m_viewportSearch;
 
-  PreRanker m_preRanker;
+  VillagesCache m_villagesCache;
+
+  Emitter m_emitter;
   Ranker m_ranker;
+  PreRanker m_preRanker;
   Geocoder m_geocoder;
 };
 }  // namespace search

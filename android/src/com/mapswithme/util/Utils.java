@@ -6,6 +6,7 @@ import android.content.ClipData;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
@@ -26,6 +27,13 @@ import android.util.Log;
 import android.view.Window;
 import android.widget.Toast;
 
+import com.mapswithme.maps.BuildConfig;
+import com.mapswithme.maps.MwmApplication;
+import com.mapswithme.maps.R;
+import com.mapswithme.maps.activity.CustomNavigateUpListener;
+import com.mapswithme.maps.uber.UberLinks;
+import com.mapswithme.util.statistics.AlohaHelper;
+
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileWriter;
@@ -35,19 +43,13 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-import com.mapswithme.maps.BuildConfig;
-import com.mapswithme.maps.MwmApplication;
-import com.mapswithme.maps.R;
-import com.mapswithme.maps.activity.CustomNavigateUpListener;
-import com.mapswithme.util.statistics.AlohaHelper;
-
 public class Utils
 {
   private static final String TAG = "Utils";
 
   public interface Proc<T>
   {
-    void invoke(T param);
+    void invoke(@NonNull T param);
   }
 
   private Utils() {}
@@ -207,6 +209,7 @@ public class Utils
       writer.write("Android version: " + Build.VERSION.SDK_INT + "\n");
       writer.write("Device: " + getDeviceModel() + "\n");
       writer.write("App version: " + BuildConfig.APPLICATION_ID + " " + BuildConfig.VERSION_NAME + "\n");
+      writer.write("Installation ID: " + getInstallationId() + "\n");
       writer.write("Locale : " + Locale.getDefault());
       writer.write("\nNetworks : ");
       final ConnectivityManager manager = (ConnectivityManager) MwmApplication.get().getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -340,11 +343,11 @@ public class Utils
     NavUtils.navigateUpTo(activity, intent);
   }
 
-  public static SpannableStringBuilder formatUnitsText(@DimenRes int size, @DimenRes int units, String dimension, String unitText)
+  public static SpannableStringBuilder formatUnitsText(Context context, @DimenRes int size, @DimenRes int units, String dimension, String unitText)
   {
     final SpannableStringBuilder res = new SpannableStringBuilder(dimension).append(" ").append(unitText);
-    res.setSpan(new AbsoluteSizeSpan(UiUtils.dimen(size), false), 0, dimension.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-    res.setSpan(new AbsoluteSizeSpan(UiUtils.dimen(units), false), dimension.length(), res.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+    res.setSpan(new AbsoluteSizeSpan(UiUtils.dimen(context, size), false), 0, dimension.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+    res.setSpan(new AbsoluteSizeSpan(UiUtils.dimen(context, units), false), dimension.length(), res.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
     return res;
   }
 
@@ -382,5 +385,69 @@ public class Utils
                          onCheckPassedCallback.invoke(false);
                      }
                    }).show();
+  }
+
+  public static String getInstallationId()
+  {
+    final Context context = MwmApplication.get();
+    final SharedPreferences sharedPrefs = context.getSharedPreferences(
+      org.alohalytics.Statistics.PREF_FILE, Context.MODE_PRIVATE);
+    // "UNIQUE_ID" is the value of org.alohalytics.Statistics.PREF_UNIQUE_ID, but it private.
+    String installationId = sharedPrefs.getString("UNIQUE_ID", null);
+
+    if (TextUtils.isEmpty(installationId))
+      return "";
+
+    return installationId;
+  }
+
+  public static boolean isUberInstalled(@NonNull Activity context)
+  {
+    try
+    {
+      PackageManager pm = context.getPackageManager();
+      pm.getPackageInfo("com.ubercab", PackageManager.GET_ACTIVITIES);
+      return true;
+    } catch (PackageManager.NameNotFoundException e)
+    {
+      return false;
+    }
+  }
+
+  public static void launchUber(@NonNull Activity context, @NonNull UberLinks links)
+  {
+    final Intent intent = new Intent(Intent.ACTION_VIEW);
+    if (isUberInstalled(context))
+    {
+
+      intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+      intent.setData(Uri.parse(links.getDeepLink()));
+    } else
+    {
+      // No Uber app! Open mobile website.
+      intent.setData(Uri.parse(links.getUniversalLink()));
+    }
+    context.startActivity(intent);
+  }
+
+  public static void sendTo(@NonNull Context context, @NonNull String email)
+  {
+    Intent intent = new Intent(Intent.ACTION_SENDTO);
+    intent.setData(Utils.buildMailUri(email, "", ""));
+    context.startActivity(intent);
+  }
+
+  public static void callPhone(@NonNull Context context, @NonNull String phone)
+  {
+    Intent intent = new Intent(Intent.ACTION_DIAL);
+    intent.setData(Uri.parse("tel:" + phone));
+    try
+    {
+      context.startActivity(intent);
+    }
+    catch (ActivityNotFoundException e)
+    {
+      AlohaHelper.logException(e);
+    }
   }
 }

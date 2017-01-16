@@ -1,5 +1,8 @@
 #include "drape_frontend/selection_shape.hpp"
 #include "drape_frontend/color_constants.hpp"
+#include "drape_frontend/map_shape.hpp"
+#include "drape_frontend/shape_view_params.hpp"
+#include "drape_frontend/tile_utils.hpp"
 #include "drape_frontend/visual_params.hpp"
 
 #include "drape/attribute_provider.hpp"
@@ -101,10 +104,10 @@ SelectionShape::SelectionShape(ref_ptr<dp::TextureManager> mng)
     batcher.InsertTriangleList(state, make_ref(&provider), nullptr);
   }
 
-  double r = 15.0f * VisualParams::Instance().GetVisualScale();
-  m_mapping.AddRangePoint(0.6, 1.3 * r);
-  m_mapping.AddRangePoint(0.85, 0.8 * r);
-  m_mapping.AddRangePoint(1.0, r);
+  m_radius = 15.0f * VisualParams::Instance().GetVisualScale();
+  m_mapping.AddRangePoint(0.6, 1.3 * m_radius);
+  m_mapping.AddRangePoint(0.85, 0.8 * m_radius);
+  m_mapping.AddRangePoint(1.0, m_radius);
 }
 
 void SelectionShape::Show(ESelectedObject obj, m2::PointD const & position, double positionZ, bool isAnimate)
@@ -125,7 +128,21 @@ void SelectionShape::Hide()
   m_selectedObject = OBJECT_EMPTY;
 }
 
-void SelectionShape::Render(ScreenBase const & screen, ref_ptr<dp::GpuProgramManager> mng,
+bool SelectionShape::IsVisible(ScreenBase const & screen, m2::PointD & pxPos) const
+{
+  m2::PointD const pt = screen.GtoP(m_position);
+  ShowHideAnimation::EState state = m_animation.GetState();
+
+  if ((state == ShowHideAnimation::STATE_VISIBLE || state == ShowHideAnimation::STATE_SHOW_DIRECTION) &&
+      !screen.IsReverseProjection3d(pt))
+  {
+    pxPos = screen.PtoP3d(pt, -m_positionZ);
+    return true;
+  }
+  return false;
+}
+
+void SelectionShape::Render(ScreenBase const & screen, int zoomLevel, ref_ptr<dp::GpuProgramManager> mng,
                             dp::UniformValuesStorage const & commonUniforms)
 {
   ShowHideAnimation::EState state = m_animation.GetState();
@@ -133,7 +150,12 @@ void SelectionShape::Render(ScreenBase const & screen, ref_ptr<dp::GpuProgramMan
       state == ShowHideAnimation::STATE_SHOW_DIRECTION)
   {
     dp::UniformValuesStorage uniforms = commonUniforms;
-    uniforms.SetFloatValue("u_position", m_position.x, m_position.y, -m_positionZ);
+    TileKey const key = GetTileKeyByPoint(m_position, ClipTileZoomByMaxDataZoom(zoomLevel));
+    math::Matrix<float, 4, 4> mv = key.GetTileBasedModelView(screen);
+    uniforms.SetMatrix4x4Value("modelView", mv.m_data);
+
+    m2::PointD const pos = MapShape::ConvertToLocal(m_position, key.GetGlobalRect().Center(), kShapeCoordScalar);
+    uniforms.SetFloatValue("u_position", pos.x, pos.y, -m_positionZ);
 
     float accuracy = m_mapping.GetValue(m_animation.GetT());
     if (screen.isPerspective())

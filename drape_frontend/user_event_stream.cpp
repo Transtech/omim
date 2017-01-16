@@ -1,7 +1,8 @@
 #include "drape_frontend/user_event_stream.hpp"
+#include "drape_frontend/animation/follow_animation.hpp"
 #include "drape_frontend/animation/linear_animation.hpp"
 #include "drape_frontend/animation/scale_animation.hpp"
-#include "drape_frontend/animation/follow_animation.hpp"
+#include "drape_frontend/animation/parallel_animation.hpp"
 #include "drape_frontend/animation/sequence_animation.hpp"
 #include "drape_frontend/animation_constants.hpp"
 #include "drape_frontend/animation_system.hpp"
@@ -16,6 +17,8 @@
 
 #include "base/logging.hpp"
 #include "base/macros.hpp"
+
+#include "std/chrono.hpp"
 
 #ifdef DEBUG
 #define TEST_CALL(action) if (m_testFn) m_testFn(action)
@@ -34,6 +37,8 @@ uint64_t const kLongTouchMs = 500;
 uint64_t const kKineticDelayMs = 500;
 
 float const kForceTapThreshold = 0.75;
+
+double const kDoNotChangeDuration = -1.0;
 
 size_t GetValidTouchesCount(array<Touch, 2> const & touches)
 {
@@ -69,6 +74,16 @@ char const * UserEventStream::END_DOUBLE_TAP_AND_HOLD = "EndDoubleTapAndHold";
 #endif
 
 uint8_t const TouchEvent::INVALID_MASKED_POINTER = 0xFF;
+
+void TouchEvent::SetFirstTouch(const Touch & touch)
+{
+  m_touches[0] = touch;
+}
+
+void TouchEvent::SetSecondTouch(const Touch & touch)
+{
+  m_touches[1] = touch;
+}
 
 void TouchEvent::PrepareTouches(array<Touch, 2> const & previousTouches)
 {
@@ -129,17 +144,16 @@ UserEventStream::UserEventStream()
 {
 }
 
-void UserEventStream::AddEvent(UserEvent const & event)
+void UserEventStream::AddEvent(drape_ptr<UserEvent> && event)
 {
   lock_guard<mutex> guard(m_lock);
   UNUSED_VALUE(guard);
-  m_events.push_back(event);
+  m_events.emplace_back(move(event));
 }
 
 ScreenBase const & UserEventStream::ProcessEvents(bool & modelViewChanged, bool & viewportChanged)
 {
-  list<UserEvent> events;
-
+  TEventsList events;
   {
     lock_guard<mutex> guard(m_lock);
     UNUSED_VALUE(guard);
@@ -148,65 +162,99 @@ ScreenBase const & UserEventStream::ProcessEvents(bool & modelViewChanged, bool 
 
   m2::RectD const prevPixelRect = GetCurrentScreen().PixelRect();
 
+  viewportChanged = false;
   m_modelViewChanged = !events.empty() || m_state == STATE_SCALE || m_state == STATE_DRAG;
-  for (UserEvent const & e : events)
+
+  for (auto const & e : events)
   {
     bool breakAnim = false;
 
-    switch (e.m_type)
+    switch (e->GetType())
     {
-    case UserEvent::EVENT_SCALE:
-      breakAnim = SetScale(e.m_scaleEvent.m_pxPoint, e.m_scaleEvent.m_factor, e.m_scaleEvent.m_isAnim);
-      TouchCancel(m_touches);
-      break;
-    case UserEvent::EVENT_RESIZE:
-      m_navigator.OnSize(e.m_resize.m_width, e.m_resize.m_height);
-      breakAnim = true;
-      TouchCancel(m_touches);
-      if (m_state == STATE_DOUBLE_TAP_HOLD)
-        EndDoubleTapAndHold(m_touches[0]);
-      break;
-    case UserEvent::EVENT_SET_ANY_RECT:
-      breakAnim = SetRect(e.m_anyRect.m_rect, e.m_anyRect.m_isAnim);
-      TouchCancel(m_touches);
-      break;
-    case UserEvent::EVENT_SET_RECT:
-      breakAnim = SetRect(e.m_rectEvent.m_rect, e.m_rectEvent.m_zoom, e.m_rectEvent.m_applyRotation, e.m_rectEvent.m_isAnim);
-      TouchCancel(m_touches);
-      break;
-    case UserEvent::EVENT_SET_CENTER:
-      breakAnim = SetCenter(e.m_centerEvent.m_center, e.m_centerEvent.m_zoom, e.m_centerEvent.m_isAnim);
-      TouchCancel(m_touches);
-      break;
-    case UserEvent::EVENT_TOUCH:
-      breakAnim = ProcessTouch(e.m_touchEvent);
-      break;
-    case UserEvent::EVENT_ROTATE:
+    case UserEvent::EventType::Scale:
       {
-        ScreenBase const & screen = m_navigator.Screen();
-        if (screen.isPerspective())
+        ref_ptr<ScaleEvent> scaleEvent = make_ref(e);
+        breakAnim = OnSetScale(scaleEvent);
+        TouchCancel(m_touches);
+      }
+      break;
+    case UserEvent::EventType::Resize:
+      {
+        ref_ptr<ResizeEvent> resizeEvent = make_ref(e);
+        m_navigator.OnSize(resizeEvent->GetWidth(), resizeEvent->GetHeight());
+        if (!m_visibleViewport.IsValid())
+          m_visibleViewport = m2::RectD(0, 0, resizeEvent->GetWidth(), resizeEvent->GetHeight());
+        viewportChanged = true;
+        breakAnim = true;
+        TouchCancel(m_touches);
+        if (m_state == STATE_DOUBLE_TAP_HOLD)
+          EndDoubleTapAndHold(m_touches[0]);
+      }
+      break;
+    case UserEvent::EventType::SetAnyRect:
+      {
+        ref_ptr<SetAnyRectEvent> anyRectEvent = make_ref(e);
+        breakAnim = OnSetAnyRect(anyRectEvent);
+        TouchCancel(m_touches);
+      }
+      break;
+    case UserEvent::EventType::SetRect:
+      {
+        ref_ptr<SetRectEvent> rectEvent = make_ref(e);
+        breakAnim = OnSetRect(rectEvent);
+        TouchCancel(m_touches);
+      }
+      break;
+    case UserEvent::EventType::SetCenter:
+      {
+        ref_ptr<SetCenterEvent> centerEvent = make_ref(e);
+        breakAnim = OnSetCenter(centerEvent);
+        TouchCancel(m_touches);
+      }
+      break;
+    case UserEvent::EventType::Touch:
+      {
+        ref_ptr<TouchEvent> touchEvent = make_ref(e);
+        breakAnim = ProcessTouch(*touchEvent.get());
+      }
+      break;
+    case UserEvent::EventType::Rotate:
+      {
+        ref_ptr<RotateEvent> rotateEvent = make_ref(e);
+        breakAnim = OnRotate(rotateEvent);
+      }
+      break;
+    case UserEvent::EventType::FollowAndRotate:
+      {
+        ref_ptr<FollowAndRotateEvent> followEvent = make_ref(e);
+
+        breakAnim = SetFollowAndRotate(followEvent->GetUserPos(), followEvent->GetPixelZero(),
+                                       followEvent->GetAzimuth(), followEvent->GetPreferredZoomLelel(),
+                                       followEvent->GetAutoScale(), followEvent->IsAnim(), followEvent->IsAutoScale(),
+                                       followEvent->GetParallelAnimCreator());
+      }
+      break;
+    case UserEvent::EventType::AutoPerspective:
+      {
+        ref_ptr<SetAutoPerspectiveEvent> perspectiveEvent = make_ref(e);
+        SetAutoPerspective(perspectiveEvent->IsAutoPerspective());
+      }
+      break;
+    case UserEvent::EventType::VisibleViewport:
+      {
+        ref_ptr<SetVisibleViewportEvent> viewportEvent = make_ref(e);
+        m2::RectD const prevVisibleViewport = m_visibleViewport;
+        m_visibleViewport = viewportEvent->GetRect();
+        m2::PointD gOffset;
+        if (m_listener->OnNewVisibleViewport(prevVisibleViewport, m_visibleViewport, gOffset))
         {
-          m2::PointD pt = screen.PixelRectIn3d().Center();
-          breakAnim = SetFollowAndRotate(screen.PtoG(screen.P3dtoP(pt)), pt,
-                                         e.m_rotate.m_targetAzimut, kDoNotChangeZoom, true);
-        }
-        else
-        {
-          m2::AnyRectD dstRect = GetTargetRect();
-          dstRect.SetAngle(e.m_rotate.m_targetAzimut);
-          breakAnim = SetRect(dstRect, true);
+          ScreenBase screen = GetCurrentScreen();
+          screen.MoveG(gOffset);
+          SetScreen(screen, true /* isAnim */);
         }
       }
       break;
-    case UserEvent::EVENT_FOLLOW_AND_ROTATE:
-      breakAnim = SetFollowAndRotate(e.m_followAndRotate.m_userPos, e.m_followAndRotate.m_pixelZero,
-                                     e.m_followAndRotate.m_azimuth, e.m_followAndRotate.m_preferredZoomLevel,
-                                     e.m_followAndRotate.m_isAnim);
-      TouchCancel(m_touches);
-      break;
-    case UserEvent::EVENT_AUTO_PERSPECTIVE:
-      SetAutoPerspective(e.m_autoPerspective.m_isAutoPerspective);
-      break;
+
     default:
       ASSERT(false, ());
       break;
@@ -232,7 +280,7 @@ ScreenBase const & UserEventStream::ProcessEvents(bool & modelViewChanged, bool 
   modelViewChanged = m_modelViewChanged;
 
   double const kEps = 1e-5;
-  viewportChanged = !m2::IsEqualSize(prevPixelRect, GetCurrentScreen().PixelRect(), kEps, kEps);
+  viewportChanged |= !m2::IsEqualSize(prevPixelRect, GetCurrentScreen().PixelRect(), kEps, kEps);
   m_modelViewChanged = false;
 
   return m_navigator.Screen();
@@ -240,7 +288,7 @@ ScreenBase const & UserEventStream::ProcessEvents(bool & modelViewChanged, bool 
 
 void UserEventStream::ApplyAnimations()
 {
-  if (m_animationSystem.AnimationExists(Animation::MapPlane))
+  if (m_animationSystem.AnimationExists(Animation::Object::MapPlane))
   {
     ScreenBase screen;
     if (m_animationSystem.GetScreen(GetCurrentScreen(), screen))
@@ -255,23 +303,37 @@ ScreenBase const & UserEventStream::GetCurrentScreen() const
   return m_navigator.Screen();
 }
 
-bool UserEventStream::SetScale(m2::PointD const & pxScaleCenter, double factor, bool isAnim)
+m2::RectD const & UserEventStream::GetVisibleViewport() const
 {
-  m2::PointD scaleCenter = pxScaleCenter;
+  return m_visibleViewport;
+}
+
+bool UserEventStream::OnSetScale(ref_ptr<ScaleEvent> scaleEvent)
+{
+  double factor = scaleEvent->GetFactor();
+
+  m2::PointD scaleCenter = scaleEvent->GetPxPoint();
   if (m_listener)
     m_listener->CorrectScalePoint(scaleCenter);
 
-  if (isAnim)
+  if (scaleEvent->IsAnim())
   {
-    auto const & followAnim = m_animationSystem.FindAnimation<MapFollowAnimation>(Animation::MapFollow);
+    auto followAnim = m_animationSystem.FindAnimation<MapFollowAnimation>(Animation::Type::MapFollow);
+    if (followAnim == nullptr)
+    {
+      auto const parallelAnim = m_animationSystem.FindAnimation<ParallelAnimation>(Animation::Type::Parallel, kParallelFollowAnim.c_str());
+      if (parallelAnim != nullptr)
+        followAnim = parallelAnim->FindAnimation<MapFollowAnimation>(Animation::Type::MapFollow);
+    }
     if (followAnim != nullptr && followAnim->HasScale())
     {
       // Scaling is not possible if current follow animation does pixel offset.
-      if (followAnim->HasPixelOffset())
+      if (followAnim->HasPixelOffset() && !followAnim->IsAutoZoom())
         return false;
 
       // Reset follow animation with scaling if we apply scale explicitly.
-      ResetAnimations(Animation::MapFollow);
+      ResetAnimations(Animation::Type::MapFollow);
+      ResetAnimations(Animation::Type::Parallel, kParallelFollowAnim);
     }
     
     m2::PointD glbScaleCenter = m_navigator.PtoG(m_navigator.P3dtoP(scaleCenter));
@@ -300,46 +362,86 @@ bool UserEventStream::SetScale(m2::PointD const & pxScaleCenter, double factor, 
   return true;
 }
 
-bool UserEventStream::SetCenter(m2::PointD const & center, int zoom, bool isAnim)
+bool UserEventStream::OnSetAnyRect(ref_ptr<SetAnyRectEvent> anyRectEvent)
 {
+  return SetRect(anyRectEvent->GetRect(), anyRectEvent->IsAnim());
+}
+
+bool UserEventStream::OnSetRect(ref_ptr<SetRectEvent> rectEvent)
+{
+  return SetRect(rectEvent->GetRect(), rectEvent->GetZoom(), rectEvent->GetApplyRotation(), rectEvent->IsAnim(),
+                 rectEvent->GetParallelAnimCreator());
+}
+
+bool UserEventStream::OnSetCenter(ref_ptr<SetCenterEvent> centerEvent)
+{
+  m2::PointD const & center = centerEvent->GetCenter();
+  double zoom = centerEvent->GetZoom();
+
   ScreenBase screen = GetCurrentScreen();
+
   if (zoom == kDoNotChangeZoom)
   {
     GetTargetScreen(screen);
-    screen.MatchGandP3d(center, screen.PixelRectIn3d().Center());
+    screen.MatchGandP3d(center, m_visibleViewport.Center());
   }
   else
   {
     screen.SetFromParams(center, screen.GetAngle(), GetScale(zoom));
-    screen.MatchGandP3d(center, screen.PixelRectIn3d().Center());
+    screen.MatchGandP3d(center, m_visibleViewport.Center());
   }
-
-  ASSERT_GREATER_OR_EQUAL(zoom, scales::GetUpperWorldScale(), ());
-  ASSERT_LESS_OR_EQUAL(zoom, scales::GetUpperStyleScale(), ());
 
   ShrinkAndScaleInto(screen, df::GetWorldRect());
 
-  return SetScreen(screen, isAnim);
+  return SetScreen(screen, centerEvent->IsAnim(), centerEvent->GetParallelAnimCreator());
 }
 
-bool UserEventStream::SetRect(m2::RectD rect, int zoom, bool applyRotation, bool isAnim)
+bool UserEventStream::OnRotate(ref_ptr<RotateEvent> rotateEvent)
+{
+  return SetAngle(rotateEvent->GetTargetAzimuth(), rotateEvent->GetParallelAnimCreator());
+}
+
+bool UserEventStream::SetAngle(double azimuth, TAnimationCreator const & parallelAnimCreator)
+{
+  ScreenBase screen;
+  GetTargetScreen(screen);
+  m2::PointD pt = m_visibleViewport.Center();
+  m2::PointD gPt = screen.PtoG(screen.P3dtoP(pt));
+  
+  if (screen.isPerspective())
+  {
+    return SetFollowAndRotate(gPt, pt,
+                              azimuth, kDoNotChangeZoom, kDoNotAutoZoom,
+                              true /* isAnim */, false /* isAutoScale */,
+                              parallelAnimCreator);
+  }
+
+  screen.SetAngle(azimuth);
+  screen.MatchGandP3d(gPt, pt);
+  return SetScreen(screen, true /* isAnim */, parallelAnimCreator);
+}
+
+bool UserEventStream::SetRect(m2::RectD rect, int zoom, bool applyRotation, bool isAnim, TAnimationCreator const & parallelAnimCreator)
 {
   CheckMinGlobalRect(rect, kDefault3dScale);
   CheckMinMaxVisibleScale(rect, zoom, kDefault3dScale);
   m2::AnyRectD targetRect = applyRotation ? ToRotated(m_navigator, rect) : m2::AnyRectD(rect);
-  return SetRect(targetRect, isAnim);
+  return SetRect(targetRect, isAnim, parallelAnimCreator);
 }
 
-bool UserEventStream::SetScreen(ScreenBase const & endScreen, bool isAnim)
+bool UserEventStream::SetRect(m2::AnyRectD const & rect, bool isAnim, TAnimationCreator const & parallelAnimCreator)
+{
+  ScreenBase tmp = GetCurrentScreen();
+  tmp.SetFromRects(rect, tmp.PixelRectIn3d());
+  tmp.MatchGandP3d(rect.GlobalCenter(), tmp.PixelRectIn3d().Center());
+
+  return SetScreen(tmp, isAnim, parallelAnimCreator);
+}
+
+bool UserEventStream::SetScreen(ScreenBase const & endScreen, bool isAnim, TAnimationCreator const & parallelAnimCreator)
 {
   if (isAnim)
   {
-    auto onStartHandler = [this](ref_ptr<Animation> animation)
-    {
-      if (m_listener)
-        m_listener->OnAnimationStarted(animation);
-    };
-
     ScreenBase const & screen = GetCurrentScreen();
 
     drape_ptr<Animation> anim = GetRectAnimation(screen, endScreen);
@@ -354,8 +456,18 @@ bool UserEventStream::SetScreen(ScreenBase const & endScreen, bool isAnim)
 
     if (anim != nullptr)
     {
-      anim->SetOnStartAction(onStartHandler);
-      m_animationSystem.CombineAnimation(move(anim));
+      if (parallelAnimCreator != nullptr)
+      {
+        drape_ptr<ParallelAnimation> parallelAnim = make_unique_dp<ParallelAnimation>();
+        parallelAnim->SetCustomType(kParallelLinearAnim);
+        parallelAnim->AddAnimation(parallelAnimCreator(kDoNotChangeDuration));
+        parallelAnim->AddAnimation(move(anim));
+        m_animationSystem.CombineAnimation(move(parallelAnim));
+      }
+      else
+      {
+        m_animationSystem.CombineAnimation(move(anim));
+      }
       return false;
     }
   }
@@ -365,31 +477,23 @@ bool UserEventStream::SetScreen(ScreenBase const & endScreen, bool isAnim)
   return true;
 }
 
-bool UserEventStream::SetRect(m2::AnyRectD const & rect, bool isAnim)
-{
-  ScreenBase tmp = GetCurrentScreen();
-  tmp.SetFromRects(rect, tmp.PixelRectIn3d());
-  tmp.MatchGandP3d(rect.GlobalCenter(), tmp.PixelRectIn3d().Center());
-
-  return SetScreen(tmp, isAnim);
-}
-
 bool UserEventStream::InterruptFollowAnimations(bool force)
 {
-  Animation const * followAnim = m_animationSystem.FindAnimation<MapFollowAnimation>(Animation::MapFollow);
+  Animation const * followAnim = m_animationSystem.FindAnimation<MapFollowAnimation>(Animation::Type::MapFollow);
 
   if (followAnim == nullptr)
-    followAnim = m_animationSystem.FindAnimation<SequenceAnimation>(Animation::Sequence, kPrettyFollowAnim.c_str());
+    followAnim = m_animationSystem.FindAnimation<SequenceAnimation>(Animation::Type::Sequence, kPrettyFollowAnim.c_str());
+
+  if (followAnim == nullptr)
+    followAnim = m_animationSystem.FindAnimation<ParallelAnimation>(Animation::Type::Parallel, kParallelFollowAnim.c_str());
+
+  if (followAnim == nullptr)
+    followAnim = m_animationSystem.FindAnimation<ParallelAnimation>(Animation::Type::Parallel, kParallelLinearAnim.c_str());
 
   if (followAnim != nullptr)
   {
     if (force || followAnim->CouldBeInterrupted())
-    {
-      bool const isFollowAnim = followAnim->GetType() == Animation::MapFollow;
-      ResetAnimations(followAnim->GetType());
-      if (isFollowAnim)
-        ResetAnimations(Animation::Arrow);
-    }
+      ResetAnimations(followAnim->GetType(), followAnim->GetCustomType(), !followAnim->CouldBeInterrupted());
     else
       return false;
   }
@@ -397,39 +501,31 @@ bool UserEventStream::InterruptFollowAnimations(bool force)
 }
 
 bool UserEventStream::SetFollowAndRotate(m2::PointD const & userPos, m2::PointD const & pixelPos,
-                                         double azimuth, int preferredZoomLevel, bool isAnim)
+                                         double azimuth, int preferredZoomLevel, double autoScale,
+                                         bool isAnim, bool isAutoScale, TAnimationCreator const & parallelAnimCreator)
 {
+  // Reset current follow-and-rotate animation if possible.
+  if (isAnim && !InterruptFollowAnimations(false /* force */))
+    return false;
+
   ScreenBase const & currentScreen = GetCurrentScreen();
   ScreenBase screen = currentScreen;
 
-  if (preferredZoomLevel == kDoNotChangeZoom)
+  if (preferredZoomLevel == kDoNotChangeZoom && !isAutoScale)
   {
     GetTargetScreen(screen);
     screen.SetAngle(-azimuth);
   }
   else
   {
-    screen.SetFromParams(userPos, -azimuth, GetScale(preferredZoomLevel));
+    screen.SetFromParams(userPos, -azimuth, isAutoScale ? autoScale : GetScale(preferredZoomLevel));
   }
   screen.MatchGandP3d(userPos, pixelPos);
-
-  ASSERT_GREATER_OR_EQUAL(preferredZoomLevel, scales::GetUpperWorldScale(), ());
-  ASSERT_LESS_OR_EQUAL(preferredZoomLevel, scales::GetUpperStyleScale(), ());
 
   ShrinkAndScaleInto(screen, df::GetWorldRect());
 
   if (isAnim)
   {
-    // Reset current follow-and-rotate animation if possible.
-    if (!InterruptFollowAnimations(false /* force */))
-      return false;
-
-    auto onStartHandler = [this](ref_ptr<Animation> animation)
-    {
-      if (m_listener)
-        m_listener->OnAnimationStarted(animation);
-    };
-
     drape_ptr<Animation> anim;
     double const moveDuration = PositionInterpolator::GetMoveDuration(currentScreen.GetOrg(), screen.GetOrg(),
                                                                       currentScreen.PixelRectIn3d(),
@@ -442,7 +538,7 @@ bool UserEventStream::SetFollowAndRotate(m2::PointD const & userPos, m2::PointD 
     else
     {
       // Run follow-and-rotate animation.
-      anim = GetFollowAnimation(currentScreen, userPos, screen.GetScale(), -azimuth, pixelPos);
+      anim = GetFollowAnimation(currentScreen, userPos, screen.GetScale(), -azimuth, pixelPos, isAutoScale);
     }
 
     if (preferredZoomLevel != kDoNotChangeZoom)
@@ -451,8 +547,19 @@ bool UserEventStream::SetFollowAndRotate(m2::PointD const & userPos, m2::PointD 
       anim->SetCouldBeBlended(false);
     }
 
-    anim->SetOnStartAction(onStartHandler);
-    m_animationSystem.CombineAnimation(move(anim));
+    if (parallelAnimCreator != nullptr)
+    {
+      drape_ptr<ParallelAnimation> parallelAnim = make_unique_dp<ParallelAnimation>();
+      parallelAnim->SetCustomType(kParallelFollowAnim);
+      parallelAnim->AddAnimation(parallelAnimCreator(anim->GetType() == Animation::Type::MapFollow ? anim->GetDuration()
+                                                                                                   : kDoNotChangeDuration));
+      parallelAnim->AddAnimation(move(anim));
+      m_animationSystem.CombineAnimation(move(parallelAnim));
+    }
+    else
+    {
+      m_animationSystem.CombineAnimation(move(anim));
+    }
     return false;
   }
 
@@ -471,18 +578,18 @@ void UserEventStream::SetAutoPerspective(bool isAutoPerspective)
   return;
 }
 
-void UserEventStream::ResetAnimations(Animation::Type animType, bool finishAll)
+void UserEventStream::ResetAnimations(Animation::Type animType, bool rewind, bool finishAll)
 {
   bool const hasAnimations = m_animationSystem.HasAnimations();
-  m_animationSystem.FinishAnimations(animType, true /* rewind */, finishAll);
+  m_animationSystem.FinishAnimations(animType, rewind, finishAll);
   if (hasAnimations)
     ApplyAnimations();
 }
 
-void UserEventStream::ResetAnimations(Animation::Type animType, string const & customType, bool finishAll)
+void UserEventStream::ResetAnimations(Animation::Type animType, string const & customType, bool rewind, bool finishAll)
 {
   bool const hasAnimations = m_animationSystem.HasAnimations();
-  m_animationSystem.FinishAnimations(animType, customType, true /* rewind */, finishAll);
+  m_animationSystem.FinishAnimations(animType, customType, rewind, finishAll);
   if (hasAnimations)
     ApplyAnimations();
 }
@@ -490,7 +597,7 @@ void UserEventStream::ResetAnimations(Animation::Type animType, string const & c
 void UserEventStream::ResetMapPlaneAnimations()
 {
   bool const hasAnimations = m_animationSystem.HasAnimations();
-  m_animationSystem.FinishObjectAnimations(Animation::MapPlane, false /* rewind */, false /* finishAll */);
+  m_animationSystem.FinishObjectAnimations(Animation::Object::MapPlane, false /* rewind */, false /* finishAll */);
   if (hasAnimations)
     ApplyAnimations();
 }
@@ -500,39 +607,52 @@ m2::AnyRectD UserEventStream::GetCurrentRect() const
   return m_navigator.Screen().GlobalRect();
 }
 
-void UserEventStream::GetTargetScreen(ScreenBase & screen) const
+void UserEventStream::GetTargetScreen(ScreenBase & screen)
 {
-   m_animationSystem.GetTargetScreen(m_navigator.Screen(), screen);
+  m_animationSystem.FinishAnimations(Animation::Type::KineticScroll, false /* rewind */, false /* finishAll */);
+  ApplyAnimations();
+
+  m_animationSystem.GetTargetScreen(m_navigator.Screen(), screen);
 }
 
-m2::AnyRectD UserEventStream::GetTargetRect() const
+m2::AnyRectD UserEventStream::GetTargetRect()
 {
   ScreenBase targetScreen;
-  m_animationSystem.GetTargetScreen(m_navigator.Screen(), targetScreen);
+  GetTargetScreen(targetScreen);
   return targetScreen.GlobalRect();
+}
+
+void UserEventStream::CheckAutoRotate()
+{
+  if (GetCurrentScreen().isPerspective())
+    return;
+  double const kMaxAutoRotateAngle = 25.0 * math::pi / 180.0;
+  double const angle = fabs(GetCurrentScreen().GetAngle());
+  if (angle < kMaxAutoRotateAngle || (math::twicePi - angle) < kMaxAutoRotateAngle)
+    SetAngle(0.0);
 }
 
 bool UserEventStream::ProcessTouch(TouchEvent const & touch)
 {
-  ASSERT(touch.m_touches[0].m_id != -1, ());
+  ASSERT(touch.GetFirstTouch().m_id != -1, ());
 
   TouchEvent touchEvent = touch;
   touchEvent.PrepareTouches(m_touches);
   bool isMapTouch = false;
 
-  switch (touchEvent.m_type)
+  switch (touchEvent.GetTouchType())
   {
   case TouchEvent::TOUCH_DOWN:
-    isMapTouch = TouchDown(touchEvent.m_touches);
+    isMapTouch = TouchDown(touchEvent.GetTouches());
     break;
   case TouchEvent::TOUCH_MOVE:
-    isMapTouch = TouchMove(touchEvent.m_touches, touch.m_timeStamp);
+    isMapTouch = TouchMove(touchEvent.GetTouches(), touch.GetTimeStamp());
     break;
   case TouchEvent::TOUCH_CANCEL:
-    isMapTouch = TouchCancel(touchEvent.m_touches);
+    isMapTouch = TouchCancel(touchEvent.GetTouches());
     break;
   case TouchEvent::TOUCH_UP:
-    isMapTouch = TouchUp(touchEvent.m_touches);
+    isMapTouch = TouchUp(touchEvent.GetTouches());
     break;
   default:
     ASSERT(false, ());
@@ -551,7 +671,7 @@ bool UserEventStream::TouchDown(array<Touch, 2> const & touches)
   bool isMapTouch = true;
   
   // Interrupt kinetic scroll on touch down.
-  m_animationSystem.FinishAnimations(Animation::KineticScroll, false /* rewind */, true /* finishAll */);
+  m_animationSystem.FinishAnimations(Animation::Type::KineticScroll, false /* rewind */, true /* finishAll */);
 
   if (touchCount == 1)
   {
@@ -605,11 +725,16 @@ bool UserEventStream::TouchDown(array<Touch, 2> const & touches)
   return isMapTouch;
 }
 
+bool UserEventStream::CheckDrag(array<Touch, 2> const & touches, double threshold) const
+{
+  return m_startDragOrg.SquareLength(touches[0].m_location) > threshold;
+}
+
 bool UserEventStream::TouchMove(array<Touch, 2> const & touches, double timestamp)
 {
   if (m_listener)
     m_listener->OnTouchMapAction();
-
+  
   double const kDragThreshold = my::sq(VisualParams::Instance().GetDragThreshold());
   size_t touchCount = GetValidTouchesCount(touches);
   bool isMapTouch = true;
@@ -619,7 +744,7 @@ bool UserEventStream::TouchMove(array<Touch, 2> const & touches, double timestam
   case STATE_EMPTY:
     if (touchCount == 1)
     {
-      if (m_startDragOrg.SquareLength(touches[0].m_location) > kDragThreshold)
+      if (CheckDrag(touches, kDragThreshold))
         BeginDrag(touches[0], timestamp);
       else
         isMapTouch = false;
@@ -646,13 +771,13 @@ bool UserEventStream::TouchMove(array<Touch, 2> const & touches, double timestam
     break;
   case STATE_TAP_DETECTION:
   case STATE_WAIT_DOUBLE_TAP:
-    if (m_startDragOrg.SquareLength(touches[0].m_location) > kDragThreshold)
+    if (CheckDrag(touches, kDragThreshold))
       CancelTapDetector();
     else
       isMapTouch = false;
     break;
   case STATE_WAIT_DOUBLE_TAP_HOLD:
-    if (m_startDragOrg.SquareLength(touches[0].m_location) > kDragThreshold)
+    if (CheckDrag(touches, kDragThreshold))
       StartDoubleTapAndHold(touches[0]);
     break;
   case STATE_DOUBLE_TAP_HOLD:
@@ -743,8 +868,9 @@ bool UserEventStream::TouchUp(array<Touch, 2> const & touches)
   switch (m_state)
   {
   case STATE_EMPTY:
+  case STATE_WAIT_DOUBLE_TAP:
     isMapTouch = false;
-    // Can be if long tap or double tap detected
+    // Can be if long tap or double tap detected.
     break;
   case STATE_FILTER:
     ASSERT_EQUAL(touchCount, 1, ());
@@ -752,8 +878,10 @@ bool UserEventStream::TouchUp(array<Touch, 2> const & touches)
     isMapTouch = false;
     break;
   case STATE_TAP_DETECTION:
-    ASSERT_EQUAL(touchCount, 1, ());
-    EndTapDetector(touches[0]);
+    if (touchCount == 1)
+      EndTapDetector(touches[0]);
+    else
+      CancelTapDetector();
     break;
   case STATE_TAP_TWO_FINGERS:
     if (touchCount == 2)
@@ -771,8 +899,15 @@ bool UserEventStream::TouchUp(array<Touch, 2> const & touches)
     isMapTouch = EndDrag(touches[0], false /* cancelled */);
     break;
   case STATE_SCALE:
-    ASSERT_EQUAL(touchCount, 2, ());
-    EndScale(touches[0], touches[1]);
+    if (touchCount < 2)
+    {
+      ASSERT_EQUAL(GetValidTouchesCount(m_touches), 2, ());
+      EndScale(m_touches[0], m_touches[1]);
+    }
+    else
+    {
+      EndScale(touches[0], touches[1]);
+    }
     break;
   default:
     ASSERT(false, ());
@@ -844,6 +979,8 @@ bool UserEventStream::EndDrag(Touch const & t, bool cancelled)
   m_startDragOrg = m2::PointD::Zero();
   m_navigator.StopDrag(t.m_location);
 
+  CheckAutoRotate();
+
   if (cancelled)
   {
     m_scroller.CancelGrab();
@@ -854,14 +991,7 @@ bool UserEventStream::EndDrag(Touch const & t, bool cancelled)
   {
     drape_ptr<Animation> anim = m_scroller.CreateKineticAnimation(m_navigator.Screen());
     if (anim != nullptr)
-    {
-      anim->SetOnStartAction([this](ref_ptr<Animation> animation)
-      {
-        if (m_listener)
-          m_listener->OnAnimationStarted(animation);
-      });
       m_animationSystem.CombineAnimation(move(anim));
-    }
     m_scroller.CancelGrab();
     return false;
   }
@@ -930,6 +1060,7 @@ void UserEventStream::EndScale(const Touch & t1, const Touch & t2)
   m_navigator.StopScale(touch1, touch2);
 
   m_kineticTimer.Reset();
+  CheckAutoRotate();
 }
 
 void UserEventStream::BeginTapDetector()

@@ -51,8 +51,12 @@ public:
   void SetTable(MwmInfoEx & info);
 
   inline feature::DataHeader const & GetHeader() const { return m_factory.GetHeader(); }
+  inline feature::RegionData const & GetRegionData() const { return m_factory.GetRegionData(); }
   inline version::MwmVersion const & GetMwmVersion() const { return m_factory.GetMwmVersion(); }
   inline string const & GetCountryFileName() const { return m_file.GetCountryFile().GetName(); }
+
+  inline bool HasSearchIndex() { return m_cont.IsExist(SEARCH_INDEX_FILE_TAG); }
+  inline bool HasGeometryIndex() { return m_cont.IsExist(INDEX_FILE_TAG); }
 };
 
 class Index : public MwmSet
@@ -283,6 +287,8 @@ public:
 
     /// Editor core only method, to get 'untouched', original version of feature.
     WARN_UNUSED_RESULT bool GetOriginalFeatureByIndex(uint32_t index, FeatureType & ft) const;
+
+    size_t GetNumFeatures() const;
 
   private:
     MwmHandle m_handle;

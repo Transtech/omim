@@ -87,9 +87,13 @@ void CalculateTangentAndNormals(glsl::vec2 const & pt0, glsl::vec2 const & pt1,
   rightNormal = -leftNormal;
 }
 
-void ConstructLineSegments(vector<m2::PointD> const & path, vector<LineSegment> & segments)
+void ConstructLineSegments(vector<m2::PointD> const & path, vector<glsl::vec4> const & segmentsColors,
+                           vector<LineSegment> & segments)
 {
   ASSERT_LESS(1, path.size(), ());
+
+  if (!segmentsColors.empty())
+    ASSERT_EQUAL(segmentsColors.size() + 1, path.size(), ());
 
   m2::PointD prevPoint = path[0];
   for (size_t i = 1; i < path.size(); ++i)
@@ -109,6 +113,8 @@ void ConstructLineSegments(vector<m2::PointD> const & path, vector<LineSegment> 
 
     segment.m_leftNormals[StartPoint] = segment.m_leftNormals[EndPoint] = segment.m_leftBaseNormal;
     segment.m_rightNormals[StartPoint] = segment.m_rightNormals[EndPoint] = segment.m_rightBaseNormal;
+    if (!segmentsColors.empty())
+      segment.m_color = segmentsColors[i - 1];
 
     prevPoint = path[i];
   }
@@ -126,7 +132,8 @@ void UpdateNormals(LineSegment * segment, LineSegment * prevSegment, LineSegment
 }
 
 void GenerateJoinNormals(dp::LineJoin joinType, glsl::vec2 const & normal1, glsl::vec2 const & normal2,
-                         float halfWidth, bool isLeft, float widthScalar, vector<glsl::vec2> & normals)
+                         float halfWidth, bool isLeft, float widthScalar, vector<glsl::vec2> & normals,
+                         vector<glsl::vec2> * uv)
 {
   float const eps = 1e-5;
   if (fabs(glsl::dot(normal1, normal2) - 1.0f) < eps)
@@ -140,6 +147,13 @@ void GenerateJoinNormals(dp::LineJoin joinType, glsl::vec2 const & normal1, glsl
     normals.push_back(glsl::vec2(0.0f, 0.0f));
     normals.push_back(isLeft ? n1 : n2);
     normals.push_back(isLeft ? n2 : n1);
+
+    if (uv != nullptr)
+    {
+      uv->push_back(glsl::vec2(0.5f, 0.5f));
+      uv->push_back(isLeft ? glsl::vec2(0.5f, 0.0f) : glsl::vec2(0.5f, 1.0f));
+      uv->push_back(isLeft ? glsl::vec2(0.5f, 0.0f) : glsl::vec2(0.5f, 1.0f));
+    }
   }
   else if (joinType == dp::LineJoin::MiterJoin)
   {
@@ -155,6 +169,17 @@ void GenerateJoinNormals(dp::LineJoin joinType, glsl::vec2 const & normal1, glsl
     normals.push_back(glsl::vec2(0.0f, 0.0f));
     normals.push_back(isLeft ? averageNormal : n2);
     normals.push_back(isLeft ? n2 : averageNormal);
+
+    if (uv != nullptr)
+    {
+      uv->push_back(glsl::vec2(0.5f, 0.5f));
+      uv->push_back(isLeft ? glsl::vec2(0.5f, 0.0f) : glsl::vec2(0.5f, 1.0f));
+      uv->push_back(isLeft ? glsl::vec2(0.5f, 0.0f) : glsl::vec2(0.5f, 1.0f));
+
+      uv->push_back(glsl::vec2(0.5f, 0.5f));
+      uv->push_back(isLeft ? glsl::vec2(0.5f, 0.0f) : glsl::vec2(0.5f, 1.0f));
+      uv->push_back(isLeft ? glsl::vec2(0.5f, 0.0f) : glsl::vec2(0.5f, 1.0f));
+    }
   }
   else
   {
@@ -176,12 +201,20 @@ void GenerateJoinNormals(dp::LineJoin joinType, glsl::vec2 const & normal1, glsl
       normals.push_back(glsl::vec2(0.0f, 0.0f));
       normals.push_back(isLeft ? glsl::vec2(n1.x, n1.y) : glsl::vec2(n2.x, n2.y));
       normals.push_back(isLeft ? glsl::vec2(n2.x, n2.y) : glsl::vec2(n1.x, n1.y));
+
+      if (uv != nullptr)
+      {
+        uv->push_back(glsl::vec2(0.5f, 0.5f));
+        uv->push_back(isLeft ? glsl::vec2(0.5f, 0.0f) : glsl::vec2(0.5f, 1.0f));
+        uv->push_back(isLeft ? glsl::vec2(0.5f, 0.0f) : glsl::vec2(0.5f, 1.0f));
+      }
     }
   }
 }
 
 void GenerateCapNormals(dp::LineCap capType, glsl::vec2 const & normal1, glsl::vec2 const & normal2,
-                        glsl::vec2 const & direction, float halfWidth, bool isStart, vector<glsl::vec2> & normals)
+                        glsl::vec2 const & direction, float halfWidth, bool isStart, vector<glsl::vec2> & normals,
+                        int segmentsCount)
 {
   if (capType == dp::ButtCap)
     return;
@@ -203,7 +236,6 @@ void GenerateCapNormals(dp::LineCap capType, glsl::vec2 const & normal1, glsl::v
   }
   else
   {
-    int const segmentsCount = 8;
     double const segmentSize = math::pi / segmentsCount * (isStart ? -1.0 : 1.0);
     glsl::vec2 const normalizedNormal = glsl::normalize(normal2);
     m2::PointD const startNormal(normalizedNormal.x, normalizedNormal.y);

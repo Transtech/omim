@@ -161,7 +161,7 @@
 	<!-- Add bookmark dialog - bookmark set, Bookmarks dialog - Bookmark set cell -->
 	<string name="set">Đặt</string>
 	<!-- Text hint in Bookmarks dialog when no any bookmarks are added -->
-	<string name="bookmarks_usage_hint">Bạn chưa có điểm đánh dấu.\nChạm vào bất kỳ địa điểm nào trên bản đồ để thêm một điểm đánh dấu.\nĐiểm đánh dấu từ các nguồn khác cũng có thể được nhập và hiển thị trong MAPS.ME. Mở tập tin KML/KMZ với các điểm đánh dấu được lưu từ e-mail, Dropbox hoặc liên kết web.</string>
+	<string name="bookmarks_usage_hint">Bạn chưa có điểm đánh dấu.\nChạm vào bất kỳ địa điểm nào trên bản đồ để thêm một điểm đánh dấu.\nĐiểm đánh dấu từ các nguồn khác cũng có thể được nhập và hiển thị trong MAPS.ME. Mở tập tin KML/KMZ với các điểm đánh dấu được lưu từ email, Dropbox hoặc liên kết web.</string>
 	<!-- Text hint in Bookmarks dialog when at least one bookmark is added -->
 	<string name="bookmarks_usage_hint_import_only">Điểm đánh dấu từ các nguồn khác có thể được nhập và hiển thị trong MAPS.ME. Mở tập tin KML/KMZ với các điểm đánh dấu được lưu từ thư, Dropbox hoặc liên kết web.</string>
 	<!-- Settings button in system menu -->
@@ -185,13 +185,14 @@
 	<!-- Search Suggestion -->
 	<string name="food">ẩm thực</string>
 	<!-- Search Suggestion -->
-	<string name="transport">giao thông</string>
+	<string name="transport">Giao thông</string>
 	<!-- Search Suggestion -->
 	<string name="fuel">Khí đốt</string>
 	<!-- Search Suggestion -->
 	<string name="parking">đỗ xe</string>
 	<!-- Search Suggestion -->
 	<string name="shop">Cửa hàng</string>
+	<!-- Search Suggestion -->
 	<string name="hotel">Khách sạn</string>
 	<!-- Search Suggestion -->
 	<string name="tourism">Diểm tham quan</string>
@@ -262,7 +263,7 @@
 	<!-- iOS share by Message button text (including SMS) -->
 	<string name="message">Tin nhắn</string>
 	<!-- Share by email button text, also used in editor. -->
-	<string name="email">E-mail</string>
+	<string name="email">Email</string>
 	<!-- Copy Link -->
 	<string name="copy_link">Sao chép Liên kết</string>
 	<!-- Text for the button that returns to caller application -->
@@ -271,8 +272,6 @@
 	<string name="copied_to_clipboard">Đã sao chép vào Bảng tạm: %1$s</string>
 	<!-- Setting label for statistics turn on/off -->
 	<string name="allow_statistics">Gửi thống kê</string>
-	<!-- Hint near allow statictics checkbox -->
-	<string name="allow_statistics_hint">Cho phép chúng tôi thu thập thống kê sử dụng để nâng cao ứng dụng</string>
 	<!-- place preview title -->
 	<string name="info">Thông tin</string>
 	<!-- Used for bookmark editing -->
@@ -325,6 +324,7 @@
 	<string name="pref_tts_how_to_set_up_voice">Làm thế nào để thiết lập tiếng nói</string>
 	<!-- Settings «Map» category: «Record track» title -->
 	<string name="pref_track_record_title">Tìm kiếm gần đây</string>
+	<string name="pref_map_auto_zoom">Ống dòm tự động</string>
 	<string name="duration_disabled">Tắt</string>
 	<string name="duration_1_hour">1 giờ</string>
 	<string name="duration_2_hours">2 giờ</string>
@@ -586,7 +586,6 @@
 	<string name="dialog_routing_send_error">Báo cáo vấn đề</string>
 	<string name="dialog_routing_if_get_cross_route">Bạn có muốn tạo một tuyến đường thẳng hơn mà kéo dài trên nhiều bản đồ không?</string>
 	<string name="dialog_routing_cross_route_is_optimal">Có một tuyến đường tối ưu hơn đi qua cạnh của bản đồ này.</string>
-	<string name="dialog_routing_always_cross_that_border">Luôn đi qua ranh giới này</string>
 	<string name="not_now">Lúc khác</string>
 	<string name="dialog_routing_build_route">Tạo</string>
 	<string name="dialog_routing_download_and_build_cross_route">Bạn có muốn tải về bản đồ và tạo một tuyến đường tối ưu hơn kéo dài trên nhiều hơn một bản đồ?</string>
@@ -630,7 +629,6 @@
 	<string name="clear_search">Xóa Lịch sử Tìm kiếm</string>
 	<!-- Title for settings to enable/disable showcase menu button -->
 	<string name="showcase_settings_title">Hiển thị lời mời</string>
-	<string name="showcase_more_apps">Thêm Ứng dụng My.com</string>
 	<string name="p2p_route_planning">Hoạch định đường đi</string>
 	<string name="p2p_your_location">Vị trí của bạn</string>
 	<string name="p2p_from">Điểm khởi hành</string>
@@ -714,9 +712,12 @@
 	<string name="login_with_openstreetmap">Đăng nhập với www.openstreetmap.org</string>
 	<string name="edit_place">Chỉnh sửa địa điểm</string>
 	<string name="place_name">Tên địa điểm</string>
-	<string name="place_name_caption">Nhập tên theo như trên chữ ký hoặc biển tên</string>
 	<!-- title above languages list cells in the editor, below editable name text field. -->
 	<string name="other_languages">Ngôn ngữ khác</string>
+	<!-- small button to open list with names in different languages -->
+	<string name="show_more">Hiển thị nhiều hơn</string>
+	<!-- small button to close list with names in different languages -->
+	<string name="show_less">Hiển thị ít hơn</string>
 	<string name="add_language">Thêm ngôn ngữ</string>
 	<string name="street">Đường</string>
 	<!-- Editable House Number text field (in address block). -->
@@ -730,7 +731,7 @@
 	<string name="cuisine">Ẩm thực</string>
 	<string name="select_cuisine">Chọn Ẩm thực</string>
 	<!-- login text field -->
-	<string name="email_or_username">E-mail hoặc tên người dùng</string>
+	<string name="email_or_username">Email hoặc tên người dùng</string>
 	<string name="phone">Điện thoại</string>
 	<string name="please_note">Xin lưu ý</string>
 	<string name="common_no_wifi_dialog">Không có Wifi. Bạn có muốn tiếp tục dùng dữ liệu di động?</string>
@@ -762,7 +763,6 @@
 	<string name="editor_edit_place_category_title">Thể loại</string>
 	<string name="detailed_problem_description">Mô tả chi tiết của vấn đề</string>
 	<string name="editor_report_problem_other_title">Một vấn đề khác</string>
-	<string name="placepage_add_place_button">Nhập một địa điểm</string>
 	<string name="placepage_report_problem_button">Báo cáo vấn đề</string>
 	<string name="placepage_add_business_button">Thêm tổ chức</string>
 	<string name="whatsnew_smallmwm_header">Bạn đã yêu cầu điều đó và chúng tôi đã thực hiện nó</string>
@@ -797,6 +797,7 @@
 	<string name="download_over_mobile_message">Như vậy sẽ rất đắt tiền với một số gói dữ liệu hoặc khi chuyển vùng.</string>
 	<string name="error_enter_correct_house_number">Nhập số nhà chính xác</string>
 	<string name="editor_storey_number">Số tầng (tối đa %d)</string>
+	<!-- Error message in Editor when a user tries to set the number of floors for a building higher than 25 -->
 	<string name="error_enter_correct_storey_number">Sửa tòa nhà có tối đa 25 tầng</string>
 	<string name="editor_zip_code">Mã ZIP</string>
 	<string name="error_enter_correct_zip_code">Nhập Mã ZIP chính xác</string>
@@ -810,7 +811,6 @@
 	<string name="editor_tag_description">Nhập công ty, tổ chức hoặc cá nhân phụ trách cơ sở.</string>
 	<string name="editor_no_local_edits_title">Bạn không có những chỗ sửa cục bộ</string>
 	<string name="editor_no_local_edits_description">Thông tin này cho biết số thay đổi đề nghị của bạn trên bản đồ hiện chỉ có thể truy cập trên thiết bị của bạn.</string>
-	<string name="editor_international_names_subtitle">Tên bằng các ngôn ngữ khác</string>
 	<string name="editor_send_to_osm">Gửi đến OSM</string>
 	<string name="editor_remove">Xóa</string>
 	<string name="downloader_my_maps_title">Bản đồ của tôi</string>
@@ -833,7 +833,8 @@
 	<string name="location_services_disabled_message">Bật truy cập định vị địa lý trong thiết lập thiết bị</string>
 	<string name="location_services_disabled_1">1. Mở Thiết lập</string>
 	<string name="location_services_disabled_2">2. Chạm mục Địa điểm</string>
-	<string name="location_services_disabled_3">3. Chọn Luôn luôn</string>
+	<!-- iOS Dialog for the case when the location permission is not granted -->
+	<string name="location_services_disabled_3">3. Chọn Khi Đang Dùng Ứng dụng</string>
 	<string name="placepage_parking_surface">Trên mặt đất</string>
 	<string name="placepage_parking_multistorey">Nhiều tầng</string>
 	<string name="placepage_parking_underground">Dưới mặt đất</string>
@@ -852,9 +853,16 @@
 	<string name="place_page_starting_from">từ %s</string>
 	<string name="meter">m</string>
 	<string name="kilometer">km</string>
+	<string name="kilometers_per_hour">km/giờ</string>
+	<string name="mile">dặm</string>
+	<string name="foot">ft</string>
+	<string name="miles_per_hour">mph</string>
+	<string name="day">ngày</string>
+	<string name="hour">giờ</string>
+	<string name="minute">phút</string>
 	<string name="placepage_place_description">Mô tả</string>
 	<string name="placepage_more_button">Bổ sung</string>
-	<string name="bookingcom_book_button">Đặt trước</string>
+	<string name="book_button">Đặt trước</string>
 	<string name="placepage_call_button">Gọi</string>
 	<string name="placepage_edit_bookmark_button">Sửa Dấu Trang</string>
 	<string name="placepage_bookmark_name_hint">Tên Dấu Trang</string>
@@ -869,18 +877,167 @@
 	<string name="editor_status_sending">Đang gửi …</string>
 	<string name="editor_place_doesnt_exist">Địa điểm không tồn tại</string>
 	<string name="text_more_button">…thêm</string>
-	<string name="error_enter_correct_phone">Nhập số điện thoại không có chữ cái</string>
+	<!-- Phone number error message -->
+	<string name="error_enter_correct_phone">Nhập chính xác số điện thoại</string>
 	<string name="error_enter_correct_web">Nhập địa chỉ trang web hợp lệ</string>
 	<string name="error_enter_correct_email">Nhập email hợp lệ</string>
 	<string name="error_enter_correct">Nhập giá trị hợp lệ</string>
 	<string name="editor_profile_changes_for_next_place">Các thay đổi tới địa điểm tiếp theo: %d</string>
 	<string name="editor_profile_rating_place">Vị trí thứ hạng</string>
 	<string name="booking_dialog_not_connect_header">Để đặt khách sạn, vui lòng bật kết nối Internet</string>
-	<string name="whatsnew_booking_header">Đặt khách sạn từ ứng dụng</string>
-	<string name="whatsnew_booking_message">Khi tìm khách sạn, bản đồ sẽ hiển thị đánh giá và giá của các khách sạn.</string>
 	<string name="button_try">Hãy thử xem</string>
-	<string name="whatsnew_cycle_navigation_header">Định vị xe đạp (phiên bản beta)</string>
-	<string name="whatsnew_cycle_navigation_message">Chúng tôi đang thử nghiệm định vị xe đạp cho mùa mới. Hãy thử tuyến đường xe đạp ưa thích của bạn với MAPS.ME, và chia sẻ ý kiến của bạn với chúng tôi.</string>
 	<string name="refresh">Cập nhật</string>
 	<string name="last_update">Cập nhật cuối cùng: %s</string>
+	<string name="booking_checkin">đăng ký vào: %s</string>
+	<string name="booking_checkout">đăng ký ra: %s</string>
+	<string name="placepage_add_place_button">Thêm địa điểm vào bản đồ</string>
+	<!-- Displayed when saving some edits to the map to warn against publishing personal data -->
+	<string name="editor_share_to_all_dialog_title">Bạn có muốn gửi cho toàn bộ người dùng?</string>
+	<!-- iOS Dialog before publishing the modifications to the public map. -->
+	<string name="editor_share_to_all_dialog_message_1">Chắc chắn rằng bạn không nhập bất kỳ thông tin cá nhân nào.</string>
+	<string name="editor_share_to_all_dialog_message_2">Chúng tôi sẽ kiểm tra những thay đổi. Nếu chúng tôi có câu hỏi nào, chúng tôi sẽ liên lạc với bạn qua email.</string>
+	<string name="navigation_overview_button">tổng quan</string>
+	<string name="navigation_stop_button">dừng</string>
+	<!-- Text on an empty bookmark page -->
+	<string name="bookmarks_empty_title">Lưu Đánh dấu trang</string>
+	<string name="bookmarks_empty_message_1">Chạm vào ★ để lưu địa điểm yêu thích giúp truy cập nhanh.</string>
+	<string name="bookmarks_empty_message_2">Nhập đánh dấu trang từ Hộp thư và trang web.</string>
+	<string name="bookmarks_empty_message_3">đăng ký ra: %s</string>
+	<!-- Name of the group for booked hotels -->
+	<string name="bookmarks_group_name">Đã đặt trước khách sạn</string>
+	<string name="place_page_button_read_descriprion">Đọc</string>
+	<!-- iOS dialog for the case when recent track recording is on and the app comes back from background -->
+	<string name="recent_track_background_dialog_title">Tắt ghi lại tuyến đường đã đi gần đây của bạn?</string>
+	<!-- If a hotel is being shared -->
+	<string name="sharing_booking">hoặc đặt phòng tại booking.com</string>
+	<string name="off_recent_track_background_button">Tắt</string>
+	<!-- For sharing via SMS and so on -->
+	<string name="sharing_call_action_look">Xem</string>
+	<string name="continue_recent_track_background_button">Tiếp tục</string>
+	<string name="recent_track_background_dialog_message">MAPS.ME sử dụng định vị của bạn trong ứng dụng chạy nền để ghi lại tuyến đường đã đi gần đây của bạn.</string>
+	<string name="whatsnew_car_navigation_header">Phần mềm dẫn đường dành cho xe cộ thân thiện với người dùng</string>
+	<string name="whatsnew_car_navigation_message">• Các thành phần của phần mềm dẫn đường chiếm ít bộ nhớ.\n• Phần mềm có hiển thị tốc độ và đã được thêm tính năng tự động thu phóng.</string>
+	<string name="whatsnew_cycle_navigation_2_header">Phần mềm dẫn đường dành cho xe đạp</string>
+	<string name="whatsnew_cycle_navigation_2_message">• Phần mềm dẫn đường dành cho điện thoại dựa trên các dữ liệu về địa hình.\n• Chúng tôi tạo nên những tuyến đường tối ưu dựa trên độ dốc của con đường.</string>
+	<string name="whatsnew_booking_2_header">Tìm kiếm khách sạn dễ dàng</string>
+	<string name="whatsnew_booking_2_message">Kết quả tìm kiếm cho thấy các đánh giá và mức giá của khách sạn.</string>
+	<string name="whatsnew_cycle_navigation_header">Định vị xe đạp (phiên bản beta)</string>
+	<string name="whatsnew_cycle_navigation_message">Chúng tôi đang thử nghiệm định vị xe đạp cho mùa mới. Hãy thử tuyến đường xe đạp ưa thích của bạn với MAPS.ME, và chia sẻ ý kiến của bạn với chúng tôi.</string>
+	<!-- Rate on Google Play (Android only) -->
+	<string name="rate_gp">Cho điểm trên Google Play</string>
+	<!-- Share with friends: menu item title -->
+	<string name="tell_friends">Giới thiệu với Bạn bè</string>
+	<!-- Share with friends: sharing text -->
+	<string name="tell_friends_text">Xin chào! Hãy cài đặt MAPS.ME!</string>
+	<!-- About short text (below logo) -->
+	<string name="about_description">MAPS.ME là một ứng dụng ngoại tuyến thiết yếu khi đi du lịch. MAPS.ME được dựa trên dữ liệu của OpenStreetMap và cho phép bạn hiệu chỉnh nó.</string>
+	<!-- Text in menu -->
+	<string name="blog">Blog</string>
+	<!-- Hint near allow statictics checkbox -->
+	<string name="allow_statistics_hint">Việc thu thập số liệu sử dụng giúp chúng tôi cải thiện ứng dụng.</string>
+	<string name="general_settings">Thiết lập chung</string>
+	<string name="date">Ngày %d</string>
+	<!-- "Report a bug" -> "Generaal Feedback" -> "Something is not working" -->
+	<string name="something_is_not_working">Có một vấn đề nào đó</string>
+	<!-- For the first routing -->
+	<string name="accept">Chấp nhận</string>
+	<!-- For the first routing -->
+	<string name="decline">Từ chối</string>
+	<string name="whats_new_route_profile_title">Đi đường vòng vẫn tốt hơn là rơi xuống hố</string>
+	<string name="whats_new_route_profile_message">Đối với các đường đi bộ và đi xe đạp, chúng tôi hiện đã hiển thị mặt cắt tầng.</string>
+	<string name="whats_new_booking_improve_title">Tiết kiệm khi đặt khách sạn</string>
+	<string name="whats_new_booking_improve_message">Kết quả tìm kiếm cho khách sạn giờ đã có bậc giá cả.\nChúng tôi cũng đã bổ sung hơn 110.000 khách sạn.</string>
+	<!-- For place page hotel facilities block -->
+	<string name="placepage_hotel_facilities">Cơ sở</string>
+	<!-- For place page hotel nearby block -->
+	<string name="placepage_hotel_nearby">Gần đây</string>
+	<!-- For ordering a taxi (as opposed to hotels or other things) -->
+	<string name="taxi_order">Đặt xe taxi</string>
+	<!-- How long it is until the taxi arrives -->
+	<string name="taxi_wait">Sẽ đến trong %s</string>
+	<!-- When there are no available taxis nearby -->
+	<string name="taxi_not_found">Không thể tìm thấy một taxi ở gần đây</string>
+	<string name="install_app">Cài đặt</string>
+	<!-- `Filter` is a noun here -->
+	<string name="booking_filters">Bộ lọc</string>
+	<string name="booking_filters_reset">Đặt lại</string>
+	<string name="booking_filters_rating">Cho điểm</string>
+	<string name="booking_filters_rating_any">Bất kỳ</string>
+	<string name="booking_filters_ragting_good">Tốt</string>
+	<string name="booking_filters_rating_very_good">Rất tốt</string>
+	<string name="booking_filters_rating_excellent">Xuất sắc</string>
+	<string name="booking_filters_price_category">Hạng mục Giá</string>
+	<string name="search_no_results_title">Không tìm thấy kết quả nào</string>
+	<string name="search_no_results_message">Hãy thử một từ khóa tìm kiếm chung hơn, thu nhỏ hoặc đặt lại bộ lọc.</string>
+	<string name="search_no_results_expand_area_button">Thu nhỏ</string>
+	<string name="search_no_results_reset_button">Đặt lại Bộ lọc</string>
+	<!-- noun -->
+	<string name="search_in_table">Danh sách</string>
+	<string name="booking_based_on_reviews">Dựa trên %d đánh giá khách sạn</string>
+	<string name="booking_show_more">Hiển thị thêm</string>
+	<string name="booking_reviews">Đánh giá</string>
+	<string name="booking_hotel">Khách sạn</string>
+	<!-- hotel room -->
+	<string name="booking_hotel_room">Phòng</string>
+	<!-- A neologism for a chat based on geographical proximity -->
+	<string name="chat">Geochat</string>
+	<!-- Verb. Text on a button that opens the chat. -->
+	<string name="chat_open">Mở</string>
+	<string name="whatsnew_uber_header">MAPS.ME &amp; Uber</string>
+	<string name="whatsnew_uber_message">Đặt taxi Uber trực tiếp từ ứng dụng!</string>
+	<string name="dialog_taxi_offline">Gọi taxi không khả dụng trong chế độ ngoại tuyến.</string>
+	<string name="dialog_taxi_error">Gọi taxi tạm thời không khả dụng.</string>
+	<string name="advertisement">Quảng cáo</string>
+	<string name="mobile_data_dialog">Sử dụng mạng Internet di động để hiển thị thông tin chi tiết?</string>
+	<string name="mobile_data_option_always">Luôn Sử dụng</string>
+	<string name="mobile_data_option_today">Chỉ Hôm nay</string>
+	<string name="mobile_data_option_not_today">Không Sử dụng Hôm nay</string>
+	<string name="mobile_data">Internet Di động</string>
+	<string name="mobile_data_description">Internet di động là cần thiết để hiển thị thông tin chi tiết về các nơi, ví dụ như ảnh chụp, giá cả và đánh giá.</string>
+	<string name="mobile_data_option_never">Không bao giờ sử dụng</string>
+	<string name="mobile_data_option_ask">Luôn Hỏi</string>
+	<string name="traffic_update_maps_text">Để hiển thị dữ liệu giao thông, cần cập nhật bản đồ.</string>
+	<string name="traffic_outdated">Dữ liệu giao thông đã lỗi thời.</string>
+	<string name="big_font">Nhãn mác to hơn</string>
+	<string name="traffic_update_app">Vui lòng cập nhật MAPS.ME</string>
+	<!-- "traffic" as in road congestion -->
+	<string name="traffic_update_app_message">Để hiển thị dữ liệu giao thông, ứng dụng cần phải được cập nhật.</string>
+	<!-- "traffic" as in "road congestion" -->
+	<string name="traffic_data_unavailable">Dữ liệu giao thông không khả dụng</string>
+	<string name="banner_deliveryclub_title">Giao thực phẩm</string>
+	<string name="banner_deliveryclub_message">Giao hàng nhanh từ 4.000 nhà hàng. Đặt hàng từ Delivery Club.</string>
+	<string name="banner_lamoda_title">Cửa hàng quần áo và giầy dép trực tuyến</string>
+	<string name="banner_lamoda_message">Hơn 1.000 nhãn hiệu. Giảm đến 70%. Giao hàng miễn phí toàn quốc.</string>
+	<string name="banner_tutu_title">Vé tàu trực tuyến</string>
+	<string name="banner_tutu_message">Mua vé tàu trực tuyến đến bất kỳ thành phố nào - giá cả, tìm kiếm và đặt vé.</string>
+	<string name="banner_geerbest_title">Cửa hàng điện tử trực tuyến</string>
+	<string name="banner_geerbest_message">Tìm kiếm nhanh hơn 50.000 sản phẩm ở mức giá thấp.</string>
+	<string name="banner_rentalcars_title">Thuê ô tô trực tuyến</string>
+	<string name="banner_rentalcars_message">800 công ty thuê ô tô ở hơn 49.000 địa điểm thuê ô tô.</string>
+	<string name="banner_viator_title">Tìm kiếm tour trực tuyến</string>
+	<string name="banner_viator_message">Tìm hơn 50.000 trên toàn thế giới.</string>
+	<!-- december -->
+	<string name="whatsnew_traffic">Dữ liệu Giao thông tại 36 Quốc gia</string>
+	<!-- december -->
+	<string name="whatsnew_traffic_text">Thông tin giao thông cập nhật và lộ trình lái xe nhanh nhất dựa trên đó!</string>
+	<!-- december -->
+	<string name="whatsnew_traffic_roaming">Thông tin Giao thông khi Chuyển vùng</string>
+	<!-- december -->
+	<string name="whatsnew_traffic_roaming_text">Cần ít hơn 1 MB băng thông di động cho mỗi chuyến đi.</string>
+	<!-- december -->
+	<string name="whatsnew_order_taxi">Đặt Xe Taxi</string>
+	<!-- december -->
+	<string name="whatsnew_order_taxi_text">Hầu hết các trang địa điểm giờ đây đều có một nút để gọi taxi.</string>
+	<!-- january -->
+	<string name="whatsnew_improved_search">Cải thiện Tìm kiếm</string>
+	<!-- january -->
+	<string name="whatsnew_improved_search_text">Kể cả các truy vấn bị lỗi chính tả vẫn có thể cho kết quả tìm kiếm chính xác.</string>
+	<!-- january -->
+	<string name="whatsnew_filters_in_search">Bộ lọc Tìm kiếm</string>
+	<!-- january -->
+	<string name="whatsnew_filters_in_search_text">Tìm kiếm khách sạn dựa trên giá cả và xếp hạng.</string>
+	<!-- january -->
+	<string name="whatsnew_font_size">Kích cỡ Phông chữ</string>
+	<!-- january -->
+	<string name="whatsnew_font_size_text">Các nhãn mác trên bản đồ có thể được phóng to hơn.</string>
 </resources>

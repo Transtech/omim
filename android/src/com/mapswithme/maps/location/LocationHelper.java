@@ -3,16 +3,23 @@ package com.mapswithme.maps.location;
 import android.app.Activity;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.location.Location;
+import android.location.LocationManager;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AlertDialog;
 import android.util.Log;
+
+import java.lang.ref.WeakReference;
+
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.mapswithme.maps.Framework;
 import com.mapswithme.maps.LocationState;
 import com.mapswithme.maps.MwmApplication;
 import com.mapswithme.maps.R;
+import com.mapswithme.maps.bookmarks.data.Banner;
 import com.mapswithme.maps.bookmarks.data.MapObject;
 import com.mapswithme.maps.routing.RoutingController;
 import com.mapswithme.util.Config;
@@ -23,8 +30,7 @@ import com.mapswithme.util.concurrency.UiThread;
 import com.mapswithme.util.log.DebugLogger;
 import com.mapswithme.util.log.Logger;
 
-import java.lang.ref.WeakReference;
-import java.util.List;
+import static com.mapswithme.maps.background.AppBackgroundTracker.*;
 
 public enum LocationHelper
 {
@@ -46,7 +52,6 @@ public enum LocationHelper
   private static final long INTERVAL_NAVIGATION_BICYCLE_MS = 1000;
   private static final long INTERVAL_NAVIGATION_PEDESTRIAN_MS = 1000;
 
-
   private static final long STOP_DELAY_MS = 5000;
   static final int REQUEST_RESOLVE_ERROR = 101;
 
@@ -54,10 +59,38 @@ public enum LocationHelper
   {
     Activity getActivity();
     void onMyPositionModeChanged(int newMode);
-    void onLocationUpdated(Location location);
-    void onCompassUpdated(CompassData compass);
+    void onLocationUpdated(@NonNull Location location);
+    void onCompassUpdated(@NonNull CompassData compass);
     boolean shouldNotifyLocationNotFound();
   }
+
+  private final OnTransitionListener mOnTransition = new OnTransitionListener()
+  {
+    private final GPSCheck mReceiver = new GPSCheck();
+    private boolean mReceiverRegistered;
+
+    @Override
+    public void onTransit(boolean foreground)
+    {
+      if (foreground && !mReceiverRegistered)
+      {
+        final IntentFilter filter = new IntentFilter();
+        filter.addAction(LocationManager.PROVIDERS_CHANGED_ACTION);
+        filter.addCategory(Intent.CATEGORY_DEFAULT);
+
+        MwmApplication.get().registerReceiver(mReceiver, filter);
+        mReceiverRegistered = true;
+        return;
+      }
+
+      if (!foreground && mReceiverRegistered)
+      {
+        MwmApplication.get().unregisterReceiver(mReceiver);
+        mReceiverRegistered = false;
+        return;
+      }
+    }
+  };
 
   private final LocationListener mLocationListener = new LocationListener()
   {
@@ -75,6 +108,9 @@ public enum LocationHelper
                             location.getAltitude(),
                             location.getSpeed(),
                             location.getBearing());
+
+      if (mUiCallback != null)
+        mUiCallback.onLocationUpdated(location);
     }
 
     @Override
@@ -131,10 +167,11 @@ public enum LocationHelper
   private boolean mActive;
   private boolean mLocationStopped;
   private boolean mColdStart = true;
+  private boolean mPendingNoLocation;
 
   private Location mSavedLocation;
   private MapObject mMyPosition;
-  private long mLastLocationTime;
+  private long mSavedLocationTime;
 
   private final SensorHelper mSensorHelper = new SensorHelper();
   private BaseLocationProvider mLocationProvider;
@@ -145,10 +182,6 @@ public enum LocationHelper
   private long mInterval;
   private boolean mHighAccuracy;
   private CompassData mCompassData;
-
-  private boolean mPendingNoLocation;
-
-    private boolean mUseDemoGPS = false;
 
   @SuppressWarnings("FieldCanBeLocal")
   private final LocationState.ModeChangeListener mModeChangeListener = new LocationState.ModeChangeListener()
@@ -209,13 +242,24 @@ public enum LocationHelper
   {
     mLogger.d("ctor()");
 
+    // TODO consider refactoring.
+    // Actually we shouldn't initialize Framework here,
+    // to allow app components to retrieve location updates without all heavy framework's stuff initialized.
+    // For now this is necessary to connect mModeChangeListener below.
+    MwmApplication.get().initNativeCore();
     LocationState.nativeSetListener(mModeChangeListener);
+
     calcParams();
     initProvider(false);
+    MwmApplication.backgroundTracker().addListener(mOnTransition);
   }
 
   public void initProvider(boolean forceNative)
   {
+    mActive = !mListeners.isEmpty();
+    if (mActive)
+      stopInternal();
+
     final MwmApplication application = MwmApplication.get();
     final boolean containsGoogleServices = GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(application) == ConnectionResult.SUCCESS;
     final boolean googleServicesTurnedInSettings = Config.useGoogleServices();
@@ -243,14 +287,16 @@ public enum LocationHelper
       startInternal();
   }
 
-  public void onLocationUpdated(Location location)
+  public void onLocationUpdated(@NonNull Location location)
   {
     mSavedLocation = location;
     mMyPosition = null;
-    mLastLocationTime = System.currentTimeMillis();
-    notifyLocationUpdated();
+    mSavedLocationTime = System.currentTimeMillis();
   }
 
+  /**
+   * @return MapObject.MY_POSITION, null if location is not yet determined or "My position" button is switched off.
+   */
   @Nullable
   public MapObject getMyPosition()
   {
@@ -264,7 +310,8 @@ public enum LocationHelper
       return null;
 
     if (mMyPosition == null)
-      mMyPosition = new MapObject(MapObject.MY_POSITION, "", "", "", mSavedLocation.getLatitude(), mSavedLocation.getLongitude(), "");
+      mMyPosition = new MapObject(MapObject.MY_POSITION, "", "", "", mSavedLocation.getLatitude(),
+          mSavedLocation.getLongitude(), "", Banner.EMPTY, false);
 
     return mMyPosition;
   }
@@ -274,9 +321,10 @@ public enum LocationHelper
    * <p>If you need the location regardless of the button's state, use {@link #getLastKnownLocation()}.
    * @return {@code null} if no location is saved or "My position" button is in "No follow, no position" mode.
    */
+  @Nullable
   public Location getSavedLocation() { return mSavedLocation; }
 
-  public long getSavedLocationTime() { return mLastLocationTime; }
+  public long getSavedLocationTime() { return mSavedLocationTime; }
 
   void notifyCompassUpdated(long time, double magneticNorth, double trueNorth, double accuracy)
   {
@@ -358,7 +406,7 @@ public enum LocationHelper
           public void onClick(DialogInterface dialog, int which)
           {
             mLocationStopped = false;
-            onMyPositionButtonClicked();
+            LocationState.nativeSwitchToNextMode();
           }
         }).setOnDismissListener(new DialogInterface.OnDismissListener()
         {
@@ -402,7 +450,7 @@ public enum LocationHelper
     mLogger.d("onActivityResult(): success: " + !mLocationStopped);
 
     if (!mLocationStopped)
-      onMyPositionButtonClicked();
+      LocationState.nativeSwitchToNextMode();
 
     return true;
   }
@@ -570,6 +618,17 @@ public enum LocationHelper
     }
   }
 
+  public void forceRestart()
+  {
+    mActive = !mListeners.isEmpty();
+    if (mActive)
+    {
+      calcParams();
+      stopInternal();
+      startInternal();
+    }
+  }
+
   /**
    * Actually starts location polling.
    */
@@ -623,6 +682,28 @@ public enum LocationHelper
     }
 
     mUiCallback = callback;
+    compareWithPreviousCallback();
+
+    Utils.keepScreenOn(true, mUiCallback.getActivity().getWindow());
+
+    mUiCallback.onMyPositionModeChanged(LocationState.getMode());
+    if (mCompassData != null)
+      mUiCallback.onCompassUpdated(mCompassData);
+
+    if (hasPendingNoLocation())
+      notifyLocationNotFound();
+
+    if (!mLocationStopped)
+      addListener(mLocationListener, true);
+  }
+
+  public void addLocationListener()
+  {
+    addListener(mLocationListener, true);
+  }
+
+  private void compareWithPreviousCallback()
+  {
     if (mPrevUiCallback != null)
     {
       UiCallback prev = mPrevUiCallback.get();
@@ -632,21 +713,7 @@ public enum LocationHelper
         setHasPendingNoLocation(false);
       }
     }
-
-    Utils.keepScreenOn(true, mUiCallback.getActivity().getWindow());
-
-    int mode = LocationState.getMode();
-    mUiCallback.onMyPositionModeChanged(mode);
-    if (mCompassData != null)
-      mUiCallback.onCompassUpdated(mCompassData);
-
     mPrevUiCallback = new WeakReference<>(mUiCallback);
-
-    if (hasPendingNoLocation())
-      notifyLocationNotFound();
-
-    if (!mLocationStopped)
-      addListener(mLocationListener, true);
   }
 
   /**
@@ -667,51 +734,26 @@ public enum LocationHelper
     removeListener(mLocationListener, delayed);
   }
 
-  public void onMyPositionButtonClicked()
-  {
-    int mode = LocationState.getMode();
-    mLogger.d("onMyPositionButtonClicked(). Mode was: " + LocationState.nameOf(mode));
-
-    if (mode == LocationState.PENDING_POSITION)
-    {
-      mLogger.d("Pending. Skip");
-      return;
-    }
-
-    mLocationStopped = false;
-    LocationState.nativeSwitchToNextMode();
-  }
-
   /**
    * Obtains last known location regardless of "My position" button state.
    * @return {@code null} on failure.
    */
-  public @Nullable Location getLastKnownLocation(long expirationMs)
+  @Nullable
+  public Location getLastKnownLocation(long expirationMillis)
   {
     if (mSavedLocation != null)
       return mSavedLocation;
 
-    AndroidNativeProvider provider = new AndroidNativeProvider()
-    {
-      @Override
-      public void onLocationChanged(Location location)
-      {
-        // Block ancestor
-      }
-    };
-
-    List<String> providers = provider.filterProviders();
-    if (providers.isEmpty())
-      return null;
-
-    return provider.findBestNotExpiredLocation(providers, expirationMs);
+    return AndroidNativeProvider.findBestNotExpiredLocation(expirationMillis);
   }
 
-  public @Nullable Location getLastKnownLocation()
+  @Nullable
+  public Location getLastKnownLocation()
   {
     return getLastKnownLocation(LocationUtils.LOCATION_EXPIRATION_TIME_MILLIS_LONG);
   }
 
+  @Nullable
   public CompassData getCompassData()
   {
     return mCompassData;
@@ -744,6 +786,7 @@ public enum LocationHelper
     }
 
   private static native void nativeOnLocationError(int errorCode);
-  private static native void nativeLocationUpdated(long time, double lat, double lon, float accuracy, double altitude, float speed, float bearing);
+  private static native void nativeLocationUpdated(long time, double lat, double lon, float accuracy,
+                                                   double altitude, float speed, float bearing);
   static native float[] nativeUpdateCompassSensor(int ind, float[] arr);
 }

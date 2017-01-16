@@ -7,8 +7,9 @@
 #include "base/buffer_vector.hpp"
 #include "base/stl_add.hpp"
 
-#include "std/bind.hpp"
 #include "std/algorithm.hpp"
+#include "std/bind.hpp"
+#include "std/iterator.hpp"
 
 namespace df
 {
@@ -36,12 +37,14 @@ struct LessCoverageCell
 
 } // namespace
 
-ReadManager::ReadManager(ref_ptr<ThreadsCommutator> commutator, MapDataProvider & model, bool allow3dBuildings)
+ReadManager::ReadManager(ref_ptr<ThreadsCommutator> commutator, MapDataProvider & model,
+                         bool allow3dBuildings, bool trafficEnabled)
   : m_commutator(commutator)
   , m_model(model)
   , m_pool(make_unique_dp<threads::ThreadPool>(ReadCount(), bind(&ReadManager::OnTaskFinished, this, _1)))
   , m_have3dBuildings(false)
   , m_allow3dBuildings(allow3dBuildings)
+  , m_trafficEnabled(trafficEnabled)
   , m_modeChanged(false)
   , myPool(64, ReadMWMTaskFactory(m_model))
   , m_counter(0)
@@ -84,13 +87,13 @@ void ReadManager::OnTaskFinished(threads::IRoutine * task)
   myPool.Return(t);
 }
 
-void ReadManager::UpdateCoverage(ScreenBase const & screen, bool have3dBuildings,
+void ReadManager::UpdateCoverage(ScreenBase const & screen, bool have3dBuildings, bool needRegenerateTraffic,
                                  TTilesCollection const & tiles, ref_ptr<dp::TextureManager> texMng)
 {
   m_modeChanged |= (m_have3dBuildings != have3dBuildings);
   m_have3dBuildings = have3dBuildings;
 
-  if (m_modeChanged || MustDropAllTiles(screen))
+  if (m_modeChanged || needRegenerateTraffic || MustDropAllTiles(screen))
   {
     m_modeChanged = false;
 
@@ -185,7 +188,7 @@ bool ReadManager::CheckTileKey(TileKey const & tileKey) const
   return false;
 }
 
-size_t ReadManager::ReadCount()
+uint32_t ReadManager::ReadCount()
 {
   return max(static_cast<int>(GetPlatform().CpuCores()) - 2, 2);
 }
@@ -202,6 +205,7 @@ void ReadManager::PushTaskBackForTileKey(TileKey const & tileKey, ref_ptr<dp::Te
   shared_ptr<TileInfo> tileInfo(new TileInfo(make_unique_dp<EngineContext>(TileKey(tileKey, m_generationCounter),
                                                                            m_commutator, texMng)));
   tileInfo->Set3dBuildings(m_have3dBuildings && m_allow3dBuildings);
+  tileInfo->SetTrafficEnabled(m_trafficEnabled);
   m_tileInfos.insert(tileInfo);
   ReadMWMTask * task = myPool.Get();
 
@@ -264,6 +268,15 @@ void ReadManager::Allow3dBuildings(bool allow3dBuildings)
   {
     m_modeChanged = true;
     m_allow3dBuildings = allow3dBuildings;
+  }
+}
+
+void ReadManager::SetTrafficEnabled(bool trafficEnabled)
+{
+  if (m_trafficEnabled != trafficEnabled)
+  {
+    m_modeChanged = true;
+    m_trafficEnabled = trafficEnabled;
   }
 }
 

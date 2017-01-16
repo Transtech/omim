@@ -31,6 +31,8 @@ class MWM:
                 "denomination", "building_levels", "test_id", "ref:sponsored", "price_rate",
                 "rating", "fuel", "routes"]
 
+    regiondata = ["languages", "driving", "timezone", "addr_fmt", "phone_fmt", "postcode_fmt", "holidays", "housenames"]
+
     def __init__(self, f):
         self.f = f
         self.coord_size = None
@@ -111,6 +113,21 @@ class MWM:
         return result
 
     # COMPLEX READERS
+
+    def read_region_info(self):
+        if not self.has_tag('rgninfo'):
+            return {}
+        fields = {}
+        self.seek_tag('rgninfo')
+        sz = self.read_varuint()
+        if sz:
+            for i in range(sz):
+                t = self.read_varuint()
+                t = self.regiondata[t] if t < len(self.regiondata) else str(t)
+                fields[t] = self.read_string()
+                if t == 'languages':
+                    fields[t] = [self.languages[ord(x)] for x in fields[t]]
+        return fields
 
     def read_metadata(self):
         """Reads 'meta' and 'metaidx' sections."""
@@ -241,7 +258,7 @@ class MWM:
                 if type_id < len(self.type_mapping):
                     types.append(self.type_mapping[type_id])
                 else:
-                    types.append(str(type_id))
+                    types.append(str(type_id + 1))  # So the numbers match with mapcss-mapping.csv
             header['types'] = types
             if has_name:
                 header['name'] = self.read_multilang()

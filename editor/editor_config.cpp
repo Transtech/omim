@@ -1,9 +1,5 @@
 #include "editor/editor_config.hpp"
 
-#include "platform/platform.hpp"
-
-#include "coding/reader.hpp"
-
 #include "base/stl_helpers.hpp"
 
 #include "std/algorithm.hpp"
@@ -40,6 +36,8 @@ static unordered_map<string, EType> const kNamesToFMD= {
   {"building:levels", feature::Metadata::FMD_BUILDING_LEVELS}
   // description
 };
+
+unordered_map<string, int> const kPriorityWeights = {{"high", 0}, {"", 1}, {"low", 2}};
 
 bool TypeDescriptionFromXml(pugi::xml_node const & root, pugi::xml_node const & node,
                             editor::TypeAggregatedDescription & outDesc)
@@ -100,26 +98,22 @@ vector<pugi::xml_node> GetPrioritizedTypes(pugi::xml_node const & node)
   vector<pugi::xml_node> result;
   for (auto const xNode : node.select_nodes("/mapsme/editor/types/type[@id]"))
     result.push_back(xNode.node());
-  stable_sort(begin(result), end(result),
-              [](pugi::xml_node const & a, pugi::xml_node const & b)
-              {
-                if (strcmp(a.attribute("priority").value(), "high") != 0 &&
-                    strcmp(b.attribute("priority").value(), "high") == 0)
-                  return true;
-                return false;
-              });
+  stable_sort(begin(result), end(result), [](pugi::xml_node const & lhs, pugi::xml_node const & rhs)
+  {
+    auto const lhsWeight = kPriorityWeights.find(lhs.attribute("priority").value());
+    auto const rhsWeight = kPriorityWeights.find(rhs.attribute("priority").value());
+
+    CHECK(lhsWeight != kPriorityWeights.end(), (""));
+    CHECK(rhsWeight != kPriorityWeights.end(), (""));
+
+    return lhsWeight->second < rhsWeight->second;
+  });
   return result;
 }
 }  // namespace
 
 namespace editor
 {
-EditorConfig::EditorConfig(string const & fileName)
-    : m_fileName(fileName)
-{
-  Reload();
-}
-
 bool EditorConfig::GetTypeDescription(vector<string> classificatorTypes,
                                       TypeAggregatedDescription & outDesc) const
 {
@@ -152,18 +146,15 @@ bool EditorConfig::GetTypeDescription(vector<string> classificatorTypes,
 vector<string> EditorConfig::GetTypesThatCanBeAdded() const
 {
   auto const xpathResult = m_document.select_nodes("/mapsme/editor/types/type[not(@can_add='no' or @editable='no')]");
+
   vector<string> result;
   for (auto const xNode : xpathResult)
     result.emplace_back(xNode.node().attribute("id").value());
   return result;
 }
 
-void EditorConfig::Reload()
+void EditorConfig::SetConfig(pugi::xml_document const & doc)
 {
-  string content;
-  auto const reader = GetPlatform().GetReader(m_fileName);
-  reader->ReadAsString(content);
-  if (!m_document.load_buffer(content.data(), content.size()))
-    MYTHROW(ConfigLoadError, ("Can't parse config"));
+  m_document.reset(doc);
 }
 }  // namespace editor

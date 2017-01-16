@@ -1,9 +1,9 @@
-#import "Common.h"
+#import "MWMCommon.h"
 #import "EAGLView.h"
 #import "MapsAppDelegate.h"
 #import "MWMDirectionView.h"
 
-#import "../Platform/opengl/iosOGLContextFactory.h"
+#import "iosOGLContextFactory.h"
 
 #import "3party/Alohalytics/src/alohalytics_objc.h"
 
@@ -22,17 +22,6 @@
 
 namespace
 {
-// Returns native scale if it's possible.
-double correctContentScale()
-{
-  UIScreen * uiScreen = [UIScreen mainScreen];
-  
-  if (isIOS7)
-    return [uiScreen respondsToSelector:@selector(scale)] ? [uiScreen scale] : 1.f;
-  else
-    return [uiScreen respondsToSelector:@selector(nativeScale)] ? [uiScreen nativeScale] : 1.f;
-}
-
 // Returns DPI as exact as possible. It works for iPhone, iPad and iWatch.
 double getExactDPI(double contentScaleFactor)
 {
@@ -82,7 +71,7 @@ double getExactDPI(double contentScaleFactor)
                                    kEAGLDrawablePropertyColorFormat : kEAGLColorFormatRGBA8};
 
   // Correct retina display support in opengl renderbuffer
-  self.contentScaleFactor = correctContentScale();
+  self.contentScaleFactor = [[UIScreen mainScreen] nativeScale];
 
   m_factory = make_unique_dp<dp::ThreadSafeFactory>(new iosOGLContextFactory(eaglLayer));
 }
@@ -99,8 +88,6 @@ double getExactDPI(double contentScaleFactor)
 
   [self.widgetsManager setupWidgets:p];
   GetFramework().CreateDrapeEngine(make_ref(m_factory), move(p));
-
-  _drapeEngineCreated = YES;
 
   LOG(LINFO, ("EAGLView createDrapeEngine Ended"));
 }
@@ -123,8 +110,19 @@ double getExactDPI(double contentScaleFactor)
   dispatch_async(dispatch_get_main_queue(), ^
   {
     GetFramework().OnSize(width, height);
+    // TODO: Temporary realization of visible viewport, this code must be removed later.
+    GetFramework().SetVisibleViewport(m2::RectD(0.0, 0.0, width, height));
     [self.widgetsManager resize:CGSizeMake(width, height)];
+    self->_drapeEngineCreated = YES;
   });
+}
+
+- (m2::PointU)pixelSize
+{
+  CGSize const s = self.bounds.size;
+  uint32_t const w = static_cast<uint32_t>(s.width * self.contentScaleFactor);
+  uint32_t const h = static_cast<uint32_t>(s.height * self.contentScaleFactor);
+  return m2::PointU(w, h);
 }
 
 - (void)onSize:(int)width withHeight:(int)height
@@ -133,10 +131,7 @@ double getExactDPI(double contentScaleFactor)
   int h = height * self.contentScaleFactor;
 
   if (GetFramework().GetDrapeEngine() == nullptr)
-  {
     [self createDrapeEngineWithWidth:w height:h];
-    return;
-  }
 
   [self applyOnSize:w withHeight:h];
 }

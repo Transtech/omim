@@ -1,6 +1,7 @@
 package com.mapswithme.maps.editor;
 
 import android.app.Activity;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -13,6 +14,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.mapswithme.maps.MwmActivity;
+import com.mapswithme.maps.MwmApplication;
 import com.mapswithme.maps.R;
 import com.mapswithme.maps.base.BaseMwmToolbarFragment;
 import com.mapswithme.maps.base.OnBackPressListener;
@@ -25,6 +27,7 @@ import com.mapswithme.util.ConnectionState;
 import com.mapswithme.util.UiUtils;
 import com.mapswithme.util.Utils;
 import com.mapswithme.util.statistics.Statistics;
+import com.mapswithme.maps.editor.data.NamesDataSource;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,29 +51,32 @@ public class EditorHostFragment extends BaseMwmToolbarFragment
   /**
    * A list of localized names added by a user and those that were in metadata.
    */
-  private static final List<LocalizedName> sLocalizedNames = new ArrayList<>();
+  private static final List<LocalizedName> sNames = new ArrayList<>();
+  /**
+   * Count of names which should always be shown.
+   */
+  private int mMandatoryNamesCount = 0;
 
+  private static final String NOOB_ALERT_SHOWN = "Alert_for_noob_was_shown";
   /**
    *   Used in MultilanguageAdapter to show, select and remove items.
    */
-  List<LocalizedName> getLocalizedNames()
+  List<LocalizedName> getNames()
   {
-    return sLocalizedNames;
+    return sNames;
   }
 
-  public LocalizedName[] getLocalizedNamesAsArray()
+  public LocalizedName[] getNamesAsArray()
   {
-    return sLocalizedNames.toArray(new LocalizedName[sLocalizedNames.size()]);
+    return sNames.toArray(new LocalizedName[sNames.size()]);
   }
 
-  void setLocalizedNames(LocalizedName[] names)
+  void setNames(LocalizedName[] names)
   {
-    sLocalizedNames.clear();
+    sNames.clear();
     for (LocalizedName name : names)
     {
-      if (name.code == LocalizedName.DEFAULT_LANG_CODE)
-        continue;
-      sLocalizedNames.add(name);
+      addName(name);
     }
   }
 
@@ -79,12 +85,22 @@ public class EditorHostFragment extends BaseMwmToolbarFragment
    */
   void setName(String name, int index)
   {
-    sLocalizedNames.get(index).name = name;
+    sNames.get(index).name = name;
   }
 
-  void addLocalizedName(LocalizedName name)
+  void addName(LocalizedName name)
   {
-    sLocalizedNames.add(name);
+    sNames.add(name);
+  }
+
+  public int getMandatoryNamesCount()
+  {
+    return mMandatoryNamesCount;
+  }
+
+  public void setMandatoryNamesCount(int mandatoryNamesCount)
+  {
+    mMandatoryNamesCount = mandatoryNamesCount;
   }
 
   @Nullable
@@ -112,7 +128,9 @@ public class EditorHostFragment extends BaseMwmToolbarFragment
       mIsNewObject = getArguments().getBoolean(EditorActivity.EXTRA_NEW_OBJECT, false);
     mToolbarController.setTitle(getTitle());
 
-    setLocalizedNames(Editor.nativeGetLocalizedNames());
+    NamesDataSource namesDataSource = Editor.nativeGetNamesDataSource();
+    setNames(namesDataSource.getNames());
+    setMandatoryNamesCount(namesDataSource.getMandatoryNamesCount());
     editMapObject();
   }
 
@@ -143,6 +161,7 @@ public class EditorHostFragment extends BaseMwmToolbarFragment
     case OPENING_HOURS:
     case STREET:
     case CUISINE:
+    case LANGUAGE:
       editMapObject();
       break;
     default:
@@ -153,17 +172,18 @@ public class EditorHostFragment extends BaseMwmToolbarFragment
 
   protected void editMapObject()
   {
-    editMapObject(false /* focusToLastLocalizedName */);
+    editMapObject(false /* focusToLastName */);
   }
 
-  protected void editMapObject(boolean focusToLastLocalizedName)
+  protected void editMapObject(boolean focusToLastName)
   {
     mMode = Mode.MAP_OBJECT;
     ((SearchToolbarController) mToolbarController).showControls(false);
     mToolbarController.setTitle(getTitle());
+    UiUtils.show(mToolbarController.findViewById(R.id.save));
     Bundle args = new Bundle();
-    if (focusToLastLocalizedName)
-      args.putInt(EditorFragment.LAST_LOCALIZED_NAME_INDEX, sLocalizedNames.size() - 1);
+    if (focusToLastName)
+      args.putInt(EditorFragment.LAST_INDEX_OF_NAMES_ARRAY, sNames.size() - 1);
     final Fragment editorFragment = Fragment.instantiate(getActivity(), EditorFragment.class.getName(), args);
     getChildFragmentManager().beginTransaction()
                              .replace(R.id.fragment_container, editorFragment, EditorFragment.class.getName())
@@ -187,13 +207,14 @@ public class EditorHostFragment extends BaseMwmToolbarFragment
     editWithFragment(Mode.CUISINE, R.string.select_cuisine, null, CuisineFragment.class, true);
   }
 
-  protected void addLocalizedLanguage()
+  protected void addLanguage()
   {
     Bundle args = new Bundle();
-    ArrayList<String> languages = new ArrayList<>(sLocalizedNames.size());
-    for (LocalizedName name : sLocalizedNames)
+    ArrayList<String> languages = new ArrayList<>(sNames.size());
+    for (LocalizedName name : sNames)
       languages.add(name.lang);
     args.putStringArrayList(LanguagesFragment.EXISTING_LOCALIZED_NAMES, languages);
+    UiUtils.hide(mToolbarController.findViewById(R.id.save));
     editWithFragment(Mode.LANGUAGE, R.string.choose_language, args, LanguagesFragment.class, false);
   }
 
@@ -263,32 +284,49 @@ public class EditorHostFragment extends BaseMwmToolbarFragment
         if (note.length() != 0)
           Editor.nativeCreateNote(note);
         // Save object edits
-        if (Editor.nativeSaveEditedFeature())
+        if (!MwmApplication.prefs().contains(NOOB_ALERT_SHOWN))
         {
-          Statistics.INSTANCE.trackEditorSuccess(mIsNewObject);
-          if (OsmOAuth.isAuthorized() || !ConnectionState.isConnected())
-            Utils.navigateToParent(getActivity());
-          else
-          {
-            final Activity parent = getActivity();
-            Intent intent = new Intent(parent, MwmActivity.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
-            intent.putExtra(MwmActivity.EXTRA_TASK, new MwmActivity.ShowAuthorizationTask());
-            parent.startActivity(intent);
+          MwmApplication.prefs().edit()
+            .putBoolean(NOOB_ALERT_SHOWN, true)
+            .apply();
 
-            if (parent instanceof MwmActivity)
-              ((MwmActivity) parent).customOnNavigateUp();
-            else
-              parent.finish();
-          }
+          showNoobDialog();
         }
         else
         {
-          Statistics.INSTANCE.trackEditorError(mIsNewObject);
-          UiUtils.showAlertDialog(getActivity(), R.string.downloader_no_space_title);
+          saveMapObjectEdits();
         }
+
         break;
       }
+    }
+  }
+
+  private void saveMapObjectEdits()
+  {
+    if (Editor.nativeSaveEditedFeature())
+    {
+      Statistics.INSTANCE.trackEditorSuccess(mIsNewObject);
+      if (OsmOAuth.isAuthorized() || !ConnectionState.isConnected())
+        Utils.navigateToParent(getActivity());
+      else
+      {
+        final Activity parent = getActivity();
+        Intent intent = new Intent(parent, MwmActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
+        intent.putExtra(MwmActivity.EXTRA_TASK, new MwmActivity.ShowAuthorizationTask());
+        parent.startActivity(intent);
+
+        if (parent instanceof MwmActivity)
+          ((MwmActivity) parent).customOnNavigateUp();
+        else
+          parent.finish();
+      }
+    }
+    else
+    {
+      Statistics.INSTANCE.trackEditorError(mIsNewObject);
+      UiUtils.showAlertDialog(getActivity(), R.string.downloader_no_space_title);
     }
   }
 
@@ -298,6 +336,24 @@ public class EditorHostFragment extends BaseMwmToolbarFragment
         .setMessage(resId)
         .setPositiveButton(android.R.string.ok, null)
         .show();
+  }
+
+  private void showNoobDialog()
+  {
+    new AlertDialog.Builder(getActivity())
+      .setTitle(R.string.editor_share_to_all_dialog_title)
+      .setMessage(getString(R.string.editor_share_to_all_dialog_message_1)
+        + " " + getString(R.string.editor_share_to_all_dialog_message_2))
+      .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener()
+      {
+        @Override
+        public void onClick(DialogInterface dlg, int which)
+        {
+          saveMapObjectEdits();
+        }
+      })
+      .setNegativeButton(android.R.string.cancel, null)
+      .show();
   }
 
   public void setStreet(LocalizedStreet street)
@@ -314,7 +370,14 @@ public class EditorHostFragment extends BaseMwmToolbarFragment
   @Override
   public void onLanguageSelected(Language lang)
   {
-    addLocalizedName(Editor.nativeMakeLocalizedName(lang.code, ""));
-    editMapObject(true /* focusToLastLocalizedName */);
+    String name = "";
+    if (lang.code.equals(Language.DEFAULT_LANG_CODE))
+    {
+      name = Editor.nativeGetDefaultName();
+      Editor.nativeEnableNamesAdvancedMode();
+    }
+
+    addName(Editor.nativeMakeLocalizedName(lang.code, name));
+    editMapObject(true /* focusToLastName */);
   }
 }

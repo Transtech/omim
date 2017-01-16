@@ -8,6 +8,7 @@
 #include "indexer/ftypes_matcher.hpp"
 #include "indexer/index.hpp"
 #include "indexer/osm_editor.hpp"
+#include "indexer/index_helpers.hpp"
 
 #include "platform/local_country_file_utils.hpp"
 #include "platform/platform.hpp"
@@ -38,8 +39,8 @@
 #include "std/unordered_set.hpp"
 
 #include "3party/Alohalytics/src/alohalytics.h"
-#include "3party/pugixml/src/pugixml.hpp"
 #include "3party/opening_hours/opening_hours.hpp"
+#include "3party/pugixml/src/pugixml.hpp"
 
 using namespace pugi;
 using feature::EGeomType;
@@ -48,7 +49,6 @@ using editor::XMLFeature;
 
 namespace
 {
-constexpr char const * kEditorXMLFileName = "edits.xml";
 constexpr char const * kXmlRootNode = "mapsme";
 constexpr char const * kXmlMwmNode = "mwm";
 constexpr char const * kDeleteSection = "delete";
@@ -73,8 +73,6 @@ bool NeedsUpload(string const & uploadStatus)
       // TODO: Remove this when we have better matching algorithm.
       uploadStatus != kWrongMatch;
 }
-
-string GetEditorFilePath() { return GetPlatform().WritablePathForFile(kEditorXMLFileName); }
 
 /// Compares editable fields connected with feature ignoring street.
 bool AreFeaturesEqualButStreet(FeatureType const & a, FeatureType const & b)
@@ -136,7 +134,12 @@ namespace osm
 // TODO(AlexZ): Normalize osm multivalue strings for correct merging
 // (e.g. insert/remove spaces after ';' delimeter);
 
-Editor::Editor() : m_notes(editor::Notes::MakeNotes()) {}
+Editor::Editor()
+  : m_configLoader(m_config)
+  , m_notes(editor::Notes::MakeNotes())
+  , m_storage(make_unique<editor::LocalStorage>())
+{
+}
 
 Editor & Editor::Instance()
 {
@@ -146,23 +149,15 @@ Editor & Editor::Instance()
 
 void Editor::LoadMapEdits()
 {
-  if (!m_mwmIdByMapNameFn)
+  if (!m_delegate)
   {
-    LOG(LERROR, ("Can't load any map edits, MwmIdByNameAndVersionFn has not been set."));
+    LOG(LERROR, ("Can't load any map edits, delegate has not been set."));
     return;
   }
 
   xml_document doc;
-  {
-    string const fullFilePath = GetEditorFilePath();
-    xml_parse_result const res = doc.load_file(fullFilePath.c_str());
-    // Note: status_file_not_found is ok if user has never made any edits.
-    if (res != status_ok && res != status_file_not_found)
-    {
-      LOG(LERROR, ("Can't load map edits from disk:", fullFilePath));
-      return;
-    }
-  }
+  if (!m_storage->Load(doc))
+    return;
 
   array<pair<FeatureStatus, char const *>, 4> const sections =
   {{
@@ -181,7 +176,7 @@ void Editor::LoadMapEdits()
   {
     string const mapName = mwm.attribute("name").as_string("");
     int64_t const mapVersion = mwm.attribute("version").as_llong(0);
-    MwmSet::MwmId const mwmId = m_mwmIdByMapNameFn(mapName);
+    MwmSet::MwmId const mwmId = GetMwmIdByMapName(mapName);
     // TODO(mgsergio, AlexZ): Is it normal to have isMwmIdAlive and mapVersion
     // NOT equal to mwmId.GetInfo()->GetVersion() at the same time?
     auto const needMigrateEdits = !mwmId.IsAlive() || mapVersion != mwmId.GetInfo()->GetVersion();
@@ -203,10 +198,15 @@ void Editor::LoadMapEdits()
             goto SECTION_END;
           }
 
+          TForEachFeaturesNearByFn forEach = [this](TFeatureTypeFn && fn,
+                                                    m2::PointD const & point) {
+            return ForEachFeatureAtPoint(move(fn), point);
+          };
+
           // TODO(mgsergio): Deleted features are not properly handled yet.
           auto const fid = needMigrateEdits
                                ? editor::MigrateFeatureIndex(
-                                     m_forEachFeatureAtPointFn, xml, section.first,
+                                     forEach, xml, section.first,
                                      [this, &mwmId] { return GenerateNewFeatureId(mwmId); })
                                : FeatureID(mwmId, xml.GetMWMFeatureIndex());
 
@@ -221,7 +221,7 @@ void Editor::LoadMapEdits()
           }
           else
           {
-            auto const originalFeaturePtr = m_getOriginalFeatureFn(fid);
+            auto const originalFeaturePtr = GetOriginalFeature(fid);
             if (!originalFeaturePtr)
             {
               LOG(LERROR, ("A feature with id", fid, "cannot be loaded."));
@@ -271,12 +271,12 @@ void Editor::LoadMapEdits()
 
   // Save edits with new indexes and mwm version to avoid another migration on next startup.
   if (needRewriteEdits)
-    Save(GetEditorFilePath());
+    Save();
   LOG(LINFO, ("Loaded", modified, "modified,",
               created, "created,", deleted, "deleted and", obsolete, "obsolete features."));
 }
 
-bool Editor::Save(string const & fullFilePath) const
+bool Editor::Save() const
 {
   // TODO(AlexZ): Improve synchronization in Editor code.
   static mutex saveMutex;
@@ -284,7 +284,7 @@ bool Editor::Save(string const & fullFilePath) const
 
   if (m_features.empty())
   {
-    my::DeleteFileX(GetEditorFilePath());
+    m_storage->Reset();
     return true;
   }
 
@@ -330,18 +330,13 @@ bool Editor::Save(string const & fullFilePath) const
     }
   }
 
-  return my::WriteToTempAndRenameToFile(
-      fullFilePath,
-      [&doc](string const & fileName)
-      {
-        return doc.save_file(fileName.data(), "  ");
-      });
+  return m_storage->Save(doc);
 }
 
 void Editor::ClearAllLocalEdits()
 {
   m_features.clear();
-  Save(GetEditorFilePath());
+  Save();
   Invalidate();
 }
 
@@ -360,7 +355,7 @@ void Editor::OnMapDeregistered(platform::LocalCountryFile const & localFile)
   if (m_features.end() != matchedMwm)
   {
     m_features.erase(matchedMwm);
-    Save(GetEditorFilePath());
+    Save();
   }
 }
 
@@ -388,9 +383,8 @@ bool Editor::IsFeatureUploaded(MwmSet::MwmId const & mwmId, uint32_t index) cons
   return info && info->m_uploadStatus == kUploaded;
 }
 
-void Editor::DeleteFeature(FeatureType const & feature)
+void Editor::DeleteFeature(FeatureID const & fid)
 {
-  FeatureID const & fid = feature.GetID();
   auto const mwm = m_features.find(fid.m_mwmId);
   if (mwm != m_features.end())
   {
@@ -403,16 +397,10 @@ void Editor::DeleteFeature(FeatureType const & feature)
     }
   }
 
-  FeatureTypeInfo & fti = m_features[fid.m_mwmId][fid.m_index];
-  fti.m_status = FeatureStatus::Deleted;
-  // TODO: What if local client time is absolutely wrong?
-  fti.m_modificationTimestamp = time(nullptr);
-  // TODO: We don't really need to serialize whole feature. Improve this code in the future.
-  fti.m_feature = feature;
+  MarkFeatureWithStatus(fid, FeatureStatus::Deleted);
 
   // TODO(AlexZ): Synchronize Save call/make it on a separate thread.
-  Save(GetEditorFilePath());
-
+  Save();
   Invalidate();
 }
 
@@ -424,6 +412,24 @@ constexpr uint32_t kStartIndexForCreatedFeatures = numeric_limits<uint32_t>::max
 bool Editor::IsCreatedFeature(FeatureID const & fid)
 {
   return fid.m_index >= kStartIndexForCreatedFeatures;
+}
+
+bool Editor::OriginalFeatureHasDefaultName(FeatureID const & fid) const
+{
+  if (IsCreatedFeature(fid))
+    return false;
+
+  auto const originalFeaturePtr = GetOriginalFeature(fid);
+  if (!originalFeaturePtr)
+  {
+    LOG(LERROR, ("A feature with id", fid, "cannot be loaded."));
+    alohalytics::LogEvent("Editor_MissingFeature_Error");
+    return false;
+  }
+
+  auto const & names = originalFeaturePtr->GetNames();
+
+  return names.HasString(StringUtf8Multilang::kDefaultCode);
 }
 
 /// Several cases should be handled while saving changes:
@@ -446,18 +452,27 @@ Editor::SaveResult Editor::SaveEditedFeature(EditableMapObject const & emo)
 
   auto const featureStatus = GetFeatureStatus(fid.m_mwmId, fid.m_index);
   ASSERT_NOT_EQUAL(featureStatus, FeatureStatus::Obsolete, ("Obsolete feature cannot be modified."));
+  ASSERT_NOT_EQUAL(featureStatus, FeatureStatus::Deleted, ("Unexpected feature status."));
 
   bool const wasCreatedByUser = IsCreatedFeature(fid);
-  if (wasCreatedByUser && featureStatus == FeatureStatus::Untouched)
+  if (wasCreatedByUser)
   {
     fti.m_status = FeatureStatus::Created;
     fti.m_feature.ReplaceBy(emo);
+
+    if (featureStatus == FeatureStatus::Created)
+    {
+      auto const & editedFeatureInfo = m_features[fid.m_mwmId][fid.m_index];
+      if (AreFeaturesEqualButStreet(fti.m_feature, editedFeatureInfo.m_feature) &&
+          emo.GetStreet().m_defaultName == editedFeatureInfo.m_street)
+      {
+        return NothingWasChanged;
+      }
+    }
   }
   else
   {
-    ASSERT_NOT_EQUAL(featureStatus, FeatureStatus::Deleted, ("Unexpected feature status."));
-
-    auto const originalFeaturePtr = m_getOriginalFeatureFn(fid);
+    auto const originalFeaturePtr = GetOriginalFeature(fid);
     if (!originalFeaturePtr)
     {
       LOG(LERROR, ("A feature with id", fid, "cannot be loaded."));
@@ -469,9 +484,9 @@ Editor::SaveResult Editor::SaveEditedFeature(EditableMapObject const & emo)
         ? *originalFeaturePtr
         : m_features[fid.m_mwmId][fid.m_index].m_feature;
     fti.m_feature.ReplaceBy(emo);
-    bool const sameAsInMWM = featureStatus != FeatureStatus::Created &&
+    bool const sameAsInMWM =
         AreFeaturesEqualButStreet(fti.m_feature, *originalFeaturePtr) &&
-        emo.GetStreet().m_defaultName == m_getOriginalFeatureStreetFn(fti.m_feature);
+        emo.GetStreet().m_defaultName == GetOriginalFeatureStreet(fti.m_feature);
 
     if (featureStatus != FeatureStatus::Untouched)
     {
@@ -491,7 +506,7 @@ Editor::SaveResult Editor::SaveEditedFeature(EditableMapObject const & emo)
         {
           RemoveFeatureFromStorageIfExists(fid.m_mwmId, fid.m_index);
           // TODO(AlexZ): Synchronize Save call/make it on a separate thread.
-          Save(GetEditorFilePath());
+          Save();
           Invalidate();
           return SavedSuccessfully;
         }
@@ -506,9 +521,7 @@ Editor::SaveResult Editor::SaveEditedFeature(EditableMapObject const & emo)
       return NothingWasChanged;
     }
 
-    fti.m_status = featureStatus == FeatureStatus::Created
-      ? FeatureStatus::Created
-      : FeatureStatus::Modified;
+    fti.m_status = FeatureStatus::Modified;
   }
 
   // TODO: What if local client time is absolutely wrong?
@@ -520,7 +533,7 @@ Editor::SaveResult Editor::SaveEditedFeature(EditableMapObject const & emo)
   m_features[fid.m_mwmId][fid.m_index] = move(fti);
 
   // TODO(AlexZ): Synchronize Save call/make it on a separate thread.
-  bool const savedSuccessfully = Save(GetEditorFilePath());
+  bool const savedSuccessfully = Save();
   Invalidate();
   return savedSuccessfully ? SavedSuccessfully : NoFreeSpaceError;
 }
@@ -532,7 +545,7 @@ bool Editor::RollBackChanges(FeatureID const & fid)
 
   RemoveFeatureFromStorageIfExists(fid.m_mwmId, fid.m_index);
   Invalidate();
-  return Save(GetEditorFilePath());
+  return Save();
 }
 
 void Editor::ForEachFeatureInMwmRectAndScale(MwmSet::MwmId const & id,
@@ -630,8 +643,8 @@ EditableProperties Editor::GetEditableProperties(FeatureType const & feature) co
   // Disable opening hours editing if opening hours cannot be parsed.
   if (GetFeatureStatus(feature.GetID()) != FeatureStatus::Created)
   {
-    auto const originalFeaturePtr = m_getOriginalFeatureFn(feature.GetID());
-    if (originalFeaturePtr)
+    auto const originalFeaturePtr = GetOriginalFeature(feature.GetID());
+    if (!originalFeaturePtr)
     {
       LOG(LERROR, ("A feature with id", feature.GetID(), "cannot be loaded."));
       alohalytics::LogEvent("Editor_MissingFeature_Error");
@@ -656,7 +669,7 @@ EditableProperties Editor::GetEditableProperties(FeatureType const & feature) co
 EditableProperties Editor::GetEditablePropertiesForTypes(feature::TypesHolder const & types) const
 {
   editor::TypeAggregatedDescription desc;
-  if (m_config.GetTypeDescription(types.ToObjectNames(), desc))
+  if (m_config.Get()->GetTypeDescription(types.ToObjectNames(), desc))
     return {desc.GetEditableFields(), desc.IsNameEditable(), desc.IsAddressEditable()};
   return {};
 }
@@ -792,7 +805,7 @@ void Editor::UploadChanges(string const & key, string const & secret, TChangeset
                 feature.SetTagValue(kAddrStreetTag, fti.m_street);
               ourDebugFeatureString = DebugPrint(feature);
 
-              auto const originalFeaturePtr = m_getOriginalFeatureFn(fti.m_feature.GetID());
+              auto const originalFeaturePtr = GetOriginalFeature(fti.m_feature.GetID());
               if (!originalFeaturePtr)
               {
                 LOG(LERROR, ("A feature with id", fti.m_feature.GetID(), "cannot be loaded."));
@@ -821,7 +834,7 @@ void Editor::UploadChanges(string const & key, string const & secret, TChangeset
             break;
 
           case FeatureStatus::Deleted:
-            auto const originalFeaturePtr = m_getOriginalFeatureFn(fti.m_feature.GetID());
+            auto const originalFeaturePtr = GetOriginalFeature(fti.m_feature.GetID());
             if (!originalFeaturePtr)
             {
               LOG(LERROR, ("A feature with id", fti.m_feature.GetID(), "cannot be loaded."));
@@ -917,7 +930,7 @@ void Editor::SaveUploadedInformation(FeatureTypeInfo const & fromUploader)
   fti.m_uploadAttemptTimestamp = fromUploader.m_uploadAttemptTimestamp;
   fti.m_uploadStatus = fromUploader.m_uploadStatus;
   fti.m_uploadError = fromUploader.m_uploadError;
-  Save(GetEditorFilePath());
+  Save();
 }
 
 // Macros is used to avoid code duplication.
@@ -984,22 +997,9 @@ void Editor::MarkFeatureAsObsolete(FeatureID const & fid)
     return;
   }
 
-  auto & fti = m_features[fid.m_mwmId][fid.m_index];
-  // If a feature was modified we can drop all changes since it's now obsolete.
-  auto const originalFeaturePtr = m_getOriginalFeatureFn(fid);
+  MarkFeatureWithStatus(fid, FeatureStatus::Obsolete);
 
-  if (originalFeaturePtr)
-  {
-    LOG(LERROR, ("A feature with id", fid, "cannot be loaded."));
-    alohalytics::LogEvent("Editor_MissingFeature_Error");
-    return;
-  }
-
-  fti.m_feature = *originalFeaturePtr;
-  fti.m_status = FeatureStatus::Obsolete;
-  fti.m_modificationTimestamp = time(nullptr);
-
-  Save(GetEditorFilePath());
+  Save();
   Invalidate();
 }
 
@@ -1030,7 +1030,7 @@ Editor::Stats Editor::GetStats() const
 
 NewFeatureCategories Editor::GetNewFeatureCategories() const
 {
-  return NewFeatureCategories(m_config);
+  return NewFeatureCategories(*(m_config.Get()));
 }
 
 FeatureID Editor::GenerateNewFeatureId(MwmSet::MwmId const & id)
@@ -1054,6 +1054,11 @@ FeatureID Editor::GenerateNewFeatureId(MwmSet::MwmId const & id)
 bool Editor::CreatePoint(uint32_t type, m2::PointD const & mercator, MwmSet::MwmId const & id, EditableMapObject & outFeature)
 {
   ASSERT(id.IsAlive(), ("Please check that feature is created in valid MWM file before calling this method."));
+  if (!id.GetInfo()->m_limitRect.IsPointInside(mercator))
+  {
+    LOG(LERROR, ("Attempt to create a feature outside of the MWM's bounding box."));
+    return false;
+  }
   outFeature.SetMercator(mercator);
   outFeature.SetID(GenerateNewFeatureId(id));
   outFeature.SetType(type);
@@ -1091,6 +1096,64 @@ void Editor::UploadNotes(string const & key, string const & secret)
 {
   alohalytics::LogEvent("Editor_UploadNotes", strings::to_string(m_notes->NotUploadedNotesCount()));
   m_notes->Upload(OsmOAuth::ServerAuth({key, secret}));
+}
+
+void Editor::MarkFeatureWithStatus(FeatureID const & fid, FeatureStatus status)
+{
+  auto & fti = m_features[fid.m_mwmId][fid.m_index];
+
+  auto const originalFeaturePtr = GetOriginalFeature(fid);
+
+  if (!originalFeaturePtr)
+  {
+    LOG(LERROR, ("A feature with id", fid, "cannot be loaded."));
+    alohalytics::LogEvent("Editor_MissingFeature_Error");
+    return;
+  }
+
+  fti.m_feature = *originalFeaturePtr;
+  fti.m_status = status;
+  fti.m_modificationTimestamp = time(nullptr);
+}
+
+MwmSet::MwmId Editor::GetMwmIdByMapName(string const & name)
+{
+  if (!m_delegate)
+  {
+    LOG(LERROR, ("Can't get mwm id by map name:", name, ", delegate is not set."));
+    return {};
+  }
+  return m_delegate->GetMwmIdByMapName(name);
+}
+
+unique_ptr<FeatureType> Editor::GetOriginalFeature(FeatureID const & fid) const
+{
+  if (!m_delegate)
+  {
+    LOG(LERROR, ("Can't get original feature by id:", fid, ", delegate is not set."));
+    return {};
+  }
+  return m_delegate->GetOriginalFeature(fid);
+}
+
+string Editor::GetOriginalFeatureStreet(FeatureType & ft) const
+{
+  if (!m_delegate)
+  {
+    LOG(LERROR, ("Can't get feature street, delegate is not set."));
+    return {};
+  }
+  return m_delegate->GetOriginalFeatureStreet(ft);
+}
+
+void Editor::ForEachFeatureAtPoint(TFeatureTypeFn && fn, m2::PointD const & point) const
+{
+  if (!m_delegate)
+  {
+    LOG(LERROR, ("Can't load features in point's vicinity, delegate is not set."));
+    return;
+  }
+  m_delegate->ForEachFeatureAtPoint(move(fn), point);
 }
 
 string DebugPrint(Editor::FeatureStatus fs)

@@ -8,6 +8,7 @@
 #include "coding/read_write_utils.hpp"
 
 #include "std/bind.hpp"
+#include "std/list.hpp"
 
 
 namespace serial { class CodingParams; }
@@ -32,8 +33,6 @@ public:
   void SetCenter(m2::PointD const & p);
 
   void SetRank(uint8_t rank);
-
-  void SetTestId(uint64_t id);
 
   void AddHouseNumber(string const & houseNumber);
 
@@ -61,6 +60,7 @@ public:
 
 
   inline feature::Metadata const & GetMetadata() const { return m_params.GetMetadata(); }
+  inline feature::Metadata & GetMetadataForTesting() { return m_params.GetMetadata(); }
   inline TGeometry const & GetGeometry() const { return m_polygons; }
   inline TPointSeq const & GetOuterGeometry() const { return m_polygons.front(); }
   inline feature::EGeomType GetGeomType() const { return m_params.GetGeomType(); }
@@ -161,14 +161,18 @@ public:
 
   inline FeatureParams const & GetParams() const { return m_params; }
 
-  /// @name For OSM debugging, store original OSM id
+  /// @name For OSM debugging and osm objects replacement, store original OSM id
   //@{
   void AddOsmId(osm::Id id);
   void SetOsmId(osm::Id id);
   osm::Id GetFirstOsmId() const;
   osm::Id GetLastOsmId() const;
+  /// @returns an id of the most general element: node's one if there is no area or relation,
+  /// area's one if there is no relation, and relation id otherwise.
+  osm::Id GetMostGenericOsmId() const;
   bool HasOsmId(osm::Id const & id) const;
   string GetOsmIdsString() const;
+  vector<osm::Id> const & GetOsmIds() const { return m_osmIds; }
   //@}
 
   uint64_t GetWayIDForRouting() const;

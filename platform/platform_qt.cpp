@@ -95,6 +95,7 @@ void Platform::RunAsync(TFunctor const & fn, Priority p)
 {
   async(fn);
 }
+
 #endif  // defined(OMIM_OS_LINUX)
 
 extern Platform & GetPlatform()

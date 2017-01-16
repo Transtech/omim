@@ -44,7 +44,10 @@ bool FormatDistanceImpl(double m, string & res,
     res = ToStringPrecision(v, v >= 10.0 ? 0 : 1) + high;
   }
   else
-    res = ToStringPrecision(lowV, 0) + low;
+  {
+    // To display unit number only if <= 100.
+    res = ToStringPrecision(lowV <= 100.0 ? lowV : round(lowV / 10) * 10, 0) + low;
+  }
 
   return true;
 }
@@ -133,6 +136,11 @@ string FormatMercatorAsDMS(m2::PointD const & mercator, int dac)
 string FormatLatLon(double lat, double lon, int dac)
 {
   return to_string_dac(lat, dac) + " " + to_string_dac(lon, dac);
+}
+
+string FormatLatLon(double lat, double lon, bool withSemicolon, int dac)
+{
+  return to_string_dac(lat, dac) + (withSemicolon ? ", " : " ") + to_string_dac(lon, dac);
 }
 
 void FormatLatLon(double lat, double lon, string & latText, string & lonText, int dac)

@@ -127,7 +127,7 @@ void StaticLabel::CacheStaticText(string const & text, char const * delim,
     result.m_alphabet.insert(str.begin(), str.end());
 
   dp::TextureManager::TMultilineGlyphsBuffer buffers;
-  mng->GetGlyphRegions(textParts, buffers);
+  mng->GetGlyphRegions(textParts, dp::GlyphManager::kDynamicGlyphSize, buffers);
 
 #ifdef DEBUG
   ASSERT_EQUAL(textParts.size(), buffers.size(), ());
@@ -296,11 +296,12 @@ void MutableLabel::SetMaxLength(uint16_t maxLength)
 ref_ptr<dp::Texture> MutableLabel::SetAlphabet(string const & alphabet, ref_ptr<dp::TextureManager> mng)
 {
   strings::UniString str = strings::MakeUniString(alphabet + ".");
+  sort(str.begin(), str.end());
   strings::UniString::iterator it = unique(str.begin(), str.end());
   str.resize(distance(str.begin(), it));
 
   dp::TextureManager::TGlyphsBuffer buffer;
-  mng->GetGlyphRegions(str, buffer);
+  mng->GetGlyphRegions(str, dp::GlyphManager::kDynamicGlyphSize, buffer);
   m_alphabet.reserve(buffer.size());
 
   ASSERT_EQUAL(str.size(), buffer.size(), ());
@@ -465,7 +466,7 @@ void MutableLabelHandle::GetAttributeMutation(ref_ptr<dp::AttributeBufferMutator
   m_textView->SetText(result, m_content);
   m_size = m2::PointF(result.m_boundRect.SizeX(), result.m_boundRect.SizeY());
 
-  size_t byteCount = result.m_buffer.size() * sizeof(MutableLabel::DynamicVertex);
+  uint32_t byteCount = static_cast<uint32_t>(result.m_buffer.size()) * sizeof(MutableLabel::DynamicVertex);
 
   MutableLabel::DynamicVertex * dataPointer =
       reinterpret_cast<MutableLabel::DynamicVertex *>(mutator->AllocateMutationBuffer(byteCount));
@@ -488,7 +489,7 @@ bool MutableLabelHandle::Update(ScreenBase const & screen)
     for (auto const & node : m_textView->GetAlphabet())
       alphabetStr.push_back(node.first);
 
-    m_glyphsReady = m_textureManager->AreGlyphsReady(alphabetStr);
+    m_glyphsReady = m_textureManager->AreGlyphsReady(alphabetStr, dp::GlyphManager::kDynamicGlyphSize);
   }
 
   if (!m_glyphsReady)
@@ -552,7 +553,7 @@ m2::PointF MutableLabelDrawer::Draw(Params const & params, ref_ptr<dp::TextureMa
 
   dp::BindingInfo const & sBinding = MutableLabel::StaticVertex::GetBindingInfo();
   dp::BindingInfo const & dBinding = MutableLabel::DynamicVertex::GetBindingInfo();
-  dp::AttributeProvider provider(2 /*stream count*/, staticData.m_buffer.size());
+  dp::AttributeProvider provider(2 /*stream count*/, static_cast<uint32_t>(staticData.m_buffer.size()));
   provider.InitStream(0 /*stream index*/, sBinding,
                       make_ref(staticData.m_buffer.data()));
   provider.InitStream(1 /*stream index*/, dBinding, make_ref(dynData.data()));
@@ -580,7 +581,7 @@ StaticLabelHandle::StaticLabelHandle(uint32_t id, ref_ptr<dp::TextureManager> te
 bool StaticLabelHandle::Update(ScreenBase const & screen)
 {
   if (!m_glyphsReady)
-    m_glyphsReady = m_textureManager->AreGlyphsReady(m_alphabet);
+    m_glyphsReady = m_textureManager->AreGlyphsReady(m_alphabet, dp::GlyphManager::kDynamicGlyphSize);
 
   if (!m_glyphsReady)
     return false;

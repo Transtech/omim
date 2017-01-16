@@ -137,7 +137,7 @@
 	<!-- Show popup notification on top of the map when country download has failed. -->
 	<string name="download_country_failed">Nedlasting av %s mislyktes</string>
 	<!-- Add New Bookmark Set dialog title -->
-	<string name="add_new_set">Lisää uusi valikoima</string>
+	<string name="add_new_set">Legg til nytt sett</string>
 	<!-- Place Page - Add To Bookmarks button -->
 	<string name="add_to_bookmarks">Legg til i bokmerker</string>
 	<!-- Bookmark Color dialog title -->
@@ -192,6 +192,7 @@
 	<string name="parking">Parkering</string>
 	<!-- Search Suggestion -->
 	<string name="shop">Butikk</string>
+	<!-- Search Suggestion -->
 	<string name="hotel">Hotell</string>
 	<!-- Search Suggestion -->
 	<string name="tourism">Severdigheter</string>
@@ -271,8 +272,6 @@
 	<string name="copied_to_clipboard">Kopiert til utklippstavlen: %1$s</string>
 	<!-- Setting label for statistics turn on/off -->
 	<string name="allow_statistics">Send statistikk</string>
-	<!-- Hint near allow statictics checkbox -->
-	<string name="allow_statistics_hint">Tillat oss å innhente bruksstatistikk for å forbedre appen</string>
 	<!-- place preview title -->
 	<string name="info">Informasjon</string>
 	<!-- Used for bookmark editing -->
@@ -325,6 +324,7 @@
 	<string name="pref_tts_how_to_set_up_voice">Slik installerer du stemme</string>
 	<!-- Settings «Map» category: «Record track» title -->
 	<string name="pref_track_record_title">Siste rute</string>
+	<string name="pref_map_auto_zoom">Automatisk zooming</string>
 	<string name="duration_disabled">Av</string>
 	<string name="duration_1_hour">1 time</string>
 	<string name="duration_2_hours">2 timer</string>
@@ -586,7 +586,6 @@
 	<string name="dialog_routing_send_error">Rapporter problemet</string>
 	<string name="dialog_routing_if_get_cross_route">Vil du opprette en mer direkte rute som går over flere kart?</string>
 	<string name="dialog_routing_cross_route_is_optimal">En mer optimal rute som går utenfor dette kartet er tilgjengelig.</string>
-	<string name="dialog_routing_always_cross_that_border">Kryss alltid denne grensen</string>
 	<string name="not_now">Ikke nå</string>
 	<string name="dialog_routing_build_route">Opprett</string>
 	<string name="dialog_routing_download_and_build_cross_route">Vil du laste ned kartet og lage en mer optimal rute som går over flere kart?</string>
@@ -630,7 +629,6 @@
 	<string name="clear_search">Tøm søkehistorikk</string>
 	<!-- Title for settings to enable/disable showcase menu button -->
 	<string name="showcase_settings_title">Vis tilbud</string>
-	<string name="showcase_more_apps">Flere apper fra My.com</string>
 	<string name="p2p_route_planning">Ruteplanlegging</string>
 	<string name="p2p_your_location">Din beliggenhet</string>
 	<string name="p2p_from">Avreisested</string>
@@ -714,9 +712,12 @@
 	<string name="login_with_openstreetmap">Logg inn med www.openstreetmap.org</string>
 	<string name="edit_place">Rediger stedet</string>
 	<string name="place_name">Stedsnavn</string>
-	<string name="place_name_caption">Oppgi navnet som på skiltet eller navneskiltet</string>
 	<!-- title above languages list cells in the editor, below editable name text field. -->
 	<string name="other_languages">Andre språk</string>
+	<!-- small button to open list with names in different languages -->
+	<string name="show_more">Vis mer</string>
+	<!-- small button to close list with names in different languages -->
+	<string name="show_less">Vis mindre</string>
 	<string name="add_language">Legg til et språk</string>
 	<string name="street">Gate</string>
 	<!-- Editable House Number text field (in address block). -->
@@ -762,7 +763,6 @@
 	<string name="editor_edit_place_category_title">Kategori</string>
 	<string name="detailed_problem_description">Detaljert beskrivelse av problemet</string>
 	<string name="editor_report_problem_other_title">Et annet problem</string>
-	<string name="placepage_add_place_button">Legg til et sted</string>
 	<string name="placepage_report_problem_button">Rapporter et problem</string>
 	<string name="placepage_add_business_button">Legg til organisasjon</string>
 	<string name="whatsnew_smallmwm_header">Dere har bedt om det og vi har fått det til</string>
@@ -795,6 +795,7 @@
 	<string name="downloader_of">%1$d av %2$d</string>
 	<string name="error_enter_correct_house_number">Skriv riktig husnummer</string>
 	<string name="editor_storey_number">Antall etasjer (maks. %d)</string>
+	<!-- Error message in Editor when a user tries to set the number of floors for a building higher than 25 -->
 	<string name="error_enter_correct_storey_number">Rediger bygningen med maks. 25 etasjer</string>
 	<string name="editor_zip_code">Postnummer</string>
 	<string name="error_enter_correct_zip_code">Angi riktig postnummer</string>
@@ -808,7 +809,6 @@
 	<string name="editor_tag_description">Angi firma, organisasjon eller enkeltperson som er ansvarlig for anlegget.</string>
 	<string name="editor_no_local_edits_title">Du har ikke lokale redigeringer</string>
 	<string name="editor_no_local_edits_description">Dette viser antallet foreslåtte endringer på kartet som i øyeblikket bare er tilgjengelige på enheten din.</string>
-	<string name="editor_international_names_subtitle">Navn på andre språk</string>
 	<string name="editor_send_to_osm">Send til OSM</string>
 	<string name="editor_remove">Fjern</string>
 	<string name="downloader_my_maps_title">Mine kart</string>
@@ -831,7 +831,8 @@
 	<string name="location_services_disabled_message">Tillat bruk av av geografisk lokalisering i enhetens innstillinger</string>
 	<string name="location_services_disabled_1">1. Åpne Innstillinger</string>
 	<string name="location_services_disabled_2">2. Trykk Lokalisering</string>
-	<string name="location_services_disabled_3">3. Velg Alltid</string>
+	<!-- iOS Dialog for the case when the location permission is not granted -->
+	<string name="location_services_disabled_3">3.Velg når appen er i bruk</string>
 	<string name="placepage_parking_surface">Åpen plass</string>
 	<string name="placepage_parking_multistorey">Fleretasjers</string>
 	<string name="placepage_parking_underground">Undergrunns</string>
@@ -850,9 +851,16 @@
 	<string name="place_page_starting_from">fra %s</string>
 	<string name="meter">m</string>
 	<string name="kilometer">km</string>
+	<string name="kilometers_per_hour">km/t</string>
+	<string name="mile">mi</string>
+	<string name="foot">ft</string>
+	<string name="miles_per_hour">mph</string>
+	<string name="day">d</string>
+	<string name="hour">t</string>
+	<string name="minute">min</string>
 	<string name="placepage_place_description">Beskrivelse</string>
 	<string name="placepage_more_button">Mer</string>
-	<string name="bookingcom_book_button">Bestill</string>
+	<string name="book_button">Bestill</string>
 	<string name="placepage_call_button">Ring</string>
 	<string name="placepage_edit_bookmark_button">Rediger bokmerke</string>
 	<string name="placepage_bookmark_name_hint">Bokmerkenavn</string>
@@ -867,18 +875,167 @@
 	<string name="editor_status_sending">Sender…</string>
 	<string name="editor_place_doesnt_exist">Sted finnes ikke</string>
 	<string name="text_more_button">…mer</string>
-	<string name="error_enter_correct_phone">Oppgi telefonnummer uten bokstaver</string>
+	<!-- Phone number error message -->
+	<string name="error_enter_correct_phone">Skriv riktig telefonnummer</string>
 	<string name="error_enter_correct_web">Oppgi en gyldig nettadresse</string>
 	<string name="error_enter_correct_email">Oppgi en gyldig epostadresse</string>
 	<string name="error_enter_correct">Oppgi en gyldig verdi</string>
 	<string name="editor_profile_changes_for_next_place">Endringer på neste sted: %d</string>
 	<string name="editor_profile_rating_place">Rangeringsplassering</string>
 	<string name="booking_dialog_not_connect_header">Aktiver Internett-tilkoblingen din for å bestille hotellet</string>
-	<string name="whatsnew_booking_header">Reserver hotellrom fra appen</string>
-	<string name="whatsnew_booking_message">Når du leter etter hotell, vil kartet fortelle deg hotellenes priskategori og rangering.</string>
 	<string name="button_try">Prøv det</string>
-	<string name="whatsnew_cycle_navigation_header">Sykkelnavigering (betaversjon)</string>
-	<string name="whatsnew_cycle_navigation_message">Vi tester sykkelnavigering for den nye sesongen. Prøv din favorittrute med MAPS.ME, og del din vurdering med oss.</string>
 	<string name="refresh">Oppdatere</string>
 	<string name="last_update">Sist oppdatert: %s</string>
+	<string name="booking_checkin">sjekk inn: %s</string>
+	<string name="booking_checkout">sjekk ut: %s</string>
+	<string name="placepage_add_place_button">Legg til en plass på kartet</string>
+	<!-- Displayed when saving some edits to the map to warn against publishing personal data -->
+	<string name="editor_share_to_all_dialog_title">Vil du sende det til alle brukere?</string>
+	<!-- iOS Dialog before publishing the modifications to the public map. -->
+	<string name="editor_share_to_all_dialog_message_1">Sørg for at du ikke har skrevet noe personlig informasjon.</string>
+	<string name="editor_share_to_all_dialog_message_2">Vi vil sjekke endringene. Vi kontakter deg via e-post dersom vi har spørsmål.</string>
+	<string name="navigation_overview_button">oversikt</string>
+	<string name="navigation_stop_button">stopp</string>
+	<!-- Text on an empty bookmark page -->
+	<string name="bookmarks_empty_title">Lagre bokmerker</string>
+	<string name="bookmarks_empty_message_1">Trykk på ★ for å lagre favorittsteder og få rask tilgang.</string>
+	<string name="bookmarks_empty_message_2">Importer bokmerker fra e-post og nettet.</string>
+	<string name="bookmarks_empty_message_3">sjekk ut: %s</string>
+	<!-- Name of the group for booked hotels -->
+	<string name="bookmarks_group_name">Bestilte hoteller</string>
+	<string name="place_page_button_read_descriprion">Les</string>
+	<!-- iOS dialog for the case when recent track recording is on and the app comes back from background -->
+	<string name="recent_track_background_dialog_title">Deaktivere opptak av nylig reiste rute?</string>
+	<!-- If a hotel is being shared -->
+	<string name="sharing_booking">eller bestill via booking.com</string>
+	<string name="off_recent_track_background_button">Deaktiver</string>
+	<!-- For sharing via SMS and so on -->
+	<string name="sharing_call_action_look">Sjekk ut</string>
+	<string name="continue_recent_track_background_button">Fortsett</string>
+	<string name="recent_track_background_dialog_message">MAPS.ME bruker geografiske funksjoner i bakgrunnen for å registrere din nylig reiste rute.</string>
+	<string name="whatsnew_car_navigation_header">Brukervennlig navigeringssystem for kjøretøy</string>
+	<string name="whatsnew_car_navigation_message">• Navigeringselementene tar mindre plass.\n• Programmet viser farten du reiser i og innebærer en automatisk zoomingsfunksjon.</string>
+	<string name="whatsnew_cycle_navigation_2_header">Sykkelnavigasjon</string>
+	<string name="whatsnew_cycle_navigation_2_message">• Sykkelnavigasjon medberegner informasjon om terrenget.\n• Programmet viser hvilke stier som er enklere og mindre bratt.</string>
+	<string name="whatsnew_booking_2_header">Forenkelt hotellsøk</string>
+	<string name="whatsnew_booking_2_message">Søkeresultatene rangerer hotellene etter omdømme og priskategorier.</string>
+	<string name="whatsnew_cycle_navigation_header">Sykkelnavigering (betaversjon)</string>
+	<string name="whatsnew_cycle_navigation_message">Vi tester sykkelnavigering for den nye sesongen. Prøv din favorittrute med MAPS.ME, og del din vurdering med oss.</string>
+	<!-- Rate on Google Play (Android only) -->
+	<string name="rate_gp">Gi vurdering på Google Play</string>
+	<!-- Share with friends: menu item title -->
+	<string name="tell_friends">Fortell en venn</string>
+	<!-- Share with friends: sharing text -->
+	<string name="tell_friends_text">Hei! Installer MAPS.ME!</string>
+	<!-- About short text (below logo) -->
+	<string name="about_description">MAPS.ME er en offline app for reising. MAPS.ME bygger på OpenStreetMap-data og tillater redigering av den.</string>
+	<!-- Text in menu -->
+	<string name="blog">Blogg</string>
+	<!-- Hint near allow statictics checkbox -->
+	<string name="allow_statistics_hint">Innsamling av brukerstatistikk hjelper oss til å forbedre appen.</string>
+	<string name="general_settings">Generelle innstillinger</string>
+	<string name="date">Dato %d</string>
+	<!-- "Report a bug" -> "Generaal Feedback" -> "Something is not working" -->
+	<string name="something_is_not_working">Noe fungerer ikke som det skal</string>
+	<!-- For the first routing -->
+	<string name="accept">Godta</string>
+	<!-- For the first routing -->
+	<string name="decline">Avvis</string>
+	<string name="whats_new_route_profile_title">Range vegen vert ikkje rett om det er mange som går han</string>
+	<string name="whats_new_route_profile_message">Vi viser nå høydeprofilen med tanke på gå- og sykkelruter.</string>
+	<string name="whats_new_booking_improve_title">Spar penger når du bestiller hotell</string>
+	<string name="whats_new_booking_improve_message">Søkeresultatene for hoteller inneholder nå priskategori.\nVi har også lagt til flere enn 110.000 hoteller.</string>
+	<!-- For place page hotel facilities block -->
+	<string name="placepage_hotel_facilities">Fasiliteter</string>
+	<!-- For place page hotel nearby block -->
+	<string name="placepage_hotel_nearby">I nærheten</string>
+	<!-- For ordering a taxi (as opposed to hotels or other things) -->
+	<string name="taxi_order">Bestill drosje</string>
+	<!-- How long it is until the taxi arrives -->
+	<string name="taxi_wait">Forventet om %s</string>
+	<!-- When there are no available taxis nearby -->
+	<string name="taxi_not_found">Kunne ikke finne drosje i nærheten</string>
+	<string name="install_app">Installer</string>
+	<!-- `Filter` is a noun here -->
+	<string name="booking_filters">Filter</string>
+	<string name="booking_filters_reset">Tilbakestille</string>
+	<string name="booking_filters_rating">Vurdering</string>
+	<string name="booking_filters_rating_any">Hvilken som helst</string>
+	<string name="booking_filters_ragting_good">Bra</string>
+	<string name="booking_filters_rating_very_good">Veldig bra</string>
+	<string name="booking_filters_rating_excellent">Utmerket</string>
+	<string name="booking_filters_price_category">Prisklasse</string>
+	<string name="search_no_results_title">Fant ingen resultater</string>
+	<string name="search_no_results_message">Prøv et mer generelt søkeord, zoom ut eller tilbakestill filteret.</string>
+	<string name="search_no_results_expand_area_button">Zoom ut</string>
+	<string name="search_no_results_reset_button">Tilbakestill filter</string>
+	<!-- noun -->
+	<string name="search_in_table">Liste</string>
+	<string name="booking_based_on_reviews">Basert på %d hotellvurderinger</string>
+	<string name="booking_show_more">Vis mer</string>
+	<string name="booking_reviews">Vurderinger</string>
+	<string name="booking_hotel">Hotell</string>
+	<!-- hotel room -->
+	<string name="booking_hotel_room">Rom</string>
+	<!-- A neologism for a chat based on geographical proximity -->
+	<string name="chat">Geochat</string>
+	<!-- Verb. Text on a button that opens the chat. -->
+	<string name="chat_open">Åpne</string>
+	<string name="whatsnew_uber_header">MAPS.ME og Uber</string>
+	<string name="whatsnew_uber_message">Bestill en Uber-drosje direkte fra appen!</string>
+	<string name="dialog_taxi_offline">Bestilling av taxi er ikke mulig i offlinemodus.</string>
+	<string name="dialog_taxi_error">Bestilling av taxi er ikke tilgjengelig for øyeblikket.</string>
+	<string name="advertisement">Reklame</string>
+	<string name="mobile_data_dialog">Bruke mobilt Internett til å vise detaljert informasjon?</string>
+	<string name="mobile_data_option_always">Bruk alltid</string>
+	<string name="mobile_data_option_today">Bare i dag</string>
+	<string name="mobile_data_option_not_today">Ikke bruk i dag</string>
+	<string name="mobile_data">Mobilt Internett</string>
+	<string name="mobile_data_description">Mobilt Internett er nødvendig for å vise detaljert informasjon om steder, for eksempel fotografier, priser og anmeldelser.</string>
+	<string name="mobile_data_option_never">Aldri bruk</string>
+	<string name="mobile_data_option_ask">Alltid spør</string>
+	<string name="traffic_update_maps_text">For å vise trafikkdata må kartene i appen være oppdaterte.</string>
+	<string name="traffic_outdated">Trafikkdata er utdatert.</string>
+	<string name="big_font">Større etiketter</string>
+	<string name="traffic_update_app">Vennligst oppdater MAPS.ME</string>
+	<!-- "traffic" as in road congestion -->
+	<string name="traffic_update_app_message">Du må oppdatere applikasjonen for å kunne se trafikkdata.</string>
+	<!-- "traffic" as in "road congestion" -->
+	<string name="traffic_data_unavailable">Trafikkdata er ikke tilgjengelig</string>
+	<string name="banner_deliveryclub_title">Matleveranse</string>
+	<string name="banner_deliveryclub_message">Hurtig leveranse fra 4000 restauranter. Bestill fra Delivery Club.</string>
+	<string name="banner_lamoda_title">Kles- og skobutikk online</string>
+	<string name="banner_lamoda_message">Flere enn 1000 ulike merker. Opptil 70 % rabatt. Gratis frakt over hele landet.</string>
+	<string name="banner_tutu_title">Togbilletter online</string>
+	<string name="banner_tutu_message">Togbilletter til alle byer – priser, søk og bestilling.</string>
+	<string name="banner_geerbest_title">Elektronikkbutikk online</string>
+	<string name="banner_geerbest_message">Hurtigsøk blant over 50 000 varer til lave priser.</string>
+	<string name="banner_rentalcars_title">Leie av bil online</string>
+	<string name="banner_rentalcars_message">800 leiebilfirmaer på over 49 000 steder.</string>
+	<string name="banner_viator_title">Søk etter omvisninger med guide online</string>
+	<string name="banner_viator_message">Søk blant over 50 000 omvisninger verden over.</string>
+	<!-- december -->
+	<string name="whatsnew_traffic">Trafikkdata i 36 land</string>
+	<!-- december -->
+	<string name="whatsnew_traffic_text">Oppdatert trafikkinformasjon og raskeste kjøreruter basert på det!</string>
+	<!-- december -->
+	<string name="whatsnew_traffic_roaming">Trafikkinformasjon ved roaming</string>
+	<!-- december -->
+	<string name="whatsnew_traffic_roaming_text">Bruker mindre enn 1MB mobildata per tur.</string>
+	<!-- december -->
+	<string name="whatsnew_order_taxi">Bestill drosje</string>
+	<!-- december -->
+	<string name="whatsnew_order_taxi_text">De fleste sidene har nå en knapp til å bestille taxi.</string>
+	<!-- january -->
+	<string name="whatsnew_improved_search">Forbedret søkefunksjon</string>
+	<!-- january -->
+	<string name="whatsnew_improved_search_text">Selv feilstavede forespørsler gir nøyaktige søkeresultater.</string>
+	<!-- january -->
+	<string name="whatsnew_filters_in_search">Søkefiltre</string>
+	<!-- january -->
+	<string name="whatsnew_filters_in_search_text">Søk etter hoteller basert på pris og vurdering.</string>
+	<!-- january -->
+	<string name="whatsnew_font_size">Skriftstørrelse</string>
+	<!-- january -->
+	<string name="whatsnew_font_size_text">Etiketter på kartet kan gjøres større.</string>
 </resources>

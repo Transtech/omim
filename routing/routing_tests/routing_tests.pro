@@ -7,7 +7,7 @@ TEMPLATE = app
 
 ROOT_DIR = ../..
 DEPENDENCIES = routing indexer platform_tests_support platform editor geometry coding base \
-               osrm protobuf tomcrypt succinct jansson stats_client map pugixml stats_client
+               osrm protobuf succinct jansson stats_client map traffic pugixml stats_client
 
 macx-*: LIBS *= "-framework IOKit" "-framework SystemConfiguration"
 
@@ -21,12 +21,15 @@ INCLUDEPATH += $$ROOT_DIR/3party/jansson/src \
 
 SOURCES += \
   ../../testing/testingmain.cpp \
+  applying_traffic_test.cpp \
   astar_algorithm_test.cpp \
   astar_progress_test.cpp \
   astar_router_test.cpp \
   async_router_test.cpp \
   cross_routing_tests.cpp \
   followed_polyline_test.cpp \
+  index_graph_test.cpp \
+  index_graph_tools.cpp \
   nearest_edge_finder_tests.cpp \
   online_cross_fetcher_test.cpp \
   osrm_router_test.cpp \
@@ -41,4 +44,5 @@ SOURCES += \
   vehicle_model_test.cpp \
 
 HEADERS += \
+  index_graph_tools.hpp \
   road_graph_builder.hpp \

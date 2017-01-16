@@ -1,7 +1,5 @@
 #include "skin_generator.hpp"
 
-#include "3party/lodepng/lodepng_io.hpp"
-
 #include "base/logging.hpp"
 #include "base/math.hpp"
 
@@ -161,7 +159,7 @@ namespace tools
     }
   }
 
-  void SkinGenerator::renderPages()
+  bool SkinGenerator::renderPages(uint32_t maxSize)
   {
     for (TSkinPages::iterator pageIt = m_pages.begin(); pageIt != m_pages.end(); ++pageIt)
     {
@@ -196,6 +194,15 @@ namespace tools
             page.m_width *= 2;
           else
             page.m_height *= 2;
+
+          if (page.m_width > maxSize)
+          {
+            page.m_width = maxSize;
+            page.m_height *= 2;
+            if (page.m_height > maxSize)
+              return false;
+          }
+
           continue;
         }
 
@@ -237,6 +244,8 @@ namespace tools
         correctColors(gilImage);
       img.save(s.c_str());
     }
+
+    return true;
   }
 
   void SkinGenerator::markOverflow()

@@ -117,10 +117,8 @@ void SearchPanel::OnSearchResult(ResultsT * results)
   {
     ClearResults();
 
-    for (ResultsT::IterT i = results->Begin(); i != results->End(); ++i)
+    for (auto const & res : *results)
     {
-      ResultT const & res = *i;
-
       QString const name = QString::fromStdString(res.GetString());
       QString strHigh;
       int pos = 0;
@@ -158,9 +156,8 @@ bool SearchPanel::TryChangeMapStyleCmd(QString const & str)
   // Hook for shell command on change map style
   bool const isDark = (str == "mapstyle:dark") || (str == "?dark");
   bool const isLight = isDark ? false : (str == "mapstyle:light") || (str == "?light");
-  bool const isOld = isDark || isLight ? false : (str == "?oldstyle");
 
-  if (!isDark && !isLight && !isOld)
+  if (!isDark && !isLight)
     return false;
 
   // close Search panel
@@ -168,7 +165,7 @@ bool SearchPanel::TryChangeMapStyleCmd(QString const & str)
   parentWidget()->hide();
 
   // change color scheme for the Map activity
-  MapStyle const mapStyle = isOld ? MapStyleLight : (isDark ? MapStyleDark : MapStyleClear);
+  MapStyle const mapStyle = isDark ? MapStyleDark : MapStyleClear;
   m_pDrawWidget->SetMapStyle(mapStyle);
 
   return true;
@@ -221,7 +218,7 @@ bool SearchPanel::TryMigrate(QString const & str)
 
   auto const stateChanged = [&](storage::TCountryId const & id)
   {
-    storage::Status const nextStatus = m_pDrawWidget->GetFramework().Storage().GetPrefetchStorage()->CountryStatusEx(id);
+    storage::Status const nextStatus = m_pDrawWidget->GetFramework().GetStorage().GetPrefetchStorage()->CountryStatusEx(id);
     LOG_SHORT(LINFO, (id, "status :", nextStatus));
     if (nextStatus == storage::Status::EOnDisk)
     {
@@ -249,12 +246,18 @@ bool SearchPanel::TryDisplacementModeCmd(QString const & str)
   
   if (!isDefaultDisplacementMode && !isHotelDisplacementMode)
     return false;
-  
+
   if (isDefaultDisplacementMode)
-    m_pDrawWidget->GetFramework().SetDisplacementMode(dp::displacement::kDefaultMode);
+  {
+    m_pDrawWidget->GetFramework().SetDisplacementMode(DisplacementModeManager::SLOT_DEBUG,
+                                                      false /* show */);
+  }
   else if (isHotelDisplacementMode)
-    m_pDrawWidget->GetFramework().SetDisplacementMode(dp::displacement::kHotelMode);
-  
+  {
+    m_pDrawWidget->GetFramework().SetDisplacementMode(DisplacementModeManager::SLOT_DEBUG,
+                                                      true /* show */);
+  }
+
   return true;
 }
 
@@ -292,7 +295,7 @@ void SearchPanel::OnSearchTextChanged(QString const & str)
   {
     ClearResults();
 
-    m_pDrawWidget->GetFramework().CancelInteractiveSearch();
+    m_pDrawWidget->GetFramework().CancelSearch(search::Mode::Everywhere);
 
     // hide X button
     m_pClearButton->setVisible(false);
@@ -318,7 +321,7 @@ void SearchPanel::OnSearchPanelItemClicked(int row, int)
 
 void SearchPanel::hideEvent(QHideEvent *)
 {
-  m_pDrawWidget->GetFramework().CancelInteractiveSearch();
+  m_pDrawWidget->GetFramework().CancelSearch(search::Mode::Everywhere);
 }
 
 void SearchPanel::OnAnimationTimer()

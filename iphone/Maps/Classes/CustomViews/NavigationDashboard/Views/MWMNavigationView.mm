@@ -1,13 +1,11 @@
-#import "Common.h"
 #import "MWMNavigationView.h"
-
-static CGFloat const kStatusbarHeight = 20.0;
+#import "MWMCommon.h"
 
 @interface MWMNavigationView ()
 
-@property (nonatomic) BOOL isVisible;
+@property(nonatomic) BOOL isVisible;
 
-@property (weak, nonatomic, readwrite) IBOutlet UIView * contentView;
+@property(weak, nonatomic, readwrite) IBOutlet UIView * contentView;
 
 @end
 
@@ -25,39 +23,29 @@ static CGFloat const kStatusbarHeight = 20.0;
 
 - (void)addToView:(UIView *)superview
 {
+  self.frame = self.defaultFrame;
+  self.isVisible = YES;
   NSAssert(superview != nil, @"Superview can't be nil");
   if ([superview.subviews containsObject:self])
     return;
-  dispatch_async(dispatch_get_main_queue(), ^
-  {
-    if (IPAD)
-      [superview addSubview:self];
-    else
-      [superview insertSubview:self atIndex:0];
-    self.frame = self.defaultFrame;
-    self.isVisible = YES;
-  });
+  [superview addSubview:self];
 }
 
-- (void)remove
-{
-  self.isVisible = NO;
-}
-
+- (void)remove { self.isVisible = NO; }
 - (void)layoutSubviews
 {
-  [UIView animateWithDuration:kDefaultAnimationDuration animations:^
-  {
-    if (!CGRectEqualToRect(self.frame, self.defaultFrame))
-      self.frame = self.defaultFrame;
-    self.statusbarBackground.frame = CGRectMake(0.0, -kStatusbarHeight, self.width, kStatusbarHeight);
-    [self.delegate navigationDashBoardDidUpdate];
-  }
-  completion:^(BOOL finished)
-  {
-    if (!self.isVisible)
-      [self removeFromSuperview];
-  }];
+  [UIView animateWithDuration:kDefaultAnimationDuration
+      animations:^{
+        if (!CGRectEqualToRect(self.frame, self.defaultFrame))
+          self.frame = self.defaultFrame;
+        CGFloat const sbHeight = statusBarHeight();
+        self.statusbarBackground.frame = CGRectMake(0.0, -sbHeight, self.width, sbHeight);
+        [self.delegate navigationDashBoardDidUpdate];
+      }
+      completion:^(BOOL finished) {
+        if (!self.isVisible)
+          [self removeFromSuperview];
+      }];
   [super layoutSubviews];
 }
 
@@ -71,8 +59,9 @@ static CGFloat const kStatusbarHeight = 20.0;
 
 - (void)setTopBound:(CGFloat)topBound
 {
-  _topBound = MAX(topBound, kStatusbarHeight);
-  if (_topBound <= kStatusbarHeight)
+  CGFloat const sbHeight = statusBarHeight();
+  _topBound = MAX(topBound, sbHeight);
+  if (_topBound <= sbHeight)
   {
     if (![self.statusbarBackground.superview isEqual:self])
       [self addSubview:self.statusbarBackground];
@@ -86,7 +75,7 @@ static CGFloat const kStatusbarHeight = 20.0;
 
 - (void)setLeftBound:(CGFloat)leftBound
 {
-  _leftBound = leftBound;
+  _leftBound = MAX(leftBound, 0.0);
   [self setNeedsLayout];
 }
 

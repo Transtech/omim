@@ -105,6 +105,10 @@ Platform::EConnectionType Platform::ConnectionStatus()
   return EConnectionType::CONNECTION_NONE;
 }
 
+void Platform::GetSystemFontNames(FilesList & res) const
+{
+}
+
 extern Platform & GetPlatform()
 {
   static Platform platform;

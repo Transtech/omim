@@ -4,6 +4,7 @@
 #include "indexer/index.hpp"
 #include "indexer/classificator_loader.hpp"
 
+#include "search/categories_cache.hpp"
 #include "search/locality_finder.hpp"
 
 #include "platform/country_file.hpp"
@@ -11,21 +12,30 @@
 #include "platform/local_country_file_utils.hpp"
 #include "platform/platform.hpp"
 
+#include "base/cancellable.hpp"
 
 namespace
 {
+struct TestWithClassificator
+{
+  TestWithClassificator() { classificator::Load(); }
+};
 
-class LocalityFinderTest
+class LocalityFinderTest : public TestWithClassificator
 {
   platform::LocalCountryFile m_worldFile;
+
   Index m_index;
+
+  my::Cancellable m_cancellable;
+  search::VillagesCache m_villagesCache;
+
   search::LocalityFinder m_finder;
   m2::RectD m_worldRect;
 
 public:
-  LocalityFinderTest() : m_finder(&m_index)
+  LocalityFinderTest() : m_villagesCache(m_cancellable), m_finder(m_index, m_villagesCache)
   {
-    classificator::Load();
     m_worldFile = platform::LocalCountryFile::MakeForTesting("World");
 
     try
@@ -93,7 +103,7 @@ UNIT_CLASS_TEST(LocalityFinderTest, Smoke)
   input.emplace_back(53.883931, 27.69341);     // Parking Minsk (near MKAD)
   input.emplace_back(53.917306, 27.707875);    // Lipki airport (Minsk)
   input.emplace_back(42.285901, 18.834407);    // Budva (Montenegro)
-  input.emplace_back(41.903479, 12.452854);    // Vaticano (Rome)
+  input.emplace_back(43.9363996, 12.4466991);  // City of San Marino
   input.emplace_back(47.3345002, 8.531262);    // Zurich
 
   char const * results3[] =
@@ -104,7 +114,7 @@ UNIT_CLASS_TEST(LocalityFinderTest, Smoke)
     "Minsk",
     "Minsk",
     "Budva",
-    "Rome",
+    "City of San Marino",
     "Zurich"
   };
 

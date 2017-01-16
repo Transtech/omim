@@ -24,7 +24,7 @@
           android:layout_marginBottom="@dimen/margin_base"
           android:layout_gravity="center_horizontal"
           android:tag="@string/tag_height_limited"
-          tools:src="@drawable/img_news_booking"/>
+          tools:src="@drawable/img_whats_new_traffic_roaming"/>
 
         <TextView
           android:id="@+id/title"

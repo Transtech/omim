@@ -1,6 +1,7 @@
 #pragma once
 
 #include "search/house_to_street_table.hpp"
+#include "search/lazy_centers_table.hpp"
 
 #include "indexer/features_vector.hpp"
 #include "indexer/index.hpp"
@@ -8,6 +9,8 @@
 
 #include "base/macros.hpp"
 
+#include "std/shared_ptr.hpp"
+#include "std/string.hpp"
 #include "std/unique_ptr.hpp"
 
 class MwmValue;
@@ -21,22 +24,13 @@ void CoverRect(m2::RectD const & rect, int scale, covering::IntervalsT & result)
 class MwmContext
 {
 public:
-  MwmSet::MwmHandle m_handle;
-  MwmValue & m_value;
-
-private:
-  FeaturesVector m_vector;
-  ScaleIndex<ModelReaderPtr> m_index;
-  unique_ptr<HouseToStreetTable> m_houseToStreetTable;
-
-public:
   explicit MwmContext(MwmSet::MwmHandle handle);
 
   inline MwmSet::MwmId const & GetId() const { return m_handle.GetId(); }
   inline string const & GetName() const { return GetInfo()->GetCountryName(); }
   inline shared_ptr<MwmInfo> const & GetInfo() const { return GetId().GetInfo(); }
 
-  template <class TFn>
+  template <typename TFn>
   void ForEachIndex(covering::IntervalsT const & intervals, uint32_t scale, TFn && fn) const
   {
     ForEachIndexImpl(intervals, scale, [&](uint32_t index)
@@ -48,7 +42,16 @@ public:
                      });
   }
 
-  template <class TFn>
+  template <typename TFn>
+  void ForEachIndex(m2::RectD const & rect, TFn && fn) const
+  {
+    uint32_t const scale = m_value.GetHeader().GetLastScale();
+    covering::IntervalsT intervals;
+    CoverRect(rect, scale, intervals);
+    ForEachIndex(intervals, scale, forward<TFn>(fn));
+  }
+
+  template <typename TFn>
   void ForEachFeature(m2::RectD const & rect, TFn && fn) const
   {
     uint32_t const scale = m_value.GetHeader().GetLastScale();
@@ -64,9 +67,17 @@ public:
   }
 
   // @returns false if feature was deleted by user.
-  bool GetFeature(uint32_t index, FeatureType & ft) const;
+  WARN_UNUSED_RESULT bool GetFeature(uint32_t index, FeatureType & ft) const;
 
-  bool GetStreetIndex(uint32_t houseId, uint32_t & streetId);
+  WARN_UNUSED_RESULT bool GetStreetIndex(uint32_t houseId, uint32_t & streetId);
+
+  WARN_UNUSED_RESULT inline bool GetCenter(uint32_t index, m2::PointD & center)
+  {
+    return m_centers.Get(index, center);
+  }
+
+  MwmSet::MwmHandle m_handle;
+  MwmValue & m_value;
 
 private:
   osm::Editor::FeatureStatus GetEditedStatus(uint32_t index) const
@@ -87,6 +98,11 @@ private:
           },
           i.first, i.second, scale);
   }
+
+  FeaturesVector m_vector;
+  ScaleIndex<ModelReaderPtr> m_index;
+  unique_ptr<HouseToStreetTable> m_houseToStreetTable;
+  LazyCentersTable m_centers;
 
   DISALLOW_COPY_AND_MOVE(MwmContext);
 };

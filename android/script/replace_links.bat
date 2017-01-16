@@ -2,6 +2,7 @@ cd ..
 
 rm -rf assets/
 mkdir assets
+cp ../data/banners.txt assets/
 cp ../data/categories.txt assets/
 cp ../data/classificator.txt assets/
 cp ../data/colors.txt assets/
@@ -10,7 +11,6 @@ cp ../data/countries.txt assets/
 cp ../data/countries_obsolete.txt assets/
 cp ../data/drules_proto_dark.bin assets/
 cp ../data/drules_proto_clear.bin assets/
-cp ../data/drules_proto_legacy.bin assets/
 cp ../data/editor.config assets/
 cp ../data/external_resources.txt assets/
 cp ../data/faq.html assets/
@@ -24,22 +24,14 @@ cp ../data/types.txt assets/
 cp ../data/unicode_blocks.txt assets/
 cp ../data/opening_hours_how_to_edit.html assets/
 
-cp -r ../data/resources-hdpi_legacy/ assets/
 cp -r ../data/resources-hdpi_dark/ assets/
 cp -r ../data/resources-hdpi_clear/ assets/
-cp -r ../data/resources-ldpi_legacy/ assets/
-cp -r ../data/resources-ldpi_dark/ assets/
-cp -r ../data/resources-ldpi_clear/ assets/
-cp -r ../data/resources-mdpi_legacy/ assets/
 cp -r ../data/resources-mdpi_dark/ assets/
 cp -r ../data/resources-mdpi_clear/ assets/
-cp -r ../data/resources-xhdpi_legacy/ assets/
 cp -r ../data/resources-xhdpi_dark/ assets/
 cp -r ../data/resources-xhdpi_clear/ assets/
-cp -r ../data/resources-xxhdpi_legacy/ assets/
 cp -r ../data/resources-xxhdpi_dark/ assets/
 cp -r ../data/resources-xxhdpi_clear/ assets/
-cp -r ../data/resources-6plus_legacy/ assets/
 cp -r ../data/resources-6plus_dark/ assets/
 cp -r ../data/resources-6plus_clear/ assets/
 

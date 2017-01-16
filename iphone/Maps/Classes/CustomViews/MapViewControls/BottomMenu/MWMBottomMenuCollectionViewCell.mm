@@ -1,7 +1,5 @@
-#import "Common.h"
+#import "MWMCommon.h"
 #import "MWMBottomMenuCollectionViewCell.h"
-#import "UIFont+MapsMeFonts.h"
-#import "UIColor+MapsMeColor.h"
 #import "UIImageView+Coloring.h"
 
 @interface MWMBottomMenuCollectionViewCell ()
@@ -24,8 +22,6 @@
                  isEnabled:(BOOL)isEnabled
 {
   self.icon.image = [UIImage imageNamed:imageName];
-  if (isIOS7)
-    [self.icon makeImageAlwaysTemplate];
   self.label.text = label;
   if (badgeCount > 0)
   {

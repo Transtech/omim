@@ -198,6 +198,7 @@
 	<string name="parking">الاصطفاف</string>
 	<!-- Search Suggestion -->
 	<string name="shop">المتجر</string>
+	<!-- Search Suggestion -->
 	<string name="hotel">الفندق</string>
 	<!-- Search Suggestion -->
 	<string name="tourism">سياحة</string>
@@ -277,8 +278,6 @@
 	<string name="copied_to_clipboard">تم النسخ الى الحافظة: %1$s</string>
 	<!-- Setting label for statistics turn on/off -->
 	<string name="allow_statistics">ارسال الاحصائيات</string>
-	<!-- Hint near allow statictics checkbox -->
-	<string name="allow_statistics_hint">اسمح لنا بجمع احصائيات الاستخدام من أجل تحسين التطبيق</string>
 	<!-- place preview title -->
 	<string name="info">المعلومات</string>
 	<!-- Used for bookmark editing -->
@@ -331,6 +330,7 @@
 	<string name="pref_tts_how_to_set_up_voice">كيفية ضبط الصوت</string>
 	<!-- Settings «Map» category: «Record track» title -->
 	<string name="pref_track_record_title">المسار الأخير</string>
+	<string name="pref_map_auto_zoom">تكبير تلقائي</string>
 	<string name="duration_disabled">لا يعمل</string>
 	<string name="duration_1_hour">1 ساعة</string>
 	<string name="duration_2_hours">2 ساعة</string>
@@ -592,7 +592,6 @@
 	<string name="dialog_routing_send_error">الإبلاغ عن المشكلة</string>
 	<string name="dialog_routing_if_get_cross_route">هل تريد إنشاء مسار مباشر بشكل أكبر يمتد عبر أكثر من خريطة؟</string>
 	<string name="dialog_routing_cross_route_is_optimal">هناك مسار أفضل يعبر حافة هذه الخريطة.</string>
-	<string name="dialog_routing_always_cross_that_border">اعبر هذه الحدود دائمًا</string>
 	<string name="not_now">ليس الآن</string>
 	<string name="dialog_routing_build_route">إنشاء</string>
 	<string name="dialog_routing_download_and_build_cross_route">هل ترغب في تنزيل الخريطة وإنشاء مسار أفضل يمتد عبر أكثر من خريطة؟</string>
@@ -636,7 +635,6 @@
 	<string name="clear_search">مسح تاريخ البحث</string>
 	<!-- Title for settings to enable/disable showcase menu button -->
 	<string name="showcase_settings_title">رؤية العروض</string>
-	<string name="showcase_more_apps">المزيد من تطبيقات My.com</string>
 	<string name="p2p_route_planning">تخطيط الطريق</string>
 	<string name="p2p_your_location">موقعك</string>
 	<string name="p2p_from">نقطة المغادرة</string>
@@ -720,9 +718,12 @@
 	<string name="login_with_openstreetmap">قم بتسجيل الدخول في www.openstreetmap.org</string>
 	<string name="edit_place">تعديل المكان</string>
 	<string name="place_name">اسم المكان</string>
-	<string name="place_name_caption">أدخل الاسم كما هو مبين على العلامة أو اللافتة</string>
 	<!-- title above languages list cells in the editor, below editable name text field. -->
 	<string name="other_languages">لغات أخرى</string>
+	<!-- small button to open list with names in different languages -->
+	<string name="show_more">إظهار أكثر</string>
+	<!-- small button to close list with names in different languages -->
+	<string name="show_less">إظهار أقل</string>
 	<string name="add_language">إضافة لغة</string>
 	<string name="street">الشارع</string>
 	<!-- Editable House Number text field (in address block). -->
@@ -768,7 +769,6 @@
 	<string name="editor_edit_place_category_title">الفئة</string>
 	<string name="detailed_problem_description">وصف مفصل للمشكلة</string>
 	<string name="editor_report_problem_other_title">مشكلة مختلفة</string>
-	<string name="placepage_add_place_button">إضافة مكان</string>
 	<string name="placepage_report_problem_button">الإبلاغ عن مشكلة</string>
 	<string name="placepage_add_business_button">إضافة مؤسسة</string>
 	<string name="whatsnew_smallmwm_header">لقد طلبتم ذلك، وها نحن قد لبينا طلبكم</string>
@@ -803,6 +803,7 @@
 	<string name="download_over_mobile_message">قد يكون هذا مكلفا جدا لبعض الخطط أو عند التجوال.</string>
 	<string name="error_enter_correct_house_number">أدخل رقم منزل صحيح</string>
 	<string name="editor_storey_number">عدد الطوابق (بحد أقصى %d)</string>
+	<!-- Error message in Editor when a user tries to set the number of floors for a building higher than 25 -->
 	<string name="error_enter_correct_storey_number">تحرير المبنى بحد أقصى 25 طابقًا</string>
 	<string name="editor_zip_code">الرمز البريدي</string>
 	<string name="error_enter_correct_zip_code">أدخل الرمز البريدي الصحيح</string>
@@ -816,7 +817,6 @@
 	<string name="editor_tag_description">أدخل الشركة أو المؤسسة أو الشخص المسؤول عن المنشآت.</string>
 	<string name="editor_no_local_edits_title">ليست لديك تعديلات محلية</string>
 	<string name="editor_no_local_edits_description">يوضح هذا عدد التغييرات المقترحة على الخريطة والتي يمكن الوصول إليها حاليًا فقط من على جهازك.</string>
-	<string name="editor_international_names_subtitle">الاسم بلغات أخرى</string>
 	<string name="editor_send_to_osm">إرسال الى OSM</string>
 	<string name="editor_remove">إزالة</string>
 	<string name="downloader_my_maps_title">خرائطي</string>
@@ -839,7 +839,8 @@
 	<string name="location_services_disabled_message">قم بتفعيل الوصول إلى الموقع الجغرافي في إعدادات الجهاز</string>
 	<string name="location_services_disabled_1">1. افتح الإعدادات</string>
 	<string name="location_services_disabled_2">2. انقر على الموقع</string>
-	<string name="location_services_disabled_3">3. اختر دائما</string>
+	<!-- iOS Dialog for the case when the location permission is not granted -->
+	<string name="location_services_disabled_3">3. اختيار أثناء استخدام التطبيق</string>
 	<string name="placepage_parking_surface">سطح</string>
 	<string name="placepage_parking_multistorey">متعدد الطوابق</string>
 	<string name="placepage_parking_underground">تحت الارض</string>
@@ -856,11 +857,18 @@
 	<string name="placepage_open_24_7">24 / 7</string>
 	<string name="place_page_booking_rating">التصنيف: %s</string>
 	<string name="place_page_starting_from">من%s</string>
-	<string name="meter">متر</string>
+	<string name="meter">م</string>
 	<string name="kilometer">كم</string>
+	<string name="kilometers_per_hour">كم/ساعة</string>
+	<string name="mile">ميل</string>
+	<string name="foot">قدم</string>
+	<string name="miles_per_hour">ميل/ساعة</string>
+	<string name="day">ي</string>
+	<string name="hour">س</string>
+	<string name="minute">د</string>
 	<string name="placepage_place_description">الوصف</string>
 	<string name="placepage_more_button">المزيد</string>
-	<string name="bookingcom_book_button">حجز</string>
+	<string name="book_button">حجز</string>
 	<string name="placepage_call_button">اتصال</string>
 	<string name="placepage_edit_bookmark_button">تحرير العلامة المرجعية</string>
 	<string name="placepage_bookmark_name_hint">اسم العلامة المرجعية</string>
@@ -875,18 +883,167 @@
 	<string name="editor_status_sending">جارِ الإرسال…</string>
 	<string name="editor_place_doesnt_exist">المكان غير موجود</string>
 	<string name="text_more_button">…المزيد</string>
-	<string name="error_enter_correct_phone">أدحل رقم الهاتف دون أحرف</string>
+	<!-- Phone number error message -->
+	<string name="error_enter_correct_phone">أدخل رقم هاتف صحيح</string>
 	<string name="error_enter_correct_web">أدخل عنوان ويب صالح</string>
 	<string name="error_enter_correct_email">أدخل بريدا إلكترونيا صالحا</string>
 	<string name="error_enter_correct">أدخل قيمة صالحة</string>
 	<string name="editor_profile_changes_for_next_place">التغييرات في المكان التالي: %d</string>
 	<string name="editor_profile_rating_place">المركز في التصنيف</string>
 	<string name="booking_dialog_not_connect_header">لحجز الفندق، يُرجى تمكين الاتصال بالإنترنت</string>
-	<string name="whatsnew_booking_header">حجز فندق من التطبيق</string>
-	<string name="whatsnew_booking_message">عندما تبحث عن فندق، ستعرض لك الخريطة فئة أسعار وتصنيف الفندق.</string>
 	<string name="button_try">جربه</string>
-	<string name="whatsnew_cycle_navigation_header">التوجيه الملاحي مع الدراجات (إصدار تجريبي)</string>
-	<string name="whatsnew_cycle_navigation_message">نختبر الآن التوجيه الملاحي مع الدراجات للموسم الجديد. جرب طريق الدراجات المفضل لديك باستخدام MAPS.ME، واطلعنا على رأيك.</string>
 	<string name="refresh">تحديث</string>
 	<string name="last_update">أخر تحديث: %s</string>
+	<string name="booking_checkin">موجود في: %s</string>
+	<string name="booking_checkout">غادر: %s</string>
+	<string name="placepage_add_place_button">إضافة مكان ما للخريطة</string>
+	<!-- Displayed when saving some edits to the map to warn against publishing personal data -->
+	<string name="editor_share_to_all_dialog_title">هل ترغب في إرساله لجميع المستخدمين؟</string>
+	<!-- iOS Dialog before publishing the modifications to the public map. -->
+	<string name="editor_share_to_all_dialog_message_1">تأكد من أنك لم تقم بإدخال أي بيانات شخصية.</string>
+	<string name="editor_share_to_all_dialog_message_2">سنقوم بمراجعة هذه التغييرات. إذا كانت لدينا أي أسئلة فسوف نتصل بك عبر البريد الإلكتروني.</string>
+	<string name="navigation_overview_button">استعراض</string>
+	<string name="navigation_stop_button">توقف</string>
+	<!-- Text on an empty bookmark page -->
+	<string name="bookmarks_empty_title">حفظ الإشارات المرجعية</string>
+	<string name="bookmarks_empty_message_1">انقر على ★ لحفظ الأماكن المفضلة من أجل إمكانية الوصول السريع.</string>
+	<string name="bookmarks_empty_message_2">جلب العلامات المرجعية من البريد الإلكتروني والإنترنت.</string>
+	<string name="bookmarks_empty_message_3">غادر: %s</string>
+	<!-- Name of the group for booked hotels -->
+	<string name="bookmarks_group_name">فنادق تم حجزها</string>
+	<string name="place_page_button_read_descriprion">اقرأ</string>
+	<!-- iOS dialog for the case when recent track recording is on and the app comes back from background -->
+	<string name="recent_track_background_dialog_title">تريد تعطيل التسجيل الخاص بمسار سفرك الأخير؟</string>
+	<!-- If a hotel is being shared -->
+	<string name="sharing_booking">أو قم بالحجز عبر booking.com</string>
+	<string name="off_recent_track_background_button">تعطيل</string>
+	<!-- For sharing via SMS and so on -->
+	<string name="sharing_call_action_look">انظر</string>
+	<string name="continue_recent_track_background_button">استمرار</string>
+	<string name="recent_track_background_dialog_message">يستخدم MAPS.ME موقعك الجغرافي في الخلفية لتسجيل مسار سفرك الأخير.</string>
+	<string name="whatsnew_car_navigation_header">ملاحة المركبات سهلة الاستخدام</string>
+	<string name="whatsnew_car_navigation_message">• تستحوذ عناصر الملاحة على مساحة أقل.\n• نحن نعرض السرعة كما وأضفنا كذلك التكبير التلقائي.</string>
+	<string name="whatsnew_cycle_navigation_2_header">ملاحة الدراجات</string>
+	<string name="whatsnew_cycle_navigation_2_message">• تضع ملاحة الدراجات بيانات التضاريس في الاعتبار.\n• نحن نخلق طرق أسهل مع الأخذ بعين الاعتبار منحدرات الطريق.</string>
+	<string name="whatsnew_booking_2_header">البحث بسهولة عن فندق</string>
+	<string name="whatsnew_booking_2_message">تظهر نتائج البحث التقييم والفئة السعرية للفندق.</string>
+	<string name="whatsnew_cycle_navigation_header">التوجيه الملاحي مع الدراجات (إصدار تجريبي)</string>
+	<string name="whatsnew_cycle_navigation_message">نختبر الآن التوجيه الملاحي مع الدراجات للموسم الجديد. جرب طريق الدراجات المفضل لديك باستخدام MAPS.ME، واطلعنا على رأيك.</string>
+	<!-- Rate on Google Play (Android only) -->
+	<string name="rate_gp">تصنيف على Google Play</string>
+	<!-- Share with friends: menu item title -->
+	<string name="tell_friends">أخبر صديق</string>
+	<!-- Share with friends: sharing text -->
+	<string name="tell_friends_text">مرحبًا! تثبيت MAPS.ME!</string>
+	<!-- About short text (below logo) -->
+	<string name="about_description">MAPS.ME هو تطبيق أساسي للسفر بدون اتصال بالإنترنت. يعتمد برنامج MAPS.ME على بيانات OpenStreetMap ويتيح تحريرها.</string>
+	<!-- Text in menu -->
+	<string name="blog">المدونة</string>
+	<!-- Hint near allow statictics checkbox -->
+	<string name="allow_statistics_hint">تجميح إحصائيات الاستخدام يساعد في تحسين التطبيق.</string>
+	<string name="general_settings">إعدادات عامة</string>
+	<string name="date">التاريخ %d</string>
+	<!-- "Report a bug" -> "Generaal Feedback" -> "Something is not working" -->
+	<string name="something_is_not_working">شيء ما لا يعمل</string>
+	<!-- For the first routing -->
+	<string name="accept">قبول</string>
+	<!-- For the first routing -->
+	<string name="decline">رفض</string>
+	<string name="whats_new_route_profile_title">الأفضل العثور على حل بدلا من السقوط في خندق</string>
+	<string name="whats_new_route_profile_message">بالنسبة لمسارات المشاة والدراجات نحن الآن نعرض تشكيل الارتفاع.</string>
+	<string name="whats_new_booking_improve_title">توفير عند حجز الفنادق</string>
+	<string name="whats_new_booking_improve_message">تحتوي نتائج البحث عن الفنادق الآن على فئة السعر.\nوأضفنا أيضًا أكثر من 110000 فندق.</string>
+	<!-- For place page hotel facilities block -->
+	<string name="placepage_hotel_facilities">مرافق</string>
+	<!-- For place page hotel nearby block -->
+	<string name="placepage_hotel_nearby">قريبة</string>
+	<!-- For ordering a taxi (as opposed to hotels or other things) -->
+	<string name="taxi_order">طلب تاكسي</string>
+	<!-- How long it is until the taxi arrives -->
+	<string name="taxi_wait">متوقع في %s</string>
+	<!-- When there are no available taxis nearby -->
+	<string name="taxi_not_found">لا يمكن العثور على تاكسي قريب</string>
+	<string name="install_app">تثبيت</string>
+	<!-- `Filter` is a noun here -->
+	<string name="booking_filters">عامل التصفية</string>
+	<string name="booking_filters_reset">إعادة تعيين</string>
+	<string name="booking_filters_rating">تصنيف</string>
+	<string name="booking_filters_rating_any">أي</string>
+	<string name="booking_filters_ragting_good">جيد</string>
+	<string name="booking_filters_rating_very_good">جيد جداً</string>
+	<string name="booking_filters_rating_excellent">ممتاز</string>
+	<string name="booking_filters_price_category">فئة الأسعار</string>
+	<string name="search_no_results_title">لم يتم العثور على نتائج</string>
+	<string name="search_no_results_message">جرب مصطلح بحث أكثر عمومية أو التصغير أو إعادة تعيين عامل التصفية.</string>
+	<string name="search_no_results_expand_area_button">تصغير</string>
+	<string name="search_no_results_reset_button">إعادة تعيين عامل التصفية</string>
+	<!-- noun -->
+	<string name="search_in_table">قائمة</string>
+	<string name="booking_based_on_reviews">استناداً إلى %d من مراجعات الفنادق</string>
+	<string name="booking_show_more">إظهار المزيد</string>
+	<string name="booking_reviews">المراجعات</string>
+	<string name="booking_hotel">الفندق</string>
+	<!-- hotel room -->
+	<string name="booking_hotel_room">الغرفة</string>
+	<!-- A neologism for a chat based on geographical proximity -->
+	<string name="chat">Geochat</string>
+	<!-- Verb. Text on a button that opens the chat. -->
+	<string name="chat_open">فتح</string>
+	<string name="whatsnew_uber_header">MAPS.ME وUber</string>
+	<string name="whatsnew_uber_message">اطلب تاكسي Uber مباشرة من التطبيق!</string>
+	<string name="dialog_taxi_offline">طلب تاكسي غير متاح في وضع الطيران.</string>
+	<string name="dialog_taxi_error">طلب تاكسي غير متاح مؤقتا.</string>
+	<string name="advertisement">إعلان</string>
+	<string name="mobile_data_dialog">استخدام إنترنت المحمول لإظهار المعلومات التفصيلية؟</string>
+	<string name="mobile_data_option_always">استخدام دائمًا</string>
+	<string name="mobile_data_option_today">اليوم فقط</string>
+	<string name="mobile_data_option_not_today">عدم الاستخدام اليوم</string>
+	<string name="mobile_data">انترنت المحمول</string>
+	<string name="mobile_data_description">الإنترنت المحمول مطلوب لعرض معلومات تفصيلية عن الأماكن مثل الصور الفوتوغرافية والأسعار والمراجعات.</string>
+	<string name="mobile_data_option_never">عدم الاستخدام مطلقًا</string>
+	<string name="mobile_data_option_ask">السؤال دوماً</string>
+	<string name="traffic_update_maps_text">لعرض البيانات المرورية، يجب تحديث الخرائط.</string>
+	<string name="traffic_outdated">البيانات المرورية قديمة.</string>
+	<string name="big_font">تسميات أكبر</string>
+	<string name="traffic_update_app">الرجاء تحديث MAPS.ME</string>
+	<!-- "traffic" as in road congestion -->
+	<string name="traffic_update_app_message">لعرض البيانات المرورية، يجب تحديث التطبيق.</string>
+	<!-- "traffic" as in "road congestion" -->
+	<string name="traffic_data_unavailable">البيانات المرورية غير متاحة</string>
+	<string name="banner_deliveryclub_title">توصيل الطعام</string>
+	<string name="banner_deliveryclub_message">توصيل سريع من 4000 مطعم. اطلب من Delivery Club.</string>
+	<string name="banner_lamoda_title">متجر الملابس والأحذية على الإنترنت</string>
+	<string name="banner_lamoda_message">أكثر من 1000 علامة تجارية. خصم يصل إلى 70%. توصيل مجاني في كافة أنحاء البلاد.</string>
+	<string name="banner_tutu_title">تذاكر القطار على الإنترنت</string>
+	<string name="banner_tutu_message">تذاكر القطار إلى أي مدينة على الإنترنت - الأسعار والبحث والحجز.</string>
+	<string name="banner_geerbest_title">متجر إلكترونيات على الإنترنت</string>
+	<string name="banner_geerbest_message">بحث سريع في أكثر من 50000 صنف بأسعار منخفضة.</string>
+	<string name="banner_rentalcars_title">إيجار السيارات على الإنترنت</string>
+	<string name="banner_rentalcars_message">800 شركة تأجير سيارات في أكثر من 49000 مكان لتأجير السيارات.</string>
+	<string name="banner_viator_title">بحث عن الرحلات على الإنترنت</string>
+	<string name="banner_viator_message">بحث في أكثر من 50000 رحلة في كافة أنحاء العالم.</string>
+	<!-- december -->
+	<string name="whatsnew_traffic">البيانات المرورية في 36 دولة</string>
+	<!-- december -->
+	<string name="whatsnew_traffic_text">معلومات مرورية حديثة وأسرع مسارات القيادة التي تعتمد عليها!</string>
+	<!-- december -->
+	<string name="whatsnew_traffic_roaming">المعلومات المرورية أثناء التجوال</string>
+	<!-- december -->
+	<string name="whatsnew_traffic_roaming_text">يتطلب أقل من 1 ميجابايت من عرض نطاق المحمول لكل رحلة.</string>
+	<!-- december -->
+	<string name="whatsnew_order_taxi">طلب تاكسي</string>
+	<!-- december -->
+	<string name="whatsnew_order_taxi_text">تحتوي معظم صفحات المواقع الآن على زر لطلب تاكسي.</string>
+	<!-- january -->
+	<string name="whatsnew_improved_search">بحث محسّن</string>
+	<!-- january -->
+	<string name="whatsnew_improved_search_text">حتى الاستعلامات التي بها أخطاء إملائية يمكن أن تحقق نتائج بحث دقيقة.</string>
+	<!-- january -->
+	<string name="whatsnew_filters_in_search">عوامل تصفية البحث</string>
+	<!-- january -->
+	<string name="whatsnew_filters_in_search_text">البحث عن الفنادق وفقًا للسعر والتصنيف.</string>
+	<!-- january -->
+	<string name="whatsnew_font_size">حجم الخط</string>
+	<!-- january -->
+	<string name="whatsnew_font_size_text">يمكن جعل التسميات على الخريطة أكبر.</string>
 </resources>

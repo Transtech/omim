@@ -2,24 +2,30 @@ package com.mapswithme.maps.widget.menu;
 
 import android.graphics.drawable.AnimationDrawable;
 import android.graphics.drawable.Drawable;
+import android.support.annotation.NonNull;
 import android.util.SparseArray;
 import android.view.View;
 import android.widget.ImageView;
 
 import com.mapswithme.maps.LocationState;
 import com.mapswithme.maps.R;
-import com.mapswithme.maps.location.LocationHelper;
+import com.mapswithme.maps.routing.RoutingController;
+import com.mapswithme.util.Animations;
 import com.mapswithme.util.Graphics;
 import com.mapswithme.util.ThemeUtils;
+import com.mapswithme.util.UiUtils;
 import com.mapswithme.util.statistics.AlohaHelper;
 import com.mapswithme.util.statistics.Statistics;
 
 public class MyPositionButton
 {
+  @NonNull
   private final ImageView mButton;
-  private final SparseArray<Drawable> mIcons = new SparseArray<>();  // Location mode -> Button icon
+  private static final SparseArray<Drawable> mIcons = new SparseArray<>(); // Location mode -> Button icon
 
-  MyPositionButton(View button)
+  private int mMode;
+
+  public MyPositionButton(@NonNull View button)
   {
     mButton = (ImageView) button;
     mButton.setOnClickListener(new View.OnClickListener()
@@ -27,17 +33,19 @@ public class MyPositionButton
       @Override
       public void onClick(View v)
       {
-        LocationHelper.INSTANCE.onMyPositionButtonClicked();
-
+        LocationState.nativeSwitchToNextMode();
         Statistics.INSTANCE.trackEvent(Statistics.EventName.TOOLBAR_MY_POSITION);
         AlohaHelper.logClick(AlohaHelper.TOOLBAR_MY_POSITION);
       }
     });
+
+    mIcons.clear();
   }
 
   @SuppressWarnings("deprecation")
   public void update(int mode)
   {
+    mMode = mode;
     Drawable image = mIcons.get(mode);
     if (image == null)
     {
@@ -71,5 +79,23 @@ public class MyPositionButton
 
     if (image instanceof AnimationDrawable)
       ((AnimationDrawable) image).start();
+
+    UiUtils.visibleIf(!shouldBeHidden(), mButton);
+  }
+
+  private boolean shouldBeHidden()
+  {
+    return mMode == LocationState.FOLLOW_AND_ROTATE
+           && (RoutingController.get().isPlanning());
+  }
+
+  public void show()
+  {
+    Animations.appearSliding(mButton, Animations.RIGHT, null);
+  }
+
+  public void hide()
+  {
+    Animations.disappearSliding(mButton, Animations.RIGHT, null);
   }
 }

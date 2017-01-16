@@ -15,12 +15,13 @@
 #include "indexer/feature.hpp"
 #include "indexer/ftypes_matcher.hpp"
 #include "indexer/index.hpp"
-#include "geometry/mercator.hpp"
 
 #include "geometry/distance_on_sphere.hpp"
+#include "geometry/mercator.hpp"
 
 #include "coding/file_container.hpp"
 #include "coding/read_write_utils.hpp"
+
 #include "coding/internal/file_data.hpp"
 
 #include "base/logging.hpp"
@@ -412,8 +413,8 @@ void BuildRoutingIndex(string const & baseDir, string const & countryName, strin
       }
 
       // Matching error. Print warning message.
-      LOG(LWARNING, ("!!!!! Match not found:", seg.wayId));
-      LOG(LWARNING, ("(Lat, Lon):", pts[0].y, pts[0].x, "; (Lat, Lon):", pts[1].y, pts[1].x));
+      LOG(LINFO, ("!!!!! Match not found:", seg.wayId));
+      LOG(LINFO, ("(Lat, Lon):", pts[0].y, pts[0].x, "; (Lat, Lon):", pts[1].y, pts[1].x));
 
       int ind1 = -1;
       int ind2 = -1;
@@ -437,7 +438,7 @@ void BuildRoutingIndex(string const & baseDir, string const & countryName, strin
         }
       }
 
-      LOG(LWARNING, ("ind1 =", ind1, "ind2 =", ind2, "dist1 =", dist1, "dist2 =", dist2));
+      LOG(LINFO, ("ind1 =", ind1, "ind2 =", ind2, "dist1 =", dist1, "dist2 =", dist2));
     }
 
     if (vec.size() > 1)

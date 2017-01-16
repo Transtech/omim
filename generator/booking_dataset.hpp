@@ -1,114 +1,68 @@
 #pragma once
 
-#include "generator/osm_element.hpp"
+#include "generator/sponsored_dataset.hpp"
 
-#include "indexer/index.hpp"
+#include "geometry/latlon.hpp"
 
-#include "search/reverse_geocoder.hpp"
+#include "base/newtype.hpp"
 
-#include "boost/geometry.hpp"
-#include "boost/geometry/geometries/point.hpp"
-#include "boost/geometry/geometries/box.hpp"
-#include "boost/geometry/index/rtree.hpp"
-
-#include "std/function.hpp"
+#include "std/limits.hpp"
 #include "std/string.hpp"
 
 namespace generator
 {
-class BookingDataset
+// TODO(mgsergio): Try to get rid of code duplication. (See OpenTableRestaurant)
+struct BookingHotel
 {
-public:
-  double static constexpr kDistanceLimitInMeters = 150;
-  size_t static constexpr kMaxSelectedElements = 3;
+  NEWTYPE(uint32_t, ObjectId);
 
-  // Calculated with tools/python/booking_hotels_quality.py
-  double static constexpr kOptimalThreshold = 0.709283;
-
-  struct Hotel
+  enum class Fields
   {
-    enum class Fields
-    {
-      Id = 0,
-      Latitude = 1,
-      Longtitude = 2,
-      Name = 3,
-      Address = 4,
-      Stars = 5,
-      PriceCategory = 6,
-      RatingBooking = 7,
-      RatingUsers = 8,
-      DescUrl = 9,
-      Type = 10,
-      Translations = 11,
-
-      Counter
-    };
-
-    uint32_t id = 0;
-    double lat = 0.0;
-    double lon = 0.0;
-    string name;
-    string address;
-    string street;
-    string houseNumber;
-    uint32_t stars = 0;
-    uint32_t priceCategory = 0;
-    double ratingBooking = 0.0;
-    double ratingUser = 0.0;
-    string descUrl;
-    uint32_t type = 0;
-    string translations;
-
-    static constexpr size_t Index(Fields field) { return static_cast<size_t>(field); }
-    static constexpr size_t FieldsCount() { return static_cast<size_t>(Fields::Counter); }
-    explicit Hotel(string const & src);
-
-    inline bool IsAddressPartsFilled() const { return !street.empty() || !houseNumber.empty(); }
+    Id = 0,
+    Latitude = 1,
+    Longtitude = 2,
+    Name = 3,
+    Address = 4,
+    Stars = 5,
+    PriceCategory = 6,
+    RatingBooking = 7,
+    RatingUsers = 8,
+    DescUrl = 9,
+    Type = 10,
+    Translations = 11,
+    Counter
   };
 
-  class AddressMatcher
+  static constexpr ObjectId InvalidObjectId()
   {
-    Index m_index;
-    unique_ptr<search::ReverseGeocoder> m_coder;
+    return ObjectId(numeric_limits<typename ObjectId::RepType>::max());
+  }
 
-  public:
-    AddressMatcher();
-    void operator()(Hotel & hotel);
-  };
+  explicit BookingHotel(string const & src);
 
-  explicit BookingDataset(string const & dataPath, string const & addressReferencePath = string());
-  explicit BookingDataset(istream & dataSource, string const & addressReferencePath = string());
+  static constexpr size_t FieldIndex(Fields field) { return static_cast<size_t>(field); }
+  static constexpr size_t FieldsCount() { return static_cast<size_t>(Fields::Counter); }
 
-  bool BookingFilter(OsmElement const & e) const;
-  bool TourismFilter(OsmElement const & e) const;
+  bool HasAddresParts() const { return !m_street.empty() || !m_houseNumber.empty(); }
 
-  inline size_t Size() const { return m_hotels.size(); }
-  Hotel const & GetHotel(size_t index) const;
-  Hotel & GetHotel(size_t index);
-  vector<size_t> GetNearestHotels(double lat, double lon, size_t limit,
-                                  double maxDistance = 0.0) const;
-  bool MatchByName(string const & osmName, vector<size_t> const & bookingIndexes) const;
+  ObjectId m_id{InvalidObjectId()};
+  ms::LatLon m_latLon = ms::LatLon::Zero();
+  string m_name;
+  string m_street;
+  string m_houseNumber;
 
-  void BuildFeatures(function<void(OsmElement *)> const & fn) const;
-
-  static double ScoreByLinearNormDistance(double distance);
-
-protected:
-  vector<Hotel> m_hotels;
-
-  // create the rtree using default constructor
-  using TPoint = boost::geometry::model::point<float, 2, boost::geometry::cs::cartesian>;
-  using TBox = boost::geometry::model::box<TPoint>;
-  using TValue = pair<TBox, size_t>;
-
-  boost::geometry::index::rtree<TValue, boost::geometry::index::quadratic<16>> m_rtree;
-
-  void LoadHotels(istream & path, string const & addressReferencePath);
-  bool MatchWithBooking(OsmElement const & e) const;
-  bool Filter(OsmElement const & e, function<bool(OsmElement const &)> const & fn) const;
+  string m_address;
+  uint32_t m_stars = 0;
+  uint32_t m_priceCategory = 0;
+  double m_ratingBooking = 0.0;
+  double m_ratingUser = 0.0;
+  string m_descUrl;
+  uint32_t m_type = 0;
+  string m_translations;
 };
 
-ostream & operator<<(ostream & s, BookingDataset::Hotel const & h);
+ostream & operator<<(ostream & s, BookingHotel const & h);
 
+NEWTYPE_SIMPLE_OUTPUT(BookingHotel::ObjectId);
+using BookingDataset = SponsoredDataset<BookingHotel>;
 }  // namespace generator

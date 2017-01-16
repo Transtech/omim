@@ -4,6 +4,7 @@
 
 #include "storage/index.hpp"
 
+#include "indexer/banners.hpp"
 #include "indexer/feature_data.hpp"
 #include "indexer/feature_meta.hpp"
 #include "indexer/map_object.hpp"
@@ -16,6 +17,14 @@
 
 namespace place_page
 {
+enum class SponsoredType
+{
+  None,
+  Booking,
+  Opentable,
+  Geochat
+};
+
 class Info : public osm::MapObject
 {
 public:
@@ -28,8 +37,8 @@ public:
   bool IsFeature() const;
   bool IsBookmark() const;
   bool IsMyPosition() const;
-  bool IsSponsoredHotel() const;
-  bool IsHotel() const;
+  bool IsSponsored() const;
+  bool IsNotEditableSponsored() const;
 
   bool ShouldShowAddPlace() const;
   bool ShouldShowAddBusiness() const;
@@ -54,12 +63,15 @@ public:
   /// @returns empty string or GetStars() count of ★ symbol.
   string FormatStars() const;
 
+  /// @returns coordinate in DMS format if isDMS is true
+  string GetFormattedCoordinate(bool isDMS) const;
+
   string GetCustomName() const;
   BookmarkAndCategory GetBookmarkAndCategory() const;
   string GetBookmarkCategoryName() const;
   string const & GetApiUrl() const;
 
-  string const & GetSponsoredBookingUrl() const;
+  string const & GetSponsoredUrl() const;
   string const & GetSponsoredDescriptionUrl() const;
 
   /// @returns formatted rating string for booking object, or empty if it isn't booking object
@@ -67,27 +79,47 @@ public:
   /// @returns string with |kPricingSymbol| signs or empty string if it isn't booking object
   string GetApproximatePricing() const;
 
+  /// Returns true, if the current time is within the working range of the banner.
+  bool HasBanner() const;
+  string GetBannerTitleId() const;
+  string GetBannerMessageId() const;
+  string GetBannerIconId() const;
+  string GetBannerUrl() const;
+  string GetBannerId() const;
+
+  bool IsReachableByTaxi() const;
+
   void SetMercator(m2::PointD const & mercator);
+
+  vector<string> GetRawTypes() const;
 
   /// Comes from API, shared links etc.
   string m_customName;
   /// If not empty, bookmark is bound to this place page.
-  BookmarkAndCategory m_bac = MakeEmptyBookmarkAndCategory();
+  BookmarkAndCategory m_bac;
   /// Bookmark category name. Empty, if it's not bookmark;
   string m_bookmarkCategoryName;
+  /// Bookmark title. Empty, if it's not bookmark;
+  string m_bookmarkTitle;
+  /// Bookmark color name. Empty, if it's not bookmark;
+  string m_bookmarkColorName;
+  /// Bookmark description. Empty, if it's not bookmark;
+  string m_bookmarkDescription;
   /// Api ID passed for the selected object. It's automatically included in api url below.
   string m_apiId;
   /// [Deep] link to open when "Back" button is pressed in a Place Page.
   string m_apiUrl;
   /// Formatted feature address.
   string m_address;
-  /// Feature is a hotel.
-  bool m_isHotel = false;
-  /// Feature is a sponsored hotel.
-  bool m_isSponsoredHotel = false;
+  /// Sponsored type or None.
+  SponsoredType m_sponsoredType = SponsoredType::None;
+
   /// Sponsored feature urls.
-  string m_sponsoredBookingUrl;
+  string m_sponsoredUrl;
   string m_sponsoredDescriptionUrl;
+
+  /// A banner associated with the object.
+  banner::Banner m_banner;
 
   /// Which country this MapObject is in.
   /// For a country point it will be set to topmost node for country.

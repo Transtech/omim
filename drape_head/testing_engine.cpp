@@ -120,7 +120,7 @@ public:
   {
   }
 
-  void Draw(ref_ptr<dp::Batcher> batcher, ref_ptr<dp::TextureManager> textures) const
+  void Draw(ref_ptr<dp::Batcher> batcher, ref_ptr<dp::TextureManager> textures) const override
   {
     dp::TextureManager::TStipplePattern key;
     key.push_back(10);
@@ -165,7 +165,7 @@ class DummyColorElement : public MapShape
 public:
   DummyColorElement() { }
 
-  void Draw(ref_ptr<dp::Batcher> batcher, ref_ptr<dp::TextureManager> textures) const
+  void Draw(ref_ptr<dp::Batcher> batcher, ref_ptr<dp::TextureManager> textures) const override
   {
     dp::TextureManager::ColorRegion region;
     textures->GetColorRegion(dp::Color(rand() % 256, rand() % 256, rand() % 256, 255), region);
@@ -398,7 +398,7 @@ void TestingEngine::Draw()
     for (size_t i = 0; i < buckets.size(); ++i)
       buckets[i]->CollectOverlayHandles(make_ref(&tree));
     for (size_t i = 0; i < buckets.size(); ++i)
-      buckets[i]->Render();
+      buckets[i]->Render(state.GetDrawAsLine());
     tree.EndOverlayPlacing();
   }
 }
@@ -457,7 +457,7 @@ void TestingEngine::DrawImpl()
   ptvp.m_minVisibleScale = 1;
   ptvp.m_rank = 0;
   ptvp.m_text = "Some text";
-  ptvp.m_textFont = dp::FontDecl(dp::Color::Black(), 40, dp::Color::Red());
+  ptvp.m_textFont = dp::FontDecl(dp::Color::Black(), 40, true, dp::Color::Red());
 
   PathTextShape(spline, ptvp).Draw(make_ref(m_batcher), make_ref(m_textures));
   LineViewParams lvp;
@@ -506,15 +506,15 @@ void TestingEngine::DrawImpl()
   }
 
   {
-    vector<m2::PointF> trg{ m2::PointD(110.0f, 30.0f), m2::PointD(112.0f, 30.0f), m2::PointD(112.0f, 28.0f),
-                            m2::PointD(110.0f, 30.0f), m2::PointD(112.0f, 28.0f), m2::PointD(110.0f, 28.0f) };
-    vector<df::BuildingEdge> edges;
+    vector<m2::PointD> trg{ m2::PointD(110.0, 30.0), m2::PointD(112.0, 30.0), m2::PointD(112.0, 28.0),
+                            m2::PointD(110.0, 30.0), m2::PointD(112.0, 28.0), m2::PointD(110.0, 28.0) };
+    df::BuildingOutline outline;
     AreaViewParams p;
     p.m_color = dp::Color::White();
     p.m_depth = 0.0f;
     params.m_minVisibleScale = 1;
     params.m_rank = 0;
-    AreaShape(move(trg), move(edges), p).Draw(make_ref(m_batcher), make_ref(m_textures));
+    AreaShape(move(trg), move(outline), p).Draw(make_ref(m_batcher), make_ref(m_textures));
   }
   m_batcher->EndSession();
 

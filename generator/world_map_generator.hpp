@@ -312,7 +312,7 @@ class CountryMapGenerator
   FeatureOutT m_bucket;
 
 public:
-  explicit CountryMapGenerator(feature::GenerateInfo const & info) : m_bucket(info) {}
+  CountryMapGenerator(feature::GenerateInfo const & info) : m_bucket(info) {}
 
   void operator()(FeatureBuilder1 fb)
   {

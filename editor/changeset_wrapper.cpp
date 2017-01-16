@@ -34,9 +34,11 @@ bool OsmFeatureHasTags(pugi::xml_node const & osmFt)
   return osmFt.child("tag");
 }
 
-vector<string> const static kMainTags = {"amenity", "shop",      "tourism", "historic",
-                                         "craft",   "emergency", "barrier", "highway",
-                                         "office",  "entrance",  "building"};
+string const static kVowels = "aeiouy";
+
+vector<string> const static kMainTags = {"amenity",   "shop",    "tourism", "historic", "craft",
+                                         "emergency", "barrier", "highway", "office",   "leisure",
+                                         "waterway",  "natural", "place",   "entrance", "building"};
 
 string GetTypeForFeature(XMLFeature const & node)
 {
@@ -70,7 +72,7 @@ vector<m2::PointD> NaiveSample(vector<m2::PointD> const & source, size_t count)
   indexes.reserve(count);
 
   minstd_rand engine;
-  uniform_int_distribution<> distrib(0, source.size());
+  uniform_int_distribution<size_t> distrib(0, source.size());
 
   while (count--)
   {
@@ -101,8 +103,7 @@ namespace osm
 {
 ChangesetWrapper::ChangesetWrapper(TKeySecret const & keySecret,
                                    ServerApi06::TKeyValueTags const & comments) noexcept
-    : m_changesetComments(comments),
-      m_api(OsmOAuth::ServerAuth(keySecret))
+  : m_changesetComments(comments), m_api(OsmOAuth::ServerAuth(keySecret))
 {
 }
 
@@ -123,7 +124,8 @@ ChangesetWrapper::~ChangesetWrapper()
   }
 }
 
-void ChangesetWrapper::LoadXmlFromOSM(ms::LatLon const & ll, pugi::xml_document & doc, double radiusInMeters)
+void ChangesetWrapper::LoadXmlFromOSM(ms::LatLon const & ll, pugi::xml_document & doc,
+                                      double radiusInMeters)
 {
   auto const response = m_api.GetXmlFeaturesAtLatLon(ll.lat, ll.lon, radiusInMeters);
   if (response.first != OsmOAuth::HTTP::OK)
@@ -135,7 +137,8 @@ void ChangesetWrapper::LoadXmlFromOSM(ms::LatLon const & ll, pugi::xml_document 
         ("Can't parse OSM server response for GetXmlFeaturesAtLatLon request", response.second));
 }
 
-void ChangesetWrapper::LoadXmlFromOSM(ms::LatLon const & min, ms::LatLon const & max, pugi::xml_document & doc)
+void ChangesetWrapper::LoadXmlFromOSM(ms::LatLon const & min, ms::LatLon const & max,
+                                      pugi::xml_document & doc)
 {
   auto const response = m_api.GetXmlFeaturesInRect(min.lat, min.lon, max.lat, max.lon);
   if (response.first != OsmOAuth::HTTP::OK)
@@ -278,8 +281,8 @@ string ChangesetWrapper::TypeCountToString(TTypeCount const & typeCount)
        });
 
   ostringstream ss;
-  auto const limit = min(size_t(3), items.size());
-  for (auto i = 0; i < limit; ++i)
+  size_t const limit = min(size_t(3), items.size());
+  for (size_t i = 0; i < limit; ++i)
   {
     if (i > 0)
     {
@@ -305,15 +308,10 @@ string ChangesetWrapper::TypeCountToString(TTypeCount const & typeCount)
     // Format a count: "a shop" for single shop, "4 shops" for multiple.
     if (currentPair.second == 1)
     {
-      switch (currentPair.first.front())
-      {
-      case 'a':
-      case 'e':
-      case 'i':
-      case 'y':
-      case 'o': ss << "an"; break;
-      default: ss << "a";
-      }
+      if (kVowels.find(currentPair.first.front()) != string::npos)
+        ss << "an";
+      else
+        ss << "a";
     }
     else
     {
@@ -321,7 +319,25 @@ string ChangesetWrapper::TypeCountToString(TTypeCount const & typeCount)
     }
     ss << ' ' << currentPair.first;
     if (currentPair.second > 1)
+    {
+      if (currentPair.first.size() >= 2)
+      {
+        string const lastTwo = currentPair.first.substr(currentPair.first.size() - 2);
+        // "bench" -> "benches", "marsh" -> "marshes", etc.
+        if (lastTwo.back() == 'x' || lastTwo == "sh" || lastTwo == "ch" || lastTwo == "ss")
+        {
+          ss << 'e';
+        }
+        // "library" -> "libraries"
+        else if (lastTwo.back() == 'y' && kVowels.find(lastTwo.front()) == string::npos)
+        {
+          long const pos = ss.tellp();
+          ss.seekp(pos - 1);
+          ss << "ie";
+        }
+      }
       ss << 's';
+    }
   }
   return ss.str();
 }

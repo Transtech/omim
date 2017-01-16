@@ -2,6 +2,7 @@
 
 #include "drape_frontend/map_shape.hpp"
 #include "drape_frontend/tile_key.hpp"
+#include "drape_frontend/traffic_generator.hpp"
 
 #include "drape/pointers.hpp"
 
@@ -29,7 +30,8 @@ public:
   using TIsCountryLoadedByNameFn = function<bool (string const &)>;
 
   RuleDrawer(TDrawerCallback const & drawerFn, TCheckCancelledCallback const & checkCancelled,
-             TIsCountryLoadedByNameFn const & isLoadedFn, ref_ptr<EngineContext> context, bool is3dBuildings);
+             TIsCountryLoadedByNameFn const & isLoadedFn, ref_ptr<EngineContext> context,
+             bool is3dBuildings, bool trafficEnabled);
   ~RuleDrawer();
 
   void operator() (FeatureType const & f);
@@ -44,8 +46,12 @@ private:
   ref_ptr<EngineContext> m_context;
   m2::RectD m_globalRect;
   double m_currentScaleGtoP;
+  double m_trafficScalePtoG;
 
   bool const m_is3dBuidings;
+
+  bool const m_trafficEnabled;
+  TrafficSegmentsGeometry m_trafficGeometry;
 
   array<TMapShapes, df::MapShapeTypeCount> m_mapShapes;
   bool m_wasCancelled;

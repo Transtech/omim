@@ -35,9 +35,11 @@ public:
   void SetPosition(m2::PointD const & position) { m_position = position; }
   void Show(ESelectedObject obj, m2::PointD const & position, double positionZ, bool isAnimate);
   void Hide();
-  void Render(ScreenBase const & screen,
-              ref_ptr<dp::GpuProgramManager> mng,
+  void Render(ScreenBase const & screen, int zoomLevel, ref_ptr<dp::GpuProgramManager> mng,
               dp::UniformValuesStorage const & commonUniforms);
+
+  bool IsVisible(ScreenBase const & screen, m2::PointD & pxPos) const;
+  double GetRadius() const { return m_radius; }
 
   ESelectedObject GetSelectedObject() const;
 
@@ -47,6 +49,7 @@ private:
 private:
   m2::PointD m_position;
   double m_positionZ;
+  double m_radius;
   ShowHideAnimation m_animation;
   ESelectedObject m_selectedObject;
 

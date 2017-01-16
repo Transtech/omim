@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.graphics.Typeface;
 import android.location.Location;
 import android.support.annotation.DrawableRes;
+import android.support.annotation.LayoutRes;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.StringRes;
@@ -15,11 +16,30 @@ import android.support.v7.widget.RecyclerView;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.style.StyleSpan;
+import android.util.Log;
 import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
+
+import com.crashlytics.android.Crashlytics;
+import com.mapswithme.maps.MwmActivity;
+import com.mapswithme.maps.MwmApplication;
+import com.mapswithme.maps.R;
+import com.mapswithme.maps.background.Notifier;
+import com.mapswithme.maps.location.LocationHelper;
+import com.mapswithme.maps.routing.RoutingController;
+import com.mapswithme.util.BottomSheetHelper;
+import com.mapswithme.util.StringUtils;
+import com.mapswithme.util.ThemeUtils;
+import com.mapswithme.util.UiUtils;
+import com.mapswithme.util.statistics.MytargetHelper;
+import com.mapswithme.util.statistics.Statistics;
+import com.timehop.stickyheadersrecyclerview.StickyRecyclerHeadersAdapter;
+import com.timehop.stickyheadersrecyclerview.StickyRecyclerHeadersDecoration;
+import ru.mail.android.mytarget.nativeads.banners.NativeAppwallBanner;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -29,39 +49,39 @@ import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 
-import com.mapswithme.maps.MwmActivity;
-import com.mapswithme.maps.MwmApplication;
-import com.mapswithme.maps.R;
-import com.mapswithme.maps.background.Notifier;
-import com.mapswithme.maps.location.LocationHelper;
-import com.mapswithme.maps.routing.RoutingController;
-import com.mapswithme.util.BottomSheetHelper;
-import com.mapswithme.util.StringUtils;
-import com.mapswithme.util.UiUtils;
-import com.mapswithme.util.statistics.Statistics;
-import com.timehop.stickyheadersrecyclerview.StickyRecyclerHeadersAdapter;
-import com.timehop.stickyheadersrecyclerview.StickyRecyclerHeadersDecoration;
-
-
-class DownloaderAdapter extends RecyclerView.Adapter<DownloaderAdapter.ViewHolder>
+class DownloaderAdapter extends RecyclerView.Adapter<DownloaderAdapter.ViewHolderWrapper>
                      implements StickyRecyclerHeadersAdapter<DownloaderAdapter.HeaderViewHolder>
 {
+  private static final String HEADER_ADVERTISMENT_TITLE = "MY.COM";
+  private static final int HEADER_ADVERTISMENT_ID = CountryItem.CATEGORY__LAST + 1;
+  private static final int HEADER_ADS_OFFSET = 10;
+
+  private static final int TYPE_COUNTRY = 0;
+  private static final int TYPE_ADVERTISMENT = 1;
+
   private final RecyclerView mRecycler;
   private final Activity mActivity;
   private final DownloaderFragment mFragment;
   private final StickyRecyclerHeadersDecoration mHeadersDecoration;
 
   private boolean mMyMapsMode = true;
+  private boolean mAdsLoaded;
+  private boolean mAdsLoading;
+  private boolean mShowAds;
   private boolean mSearchResultsMode;
   private String mSearchQuery;
 
   private final List<CountryItem> mItems = new ArrayList<>();
   private final Map<String, CountryItem> mCountryIndex = new HashMap<>();  // Country.id -> Country
+  private final List<NativeAppwallBanner> mAds = new ArrayList<>();
 
   private final SparseArray<String> mHeaders = new SparseArray<>();
   private final Stack<PathEntry> mPath = new Stack<>();  // Holds navigation history. The last element is the current level.
+  private int mNearMeCount;
 
   private int mListenerSlot;
+  @Nullable
+  private MytargetHelper mMytargetHelper;
 
   private enum MenuItem
   {
@@ -102,7 +122,7 @@ class DownloaderAdapter extends RecyclerView.Adapter<DownloaderAdapter.ViewHolde
       }
 
       @Override
-      void invoke(final CountryItem item, DownloaderAdapter adapter)
+      void invoke(final CountryItem item, final DownloaderAdapter adapter)
       {
         if (RoutingController.get().isNavigating())
         {
@@ -116,7 +136,7 @@ class DownloaderAdapter extends RecyclerView.Adapter<DownloaderAdapter.ViewHolde
 
         if (!MapManager.nativeHasUnsavedEditorChanges(item.id))
         {
-          deleteNode(item);
+          deleteNode(item, adapter);
           return;
         }
 
@@ -129,9 +149,18 @@ class DownloaderAdapter extends RecyclerView.Adapter<DownloaderAdapter.ViewHolde
                          @Override
                          public void onClick(DialogInterface dialog, int which)
                          {
-                           deleteNode(item);
+                           deleteNode(item, adapter);
                          }
                        }).show();
+      }
+
+      private void deleteNode(CountryItem item, DownloaderAdapter adapter)
+      {
+        if (adapter.mActivity instanceof MwmActivity)
+        {
+          ((MwmActivity) adapter.mActivity).closePlacePage();
+        }
+        deleteNode(item);
       }
     },
 
@@ -240,7 +269,7 @@ class DownloaderAdapter extends RecyclerView.Adapter<DownloaderAdapter.ViewHolde
 
       ci.update();
 
-      LinearLayoutManager lm = (LinearLayoutManager)mRecycler.getLayoutManager();
+      LinearLayoutManager lm = (LinearLayoutManager) mRecycler.getLayoutManager();
       int first = lm.findFirstVisibleItemPosition();
       int last = lm.findLastVisibleItemPosition();
       if (first == RecyclerView.NO_POSITION || last == RecyclerView.NO_POSITION)
@@ -248,9 +277,9 @@ class DownloaderAdapter extends RecyclerView.Adapter<DownloaderAdapter.ViewHolde
 
       for (int i = first; i <= last; i++)
       {
-        ViewHolder vh = (ViewHolder)mRecycler.findViewHolderForAdapterPosition(i);
-        if (vh != null && vh.mItem.id.equals(countryId))
-          vh.bind(vh.mItem);
+        ViewHolderWrapper vh = (ViewHolderWrapper) mRecycler.findViewHolderForAdapterPosition(i);
+        if (vh != null && vh.mKind == TYPE_COUNTRY && ((CountryItem) vh.mHolder.mItem).id.equals(countryId))
+          vh.mHolder.rebind();
       }
     }
 
@@ -258,11 +287,13 @@ class DownloaderAdapter extends RecyclerView.Adapter<DownloaderAdapter.ViewHolde
     public void onStatusChanged(List<MapManager.StorageCallbackData> data)
     {
       for (MapManager.StorageCallbackData item : data)
+      {
         if (item.isLeafNode && item.newStatus == CountryItem.STATUS_FAILED)
         {
           MapManager.showError(mActivity, item, null);
           break;
         }
+      }
 
       if (mSearchResultsMode)
       {
@@ -270,7 +301,9 @@ class DownloaderAdapter extends RecyclerView.Adapter<DownloaderAdapter.ViewHolde
           updateItem(item.countryId);
       }
       else
+      {
         refreshData();
+      }
     }
 
     @Override
@@ -280,15 +313,66 @@ class DownloaderAdapter extends RecyclerView.Adapter<DownloaderAdapter.ViewHolde
     }
   };
 
-  class ViewHolder extends RecyclerView.ViewHolder
+  private View createViewHolderFrame(ViewGroup parent, int kind)
+  {
+    return inflate(parent, (kind == TYPE_ADVERTISMENT ? R.layout.downloader_item_ad
+                                                      : R.layout.downloader_item));
+  }
+
+  class ViewHolderWrapper extends RecyclerView.ViewHolder
+  {
+    private final int mKind;
+    @NonNull
+    private final BaseInnerViewHolder mHolder;
+
+    ViewHolderWrapper(@NonNull ViewGroup parent, int kind)
+    {
+      super(createViewHolderFrame(parent, kind));
+
+      mKind = kind;
+      mHolder = (kind == TYPE_ADVERTISMENT) ? new AdViewHolder(itemView)
+                                            : new ItemViewHolder(itemView);
+    }
+
+    @SuppressWarnings("unchecked")
+    void bind(int position)
+    {
+      int kind = DownloaderAdapter.this.getItemViewType(position);
+      if (kind == TYPE_ADVERTISMENT)
+      {
+        mHolder.bind(mAds.get(position - mNearMeCount));
+        return;
+      }
+
+      if (position > mNearMeCount)
+        position -= getAdsCount();
+
+      mHolder.bind(mItems.get(position));
+    }
+  }
+
+  private static abstract class BaseInnerViewHolder<T>
+  {
+    T mItem;
+
+    void bind(T item)
+    {
+      mItem = item;
+    }
+
+    void rebind()
+    {
+      bind(mItem);
+    }
+  }
+
+  private class ItemViewHolder extends BaseInnerViewHolder<CountryItem>
   {
     private final DownloaderStatusIcon mStatusIcon;
     private final TextView mName;
     private final TextView mSubtitle;
     private final TextView mFoundName;
     private final TextView mSize;
-
-    private CountryItem mItem;
 
     private void processClick(boolean clickOnStatus)
     {
@@ -405,10 +489,8 @@ class DownloaderAdapter extends RecyclerView.Adapter<DownloaderAdapter.ViewHolde
       }).tint().show();
     }
 
-    public ViewHolder(View frame)
+    ItemViewHolder(View frame)
     {
-      super(frame);
-
       mStatusIcon = new DownloaderStatusIcon(frame.findViewById(R.id.downloader_status_frame))
       {
         @Override
@@ -476,9 +558,10 @@ class DownloaderAdapter extends RecyclerView.Adapter<DownloaderAdapter.ViewHolde
       });
     }
 
+    @Override
     void bind(CountryItem item)
     {
-      mItem = item;
+      super.bind(item);
 
       if (mSearchResultsMode)
       {
@@ -519,28 +602,108 @@ class DownloaderAdapter extends RecyclerView.Adapter<DownloaderAdapter.ViewHolde
       if (mItem.status == CountryItem.STATUS_ENQUEUED || mItem.status == CountryItem.STATUS_PROGRESS)
         size = mItem.enqueuedSize;
       else
-        size = (mMyMapsMode ? mItem.size : mItem.totalSize);
+        size = ((!mSearchResultsMode && mMyMapsMode) ? mItem.size : mItem.totalSize);
 
       mSize.setText(StringUtils.getFileSizeString(size));
       mStatusIcon.update(mItem);
     }
   }
 
-  class HeaderViewHolder extends RecyclerView.ViewHolder {
+  class HeaderViewHolder extends RecyclerView.ViewHolder
+  {
+    @NonNull
     private final TextView mTitle;
 
-    HeaderViewHolder(View frame) {
+    HeaderViewHolder(@NonNull View frame)
+    {
       super(frame);
       mTitle = (TextView) frame.findViewById(R.id.title);
     }
 
-    void bind(int position) {
-      mTitle.setText(mHeaders.get(mItems.get(position).headerId));
+    void bind(int position)
+    {
+      if (position >= mNearMeCount && position < mNearMeCount + getAdsCount())
+      {
+        mTitle.setText(HEADER_ADVERTISMENT_TITLE);
+      }
+      else
+      {
+        // TODO: remove this debug 'if' if the crash is gone in next (6.5.3) release
+        // - https://www.fabric.io/mapsme/android/apps/com.mapswithme.maps.pro/issues/58249a350aeb16625bb4d0a7,
+        // otherwise the logged information should help to pinpoint the 'IndexOutOfBounds' bug.
+        if (position >= mItems.size())
+          logIndexOutOfBoundsErrorInfoToCrashlytics(position);
+
+        CountryItem ci = mItems.get(position);
+        mTitle.setText(mHeaders.get(ci.headerId));
+      }
+    }
+  }
+
+  private void logIndexOutOfBoundsErrorInfoToCrashlytics(int position)
+  {
+    String tag = DownloaderAdapter.class.getSimpleName();
+    int itemSize = mItems.size();
+    Crashlytics.log(Log.ERROR, tag, "Index " + position + " is out of bounds, mItem.size = "
+                                    + itemSize + ", current thread = " + Thread.currentThread() +
+                                    " mNearMeCount = " + mNearMeCount + ", ads count = " + mAds.size()
+                                    + ", showAds = " + mShowAds + ", mAdsLoaded = " + mAdsLoaded
+                                    + ", mAdsLoading = " + mAdsLoading +
+                                    " mSearchResultsMode = " + mSearchResultsMode
+                                    + ", mSearchQuery = " + mSearchQuery +
+                                    " mHeaders.size = " + mHeaders.size()
+                                    + " mHeaders = " + mHeaders);
+    if (itemSize > 0)
+    {
+      CountryItem lastCi = mItems.get(--itemSize);
+      Crashlytics.log(Log.INFO, tag, "last county item in position = " + itemSize + " = " + lastCi);
+    }
+  }
+
+  private class AdViewHolder extends BaseInnerViewHolder<NativeAppwallBanner>
+  {
+    private final ImageView mIcon;
+    private final TextView mTitle;
+    private final TextView mSubtitle;
+
+    private NativeAppwallBanner mData;
+
+    @NonNull
+    private final View.OnClickListener mClickListener = new View.OnClickListener()
+    {
+      @Override
+      public void onClick(View v)
+      {
+        if (mData != null)
+          if (mMytargetHelper != null)
+            mMytargetHelper.onBannerClick(mData);
+      }
+    };
+
+    AdViewHolder(View frame)
+    {
+      mIcon = (ImageView)frame.findViewById(R.id.downloader_ad_icon);
+      mTitle = (TextView)frame.findViewById(R.id.downloader_ad_title);
+      mSubtitle = (TextView)frame.findViewById(R.id.downloader_ad_subtitle);
+
+      frame.setOnClickListener(mClickListener);
+    }
+
+    @Override
+    void bind(NativeAppwallBanner item)
+    {
+      mData = item;
+      super.bind(item);
+
+      mIcon.setImageBitmap(item.getIcon().getBitmap());
+      mTitle.setText(item.getTitle());
+      mSubtitle.setText(item.getDescription());
     }
   }
 
   private void collectHeaders()
   {
+    mNearMeCount = 0;
     mHeaders.clear();
     if (mSearchResultsMode)
       return;
@@ -558,6 +721,8 @@ class DownloaderAdapter extends RecyclerView.Adapter<DownloaderAdapter.ViewHolde
           mHeaders.put(headerId, MwmApplication.get().getString(R.string.downloader_near_me_subtitle));
           prev = ci.category;
         }
+
+        mNearMeCount++;
         break;
 
       case CountryItem.CATEGORY_DOWNLOADED:
@@ -571,7 +736,7 @@ class DownloaderAdapter extends RecyclerView.Adapter<DownloaderAdapter.ViewHolde
 
       default:
         int prevHeader = headerId;
-        headerId = CountryItem.CATEGORY_AVAILABLE + ci.name.charAt(0);
+        headerId = CountryItem.CATEGORY_AVAILABLE * HEADER_ADS_OFFSET + ci.name.charAt(0);
 
         if (headerId != prevHeader)
           mHeaders.put(headerId, ci.name.substring(0, 1).toUpperCase());
@@ -585,9 +750,6 @@ class DownloaderAdapter extends RecyclerView.Adapter<DownloaderAdapter.ViewHolde
 
   void refreshData()
   {
-    mSearchResultsMode = false;
-    mSearchQuery = null;
-
     mItems.clear();
 
     String parent = getCurrentRootId();
@@ -608,15 +770,10 @@ class DownloaderAdapter extends RecyclerView.Adapter<DownloaderAdapter.ViewHolde
 
     MapManager.nativeListItems(parent, lat, lon, hasLocation, mMyMapsMode, mItems);
     processData();
+    loadAds();
   }
 
-  void cancelSearch()
-  {
-    if (mSearchResultsMode)
-      refreshData();
-  }
-
-  void setSearchResultsMode(Collection<CountryItem> results, String query)
+  void setSearchResultsMode(@NonNull Collection<CountryItem> results, String query)
   {
     mSearchResultsMode = true;
     mSearchQuery = query.toLowerCase();
@@ -624,6 +781,25 @@ class DownloaderAdapter extends RecyclerView.Adapter<DownloaderAdapter.ViewHolde
     mItems.clear();
     mItems.addAll(results);
     processData();
+  }
+
+  void clearAdsAndCancelMyTarget()
+  {
+    if (mAds.isEmpty())
+      return;
+
+    if (mMytargetHelper != null)
+      mMytargetHelper.cancel();
+
+    clearAdsInternal();
+    mAdsLoaded = false;
+  }
+
+  void resetSearchResultsMode()
+  {
+    mSearchResultsMode = false;
+    mSearchQuery = null;
+    refreshData();
   }
 
   private void processData()
@@ -637,13 +813,13 @@ class DownloaderAdapter extends RecyclerView.Adapter<DownloaderAdapter.ViewHolde
     for (CountryItem ci: mItems)
       mCountryIndex.put(ci.id, ci);
 
-    mHeadersDecoration.invalidateHeaders();
-    notifyDataSetChanged();
-
     if (mItems.isEmpty())
       mFragment.setupPlaceholder();
 
     mFragment.showPlaceholder(mItems.isEmpty());
+
+    mHeadersDecoration.invalidateHeaders();
+    notifyDataSetChanged();
   }
 
   DownloaderAdapter(DownloaderFragment fragment)
@@ -655,22 +831,40 @@ class DownloaderAdapter extends RecyclerView.Adapter<DownloaderAdapter.ViewHolde
     mRecycler.addItemDecoration(mHeadersDecoration);
   }
 
-  @Override
-  public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType)
+  @NonNull
+  private View inflate(ViewGroup parent, @LayoutRes int layoutId)
   {
-    return new ViewHolder(LayoutInflater.from(mActivity).inflate(R.layout.downloader_item, parent, false));
+    return LayoutInflater.from(mActivity).inflate(layoutId, parent, false);
   }
 
   @Override
-  public void onBindViewHolder(ViewHolder holder, int position)
+  public int getItemViewType(int position)
   {
-    holder.bind(mItems.get(position));
+    if (position < mNearMeCount)
+      return TYPE_COUNTRY;
+
+    if (position < mNearMeCount + getAdsCount())
+      return TYPE_ADVERTISMENT;
+
+    return TYPE_COUNTRY;
+  }
+
+  @Override
+  public ViewHolderWrapper onCreateViewHolder(ViewGroup parent, int viewType)
+  {
+    return new ViewHolderWrapper(parent, viewType);
+  }
+
+  @Override
+  public void onBindViewHolder(ViewHolderWrapper holder, int position)
+  {
+    holder.bind(position);
   }
 
   @Override
   public HeaderViewHolder onCreateHeaderViewHolder(ViewGroup parent)
   {
-    return new HeaderViewHolder(LayoutInflater.from(mActivity).inflate(R.layout.downloader_item_header, parent, false));
+    return new HeaderViewHolder(inflate(parent, R.layout.downloader_item_header));
   }
 
   @Override
@@ -682,13 +876,26 @@ class DownloaderAdapter extends RecyclerView.Adapter<DownloaderAdapter.ViewHolde
   @Override
   public long getHeaderId(int position)
   {
+    if (position >= mNearMeCount)
+    {
+      if (position < mNearMeCount + getAdsCount())
+        return HEADER_ADVERTISMENT_ID;
+
+      position -= getAdsCount();
+    }
+
     return mItems.get(position).headerId;
+  }
+
+  private int getAdsCount()
+  {
+    return (mShowAds ? mAds.size() : 0);
   }
 
   @Override
   public int getItemCount()
   {
-    return mItems.size();
+    return mItems.size() + getAdsCount();
   }
 
   private void goDeeper(CountryItem child, boolean refresh)
@@ -719,7 +926,10 @@ class DownloaderAdapter extends RecyclerView.Adapter<DownloaderAdapter.ViewHolde
     if (!refresh)
       return;
 
-    refreshData();
+    if (mSearchResultsMode)
+      resetSearchResultsMode();
+    else
+      refreshData();
     mFragment.update();
   }
 
@@ -771,6 +981,115 @@ class DownloaderAdapter extends RecyclerView.Adapter<DownloaderAdapter.ViewHolde
     return mMyMapsMode;
   }
 
+  /**
+   * Loads banner if:
+   * <ul>
+   *   <li>Not in `my maps` mode;</li>
+   *   <li>Currently at root level;</li>
+   *   <li>Day mode is active;</li>
+   *   <li>There is at least one map downloaded.</li>
+   * </ul>
+   */
+  private void loadAds()
+  {
+    mShowAds = false;
+    if (mAdsLoading)
+      return;
+
+    if (mMyMapsMode || !CountryItem.isRoot(getCurrentRootId()))
+      return;
+
+    if (!ThemeUtils.isDefaultTheme())
+      return;
+
+    if (MapManager.nativeGetDownloadedCount() < 1)
+      return;
+
+    mShowAds = true;
+    if (mAdsLoaded)
+    {
+      mHeadersDecoration.invalidateHeaders();
+      notifyItemRangeInserted(mNearMeCount, mAds.size());
+      return;
+    }
+
+    mAdsLoading = true;
+
+    if (mMytargetHelper == null)
+      initMytargetHelper();
+  }
+
+  private void handleBannersShow(@NonNull List<NativeAppwallBanner> ads)
+  {
+    if (mMytargetHelper != null)
+      mMytargetHelper.handleBannersShow(ads);
+  }
+
+  private void initMytargetHelper()
+  {
+    mMytargetHelper = new MytargetHelper(new MytargetHelper.Listener<Void>()
+    {
+      private void onNoAdsInternal()
+      {
+        mAdsLoading = false;
+        mAdsLoaded = true;
+
+        clearAdsInternal();
+      }
+
+      @Override
+      public void onNoAds()
+      {
+        onNoAdsInternal();
+      }
+
+      @Override
+      public void onDataReady(@Nullable Void data)
+      {
+        //noinspection ConstantConditions
+        mMytargetHelper.loadShowcase(new MytargetHelper.Listener<List<NativeAppwallBanner>>()
+        {
+          @Override
+          public void onNoAds()
+          {
+            onNoAdsInternal();
+          }
+
+          @Override
+          public void onDataReady(@Nullable List<NativeAppwallBanner> banners)
+          {
+            mAdsLoading = false;
+            mAdsLoaded = true;
+            mAds.clear();
+
+            if (banners != null)
+            {
+              for (NativeAppwallBanner banner : banners)
+                if (!banner.isAppInstalled())
+                  mAds.add(banner);
+
+              handleBannersShow(banners);
+            }
+
+            mHeadersDecoration.invalidateHeaders();
+            notifyDataSetChanged();
+          }
+        }, mActivity);
+      }
+    });
+  }
+
+  private void clearAdsInternal()
+  {
+    int oldSize = mAds.size();
+    mAds.clear();
+    if (oldSize > 0)
+    {
+      mHeadersDecoration.invalidateHeaders();
+      notifyItemRangeRemoved(mNearMeCount, oldSize);
+    }
+  }
+
   void attach()
   {
     mListenerSlot = MapManager.nativeSubscribe(mStorageCallback);
@@ -779,6 +1098,11 @@ class DownloaderAdapter extends RecyclerView.Adapter<DownloaderAdapter.ViewHolde
   void detach()
   {
     MapManager.nativeUnsubscribe(mListenerSlot);
+
+    if (mMytargetHelper != null)
+      mMytargetHelper.cancel();
+
+    mAdsLoading = false;
   }
 
   boolean isSearchResultsMode()

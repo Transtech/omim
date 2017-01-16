@@ -15,7 +15,6 @@
 
 namespace search
 {
-
 // Search result. Search returns a list of them, ordered by score.
 class Result
 {
@@ -31,18 +30,23 @@ public:
   /// Metadata for search results. Considered valid if m_resultType == RESULT_FEATURE.
   struct Metadata
   {
-    string m_cuisine;         // Valid only if not empty. Used for restaurants.
-    int m_stars = 0;          // Valid only if not 0. Used for hotels.
-    bool m_isSponsoredHotel = false; // Used for hotels.
+    string m_cuisine;                              // Valid only if not empty. Used for restaurants.
+
+    // Following fields are used for hotels only.
+    string m_hotelApproximatePricing;
+    string m_hotelRating;
+    int m_stars = 0;
+    bool m_isSponsoredHotel = false;
+    bool m_isHotel = false;
+
     osm::YesNoUnknown m_isOpenNow = osm::Unknown;  // Valid for any result.
 
-    /// True if the struct is already assigned or need to be calculated otherwise.
     bool m_isInitialized = false;
   };
 
   /// For RESULT_FEATURE.
   Result(FeatureID const & id, m2::PointD const & pt, string const & str, string const & address,
-         string const & type, uint32_t featureType, Metadata const & meta = {});
+         string const & type, uint32_t featureType, Metadata const & meta);
 
   /// For RESULT_LATLON.
   Result(m2::PointD const & pt, string const & latlon, string const & address);
@@ -59,6 +63,9 @@ public:
   string const & GetAddress() const { return m_address; }
   string const & GetFeatureType() const { return m_type; }
   string const & GetCuisine() const { return m_metadata.m_cuisine; }
+  string const & GetHotelRating() const { return m_metadata.m_hotelRating; }
+  string const & GetHotelApproximatePricing() const { return m_metadata.m_hotelApproximatePricing; }
+  bool IsHotel() const { return m_metadata.m_isHotel; }
   //@}
 
   osm::YesNoUnknown IsOpenNow() const { return m_metadata.m_isOpenNow; }
@@ -127,66 +134,63 @@ public:
 
 class Results
 {
-  vector<Result> m_vec;
-
-  enum StatusT
-  {
-    NONE,             // default status
-    ENDED_CANCELLED,  // search ended with canceling
-    ENDED             // search ended itself
-  };
-  StatusT m_status;
-
-  explicit Results(bool isCancelled)
-  {
-    m_status = (isCancelled ? ENDED_CANCELLED : ENDED);
-  }
-
 public:
-  Results() : m_status(NONE) {}
+  using Iter = vector<Result>::const_iterator;
 
-  /// @name To implement end of search notification.
-  //@{
-  static Results GetEndMarker(bool isCancelled) { return Results(isCancelled); }
-  bool IsEndMarker() const { return (m_status != NONE); }
-  bool IsEndedNormal() const { return (m_status == ENDED); }
-  //@}
+  Results();
 
-  bool AddResult(Result && res);
-  /// Fast function that don't do any duplicates checks.
-  /// Used in viewport search only.
-  void AddResultNoChecks(Result && res)
+  inline bool IsEndMarker() const { return m_status != Status::None; }
+  inline bool IsEndedNormal() const { return m_status == Status::EndedNormal; }
+  inline bool IsEndedCancelled() const { return m_status == Status::EndedCancelled; }
+
+  void SetEndMarker(bool cancelled)
   {
-    ASSERT_LESS(m_vec.size(), numeric_limits<int32_t>::max(), ());
-    res.SetPositionInResults(static_cast<int32_t>(m_vec.size()));
-    m_vec.push_back(move(res));
+    m_status = cancelled ? Status::EndedCancelled : Status::EndedNormal;
   }
 
-  inline void Clear() { m_vec.clear(); }
+  bool AddResult(Result && result);
 
-  typedef vector<Result>::const_iterator IterT;
-  inline IterT Begin() const { return m_vec.begin(); }
-  inline IterT End() const { return m_vec.end(); }
+  // Fast version of AddResult() that doesn't do any duplicates checks.
+  void AddResultNoChecks(Result && result);
 
-  inline size_t GetCount() const { return m_vec.size(); }
+  void Clear();
+
+  inline Iter begin() const { return m_results.begin(); }
+  inline Iter end() const { return m_results.end(); }
+
+  inline size_t GetCount() const { return m_results.size(); }
   size_t GetSuggestsCount() const;
 
   inline Result & GetResult(size_t i)
   {
-    ASSERT_LESS(i, m_vec.size(), ());
-    return m_vec[i];
+    ASSERT_LESS(i, m_results.size(), ());
+    return m_results[i];
   }
 
   inline Result const & GetResult(size_t i) const
   {
-    ASSERT_LESS(i, m_vec.size(), ());
-    return m_vec[i];
+    ASSERT_LESS(i, m_results.size(), ());
+    return m_results[i];
   }
 
-  inline void Swap(Results & rhs)
+  inline void Swap(Results & rhs) { m_results.swap(rhs.m_results); }
+
+private:
+  enum class Status
   {
-    m_vec.swap(rhs.m_vec);
-  }
+    None,
+    EndedCancelled,
+    EndedNormal
+  };
+
+  // Inserts |result| in |m_results| at position denoted by |where|.
+  //
+  // *NOTE* all iterators, references and pointers to |m_results| are
+  // invalid after the call.
+  void InsertResult(vector<Result>::iterator where, Result && result);
+
+  vector<Result> m_results;
+  Status m_status;
 };
 
 struct AddressInfo
@@ -211,11 +215,10 @@ struct AddressInfo
   // Caroline, 7 vulica Frunze, Minsk, Belarus
   string FormatNameAndAddress(AddressType type = DEFAULT) const;
 
-  friend string DebugPrint(AddressInfo const & info);
-
   void Clear();
+
+  friend string DebugPrint(AddressInfo const & info);
 };
 
-string DebugPrint(search::Result const &);
-
+string DebugPrint(search::Result const & result);
 }  // namespace search

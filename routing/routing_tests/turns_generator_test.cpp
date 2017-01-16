@@ -4,8 +4,9 @@
 #include "routing/turns.hpp"
 #include "routing/turns_generator.hpp"
 
-#include "geometry/mercator.hpp"
+#include "indexer/ftypes_matcher.hpp"
 
+#include "geometry/mercator.hpp"
 #include "geometry/point2d.hpp"
 
 #include "std/cmath.hpp"
@@ -123,11 +124,11 @@ UNIT_TEST(TestFixupTurns)
   m2::RectD const kSquareNearZero = MercatorBounds::MetresToXY(kSquareCenterLonLat.x,
                                                                kSquareCenterLonLat.y, kHalfSquareSideMeters);
   // Removing a turn in case staying on a roundabout.
-  vector<m2::PointD> const pointsMerc1 = {
-    { kSquareNearZero.minX(), kSquareNearZero.minY()},
-    { kSquareNearZero.minX(), kSquareNearZero.maxY() },
-    { kSquareNearZero.maxX(), kSquareNearZero.maxY() },
-    { kSquareNearZero.maxX(), kSquareNearZero.minY() }
+  vector<Junction> const pointsMerc1 = {
+    {{ kSquareNearZero.minX(), kSquareNearZero.minY() }, feature::kDefaultAltitudeMeters},
+    {{ kSquareNearZero.minX(), kSquareNearZero.maxY() }, feature::kDefaultAltitudeMeters},
+    {{ kSquareNearZero.maxX(), kSquareNearZero.maxY() }, feature::kDefaultAltitudeMeters},
+    {{ kSquareNearZero.maxX(), kSquareNearZero.minY() }, feature::kDefaultAltitudeMeters},
   };
   // The constructor TurnItem(uint32_t idx, TurnDirection t, uint32_t exitNum = 0)
   // is used for initialization of vector<TurnItem> below.
@@ -143,10 +144,11 @@ UNIT_TEST(TestFixupTurns)
   TEST_EQUAL(turnsDir1, expectedTurnDir1, ());
 
   // Merging turns which are close to each other.
-  vector<m2::PointD> const pointsMerc2 = {
-    { kSquareNearZero.minX(), kSquareNearZero.minY()},
-    { kSquareCenterLonLat.x, kSquareCenterLonLat.y },
-    { kSquareNearZero.maxX(), kSquareNearZero.maxY() }};
+  vector<Junction> const pointsMerc2 = {
+    {{ kSquareNearZero.minX(), kSquareNearZero.minY()}, feature::kDefaultAltitudeMeters},
+    {{ kSquareCenterLonLat.x, kSquareCenterLonLat.y }, feature::kDefaultAltitudeMeters},
+    {{ kSquareNearZero.maxX(), kSquareNearZero.maxY() }, feature::kDefaultAltitudeMeters},
+  };
   Route::TTurns turnsDir2 = {{0, TurnDirection::GoStraight},
                              {1, TurnDirection::TurnLeft},
                              {2, TurnDirection::ReachedYourDestination}};
@@ -157,10 +159,11 @@ UNIT_TEST(TestFixupTurns)
   TEST_EQUAL(turnsDir2, expectedTurnDir2, ());
 
   // No turn is removed.
-  vector<m2::PointD> const pointsMerc3 = {
-    { kSquareNearZero.minX(), kSquareNearZero.minY()},
-    { kSquareNearZero.minX(), kSquareNearZero.maxY() },
-    { kSquareNearZero.maxX(), kSquareNearZero.maxY() }};
+  vector<Junction> const pointsMerc3 = {
+    {{ kSquareNearZero.minX(), kSquareNearZero.minY()}, feature::kDefaultAltitudeMeters},
+    {{ kSquareNearZero.minX(), kSquareNearZero.maxY() }, feature::kDefaultAltitudeMeters},
+    {{ kSquareNearZero.maxX(), kSquareNearZero.maxY() }, feature::kDefaultAltitudeMeters},
+  };
   Route::TTurns turnsDir3 = {{1, TurnDirection::TurnRight},
                              {2, TurnDirection::ReachedYourDestination}};
 
@@ -319,5 +322,41 @@ UNIT_TEST(TestCalculateMercatorDistanceAlongRoute)
   TEST_EQUAL(CalculateMercatorDistanceAlongPath(1, 1, points), 0., ());
   TEST_EQUAL(CalculateMercatorDistanceAlongPath(1, 2, points), 0., ());
   TEST_EQUAL(CalculateMercatorDistanceAlongPath(0, 1, points), 1., ());
+}
+
+UNIT_TEST(TestCheckUTurnOnRoute)
+{
+  TUnpackedPathSegments pathSegments(4, LoadedPathSegment(UniNodeId::Type::Osrm));
+  pathSegments[0].m_name = "A road";
+  pathSegments[0].m_weight = 1;
+  pathSegments[0].m_nodeId = UniNodeId(0 /* node id */);
+  pathSegments[0].m_highwayClass = ftypes::HighwayClass::Trunk;
+  pathSegments[0].m_onRoundabout = false;
+  pathSegments[0].m_isLink = false;
+  pathSegments[0].m_path = {{{0, 0}, 0}, {{0, 1}, 0}};
+
+  pathSegments[1] = pathSegments[0];
+  pathSegments[1].m_nodeId = UniNodeId(1 /* node id */);
+  pathSegments[1].m_path = {{{0, 1}, 0}, {{0, 0}, 0}};
+
+  pathSegments[2] = pathSegments[0];
+  pathSegments[2].m_nodeId = UniNodeId(2 /* node id */);
+  pathSegments[2].m_path = {{{0, 0}, 0}, {{0, 1}, 0}};
+
+  pathSegments[3] = pathSegments[0];
+  pathSegments[3].m_nodeId = UniNodeId(3 /* node id */);
+  pathSegments[3].m_path.clear();
+
+  // Zigzag test.
+  TurnItem turn1;
+  TEST_EQUAL(CheckUTurnOnRoute(pathSegments, 1, turn1), 1, ());
+  TEST_EQUAL(turn1.m_turn, TurnDirection::UTurnLeft, ());
+  TurnItem turn2;
+  TEST_EQUAL(CheckUTurnOnRoute(pathSegments, 2, turn2), 1, ());
+  TEST_EQUAL(turn2.m_turn, TurnDirection::UTurnLeft, ());
+
+  // Empty path test.
+  TurnItem turn3;
+  TEST_EQUAL(CheckUTurnOnRoute(pathSegments, 3, turn3), 0, ());
 }
 }  // namespace

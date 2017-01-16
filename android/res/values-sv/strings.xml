@@ -194,6 +194,7 @@
 	<string name="parking">Parkering</string>
 	<!-- Search Suggestion -->
 	<string name="shop">Butik</string>
+	<!-- Search Suggestion -->
 	<string name="hotel">Hotell</string>
 	<!-- Search Suggestion -->
 	<string name="tourism">Sevärdheter</string>
@@ -273,8 +274,6 @@
 	<string name="copied_to_clipboard">Kopierat till urklippsbordet: %1$s</string>
 	<!-- Setting label for statistics turn on/off -->
 	<string name="allow_statistics">Skicka statistik</string>
-	<!-- Hint near allow statictics checkbox -->
-	<string name="allow_statistics_hint">Tillåt oss samla in användningsstatistik för att förbättra appen</string>
 	<!-- place preview title -->
 	<string name="info">Info</string>
 	<!-- Used for bookmark editing -->
@@ -327,6 +326,7 @@
 	<string name="pref_tts_how_to_set_up_voice">Hur man ställer in ljud</string>
 	<!-- Settings «Map» category: «Record track» title -->
 	<string name="pref_track_record_title">Senaste resväg</string>
+	<string name="pref_map_auto_zoom">Automatisk zoom</string>
 	<string name="duration_disabled">Av</string>
 	<string name="duration_1_hour">1 timme</string>
 	<string name="duration_2_hours">2 timmar</string>
@@ -403,7 +403,7 @@
 	<!-- About text -->
 	<string name="about_text">MAPS.ME erbjuder de snabbaste offline-kartorna över alla städer och länder i hela världen. Res med förtroende: oavsett var du är hjälper MAPS.ME dig att placera dig på kartan, hitta den närmaste restaurangen, hotellet, banken, bensinstationen m.m. Den kräver inte internetanslutning.\n\nVi arbetar ständigt med nya funktioner och vill gärna veta hur du tycker att vi kan förbättra MAPS.ME. Ifall du har problem med appen, tveka inte att kontakta oss på support@maps.me. Vi svarar på alla mail!\n\nGillar du MAPS.ME och vill hjälpa oss? Det finns några enkla och kostnadsfria sätt:\n\n- posta en recension på din Appmarknad\n- gilla vår Facebooksida http://www.facebook.com/mapswithme\n- eller berätta bara om MAPS.ME för din mamma, vänner eller kollegor :)\n\nTack för att du är med oss. Vi uppskattar ditt stöd väldigt mycket!\n\nP.S. Vi använder oss av kartdata från OpenStreetMap, ett kartprojket som liknar Wikipedia och som tillåter användare att skapa och redigera kartor. Ifall du ser något som saknas eller är fel på kartan så kan du korrigera kartan direkt på http://openstreetmap.org och dina ändringar kommer att finns i MAPS.ME appen när nästa version släpps.</string>
 	<!-- Alert text -->
-	<string name="email_error_body">E-mailklienten har inte konfigurerats. Konfigurera den eller använd ett annat sätt att kontakta oss på %s</string>
+	<string name="email_error_body">Emailklienten har inte konfigurerats. Konfigurera den eller använd ett annat sätt att kontakta oss på %s</string>
 	<!-- Alert title -->
 	<string name="email_error_title">Fel när mailet skulle skickas</string>
 	<!-- Settings item title -->
@@ -590,7 +590,6 @@
 	<string name="dialog_routing_send_error">Rapportera problem</string>
 	<string name="dialog_routing_if_get_cross_route">Vill du skapa en mer direkt väg som sträcker sig över fler än en karta?</string>
 	<string name="dialog_routing_cross_route_is_optimal">En optimalare väg som sträcker sig utanför den här kartan är tillgänglig.</string>
-	<string name="dialog_routing_always_cross_that_border">Korsa alltid den här gränsen</string>
 	<string name="not_now">Inte nu</string>
 	<string name="dialog_routing_build_route">Skapa</string>
 	<string name="dialog_routing_download_and_build_cross_route">Vill du ladda ned kartan och skapa en optimalare väg som sträcker sig över fler än en karta?</string>
@@ -634,7 +633,6 @@
 	<string name="clear_search">Rensa sökhistorik</string>
 	<!-- Title for settings to enable/disable showcase menu button -->
 	<string name="showcase_settings_title">Visa erbjudanden</string>
-	<string name="showcase_more_apps">Mai multe aplicații My.com</string>
 	<string name="p2p_route_planning">Ruttplanering</string>
 	<string name="p2p_your_location">Din plats</string>
 	<string name="p2p_from">Startplats</string>
@@ -718,9 +716,12 @@
 	<string name="login_with_openstreetmap">Logga in med www.openstreetmap.org</string>
 	<string name="edit_place">Ändra platsen</string>
 	<string name="place_name">Platsens namn</string>
-	<string name="place_name_caption">Ange namnet som på skylten eller på namnbrickan</string>
 	<!-- title above languages list cells in the editor, below editable name text field. -->
 	<string name="other_languages">Övriga språk</string>
+	<!-- small button to open list with names in different languages -->
+	<string name="show_more">Visa mer</string>
+	<!-- small button to close list with names in different languages -->
+	<string name="show_less">Visa mindre</string>
 	<string name="add_language">Lägg till ett språk</string>
 	<string name="street">Gata</string>
 	<!-- Editable House Number text field (in address block). -->
@@ -766,7 +767,6 @@
 	<string name="editor_edit_place_category_title">Kategori</string>
 	<string name="detailed_problem_description">Detaljerad beskrivning av ett problem</string>
 	<string name="editor_report_problem_other_title">Ett annat problem</string>
-	<string name="placepage_add_place_button">Lägg till en plats</string>
 	<string name="placepage_report_problem_button">Rapportera ett problem</string>
 	<string name="placepage_add_business_button">Lägg till organisation</string>
 	<string name="whatsnew_smallmwm_header">Du har bett om det och vi har gjort det</string>
@@ -801,6 +801,7 @@
 	<string name="download_over_mobile_message">Detta kan vara mycket dyrt med vissa abonnemang och vid roaming.</string>
 	<string name="error_enter_correct_house_number">Ange korrekt husnummer</string>
 	<string name="editor_storey_number">Antal våningar (max %d)</string>
+	<!-- Error message in Editor when a user tries to set the number of floors for a building higher than 25 -->
 	<string name="error_enter_correct_storey_number">Redigera byggnaden med max 25 våningar</string>
 	<string name="editor_zip_code">Postnr</string>
 	<string name="error_enter_correct_zip_code">Ange korrekt postnr</string>
@@ -814,7 +815,6 @@
 	<string name="editor_tag_description">Ange företag, organisation eller person som är ansvarig för lokalerna.</string>
 	<string name="editor_no_local_edits_title">Du har inga lokala redigeraingar</string>
 	<string name="editor_no_local_edits_description">Detta visar antalet föreslagna förändringar på kartan som som endast är tillgängliga på din enhet.</string>
-	<string name="editor_international_names_subtitle">Namn på andra språk</string>
 	<string name="editor_send_to_osm">Skicka till OSM</string>
 	<string name="editor_remove">Ta bord</string>
 	<string name="downloader_my_maps_title">Mina kartor</string>
@@ -837,7 +837,8 @@
 	<string name="location_services_disabled_message">Aktivera tillgång till geografisk plats i enhetens inställningar</string>
 	<string name="location_services_disabled_1">1. Öppna inställningar</string>
 	<string name="location_services_disabled_2">2. Tryck på Plats</string>
-	<string name="location_services_disabled_3">3. Välj Alltid</string>
+	<!-- iOS Dialog for the case when the location permission is not granted -->
+	<string name="location_services_disabled_3">3. Välj Medan appen används</string>
 	<string name="placepage_parking_surface">Yta</string>
 	<string name="placepage_parking_multistorey">Flera våningar</string>
 	<string name="placepage_parking_underground">Under mark</string>
@@ -856,9 +857,16 @@
 	<string name="place_page_starting_from">från %s</string>
 	<string name="meter">m</string>
 	<string name="kilometer">km</string>
+	<string name="kilometers_per_hour">km/h</string>
+	<string name="mile">mile</string>
+	<string name="foot">fot</string>
+	<string name="miles_per_hour">mph</string>
+	<string name="day">d</string>
+	<string name="hour">h</string>
+	<string name="minute">min</string>
 	<string name="placepage_place_description">Beskrivning</string>
 	<string name="placepage_more_button">Mer</string>
-	<string name="bookingcom_book_button">Boka</string>
+	<string name="book_button">Boka</string>
 	<string name="placepage_call_button">Ring</string>
 	<string name="placepage_edit_bookmark_button">Redigera bokmärke</string>
 	<string name="placepage_bookmark_name_hint">Namn bokmärke</string>
@@ -873,18 +881,167 @@
 	<string name="editor_status_sending">Skickar…</string>
 	<string name="editor_place_doesnt_exist">Platsen finns inte</string>
 	<string name="text_more_button">…mer</string>
-	<string name="error_enter_correct_phone">Ange telefonnummer utan bokstäver</string>
+	<!-- Phone number error message -->
+	<string name="error_enter_correct_phone">Ange korrekt telefonnummer</string>
 	<string name="error_enter_correct_web">Ange en giltig webadress</string>
 	<string name="error_enter_correct_email">Ange en giltig e-postadress</string>
 	<string name="error_enter_correct">Ange ett giltigt värde</string>
 	<string name="editor_profile_changes_for_next_place">Ändringar av nästa plats: %d</string>
 	<string name="editor_profile_rating_place">Rankning</string>
 	<string name="booking_dialog_not_connect_header">Var vänlig aktivera din internetanslutning för att göra hotellbokningen</string>
-	<string name="whatsnew_booking_header">Boka ett hotell från appen</string>
-	<string name="whatsnew_booking_message">När du letar efter ett hotell kommer kartan visa hotellets priskategori och bedömning.</string>
 	<string name="button_try">Prova det</string>
-	<string name="whatsnew_cycle_navigation_header">Cykelnavigering (betaversion)</string>
-	<string name="whatsnew_cycle_navigation_message">Vi testar cykelnavigeringen för den nya säsongen. Testa din favoritcykelrutt med MAPS.ME och berätta för oss vad du tycker.</string>
 	<string name="refresh">Uppdatera</string>
 	<string name="last_update">Senast uppdaterad: %s</string>
+	<string name="booking_checkin">incheckning: %s</string>
+	<string name="booking_checkout">utcheckning: %s</string>
+	<string name="placepage_add_place_button">Lägg till en plats på kartan</string>
+	<!-- Displayed when saving some edits to the map to warn against publishing personal data -->
+	<string name="editor_share_to_all_dialog_title">Vill du skicka det till alla användare?</string>
+	<!-- iOS Dialog before publishing the modifications to the public map. -->
+	<string name="editor_share_to_all_dialog_message_1">Se till att du inte angett någon personinformation</string>
+	<string name="editor_share_to_all_dialog_message_2">Vi kommer att kontrollera ändringar. Om vi har några frågor kontaktar vi dig via e-post.</string>
+	<string name="navigation_overview_button">översikt</string>
+	<string name="navigation_stop_button">stopp</string>
+	<!-- Text on an empty bookmark page -->
+	<string name="bookmarks_empty_title">Spara bokmärken</string>
+	<string name="bookmarks_empty_message_1">Knacka på ★ för att spara favoritplatser för snabb åtkomst.</string>
+	<string name="bookmarks_empty_message_2">Importera bokmärken från Mail och webben.</string>
+	<string name="bookmarks_empty_message_3">utcheckning: %s</string>
+	<!-- Name of the group for booked hotels -->
+	<string name="bookmarks_group_name">Bokade hotell</string>
+	<string name="place_page_button_read_descriprion">Läs</string>
+	<!-- iOS dialog for the case when recent track recording is on and the app comes back from background -->
+	<string name="recent_track_background_dialog_title">Avaktivera inspelning av din senaste resta rutt?</string>
+	<!-- If a hotel is being shared -->
+	<string name="sharing_booking">eller boka på booking.com</string>
+	<string name="off_recent_track_background_button">Avaktivera</string>
+	<!-- For sharing via SMS and so on -->
+	<string name="sharing_call_action_look">Kolla in</string>
+	<string name="continue_recent_track_background_button">Fortsätt</string>
+	<string name="recent_track_background_dialog_message">MAPS.ME använder din geografiska position i bakgrunden för att spela in din senaste resta rutt.</string>
+	<string name="whatsnew_car_navigation_header">Användarvänlig fordonsnavigering</string>
+	<string name="whatsnew_car_navigation_message">• Navigeringselementen tar upp mindre plats.\n• Vi visar hastigheten och har tillagd automatiskt zoom.</string>
+	<string name="whatsnew_cycle_navigation_2_header">Cykelnavigering</string>
+	<string name="whatsnew_cycle_navigation_2_message">• Cykelnavigering tar med terrängdata i beräkningen.\n• Vi skapar lättare rutter med väglutningar i beräkningen.</string>
+	<string name="whatsnew_booking_2_header">Enkel hotellsökning</string>
+	<string name="whatsnew_booking_2_message">Sökresultaten visar hotellbetyget och priskategorin.</string>
+	<string name="whatsnew_cycle_navigation_header">Cykelnavigering (betaversion)</string>
+	<string name="whatsnew_cycle_navigation_message">Vi testar cykelnavigeringen för den nya säsongen. Testa din favoritcykelrutt med MAPS.ME och berätta för oss vad du tycker.</string>
+	<!-- Rate on Google Play (Android only) -->
+	<string name="rate_gp">Betygsätt på Google Play</string>
+	<!-- Share with friends: menu item title -->
+	<string name="tell_friends">Tipsa en vän</string>
+	<!-- Share with friends: sharing text -->
+	<string name="tell_friends_text">Hej! Installera MAPS.ME!</string>
+	<!-- About short text (below logo) -->
+	<string name="about_description">MAPS.ME är en offline-applikation som du behöver när du reser. MAPS.ME baseras på OpenStreetMap-data och tillåter redigering i den.</string>
+	<!-- Text in menu -->
+	<string name="blog">Blogg</string>
+	<!-- Hint near allow statictics checkbox -->
+	<string name="allow_statistics_hint">Genom att samla användningsstatistik hjälper du oss att förbättra appen.</string>
+	<string name="general_settings">Allmänna inställningar</string>
+	<string name="date">Datum %d</string>
+	<!-- "Report a bug" -> "Generaal Feedback" -> "Something is not working" -->
+	<string name="something_is_not_working">Något fungerar inte</string>
+	<!-- For the first routing -->
+	<string name="accept">Acceptera</string>
+	<!-- For the first routing -->
+	<string name="decline">Neka</string>
+	<string name="whats_new_route_profile_title">Genvägar är senvägar</string>
+	<string name="whats_new_route_profile_message">För gångvägar och cykelturer visar vi nu höjdprofilen.</string>
+	<string name="whats_new_booking_improve_title">Spara pengar när du bokar hotell</string>
+	<string name="whats_new_booking_improve_message">Sökresultat för hotell innehåller nu priskategorin.\nVi har även lagt till över 110 000 hotell.</string>
+	<!-- For place page hotel facilities block -->
+	<string name="placepage_hotel_facilities">Faciliteter</string>
+	<!-- For place page hotel nearby block -->
+	<string name="placepage_hotel_nearby">I närheten</string>
+	<!-- For ordering a taxi (as opposed to hotels or other things) -->
+	<string name="taxi_order">Beställ en taxi</string>
+	<!-- How long it is until the taxi arrives -->
+	<string name="taxi_wait">Förväntas om %s</string>
+	<!-- When there are no available taxis nearby -->
+	<string name="taxi_not_found">Hittade ingen taxi i närheten</string>
+	<string name="install_app">Installera</string>
+	<!-- `Filter` is a noun here -->
+	<string name="booking_filters">Filter</string>
+	<string name="booking_filters_reset">Återställ</string>
+	<string name="booking_filters_rating">Betyg</string>
+	<string name="booking_filters_rating_any">Vilket som helst</string>
+	<string name="booking_filters_ragting_good">Bra</string>
+	<string name="booking_filters_rating_very_good">Väldigt bra</string>
+	<string name="booking_filters_rating_excellent">Utmärkt</string>
+	<string name="booking_filters_price_category">Priskategori</string>
+	<string name="search_no_results_title">Inga resultat hittades</string>
+	<string name="search_no_results_message">Försök med en mer allmän sökterm, zooma ut eller återställ filtret.</string>
+	<string name="search_no_results_expand_area_button">Zooma ut</string>
+	<string name="search_no_results_reset_button">Återställ filtret</string>
+	<!-- noun -->
+	<string name="search_in_table">Lista</string>
+	<string name="booking_based_on_reviews">Baserat på %d hotellomdömen</string>
+	<string name="booking_show_more">Visa fler</string>
+	<string name="booking_reviews">Omdömen</string>
+	<string name="booking_hotel">Hotell</string>
+	<!-- hotel room -->
+	<string name="booking_hotel_room">Rum</string>
+	<!-- A neologism for a chat based on geographical proximity -->
+	<string name="chat">Geochat</string>
+	<!-- Verb. Text on a button that opens the chat. -->
+	<string name="chat_open">Öppna</string>
+	<string name="whatsnew_uber_header">MAPS.ME och Uber</string>
+	<string name="whatsnew_uber_message">Beställ en Uber direkt från appen!</string>
+	<string name="dialog_taxi_offline">Du kan inte beställa en taxi i offlineläge.</string>
+	<string name="dialog_taxi_error">Du kan inte beställa en taxi just nu.</string>
+	<string name="advertisement">Annons</string>
+	<string name="mobile_data_dialog">Använd mobilt nätverk för att visa detaljerad information?</string>
+	<string name="mobile_data_option_always">Använd alltid</string>
+	<string name="mobile_data_option_today">Endast idag</string>
+	<string name="mobile_data_option_not_today">Använd inte idag</string>
+	<string name="mobile_data">Mobilt internet</string>
+	<string name="mobile_data_description">Mobil internet krävs för att visa detaljerad information om platser, som t. ex. fotografier, priser och omdömen.</string>
+	<string name="mobile_data_option_never">Använd aldrig</string>
+	<string name="mobile_data_option_ask">Fråga alltid</string>
+	<string name="traffic_update_maps_text">Kartor måste uppdateras för att visa trafikdata.</string>
+	<string name="traffic_outdated">Trafikdata är inaktuellt.</string>
+	<string name="big_font">Större etiketter</string>
+	<string name="traffic_update_app">Uppdatera MAPS.ME</string>
+	<!-- "traffic" as in road congestion -->
+	<string name="traffic_update_app_message">Applikationen måste uppdateras för att trafikdata ska kunna visas.</string>
+	<!-- "traffic" as in "road congestion" -->
+	<string name="traffic_data_unavailable">Trafikdata är inte tillgänglig</string>
+	<string name="banner_deliveryclub_title">Matleverans</string>
+	<string name="banner_deliveryclub_message">Snabbleverans från 4000 restauranger. Beställ från Delivery Club.</string>
+	<string name="banner_lamoda_title">Kläd- och skobutik online</string>
+	<string name="banner_lamoda_message">Över 1000 varumärken. Upp till 70 % i rabatt. Gratis leverans över hela landet.</string>
+	<string name="banner_tutu_title">Tågbiljetter online</string>
+	<string name="banner_tutu_message">Tågbiljetter till vilken stad som helst online - priser, sökning och bokning.</string>
+	<string name="banner_geerbest_title">Elektronisk onlinebutik</string>
+	<string name="banner_geerbest_message">Snabbsökning i över 50000 föremål till låga priser.</string>
+	<string name="banner_rentalcars_title">Biluthyrning online</string>
+	<string name="banner_rentalcars_message">800 biluthyrningsföretag på mer än 49000 biluthyrningsplatser.</string>
+	<string name="banner_viator_title">Sökning efter turer online</string>
+	<string name="banner_viator_message">Sök bland mer än 50000 turer över hela världen.</string>
+	<!-- december -->
+	<string name="whatsnew_traffic">Trafikdata i 36 länder</string>
+	<!-- december -->
+	<string name="whatsnew_traffic_text">Aktuell trafikinformation och de snabbaste körrutterna som baseras på informationen!</string>
+	<!-- december -->
+	<string name="whatsnew_traffic_roaming">Trafikinformation i roaming</string>
+	<!-- december -->
+	<string name="whatsnew_traffic_roaming_text">Kräver mindre än 1 MB av mobil bandbredd per resa.</string>
+	<!-- december -->
+	<string name="whatsnew_order_taxi">Beställ en taxi</string>
+	<!-- december -->
+	<string name="whatsnew_order_taxi_text">De flesta platssidorna har nu en knapp för att beställa en taxi.</string>
+	<!-- january -->
+	<string name="whatsnew_improved_search">Förbättrad sökning</string>
+	<!-- january -->
+	<string name="whatsnew_improved_search_text">Till och med felstavade frågor skapar resultat med hög kvalitet.</string>
+	<!-- january -->
+	<string name="whatsnew_filters_in_search">Sökfilter</string>
+	<!-- january -->
+	<string name="whatsnew_filters_in_search_text">Sök hotell efter pris och omdöme.</string>
+	<!-- january -->
+	<string name="whatsnew_font_size">Teckenstorlek</string>
+	<!-- january -->
+	<string name="whatsnew_font_size_text">Etiketter på kartan kan göras större.</string>
 </resources>

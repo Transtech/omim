@@ -1,15 +1,16 @@
 #include "drape_frontend/text_layout.hpp"
-#include "drape_frontend/visual_params.hpp"
-
+#include "drape_frontend/map_shape.hpp"
 #include "drape_frontend/visual_params.hpp"
 
 #include "drape/fribidi.hpp"
 #include "drape/glsl_func.hpp"
 #include "drape/overlay_handle.hpp"
 
-#include "std/numeric.hpp"
 #include "std/algorithm.hpp"
 #include "std/bind.hpp"
+#include "std/iterator.hpp"
+#include "std/numeric.hpp"
+
 
 namespace df
 {
@@ -340,12 +341,14 @@ void CalculateOffsets(dp::Anchor anchor,
 
 } // namespace
 
-void TextLayout::Init(strings::UniString const & text, float fontSize,
+void TextLayout::Init(strings::UniString const & text, float fontSize, bool isSdf,
                       ref_ptr<dp::TextureManager> textures)
 {
   m_text = text;
-  m_textSizeRatio = fontSize / VisualParams::Instance().GetGlyphBaseSize();
-  textures->GetGlyphRegions(text, m_metrics);
+  m_textSizeRatio = isSdf ? (fontSize / VisualParams::Instance().GetGlyphBaseSize()) : 1.0;
+  m_textSizeRatio *= VisualParams::Instance().GetFontScale();
+  m_fixedHeight = isSdf ? dp::GlyphManager::kDynamicGlyphSize : fontSize;
+  textures->GetGlyphRegions(text, m_fixedHeight, m_metrics);
 }
 
 ref_ptr<dp::Texture> TextLayout::GetMaskTexture() const
@@ -364,7 +367,7 @@ ref_ptr<dp::Texture> TextLayout::GetMaskTexture() const
 
 uint32_t TextLayout::GetGlyphCount() const
 {
-  return m_metrics.size();
+  return static_cast<uint32_t>(m_metrics.size());
 }
 
 float TextLayout::GetPixelLength() const
@@ -377,7 +380,7 @@ float TextLayout::GetPixelLength() const
 
 float TextLayout::GetPixelHeight() const
 {
-  return m_textSizeRatio * VisualParams::Instance().GetGlyphBaseSize();
+  return m_fixedHeight > 0 ? m_fixedHeight : m_textSizeRatio * VisualParams::Instance().GetGlyphBaseSize();
 }
 
 strings::UniString const & TextLayout::GetText() const
@@ -385,7 +388,7 @@ strings::UniString const & TextLayout::GetText() const
   return m_text;
 }
 
-StraightTextLayout::StraightTextLayout(strings::UniString const & text, float fontSize,
+StraightTextLayout::StraightTextLayout(strings::UniString const & text, float fontSize, bool isSdf,
                                        ref_ptr<dp::TextureManager> textures, dp::Anchor anchor)
 {
   strings::UniString visibleText = fribidi::log2vis(text);
@@ -395,7 +398,7 @@ StraightTextLayout::StraightTextLayout(strings::UniString const & text, float fo
   else
     delimIndexes.push_back(visibleText.size());
 
-  TBase::Init(visibleText, fontSize, textures);
+  TBase::Init(visibleText, fontSize, isSdf, textures);
   CalculateOffsets(anchor, m_textSizeRatio, m_metrics, delimIndexes, m_offsets, m_pixelSize);
 }
 
@@ -436,10 +439,11 @@ void StraightTextLayout::Cache(glm::vec4 const & pivot, glm::vec2 const & pixelO
   }
 }
 
-PathTextLayout::PathTextLayout(strings::UniString const & text, float fontSize,
-                               ref_ptr<dp::TextureManager> textures)
+PathTextLayout::PathTextLayout(m2::PointD const & tileCenter, strings::UniString const & text,
+                               float fontSize, bool isSdf, ref_ptr<dp::TextureManager> textures)
+  : m_tileCenter(tileCenter)
 {
-  Init(fribidi::log2vis(text), fontSize, textures);
+  Init(fribidi::log2vis(text), fontSize, isSdf, textures);
 }
 
 void PathTextLayout::CacheStaticGeometry(dp::TextureManager::ColorRegion const & colorRegion,
@@ -481,6 +485,8 @@ bool PathTextLayout::CacheDynamicGeometry(m2::Spline::iterator const & iter, flo
 
   glsl::vec2 pxPivot = glsl::ToVec2(iter.m_pos);
   buffer.resize(4 * m_metrics.size());
+
+  glsl::vec4 const pivot(glsl::ToVec2(MapShape::ConvertToLocal(globalPivot, m_tileCenter, kShapeCoordScalar)), depth, 0.0f);
   for (size_t i = 0; i < m_metrics.size(); ++i)
   {
     GlyphRegion const & g = m_metrics[i];
@@ -501,7 +507,6 @@ bool PathTextLayout::CacheDynamicGeometry(m2::Spline::iterator const & iter, flo
 
     size_t baseIndex = 4 * i;
 
-    glsl::vec4 pivot(glsl::ToVec2(globalPivot), depth, 0.0f);
     buffer[baseIndex + 0] = gpu::TextDynamicVertex(pivot, formingVector + normal * bottomVector + tangent * xOffset);
     buffer[baseIndex + 1] = gpu::TextDynamicVertex(pivot, formingVector + normal * upVector + tangent * xOffset);
     buffer[baseIndex + 2] = gpu::TextDynamicVertex(pivot, formingVector + normal * bottomVector + tangent * (pxSize.x + xOffset));
@@ -560,7 +565,7 @@ void PathTextLayout::CalculatePositions(vector<float> & offsets, float splineLen
   }
   else
   {
-    double const textCount = max(floor(pathLength / minPeriodSize), 1.0);
+    double const textCount = max(floor(static_cast<double>(pathLength / minPeriodSize)), 1.0);
     double const glbTextLen = splineLength / textCount;
     for (double offset = 0.5 * glbTextLen; offset < splineLength; offset += glbTextLen)
       offsets.push_back(offset);

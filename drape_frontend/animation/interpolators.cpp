@@ -93,7 +93,7 @@ PositionInterpolator::PositionInterpolator(double duration, double delay,
   , m_endPosition(endPosition)
   , m_position(startPosition)
 {
-  SetActive(m_startPosition != m_endPosition);
+  SetActive((GetDuration() > 0.0) && (m_startPosition != m_endPosition));
 }
 
 PositionInterpolator::PositionInterpolator(m2::PointD const & startPosition, m2::PointD const & endPosition,
@@ -109,7 +109,7 @@ PositionInterpolator::PositionInterpolator(double delay,
   , m_endPosition(endPosition)
   , m_position(startPosition)
 {
-  SetActive(m_startPosition != m_endPosition);
+  SetActive((GetDuration() > 0.0) && (m_startPosition != m_endPosition));
 }
 
 PositionInterpolator::PositionInterpolator(m2::PointD const & startPosition, m2::PointD const & endPosition,
@@ -125,19 +125,18 @@ PositionInterpolator::PositionInterpolator(double delay,
   , m_endPosition(endPosition)
   , m_position(startPosition)
 {
-  SetActive(m_startPosition != m_endPosition);
+  SetActive((GetDuration() > 0.0) && (m_startPosition != m_endPosition));
 }
 
 //static
-double PositionInterpolator::GetMoveDuration(m2::PointD const & startPosition, m2::PointD const & endPosition,
-                              m2::RectD const & viewportRect, double scale)
+double PositionInterpolator::GetMoveDuration(double globalDistance, m2::RectD const & viewportRect, double scale)
 {
   double const kMinMoveDuration = 0.2;
   double const kMinSpeedScalar = 0.2;
   double const kMaxSpeedScalar = 7.0;
   double const kEps = 1e-5;
 
-  double const pixelLength = endPosition.Length(startPosition) / scale;
+  double const pixelLength = globalDistance / scale;
   if (pixelLength < kEps)
     return 0.0;
 
@@ -147,6 +146,13 @@ double PositionInterpolator::GetMoveDuration(m2::PointD const & startPosition, m
 
   double const pixelSpeed = kMaxSpeedScalar * minSize;
   return CalcAnimSpeedDuration(pixelLength, pixelSpeed);
+}
+
+//static
+double PositionInterpolator::GetMoveDuration(m2::PointD const & startPosition, m2::PointD const & endPosition,
+                              m2::RectD const & viewportRect, double scale)
+{
+  return GetMoveDuration(endPosition.Length(startPosition), viewportRect, scale);
 }
 
 //static
@@ -171,27 +177,27 @@ void PositionInterpolator::Finish()
 }
 
 ScaleInterpolator::ScaleInterpolator()
-  : ScaleInterpolator(1.0 /* startScale */, 1.0 /* endScale */)
+  : ScaleInterpolator(1.0 /* startScale */, 1.0 /* endScale */, false /* isAutoZoom */)
 {}
 
-ScaleInterpolator::ScaleInterpolator(double startScale, double endScale)
-  : ScaleInterpolator(0.0 /* delay */, startScale, endScale)
+ScaleInterpolator::ScaleInterpolator(double startScale, double endScale, bool isAutoZoom)
+  : ScaleInterpolator(0.0 /* delay */, startScale, endScale, isAutoZoom)
 {}
 
-ScaleInterpolator::ScaleInterpolator(double delay, double startScale, double endScale)
-  : Interpolator(ScaleInterpolator::GetScaleDuration(startScale, endScale), delay)
+ScaleInterpolator::ScaleInterpolator(double delay, double startScale, double endScale, bool isAutoZoom)
+  : Interpolator(ScaleInterpolator::GetScaleDuration(startScale, endScale, isAutoZoom), delay)
   , m_startScale(startScale)
   , m_endScale(endScale)
   , m_scale(startScale)
 {
-  SetActive(m_startScale != m_endScale);
+  SetActive((GetDuration() > 0.0) && (m_startScale != m_endScale));
 }
 
 // static
-double ScaleInterpolator::GetScaleDuration(double startScale, double endScale)
+double ScaleInterpolator::GetScaleDuration(double startScale, double endScale, bool isAutoZoom)
 {
-  // Resize 2.0 times should be done for 0.2 seconds.
-  double constexpr kPixelSpeed = 2.0 / 0.2;
+  // Resize 2.0 times should be done for 1.2 seconds in autozoom or for 0.2 seconds in usual case.
+  double const kPixelSpeed = isAutoZoom ? (2.0 / 1.2) : (2.0 / 0.2);
 
   if (startScale > endScale)
     swap(startScale, endScale);
@@ -225,7 +231,7 @@ AngleInterpolator::AngleInterpolator(double delay, double startAngle, double end
   , m_endAngle(ang::AngleIn2PI(endAngle))
   , m_angle(m_startAngle)
 {
-  SetActive(m_startAngle != m_endAngle);
+  SetActive((GetDuration() > 0.0) && (m_startAngle != m_endAngle));
 }
 
 AngleInterpolator::AngleInterpolator(double delay, double duration, double startAngle, double endAngle)
@@ -234,7 +240,7 @@ AngleInterpolator::AngleInterpolator(double delay, double duration, double start
   , m_endAngle(ang::AngleIn2PI(endAngle))
   , m_angle(m_startAngle)
 {
-  SetActive(m_startAngle != m_endAngle);
+  SetActive((GetDuration() > 0.0) && (m_startAngle != m_endAngle));
 }
 
 // static

@@ -15,11 +15,6 @@
     android:title="@string/pref_map_3d_title"/>
 
   <CheckBoxPreference
-            android:key="@string/pref_demo_gps"
-            android:title="@string/pref_map_demo_gps_title"/>
-
-    <ListPreference
-            android:key="@string/pref_route_network"
-            android:title="@string/pref_map_network_title"/>
-
+      android:key="@string/pref_auto_zoom"
+      android:title="@string/pref_map_auto_zoom"/>
 </PreferenceScreen>

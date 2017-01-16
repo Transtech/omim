@@ -3,6 +3,7 @@
 #include "routing/bicycle_model.hpp"
 #include "routing/car_model.hpp"
 #include "routing/pedestrian_model.hpp"
+#include "routing/routing_helpers.hpp"
 
 #include "indexer/feature_impl.hpp"
 #include "indexer/feature_visibility.hpp"
@@ -76,11 +77,6 @@ void FeatureBuilder1::SetCenter(m2::PointD const & p)
 void FeatureBuilder1::SetRank(uint8_t rank)
 {
   m_params.rank = rank;
-}
-
-void FeatureBuilder1::SetTestId(uint64_t id)
-{
-  m_params.GetMetadata().Set(Metadata::FMD_TEST_ID, strings::to_string(id));
 }
 
 void FeatureBuilder1::AddHouseNumber(string const & houseNumber)
@@ -230,10 +226,7 @@ namespace
 
 bool FeatureBuilder1::IsRoad() const
 {
-  static routing::PedestrianModel const pedModel;
-  static routing::BicycleModel const bicModel;
-  return routing::CarModel::Instance().HasRoadType(m_params.m_Types) ||
-         pedModel.HasRoadType(m_params.m_Types) || bicModel.HasRoadType(m_params.m_Types);
+  return routing::IsRoad(m_params.m_Types);
 }
 
 bool FeatureBuilder1::PreSerialize()
@@ -469,6 +462,25 @@ osm::Id FeatureBuilder1::GetLastOsmId() const
 {
   ASSERT(!m_osmIds.empty(), ());
   return m_osmIds.back();
+}
+
+osm::Id FeatureBuilder1::GetMostGenericOsmId() const
+{
+  ASSERT(!m_osmIds.empty(), ());
+  auto result = m_osmIds.front();
+  for (auto const & id : m_osmIds)
+  {
+    if (id.IsRelation())
+    {
+      result = id;
+      break;
+    }
+    else if (result.IsNode() && id.IsWay())
+    {
+      result = id;
+    }
+  }
+  return result;
 }
 
 bool FeatureBuilder1::HasOsmId(osm::Id const & id) const

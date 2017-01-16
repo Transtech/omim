@@ -43,13 +43,13 @@
 
 #include "std/bind.hpp"
 #include "std/condition_variable.hpp"
+#include "std/exception.hpp"
 #include "std/map.hpp"
 #include "std/mutex.hpp"
 #include "std/shared_ptr.hpp"
 #include "std/unique_ptr.hpp"
 #include "std/vector.hpp"
 
-using namespace generator::tests_support;
 using namespace platform::tests_support;
 using namespace platform;
 
@@ -261,7 +261,7 @@ public:
     m_slot = m_storage.Subscribe(
         bind(&CountryDownloaderChecker::OnCountryStatusChanged, this, _1),
         bind(&CountryDownloaderChecker::OnCountryDownloadingProgress, this, _1, _2));
-    TEST(storage.IsCoutryIdCountryTreeLeaf(countryId), (m_countryFile));
+    TEST(storage.IsLeaf(countryId), (m_countryFile));
     TEST(!m_transitionList.empty(), (m_countryFile));
   }
 
@@ -1393,6 +1393,7 @@ UNIT_TEST(StorageTest_GetUpdateInfoSingleMwm)
   LocalCountryFile country1(kVersion1Dir, CountryFile("OutdatedCountry1"), 1);
   LocalCountryFile country2(kVersion1Dir, CountryFile("OutdatedCountry2"), 1);
 
+  using namespace generator::tests_support;
   {
     TestMwmBuilder builder(country1, feature::DataHeader::country);
   }

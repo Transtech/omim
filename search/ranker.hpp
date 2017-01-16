@@ -4,10 +4,11 @@
 #include "search/geocoder.hpp"
 #include "search/intermediate_result.hpp"
 #include "search/keyword_lang_matcher.hpp"
+#include "search/locality_finder.hpp"
 #include "search/mode.hpp"
-#include "search/params.hpp"
 #include "search/result.hpp"
 #include "search/reverse_geocoder.hpp"
+#include "search/search_params.hpp"
 #include "search/suggest.hpp"
 
 #include "indexer/categories_holder.hpp"
@@ -23,12 +24,6 @@
 #include "std/utility.hpp"
 #include "std/vector.hpp"
 
-#define FIND_LOCALITY_TEST
-
-#ifdef FIND_LOCALITY_TEST
-#include "search/locality_finder.hpp"
-#endif  // FIND_LOCALITY_TEST
-
 class CategoriesHolder;
 class Index;
 
@@ -39,6 +34,8 @@ class CountryInfoGetter;
 
 namespace search
 {
+class VillagesCache;
+class Emitter;
 class PreResult2Maker;
 
 class Ranker
@@ -54,6 +51,7 @@ public:
     string m_pivotRegion;
     set<uint32_t> m_preferredTypes;
     bool m_suggestsEnabled = false;
+    bool m_viewportSearch = false;
 
     string m_query;
     buffer_vector<strings::UniString, 32> m_tokens;
@@ -63,22 +61,23 @@ public:
 
     m2::PointD m_accuratePivotCenter = m2::PointD(0, 0);
 
+    // A minimum distance between search results in meters, needed for
+    // filtering of indentical search results.
+    double m_minDistanceOnMapBetweenResults = 0.0;
+
     TLocales m_categoryLocales;
 
     size_t m_limit = 0;
-    TOnResults m_onResults;
   };
 
-  Ranker(Index const & index, storage::CountryInfoGetter const & infoGetter,
+  static size_t const kBatchSize;
+
+  Ranker(Index const & index, storage::CountryInfoGetter const & infoGetter, Emitter & emitter,
          CategoriesHolder const & categories, vector<Suggest> const & suggests,
-         my::Cancellable const & cancellable);
+         VillagesCache & villagesCache, my::Cancellable const & cancellable);
+  virtual ~Ranker() = default;
 
-  void Init(Params const & params);
-
-  inline void SetAccuratePivotCenter(m2::PointD const & center)
-  {
-    m_params.m_accuratePivotCenter = center;
-  }
+  void Init(Params const & params, Geocoder::Params const & geocoderParams);
 
   bool IsResultExists(PreResult2 const & p, vector<IndexedValue> const & values);
 
@@ -89,22 +88,17 @@ public:
   void MakeResultHighlight(Result & res) const;
 
   void GetSuggestion(string const & name, string & suggest) const;
-  void SuggestStrings(Results & res);
-  void MatchForSuggestions(strings::UniString const & token, int8_t locale, string const & prolog,
-                           Results & res);
+  void SuggestStrings();
+  void MatchForSuggestions(strings::UniString const & token, int8_t locale, string const & prolog);
   void GetBestMatchName(FeatureType const & f, string & name) const;
-  void ProcessSuggestions(vector<IndexedValue> & vec, Results & res) const;
+  void ProcessSuggestions(vector<IndexedValue> & vec) const;
 
-  Results & GetResults() { return m_results; }
-  void FlushResults(Geocoder::Params const & geocoderParams);
-  void FlushViewportResults(Geocoder::Params const & geocoderParams);
+  virtual void SetPreResults1(vector<PreResult1> && preResults1) { m_preResults1 = move(preResults1); }
+  virtual void UpdateResults(bool lastUpdate);
 
-  void SetPreResults1(vector<PreResult1> && preResults1) { m_preResults1 = move(preResults1); }
   void ClearCaches();
 
-#ifdef FIND_LOCALITY_TEST
-  inline void SetLocalityFinderLanguage(int8_t code) { m_locality.SetLanguage(code); }
-#endif  // FIND_LOCALITY_TEST
+  inline void SetLocalityFinderLanguage(int8_t code) { m_localities.SetLanguage(code); }
 
   inline void SetLanguage(pair<int, int> const & ind, int8_t lang)
   {
@@ -133,20 +127,20 @@ private:
   friend class PreResult2Maker;
 
   Params m_params;
+  Geocoder::Params m_geocoderParams;
   ReverseGeocoder const m_reverseGeocoder;
   my::Cancellable const & m_cancellable;
   KeywordLangMatcher m_keywordsScorer;
 
-#ifdef FIND_LOCALITY_TEST
-  mutable LocalityFinder m_locality;
-#endif  // FIND_LOCALITY_TEST
+  mutable LocalityFinder m_localities;
 
   Index const & m_index;
   storage::CountryInfoGetter const & m_infoGetter;
+  Emitter & m_emitter;
   CategoriesHolder const & m_categories;
   vector<Suggest> const & m_suggests;
 
   vector<PreResult1> m_preResults1;
-  Results m_results;
+  vector<IndexedValue> m_tentativeResults;
 };
 }  // namespace search

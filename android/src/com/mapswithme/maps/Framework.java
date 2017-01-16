@@ -1,18 +1,22 @@
 package com.mapswithme.maps;
 
+import android.graphics.Bitmap;
 import android.support.annotation.IntDef;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.annotation.Size;
 import android.support.annotation.UiThread;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-
+import com.mapswithme.maps.api.ParsedRoutingData;
+import com.mapswithme.maps.api.ParsedUrlMwmRequest;
 import com.mapswithme.maps.bookmarks.data.DistanceAndAzimut;
 import com.mapswithme.maps.bookmarks.data.MapObject;
 import com.mapswithme.maps.routing.IRouter;
 import com.mapswithme.maps.routing.RoutingInfo;
 import com.mapswithme.util.Constants;
+
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 
 /**
  * This class wraps android::Framework.cpp class
@@ -25,13 +29,14 @@ public class Framework
   public static final int MAP_STYLE_CLEAR = 2;
 
   @Retention(RetentionPolicy.SOURCE)
-  @IntDef({ROUTER_TYPE_VEHICLE, ROUTER_TYPE_PEDESTRIAN, ROUTER_TYPE_BICYCLE})
+  @IntDef({ROUTER_TYPE_VEHICLE, ROUTER_TYPE_PEDESTRIAN, ROUTER_TYPE_BICYCLE, ROUTER_TYPE_TAXI})
+
   public @interface RouterType {}
 
   public static final int ROUTER_TYPE_VEHICLE = 0;
   public static final int ROUTER_TYPE_PEDESTRIAN = 1;
   public static final int ROUTER_TYPE_BICYCLE = 2;
-  public static final int ROUTER_TYPE_TRUCK = 3;
+  public static final int ROUTER_TYPE_TAXI = 3;
 
   @SuppressWarnings("unused")
   public interface MapObjectListener
@@ -63,6 +68,13 @@ public class Framework
     public boolean buildings;
   }
 
+  public static class RouteAltitudeLimits
+  {
+    public int minRouteAltitude;
+    public int maxRouteAltitude;
+    public boolean isMetricUnits;
+  }
+
   // this class is just bridge between Java and C++ worlds, we must not create it
   private Framework() {}
 
@@ -71,9 +83,31 @@ public class Framework
     return nativeGetGe0Url(lat, lon, zoomLevel, name).replaceFirst(Constants.Url.GE0_PREFIX, Constants.Url.HTTP_GE0_PREFIX);
   }
 
+  /**
+   * Generates Bitmap with route altitude image chart taking into account current map style.
+   * @param width is width of the image.
+   * @param height is height of the image.
+   * @return Bitmap if there's pedestrian or bicycle route and null otherwise.
+   */
+  @Nullable
+  public static Bitmap GenerateRouteAltitudeChart(int width, int height)
+  {
+    if (width <= 0 || height <= 0)
+      return null;
+
+    RouteAltitudeLimits routeAltitudeLimits = new RouteAltitudeLimits();
+    final int[] altitudeChartBits = Framework.nativeGenerateRouteAltitudeChartBits(width, height, routeAltitudeLimits);
+    if (altitudeChartBits == null)
+      return null;
+
+    return Bitmap.createBitmap(altitudeChartBits, width, height, Bitmap.Config.ARGB_8888);
+  }
+
   public static native void nativeShowTrackRect(int category, int track);
 
   public static native int nativeGetDrawScale();
+  
+  public static native int nativeUpdateUserViewportChanged();
 
   @Size(2)
   public static native double[] nativeGetScreenRectCenter();
@@ -109,6 +143,9 @@ public class Framework
   public static native long nativeGetDataVersion();
 
   public static native void nativeClearApiPoints();
+  @ParsedUrlMwmRequest.ParsingResult
+  public static native int nativeParseAndSetApiUrl(String url);
+  public static native ParsedRoutingData nativeGetParsedRoutingData();
 
   public static native void nativeDeactivatePopup();
 
@@ -135,13 +172,17 @@ public class Framework
 
   public static native void nativeCloseRouting();
 
-  public static native void nativeBuildRoute(double startLat, double startLon, double finishLat, double finishLon);
+  public static native void nativeBuildRoute(double startLat, double startLon, double finishLat, double finishLon, boolean isP2P);
 
   public static native void nativeFollowRoute();
 
   public static native void nativeDisableFollowing();
 
+  @Nullable
   public static native RoutingInfo nativeGetRouteFollowingInfo();
+
+  @Nullable
+  public static native final int[] nativeGenerateRouteAltitudeChartBits(int width, int height, RouteAltitudeLimits routeAltitudeLimits);
 
   // When an end user is going to a turn he gets sound turn instructions.
   // If C++ part wants the client to pronounce an instruction nativeGenerateTurnNotifications returns
@@ -149,6 +190,7 @@ public class Framework
   // For example if C++ part wants the client to pronounce "Make a right turn." this method returns
   // an array with one string "Make a right turn.". The next call of the method returns nothing.
   // nativeGenerateTurnNotifications shall be called by the client when a new position is available.
+  @Nullable
   public static native String[] nativeGenerateTurnNotifications();
 
   public static native void nativeSetRoutingListener(RoutingListener listener);
@@ -202,6 +244,10 @@ public class Framework
 
   public native static void nativeSetExternalRouter(int routerType, IRouter router);
 
+  public static native boolean nativeGetAutoZoomEnabled();
+
+  public static native void nativeSetAutoZoomEnabled(boolean enabled);
+
   @NonNull
   public static native MapObject nativeDeleteBookmarkFromMapObject();
 
@@ -219,4 +265,6 @@ public class Framework
   public static native boolean nativeIsInChoosePositionMode();
   public static native boolean nativeIsDownloadedMapAtScreenCenter();
   public static native String nativeGetActiveObjectFormattedCuisine();
+
+  public static native void nativeSetVisibleRect(int left, int top, int right, int bottom);
 }

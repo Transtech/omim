@@ -277,22 +277,35 @@ void MainWindow::CreateNavigationBar()
   }
 
   {
+    m_trafficEnableAction = pToolBar->addAction(QIcon(":/navig64/traffic.png"), tr("Show traffic"),
+                                                this, SLOT(OnTrafficEnabled()));
+    m_trafficEnableAction->setCheckable(true);
+    m_trafficEnableAction->setChecked(m_pDrawWidget->GetFramework().LoadTrafficEnabled());
+    pToolBar->addSeparator();
+
     // TODO(AlexZ): Replace icon.
-    m_pCreateFeatureAction = pToolBar->addAction(QIcon(":/navig64/select.png"),
-                                           tr("Create Feature"),
-                                           this,
-                                           SLOT(OnCreateFeatureClicked()));
+    m_pCreateFeatureAction = pToolBar->addAction(QIcon(":/navig64/select.png"), tr("Create Feature"),
+                                                 this, SLOT(OnCreateFeatureClicked()));
     m_pCreateFeatureAction->setCheckable(true);
     m_pCreateFeatureAction->setToolTip(tr("Please select position on a map."));
     m_pCreateFeatureAction->setShortcut(QKeySequence::New);
 
     pToolBar->addSeparator();
 
+    m_selectionMode = pToolBar->addAction(QIcon(":/navig64/selectmode.png"), tr("Selection mode"),
+                                          this, SLOT(OnSwitchSelectionMode()));
+    m_selectionMode->setCheckable(true);
+    m_selectionMode->setToolTip(tr("Turn on/off selection mode"));
+
+    m_clearSelection = pToolBar->addAction(QIcon(":/navig64/clear.png"), tr("Clear selection"),
+                                           this, SLOT(OnClearSelection()));
+    m_clearSelection->setToolTip(tr("Clear selection"));
+
+    pToolBar->addSeparator();
+
     // Add search button with "checked" behavior.
-    m_pSearchAction = pToolBar->addAction(QIcon(":/navig64/search.png"),
-                                           tr("Search"),
-                                           this,
-                                           SLOT(OnSearchButtonClicked()));
+    m_pSearchAction = pToolBar->addAction(QIcon(":/navig64/search.png"), tr("Search"),
+                                          this, SLOT(OnSearchButtonClicked()));
     m_pSearchAction->setCheckable(true);
     m_pSearchAction->setToolTip(tr("Offline Search"));
     m_pSearchAction->setShortcut(QKeySequence::Find);
@@ -475,6 +488,12 @@ void MainWindow::OnCreateFeatureClicked()
   }
 }
 
+void MainWindow::OnSwitchSelectionMode()
+{
+  m_pDrawWidget->SetSelectionMode(m_selectionMode->isChecked());
+}
+
+void MainWindow::OnClearSelection() { m_pDrawWidget->GetFramework().GetDrapeApi().Clear(); }
 void MainWindow::OnSearchButtonClicked()
 {
   if (m_pSearchAction->isChecked())
@@ -573,6 +592,13 @@ void MainWindow::OnDownloadClicked()
 void MainWindow::OnRetryDownloadClicked()
 {
   m_pDrawWidget->RetryToDownloadCountry(m_lastCountry);
+}
+
+void MainWindow::OnTrafficEnabled()
+{
+  bool const enabled = m_trafficEnableAction->isChecked();
+  m_pDrawWidget->GetFramework().GetTrafficManager().SetEnabled(enabled);
+  m_pDrawWidget->GetFramework().SaveTrafficEnabled(enabled);
 }
 
 }

@@ -198,6 +198,7 @@
 	<string name="parking">Парковка</string>
 	<!-- Search Suggestion -->
 	<string name="shop">Крамниця</string>
+	<!-- Search Suggestion -->
 	<string name="hotel">Готель</string>
 	<!-- Search Suggestion -->
 	<string name="tourism">Пам’ятні місця</string>
@@ -277,8 +278,6 @@
 	<string name="copied_to_clipboard">Скопіювати в буфер обміну: %1$s</string>
 	<!-- Setting label for statistics turn on/off -->
 	<string name="allow_statistics">Надіслати статистику</string>
-	<!-- Hint near allow statictics checkbox -->
-	<string name="allow_statistics_hint">Просимо дозволити нам збирати статистичні дані по використанню, щоб поліпшити застосунок</string>
 	<!-- place preview title -->
 	<string name="info">Досьє</string>
 	<!-- Used for bookmark editing -->
@@ -331,6 +330,7 @@
 	<string name="pref_tts_how_to_set_up_voice">Як налаштувати голосовий контроль</string>
 	<!-- Settings «Map» category: «Record track» title -->
 	<string name="pref_track_record_title">Недавній маршрут</string>
+	<string name="pref_map_auto_zoom">Автозум</string>
 	<string name="duration_disabled">Вимкнуто</string>
 	<string name="duration_1_hour">1 година</string>
 	<string name="duration_2_hours">2 години</string>
@@ -590,7 +590,6 @@
 	<string name="dialog_routing_send_error">Повідомити про помилку</string>
 	<string name="dialog_routing_if_get_cross_route">Побудувати більш оптимальний маршрут з перетином межі карти?</string>
 	<string name="dialog_routing_cross_route_is_optimal">Маршрут з перетином межі карти більш оптимальний.</string>
-	<string name="dialog_routing_always_cross_that_border">Завжди перетинати цю межу</string>
 	<string name="not_now">Не зараз</string>
 	<string name="dialog_routing_build_route">Побудувати</string>
 	<string name="dialog_routing_download_and_build_cross_route">Завантажити карту і побудувати більш оптимальний маршрут з перетином межі карти?</string>
@@ -634,7 +633,6 @@
 	<string name="clear_search">Очистити історію пошуку</string>
 	<!-- Title for settings to enable/disable showcase menu button -->
 	<string name="showcase_settings_title">Показати пропозиції</string>
-	<string name="showcase_more_apps">Інші додатки My.com</string>
 	<string name="p2p_route_planning">Планування маршруту</string>
 	<string name="p2p_your_location">Ваше місцезнаходження</string>
 	<string name="p2p_from">Пункт відправлення</string>
@@ -718,9 +716,12 @@
 	<string name="login_with_openstreetmap">Увійти за допомогою www.openstreetmap.org</string>
 	<string name="edit_place">Редагувати місце</string>
 	<string name="place_name">Назва</string>
-	<string name="place_name_caption">Введіть назву як на вивісці або табличці</string>
 	<!-- title above languages list cells in the editor, below editable name text field. -->
 	<string name="other_languages">Інші мови</string>
+	<!-- small button to open list with names in different languages -->
+	<string name="show_more">Показати більше</string>
+	<!-- small button to close list with names in different languages -->
+	<string name="show_less">Показати менше</string>
 	<string name="add_language">Додати мову</string>
 	<string name="street">Вулиця</string>
 	<!-- Editable House Number text field (in address block). -->
@@ -766,7 +767,6 @@
 	<string name="editor_edit_place_category_title">Категорія</string>
 	<string name="detailed_problem_description">Детальний опис проблеми</string>
 	<string name="editor_report_problem_other_title">Інші проблема</string>
-	<string name="placepage_add_place_button">Додати місце</string>
 	<string name="placepage_report_problem_button">Повідомити про проблему</string>
 	<string name="placepage_add_business_button">Додати організацію</string>
 	<string name="whatsnew_smallmwm_header">Ви просили і ми це зробили</string>
@@ -801,6 +801,7 @@
 	<string name="download_over_mobile_message">Це може бути задорого за деякими планами або за умовами роумінгу.</string>
 	<string name="error_enter_correct_house_number">Введіть правильний номер будинку</string>
 	<string name="editor_storey_number">Кількість поверхів (максимум %d)</string>
+	<!-- Error message in Editor when a user tries to set the number of floors for a building higher than 25 -->
 	<string name="error_enter_correct_storey_number">Редагуйте будівлі висотою максимум 25 поверхів</string>
 	<string name="editor_zip_code">Поштовий індекс</string>
 	<string name="error_enter_correct_zip_code">Введіть коректний поштовий індекс</string>
@@ -814,7 +815,6 @@
 	<string name="editor_tag_description">Вкажіть компанію, організацію або особу, що відповідає за працездатність об\&#39;єкта</string>
 	<string name="editor_no_local_edits_title">Поки що ви не маєте локальних виправлень</string>
 	<string name="editor_no_local_edits_description">Тут відображається кількість запропонованих вами змін на карті, які доступні тільки на вашому пристрою</string>
-	<string name="editor_international_names_subtitle">Назва на інших мовах</string>
 	<string name="editor_send_to_osm">Відправити до OSM</string>
 	<string name="editor_remove">Видалити</string>
 	<string name="downloader_my_maps_title">Мої мапи</string>
@@ -837,7 +837,8 @@
 	<string name="location_services_disabled_message">Увімкніть доступ до геолокації в налаштуваннях цього пристрою</string>
 	<string name="location_services_disabled_1">1. Відкрийте «Налаштування»</string>
 	<string name="location_services_disabled_2">2. Клацніть «Місцезнаходження»</string>
-	<string name="location_services_disabled_3">3. Виберіть «Завжди»</string>
+	<!-- iOS Dialog for the case when the location permission is not granted -->
+	<string name="location_services_disabled_3">3. Оберіть \&quot;Під час роботи програми\&quot;</string>
 	<string name="placepage_parking_surface">Відкрите паркування</string>
 	<string name="placepage_parking_multistorey">Багатоповерхове наземне паркування</string>
 	<string name="placepage_parking_underground">Підземне паркування</string>
@@ -856,9 +857,16 @@
 	<string name="place_page_starting_from">від %s</string>
 	<string name="meter">м</string>
 	<string name="kilometer">км</string>
+	<string name="kilometers_per_hour">км/год</string>
+	<string name="mile">ми</string>
+	<string name="foot">фут</string>
+	<string name="miles_per_hour">ми/год</string>
+	<string name="day">д</string>
+	<string name="hour">год</string>
+	<string name="minute">хв</string>
 	<string name="placepage_place_description">Опис</string>
 	<string name="placepage_more_button">Ще</string>
-	<string name="bookingcom_book_button">Забронювати</string>
+	<string name="book_button">Забронювати</string>
 	<string name="placepage_call_button">Подзвонити</string>
 	<string name="placepage_edit_bookmark_button">Редагувати мiтку</string>
 	<string name="placepage_bookmark_name_hint">Назва мiтки</string>
@@ -873,18 +881,167 @@
 	<string name="editor_status_sending">Відправка…</string>
 	<string name="editor_place_doesnt_exist">Місце не існує</string>
 	<string name="text_more_button">…більше</string>
-	<string name="error_enter_correct_phone">Введіть номер телефону без літер</string>
+	<!-- Phone number error message -->
+	<string name="error_enter_correct_phone">Введіть правильний номер телефону</string>
 	<string name="error_enter_correct_web">Введіть вірну адресу веб-сайту</string>
 	<string name="error_enter_correct_email">Введіть вірниу адресу електронної пошти</string>
 	<string name="error_enter_correct">Введіть вірне значення</string>
 	<string name="editor_profile_changes_for_next_place">Виправлень до наступного місця: %d</string>
 	<string name="editor_profile_rating_place">Місце у рейтингу</string>
 	<string name="booking_dialog_not_connect_header">Для бронювання готелів потрібен доступ до інтернету</string>
-	<string name="whatsnew_booking_header">Бронюй готель з додатку</string>
-	<string name="whatsnew_booking_message">Під час вибору готелів на карті буде відображено цінову категорію та рейтинг закладу.</string>
 	<string name="button_try">Спробувати</string>
-	<string name="whatsnew_cycle_navigation_header">Велонавігація (бета-версія)</string>
-	<string name="whatsnew_cycle_navigation_message">До відкриття сезону ми тестуємо велонавігацію. Проїдьтесь за своїм улюбленим маршрутом з MAPS.ME та поділіться враженнями з нами.</string>
 	<string name="refresh">Обновити</string>
 	<string name="last_update">Останнє оновлення: %s</string>
+	<string name="booking_checkin">заїзд: %s</string>
+	<string name="booking_checkout">виїзд: %s</string>
+	<string name="placepage_add_place_button">Додати на карту</string>
+	<!-- Displayed when saving some edits to the map to warn against publishing personal data -->
+	<string name="editor_share_to_all_dialog_title">Надіслати усім користувачам?</string>
+	<!-- iOS Dialog before publishing the modifications to the public map. -->
+	<string name="editor_share_to_all_dialog_message_1">Переконайтеся, що ви не ввели особисті дані.</string>
+	<string name="editor_share_to_all_dialog_message_2">Якщо при перевірці змін виникнуть питання, ми напишемо вам на email.</string>
+	<string name="navigation_overview_button">огляд</string>
+	<string name="navigation_stop_button">стоп</string>
+	<!-- Text on an empty bookmark page -->
+	<string name="bookmarks_empty_title">Зберегти закладки</string>
+	<string name="bookmarks_empty_message_1">Клацніть по ★, щоб зберегти улюблені місця для швидкого доступу.</string>
+	<string name="bookmarks_empty_message_2">Імпортувати закладки з Mail та web.</string>
+	<string name="bookmarks_empty_message_3">виїзд: %s</string>
+	<!-- Name of the group for booked hotels -->
+	<string name="bookmarks_group_name">Заброньовані готелі</string>
+	<string name="place_page_button_read_descriprion">Прочитати</string>
+	<!-- iOS dialog for the case when recent track recording is on and the app comes back from background -->
+	<string name="recent_track_background_dialog_title">Вимкнути запис нещодавно пройденого шляху?</string>
+	<!-- If a hotel is being shared -->
+	<string name="sharing_booking">або забронюй на booking.com</string>
+	<string name="off_recent_track_background_button">Вимкнути</string>
+	<!-- For sharing via SMS and so on -->
+	<string name="sharing_call_action_look">Подивись,</string>
+	<string name="continue_recent_track_background_button">Продовжити</string>
+	<string name="recent_track_background_dialog_message">MAPS.ME використовує вашу геопозицію у фоновому режимі для запису нещодавно пройденого шляху.</string>
+	<string name="whatsnew_car_navigation_header">Режим автонавігації став зручнішим</string>
+	<string name="whatsnew_car_navigation_message">• Елементи навігації займають менше місця.\n• Показуємо швидкість і додали автозум.</string>
+	<string name="whatsnew_cycle_navigation_2_header">Велонавігація</string>
+	<string name="whatsnew_cycle_navigation_2_message">• Велонавігація враховує дані про рельєф.\n• Ми будуємо оптимальний маршрут з урахуванням перепаду висот.</string>
+	<string name="whatsnew_booking_2_header">Пошук готелів став простішим</string>
+	<string name="whatsnew_booking_2_message">При пошуку відображається рейтинг і цінова категорія готелю.</string>
+	<string name="whatsnew_cycle_navigation_header">Велонавігація (бета-версія)</string>
+	<string name="whatsnew_cycle_navigation_message">До відкриття сезону ми тестуємо велонавігацію. Проїдьтесь за своїм улюбленим маршрутом з MAPS.ME та поділіться враженнями з нами.</string>
+	<!-- Rate on Google Play (Android only) -->
+	<string name="rate_gp">Рейтинг на Google Play</string>
+	<!-- Share with friends: menu item title -->
+	<string name="tell_friends">Розповісти другу</string>
+	<!-- Share with friends: sharing text -->
+	<string name="tell_friends_text">Привіт! Встанови MAPS.ME!</string>
+	<!-- About short text (below logo) -->
+	<string name="about_description">MAPS.ME — це додаток must-have для мандрівників. У MAPS.ME використовуються офлайн-дані OpenStreetMap, які можна редагувати.</string>
+	<!-- Text in menu -->
+	<string name="blog">Блог</string>
+	<!-- Hint near allow statictics checkbox -->
+	<string name="allow_statistics_hint">Збір статистичної інформації про використання допомагає нам вдосконалювати наш додаток.</string>
+	<string name="general_settings">Загальні налаштування</string>
+	<string name="date">Дата %d</string>
+	<!-- "Report a bug" -> "Generaal Feedback" -> "Something is not working" -->
+	<string name="something_is_not_working">Щось пішло не так</string>
+	<!-- For the first routing -->
+	<string name="accept">Прийняти</string>
+	<!-- For the first routing -->
+	<string name="decline">Відхилити</string>
+	<string name="whats_new_route_profile_title">Мудрий в гори б не звернув, мудрий гори б обминув</string>
+	<string name="whats_new_route_profile_message">Для пішохідних і велосипедних маршрутів тепер відображається профіль рельєфу.</string>
+	<string name="whats_new_booking_improve_title">Заощаджуйте на бронюванні готелів</string>
+	<string name="whats_new_booking_improve_message">В результатах пошуку готелів на карті відображається цінова категорія.\nКрім того, тепер у нашій базі даних з\&#39;явилося 110 000 нових готелів.</string>
+	<!-- For place page hotel facilities block -->
+	<string name="placepage_hotel_facilities">Зручності</string>
+	<!-- For place page hotel nearby block -->
+	<string name="placepage_hotel_nearby">Поблизу</string>
+	<!-- For ordering a taxi (as opposed to hotels or other things) -->
+	<string name="taxi_order">Замовлення таксі</string>
+	<!-- How long it is until the taxi arrives -->
+	<string name="taxi_wait">Очікується через %s</string>
+	<!-- When there are no available taxis nearby -->
+	<string name="taxi_not_found">Не вдалося знайти таксі поблизу</string>
+	<string name="install_app">Встановити</string>
+	<!-- `Filter` is a noun here -->
+	<string name="booking_filters">Фільтр</string>
+	<string name="booking_filters_reset">Скинути</string>
+	<string name="booking_filters_rating">Рейтинг</string>
+	<string name="booking_filters_rating_any">Будь-який</string>
+	<string name="booking_filters_ragting_good">Добре</string>
+	<string name="booking_filters_rating_very_good">Дуже добре</string>
+	<string name="booking_filters_rating_excellent">Чудово</string>
+	<string name="booking_filters_price_category">Цінова категорія</string>
+	<string name="search_no_results_title">Не знайдено жодного результату</string>
+	<string name="search_no_results_message">Спробуйте пошук за більш узагальненим пошуковим виразом, зменшіть масштаб або скиньте фільтри.</string>
+	<string name="search_no_results_expand_area_button">Зменшити масштаб</string>
+	<string name="search_no_results_reset_button">Скинути фільтри</string>
+	<!-- noun -->
+	<string name="search_in_table">Список</string>
+	<string name="booking_based_on_reviews">На основі %d відгуків(-у) про готель</string>
+	<string name="booking_show_more">Показати більше</string>
+	<string name="booking_reviews">Відгуки</string>
+	<string name="booking_hotel">Готель</string>
+	<!-- hotel room -->
+	<string name="booking_hotel_room">Номер</string>
+	<!-- A neologism for a chat based on geographical proximity -->
+	<string name="chat">Геочат</string>
+	<!-- Verb. Text on a button that opens the chat. -->
+	<string name="chat_open">Відкрити</string>
+	<string name="whatsnew_uber_header">MAPS.ME і Uber</string>
+	<string name="whatsnew_uber_message">Замовляйте таксі прямо з додатку!</string>
+	<string name="dialog_taxi_offline">Замовлення таксі неможливе в автономному режимі.</string>
+	<string name="dialog_taxi_error">Замовлення таксі тимчасово недоступне.</string>
+	<string name="advertisement">Реклама</string>
+	<string name="mobile_data_dialog">Використовувати мобільні дані для перегляду докладної інформації?</string>
+	<string name="mobile_data_option_always">Завжди</string>
+	<string name="mobile_data_option_today">Тільки сьогодні</string>
+	<string name="mobile_data_option_not_today">За винятком сьогодні</string>
+	<string name="mobile_data">Мобільні дані</string>
+	<string name="mobile_data_description">Використання мобільних даних необхідно для відображення докладної інформації про місця (наприклад, фотографій, цін і відгуків).</string>
+	<string name="mobile_data_option_never">Ніколи</string>
+	<string name="mobile_data_option_ask">Завжди питати</string>
+	<string name="traffic_update_maps_text">Для відображення інформації про трафік необхідно оновити карти.</string>
+	<string name="traffic_outdated">Дані про трафік застаріли.</string>
+	<string name="big_font">Більші написи</string>
+	<string name="traffic_update_app">Будь ласка, встановіть оновлення MAPS.ME</string>
+	<!-- "traffic" as in road congestion -->
+	<string name="traffic_update_app_message">Для відображення даних про трафік оновіть додаток.</string>
+	<!-- "traffic" as in "road congestion" -->
+	<string name="traffic_data_unavailable">Дані про трафік недоступні</string>
+	<string name="banner_deliveryclub_title">Доставка їжі</string>
+	<string name="banner_deliveryclub_message">Швидка доставка з 4000 ресторанів. Замовляйте з Delivery Club.</string>
+	<string name="banner_lamoda_title">Онлайн-магазини одягу та взуття</string>
+	<string name="banner_lamoda_message">Понад 1000 брендів. Знижки до 70%. Безкоштовна доставка по всій країні.</string>
+	<string name="banner_tutu_title">Онлайн-замовлення залізничних квитків</string>
+	<string name="banner_tutu_message">Онлайн-пошук і замовлення квитків на поїзд до будь-якого міста.</string>
+	<string name="banner_geerbest_title">Онлайн-магазин електроніки</string>
+	<string name="banner_geerbest_message">Миттєвий пошук по більш ніж 50 000 виробів за зниженими цінами.</string>
+	<string name="banner_rentalcars_title">Онлайн-оренда автомобілів</string>
+	<string name="banner_rentalcars_message">800 компаній з прокату автомобілів та понад 49 000 агентів.</string>
+	<string name="banner_viator_title">Онлайн-пошук турів</string>
+	<string name="banner_viator_message">Вибір з понад 50 000 турів у різних куточках світу.</string>
+	<!-- december -->
+	<string name="whatsnew_traffic">Дані про трафік у 36 країнах</string>
+	<!-- december -->
+	<string name="whatsnew_traffic_text">Актуальні відомості про трафік та найменш перевантажені дороги!</string>
+	<!-- december -->
+	<string name="whatsnew_traffic_roaming">Інформація про трафік у роумінгу</string>
+	<!-- december -->
+	<string name="whatsnew_traffic_roaming_text">Менше 1 МБ мобільних даних на одну поїздку.</string>
+	<!-- december -->
+	<string name="whatsnew_order_taxi">Замовлення таксі</string>
+	<!-- december -->
+	<string name="whatsnew_order_taxi_text">На більшості сторінок місцязнаходження тепер є кнопка замовлення таксі.</string>
+	<!-- january -->
+	<string name="whatsnew_improved_search">Вдосконалений пошук</string>
+	<!-- january -->
+	<string name="whatsnew_improved_search_text">Видача правильних результатів навіть за наявності помилок у запиті.</string>
+	<!-- january -->
+	<string name="whatsnew_filters_in_search">Пошукові фільтри</string>
+	<!-- january -->
+	<string name="whatsnew_filters_in_search_text">Пошук готелів виходячи з ціни та рейтингу.</string>
+	<!-- january -->
+	<string name="whatsnew_font_size">Розмір шрифту</string>
+	<!-- january -->
+	<string name="whatsnew_font_size_text">Можливість збільшення розміру написів на карті.</string>
 </resources>

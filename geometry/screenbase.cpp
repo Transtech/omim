@@ -94,6 +94,7 @@ void ScreenBase::UpdateDependentParameters()
   }
 }
 
+// static
 double ScreenBase::CalculateAutoPerspectiveAngle(double scale)
 {
   if (scale > kStartPerspectiveScale1)
@@ -112,6 +113,12 @@ double ScreenBase::CalculateAutoPerspectiveAngle(double scale)
   }
 
   return kMaxPerspectiveAngle2 * 0.99;
+}
+
+// static
+double ScreenBase::GetStartPerspectiveScale()
+{
+  return kStartPerspectiveScale1;
 }
 
 double ScreenBase::CalculatePerspectiveAngle(double scale) const
@@ -440,14 +447,19 @@ m2::PointD ScreenBase::PtoP3d(m2::PointD const & pt) const
   return PtoP3d(pt, 0.0);
 }
 
+double ScreenBase::GetZScale() const
+{
+  double const averageScale3d = m_isPerspective ? 2.7 : 1.0;
+  return 2.0 / (m_Scale * m_ViewportRect.SizeY() * averageScale3d);
+}
+
 m2::PointD ScreenBase::PtoP3d(m2::PointD const & pt, double ptZ) const
 {
   if (!m_isPerspective)
     return pt;
-
   Vector3dT const normalizedPoint{float(2.0 * pt.x / m_PixelRect.SizeX() - 1.0),
                                   -float(2.0 * pt.y / m_PixelRect.SizeY() - 1.0),
-                                  float(2.0 * ptZ / m_PixelRect.SizeY()), 1.0};
+                                  float(ptZ * GetZScale()), 1.0};
 
   Vector3dT const perspectivePoint = normalizedPoint * m_Pto3d;
 
@@ -503,4 +515,28 @@ bool ScreenBase::IsReverseProjection3d(m2::PointD const & pt) const
 
   Vector3dT const perspectivePoint = normalizedPoint * m_Pto3d;
   return perspectivePoint(0, 3) < 0.0;
+}
+
+ScreenBase::Matrix3dT ScreenBase::GetModelView() const
+{
+  return ScreenBase::Matrix3dT
+  {
+    m_GtoP(0, 0), m_GtoP(1, 0), 0, m_GtoP(2, 0),
+    m_GtoP(0, 1), m_GtoP(1, 1), 0, m_GtoP(2, 1),
+    0, 0, 1, 0,
+    0, 0, 0, 1
+  };
+}
+
+ScreenBase::Matrix3dT ScreenBase::GetModelView(m2::PointD const & pivot, double scalar) const
+{
+  MatrixT const & m = m_GtoP;
+  double const s = 1.0 / scalar;
+  return ScreenBase::Matrix3dT
+  {
+    s * m(0, 0), s * m(1, 0), 0, m(2, 0) + pivot.x * m(0, 0) + pivot.y * m(1, 0),
+    s * m(0, 1), s * m(1, 1), 0, m(2, 1) + pivot.x * m(0, 1) + pivot.y * m(1, 1),
+    0, 0, 1, 0,
+    0, 0, 0, 1
+  };
 }

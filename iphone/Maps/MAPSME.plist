@@ -63,6 +63,7 @@
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>mapswithme</string>
+				<string>mapsme</string>
 				<string>ge0</string>
 				<string>geo</string>
 				<string>fb185237551520383</string>
@@ -71,7 +72,7 @@
 		</dict>
 	</array>
 	<key>CFBundleVersion</key>
-	<string>${CURRENT_PROJECT_VERSION}</string>
+	<string>0</string>
 	<key>Fabric</key>
 	<dict>
 		<key>APIKey</key>
@@ -96,11 +97,10 @@
 		<string>fb-messenger-api</string>
 		<string>fbauth2</string>
 		<string>fbshareextension</string>
+		<string>uber</string>
 	</array>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
-	<key>LocalNotificationsFileName</key>
-	<string>LocalNotifications</string>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>
@@ -144,6 +144,14 @@
 			</dict>
 		</dict>
 	</dict>
+	<key>NSCameraUsageDescription</key>
+	<string>Unused by an application</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Unused by an application</string>
+	<key>PW_USE_GPS</key>
+	<false/>
+	<key>Pushwoosh_LOG_LEVEL</key>
+	<string>WARNING</string>
 	<key>UIApplicationShortcutItems</key>
 	<array>
 		<dict>

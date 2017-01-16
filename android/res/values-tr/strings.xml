@@ -198,6 +198,7 @@
 	<string name="parking">Otopark</string>
 	<!-- Search Suggestion -->
 	<string name="shop">Mağaza</string>
+	<!-- Search Suggestion -->
 	<string name="hotel">Otel</string>
 	<!-- Search Suggestion -->
 	<string name="tourism">Görülecek yerler</string>
@@ -277,8 +278,6 @@
 	<string name="copied_to_clipboard">Panoya Kopyalandı: %1$s</string>
 	<!-- Setting label for statistics turn on/off -->
 	<string name="allow_statistics">İstatistikleri Gönder</string>
-	<!-- Hint near allow statictics checkbox -->
-	<string name="allow_statistics_hint">Uygulamayı geliştirebilmemiz için kullanım istatistikleri toplamamıza izin ver</string>
 	<!-- place preview title -->
 	<string name="info">Bilgi</string>
 	<!-- Used for bookmark editing -->
@@ -331,6 +330,7 @@
 	<string name="pref_tts_how_to_set_up_voice">Ses nasıl ayarlanır</string>
 	<!-- Settings «Map» category: «Record track» title -->
 	<string name="pref_track_record_title">En son yol</string>
+	<string name="pref_map_auto_zoom">Otomatik yakınlaştırma</string>
 	<string name="duration_disabled">Kapalı</string>
 	<string name="duration_1_hour">1 saat</string>
 	<string name="duration_2_hours">2 saat</string>
@@ -592,7 +592,6 @@
 	<string name="dialog_routing_send_error">Hatayı Bildirin</string>
 	<string name="dialog_routing_if_get_cross_route">Bir haritadan daha fazlasına uzanan doğrudan bir güzergah oluşturmak ister misiniz?</string>
 	<string name="dialog_routing_cross_route_is_optimal">Bu haritanın bir kısmından geçen daha uygun bir güzergah mevcut.</string>
-	<string name="dialog_routing_always_cross_that_border">Bu sınırı her zaman geçin</string>
 	<string name="not_now">Şimdi Değil</string>
 	<string name="dialog_routing_build_route">Oluşturun</string>
 	<string name="dialog_routing_download_and_build_cross_route">Haritayı indirerek birden fazla haritaya uzanan daha uygun bir güzergah oluşturmak ister misiniz?</string>
@@ -636,7 +635,6 @@
 	<string name="clear_search">Arama geçmişini temizle</string>
 	<!-- Title for settings to enable/disable showcase menu button -->
 	<string name="showcase_settings_title">Teklifleri göster</string>
-	<string name="showcase_more_apps">Daha fazla My.com uygulamaları</string>
 	<string name="p2p_route_planning">Rota planlama</string>
 	<string name="p2p_your_location">Konumunuz</string>
 	<string name="p2p_from">Kalkış noktası</string>
@@ -720,9 +718,12 @@
 	<string name="login_with_openstreetmap">www.openstreetmap.org adresinden oturum aç</string>
 	<string name="edit_place">Yeri düzenle</string>
 	<string name="place_name">Yer ismi</string>
-	<string name="place_name_caption">İşaret veya tabeladaki gibi ismi girin</string>
 	<!-- title above languages list cells in the editor, below editable name text field. -->
 	<string name="other_languages">Diğer Diller</string>
+	<!-- small button to open list with names in different languages -->
+	<string name="show_more">Daha fazlasını göster</string>
+	<!-- small button to close list with names in different languages -->
+	<string name="show_less">Daha azını göster</string>
 	<string name="add_language">Bir dil ekle</string>
 	<string name="street">Sokak</string>
 	<!-- Editable House Number text field (in address block). -->
@@ -768,7 +769,6 @@
 	<string name="editor_edit_place_category_title">Kategori</string>
 	<string name="detailed_problem_description">Sorunun ayrıntılı açıklaması</string>
 	<string name="editor_report_problem_other_title">Farklı bir problem</string>
-	<string name="placepage_add_place_button">Bir yer ekle</string>
 	<string name="placepage_report_problem_button">Bir problem bildirin</string>
 	<string name="placepage_add_business_button">Kuruluş ekle</string>
 	<string name="whatsnew_smallmwm_header">Siz istediniz biz yaptık</string>
@@ -803,6 +803,7 @@
 	<string name="download_over_mobile_message">Bu işlem bazı planlarla ya da dolaşım ise büyük ölçüde pahalı olabilir.</string>
 	<string name="error_enter_correct_house_number">Doğru ev numarası girin</string>
 	<string name="editor_storey_number">Kat sayısı (en fazla %d)</string>
+	<!-- Error message in Editor when a user tries to set the number of floors for a building higher than 25 -->
 	<string name="error_enter_correct_storey_number">Binayı en fazla 25 katlı düzenle</string>
 	<string name="editor_zip_code">Posta Kodu</string>
 	<string name="error_enter_correct_zip_code">Doğru Posta Kodunu girin</string>
@@ -816,7 +817,6 @@
 	<string name="editor_tag_description">Tesislerden sorumlu şirketi, kurumu veya bireyi girin.</string>
 	<string name="editor_no_local_edits_title">Yerel düzenlemeniz yok</string>
 	<string name="editor_no_local_edits_description">Bu, harita üzerinde önerdiğiniz değişikliklerden sadece şu anda cihazınızda erişilebilenlerin sayısını gösterir.</string>
-	<string name="editor_international_names_subtitle">Diğer dillerdeki adı</string>
 	<string name="editor_send_to_osm">OSM’ye gönder</string>
 	<string name="editor_remove">Kaldır</string>
 	<string name="downloader_my_maps_title">Haritalarım</string>
@@ -839,7 +839,8 @@
 	<string name="location_services_disabled_message">Cihaz ayarlarında konum belirlemeye erişimi etkinleştirin</string>
 	<string name="location_services_disabled_1">1. Ayarları Açın</string>
 	<string name="location_services_disabled_2">2. Konuma Dokunun</string>
-	<string name="location_services_disabled_3">3. Her Zamanı Seçin</string>
+	<!-- iOS Dialog for the case when the location permission is not granted -->
+	<string name="location_services_disabled_3">3. Uygulamayı Kullanırken Seç</string>
 	<string name="placepage_parking_surface">Yüzey</string>
 	<string name="placepage_parking_multistorey">Çok Katlı</string>
 	<string name="placepage_parking_underground">Metro</string>
@@ -858,9 +859,16 @@
 	<string name="place_page_starting_from">%s’dan</string>
 	<string name="meter">m</string>
 	<string name="kilometer">km</string>
+	<string name="kilometers_per_hour">km/s</string>
+	<string name="mile">mil</string>
+	<string name="foot">ft</string>
+	<string name="miles_per_hour">mph</string>
+	<string name="day">g</string>
+	<string name="hour">sa</string>
+	<string name="minute">dk</string>
 	<string name="placepage_place_description">Açıklama</string>
 	<string name="placepage_more_button">Diğer</string>
-	<string name="bookingcom_book_button">Rezervasyon</string>
+	<string name="book_button">Rezervasyon</string>
 	<string name="placepage_call_button">Çağrı</string>
 	<string name="placepage_edit_bookmark_button">Yer İmini Düzenle</string>
 	<string name="placepage_bookmark_name_hint">Yer İmi Adı</string>
@@ -875,18 +883,167 @@
 	<string name="editor_status_sending">Gönderiliyor…</string>
 	<string name="editor_place_doesnt_exist">Bu yer mevcut değil</string>
 	<string name="text_more_button">…daha fazla</string>
-	<string name="error_enter_correct_phone">Telefon numarasını harf olmadan girin</string>
+	<!-- Phone number error message -->
+	<string name="error_enter_correct_phone">Doğru telefon numarası gir</string>
 	<string name="error_enter_correct_web">Geçerli bir web adresi girin</string>
 	<string name="error_enter_correct_email">Geçerli bir e-posta girin</string>
 	<string name="error_enter_correct">Geçerli bir değer girin</string>
 	<string name="editor_profile_changes_for_next_place">Sonraki yerdeki değişiklikler: %d</string>
 	<string name="editor_profile_rating_place">Sıralamadaki yeri</string>
 	<string name="booking_dialog_not_connect_header">Bunlar, onaylanmış harita değişiklikleridir</string>
-	<string name="whatsnew_booking_header">Uygulama üzerinden otel rezervasyonu yapın</string>
-	<string name="whatsnew_booking_message">Bir otel aradığınızda, harita otellerin fiyat kategorisini ve puanlarını gösterir.</string>
 	<string name="button_try">Deneyin</string>
-	<string name="whatsnew_cycle_navigation_header">Bisiklet navigasyonu (beta sürüm)</string>
-	<string name="whatsnew_cycle_navigation_message">Yeni sezon için bisiklet navigasyonu özelliğini test ediyoruz. En sık kullandığınız bisiklet rotasını MAPS.ME ile deneyin ve görüşlerinizi bizimle paylaşın.</string>
 	<string name="refresh">Güncelleştirme</string>
 	<string name="last_update">Son güncelleme: %s</string>
+	<string name="booking_checkin">giriş: %s</string>
+	<string name="booking_checkout">çıkış: %s</string>
+	<string name="placepage_add_place_button">Haritaya bir yer ekleyin</string>
+	<!-- Displayed when saving some edits to the map to warn against publishing personal data -->
+	<string name="editor_share_to_all_dialog_title">Bunu tüm kullanıcılara göndermek ister misiniz?</string>
+	<!-- iOS Dialog before publishing the modifications to the public map. -->
+	<string name="editor_share_to_all_dialog_message_1">Herhangi bir kişisel bilgi girmediğinizden emin olun.</string>
+	<string name="editor_share_to_all_dialog_message_2">Değişikliği kontrol edeceğiz. Eğer herhangi bir sorumuz olursa sizinle e-posta aracılığıyla temasa geçeceğiz.</string>
+	<string name="navigation_overview_button">genel bakış</string>
+	<string name="navigation_stop_button">dur</string>
+	<!-- Text on an empty bookmark page -->
+	<string name="bookmarks_empty_title">Yer İşaretlerini Kaydet</string>
+	<string name="bookmarks_empty_message_1">Hızlı erişim için favori yerlere kaydetmek için ★ dokunun.</string>
+	<string name="bookmarks_empty_message_2">E-postadan ve weben yer işaretlerini içe aktarın.</string>
+	<string name="bookmarks_empty_message_3">çıkış: %s</string>
+	<!-- Name of the group for booked hotels -->
+	<string name="bookmarks_group_name">Ayırtılan oteller</string>
+	<string name="place_page_button_read_descriprion">Oku</string>
+	<!-- iOS dialog for the case when recent track recording is on and the app comes back from background -->
+	<string name="recent_track_background_dialog_title">En son seyahat edilen rotanızı kaydetmeyi devre dışı bırakmak istiyor musunuz?</string>
+	<!-- If a hotel is being shared -->
+	<string name="sharing_booking">veya booking.com\&#39;dan yer ayırt</string>
+	<string name="off_recent_track_background_button">Devre Dışı Bırak</string>
+	<!-- For sharing via SMS and so on -->
+	<string name="sharing_call_action_look">İncele</string>
+	<string name="continue_recent_track_background_button">Devam Et</string>
+	<string name="recent_track_background_dialog_message">MAPS.ME, en son seyahat ettiğiniz rotayı kaydetmek için arka planda coğrafi konumunuzu kullanır.</string>
+	<string name="whatsnew_car_navigation_header">Kullanıcı dostu araç navigasyonu</string>
+	<string name="whatsnew_car_navigation_message">• Navigasyon ögeleri daha az yer kaplıyor.\n• Hızı gösteriyoruz ve otomatik yakınlaştırma ilave ettik.</string>
+	<string name="whatsnew_cycle_navigation_2_header">Bisiklet navigasyonu</string>
+	<string name="whatsnew_cycle_navigation_2_message">• Bisiklet navigasyonu arazi verilerini hesaba katar.\n• Yol eğimlerini hesaba katarak daha kolay rotalar oluşturuyoruz.</string>
+	<string name="whatsnew_booking_2_header">Kolay otel arama</string>
+	<string name="whatsnew_booking_2_message">Arama sonuçları otel puan ve fiyat kategorisini gösterir.</string>
+	<string name="whatsnew_cycle_navigation_header">Bisiklet navigasyonu (beta sürüm)</string>
+	<string name="whatsnew_cycle_navigation_message">Yeni sezon için bisiklet navigasyonu özelliğini test ediyoruz. En sık kullandığınız bisiklet rotasını MAPS.ME ile deneyin ve görüşlerinizi bizimle paylaşın.</string>
+	<!-- Rate on Google Play (Android only) -->
+	<string name="rate_gp">Google Play\&#39;de Oy Ver</string>
+	<!-- Share with friends: menu item title -->
+	<string name="tell_friends">Arkadaşınıza söyleyin</string>
+	<!-- Share with friends: sharing text -->
+	<string name="tell_friends_text">Merhaba! MAPS.ME\&#39;yi hemen yükle!</string>
+	<!-- About short text (below logo) -->
+	<string name="about_description">MAPS.ME, seyahatler için vazgeçilmez bir çevrimdışı uygulamadır. MAPS.ME, OpenStreetMap verilerine dayanmakta ve bu verilerin düzenlenmesini sağlamaktadır.</string>
+	<!-- Text in menu -->
+	<string name="blog">Blog</string>
+	<!-- Hint near allow statictics checkbox -->
+	<string name="allow_statistics_hint">Kullanım istatistiklerinin toplanması uygulamayı geliştirmemize yardımcı olur.</string>
+	<string name="general_settings">Genel ayarlar</string>
+	<string name="date">Tarih %d</string>
+	<!-- "Report a bug" -> "Generaal Feedback" -> "Something is not working" -->
+	<string name="something_is_not_working">Bir şey çalışmıyor</string>
+	<!-- For the first routing -->
+	<string name="accept">Kabul</string>
+	<!-- For the first routing -->
+	<string name="decline">Ret</string>
+	<string name="whats_new_route_profile_title">Düz yoldan gitmek çukura düşmekten daha iyidir</string>
+	<string name="whats_new_route_profile_message">Yürüyüş ve bisiklet yolları şimdi yükseklik profilli olarak görüntüleniyor.</string>
+	<string name="whats_new_booking_improve_title">Otel rezervasyonlarınızdan tasarruf edin</string>
+	<string name="whats_new_booking_improve_message">Artık otel arama sonuçlarında fiyat kategorisi de gösteriliyor.\nVe 110,000\&#39;den fazla oteli sistemimize ekledik.</string>
+	<!-- For place page hotel facilities block -->
+	<string name="placepage_hotel_facilities">Tesisler</string>
+	<!-- For place page hotel nearby block -->
+	<string name="placepage_hotel_nearby">Yakınlarda</string>
+	<!-- For ordering a taxi (as opposed to hotels or other things) -->
+	<string name="taxi_order">Taksi çağır</string>
+	<!-- How long it is until the taxi arrives -->
+	<string name="taxi_wait">%s içinde bekleniyor</string>
+	<!-- When there are no available taxis nearby -->
+	<string name="taxi_not_found">Yakın hiç taksi bulunamadı</string>
+	<string name="install_app">Kur</string>
+	<!-- `Filter` is a noun here -->
+	<string name="booking_filters">Filtre</string>
+	<string name="booking_filters_reset">Sıfırla</string>
+	<string name="booking_filters_rating">Oy Verin</string>
+	<string name="booking_filters_rating_any">Herhangi biri</string>
+	<string name="booking_filters_ragting_good">İyi</string>
+	<string name="booking_filters_rating_very_good">Çok iyi</string>
+	<string name="booking_filters_rating_excellent">Mükemmel</string>
+	<string name="booking_filters_price_category">Fiyat Kategorisi</string>
+	<string name="search_no_results_title">Hiçbir Sonuç Bulunamadı</string>
+	<string name="search_no_results_message">Daha genel bir terimi aramayı deneyin, uzaklaşın veya filtreyi Sıfırlayın.</string>
+	<string name="search_no_results_expand_area_button">Uzaklaş</string>
+	<string name="search_no_results_reset_button">Filtreyi Sıfırla</string>
+	<!-- noun -->
+	<string name="search_in_table">Liste</string>
+	<string name="booking_based_on_reviews">%d otel değerlendirmesine göre</string>
+	<string name="booking_show_more">Daha fazla göster</string>
+	<string name="booking_reviews">Değerlendirmeler</string>
+	<string name="booking_hotel">Otel</string>
+	<!-- hotel room -->
+	<string name="booking_hotel_room">Oda</string>
+	<!-- A neologism for a chat based on geographical proximity -->
+	<string name="chat">GeoChat</string>
+	<!-- Verb. Text on a button that opens the chat. -->
+	<string name="chat_open">Aç</string>
+	<string name="whatsnew_uber_header">MAPS.ME ve Uber</string>
+	<string name="whatsnew_uber_message">Doğrudan uygulamadan Uber taksi isteyin!</string>
+	<string name="dialog_taxi_offline">Taksi çağırma çevrimdışı modda kullanılamıyor.</string>
+	<string name="dialog_taxi_error">Taksi çağırma geçici olarak kullanılamıyor.</string>
+	<string name="advertisement">Reklam</string>
+	<string name="mobile_data_dialog">Ayrıntılı bilgileri görüntülemek için mobil internet kullanılsın mı?</string>
+	<string name="mobile_data_option_always">Her zaman kullan</string>
+	<string name="mobile_data_option_today">Sadece Bugün</string>
+	<string name="mobile_data_option_not_today">Bugün Kullanma</string>
+	<string name="mobile_data">Mobil İnternet</string>
+	<string name="mobile_data_description">Mobil internet, fotoğraflar, fiyatlar ve yorumlar gibi mekanlarla ilgili ayrıntılı bilgileri görüntülemek için gereklidir.</string>
+	<string name="mobile_data_option_never">Asla Kullanma</string>
+	<string name="mobile_data_option_ask">Her Zaman Sor</string>
+	<string name="traffic_update_maps_text">Trafik verilerini görüntülemek için haritaların güncellenmesi gerekiyor.</string>
+	<string name="traffic_outdated">Trafik verileri güncel değil.</string>
+	<string name="big_font">Daha büyük etiketler</string>
+	<string name="traffic_update_app">Lütfen MAPS.ME uygulamasını güncelleyin</string>
+	<!-- "traffic" as in road congestion -->
+	<string name="traffic_update_app_message">Trafik verilerini görüntülemek için uygulamanın güncellenmesi gerekiyor.</string>
+	<!-- "traffic" as in "road congestion" -->
+	<string name="traffic_data_unavailable">Trafik verileri kullanılamıyor</string>
+	<string name="banner_deliveryclub_title">Gıda teslimatı</string>
+	<string name="banner_deliveryclub_message">4.000\&#39;den fazla restorandan hızlı teslimat. Siparişinizi Delivery Club ile verin.</string>
+	<string name="banner_lamoda_title">Çevrimiçi giyim ve ayakkabı mağazası</string>
+	<string name="banner_lamoda_message">1.000\&#39;den fazla marka. %70\&#39;e varan indirimler. Ülkenin her yerine ücretsiz teslimat.</string>
+	<string name="banner_tutu_title">Çevrimiçi tren biletleri</string>
+	<string name="banner_tutu_message">Tüm şehirler için çevrimiçi tren biletleri - fiyat bilgileri, arama yapma ve rezervasyon.</string>
+	<string name="banner_geerbest_title">Çevrimiçi elektronik mağazası</string>
+	<string name="banner_geerbest_message">En uygun fiyatlarla 50.000\&#39;den fazla ürün için hızlı arama yapın.</string>
+	<string name="banner_rentalcars_title">Çevrimiçi araba kiralama</string>
+	<string name="banner_rentalcars_message">49.000\&#39;den fazla araç kiralama bölgesinde yer alan 800 araç kiralama şirketi.</string>
+	<string name="banner_viator_title">Çevrimiçi tur arama</string>
+	<string name="banner_viator_message">Dünyanın her yerinden 50.000\&#39;den fazla tur içinden arama yapın.</string>
+	<!-- december -->
+	<string name="whatsnew_traffic">36 Ülkeden Trafik Verileri</string>
+	<!-- december -->
+	<string name="whatsnew_traffic_text">En güncel trafik verileri ve en hızlı sürüş güzergâhları!</string>
+	<!-- december -->
+	<string name="whatsnew_traffic_roaming">Roaming (Dolaşım) esnasında trafik bilgileri</string>
+	<!-- december -->
+	<string name="whatsnew_traffic_roaming_text">Her yolculuk için en az 1 MB mobil bant genişliği gereklidir.</string>
+	<!-- december -->
+	<string name="whatsnew_order_taxi">Taksi Çağırma</string>
+	<!-- december -->
+	<string name="whatsnew_order_taxi_text">Artık çoğu konum sayfalarında taksi çağırmak için bir düğme bulunuyor.</string>
+	<!-- january -->
+	<string name="whatsnew_improved_search">Gelişmiş Arama</string>
+	<!-- january -->
+	<string name="whatsnew_improved_search_text">Hatalı yazılan sorguları bile doğru getiren arama sonuçları.</string>
+	<!-- january -->
+	<string name="whatsnew_filters_in_search">Arama Filtreleri</string>
+	<!-- january -->
+	<string name="whatsnew_filters_in_search_text">Ücret ve puana göre otel arama.</string>
+	<!-- january -->
+	<string name="whatsnew_font_size">Yazı Tipi Boyutu</string>
+	<!-- january -->
+	<string name="whatsnew_font_size_text">Harita üzerindeki etiketler daha büyük hale getirilebilir.</string>
 </resources>

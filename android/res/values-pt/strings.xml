@@ -191,6 +191,7 @@
 	<string name="parking">Estacionamento</string>
 	<!-- Search Suggestion -->
 	<string name="shop">Compras</string>
+	<!-- Search Suggestion -->
 	<string name="hotel">Hotel</string>
 	<!-- Search Suggestion -->
 	<string name="tourism">Vistas</string>
@@ -215,7 +216,7 @@
 	<!-- Notes field in Bookmarks view -->
 	<string name="description">Notas</string>
 	<!-- Button text -->
-	<string name="share_by_email">Partilhar por e-mail</string>
+	<string name="share_by_email">Partilhar por email</string>
 	<!-- Email Subject when sharing bookmarks category -->
 	<string name="share_bookmarks_email_subject">Os favoritos do MAPS.ME foram partilhados consigo</string>
 	<!-- Email text when sharing bookmarks category -->
@@ -261,7 +262,7 @@
 	<!-- iOS share by Message button text (including SMS) -->
 	<string name="message">Mensagem</string>
 	<!-- Share by email button text, also used in editor. -->
-	<string name="email">E-mail</string>
+	<string name="email">Email</string>
 	<!-- Copy Link -->
 	<string name="copy_link">Copiar hiperligação</string>
 	<!-- Text for the button that returns to caller application -->
@@ -270,8 +271,6 @@
 	<string name="copied_to_clipboard">Copiado para a Área de Transferência: %1$s</string>
 	<!-- Setting label for statistics turn on/off -->
 	<string name="allow_statistics">Enviar Estatísticas</string>
-	<!-- Hint near allow statictics checkbox -->
-	<string name="allow_statistics_hint">Permitir que recolhamos estatísticas de utilização para melhorar a aplicação</string>
 	<!-- place preview title -->
 	<string name="info">Info</string>
 	<!-- Used for bookmark editing -->
@@ -324,6 +323,7 @@
 	<string name="pref_tts_how_to_set_up_voice">Como configurar a voz</string>
 	<!-- Settings «Map» category: «Record track» title -->
 	<string name="pref_track_record_title">Histórico recente</string>
+	<string name="pref_map_auto_zoom">Zoom automático</string>
 	<string name="duration_disabled">Desligado</string>
 	<string name="duration_1_hour">1 hora</string>
 	<string name="duration_2_hours">2 horas</string>
@@ -585,7 +585,6 @@
 	<string name="dialog_routing_send_error">Relatar o Problema</string>
 	<string name="dialog_routing_if_get_cross_route">Deseja traçar uma rota mais direta, mas que se estenda por mais de um mapa?</string>
 	<string name="dialog_routing_cross_route_is_optimal">Há uma rota disponível que vai além dos limites desse mapa.</string>
-	<string name="dialog_routing_always_cross_that_border">Sempre cruzar esse limite</string>
 	<string name="not_now">Agora Não</string>
 	<string name="dialog_routing_build_route">Traçar</string>
 	<string name="dialog_routing_download_and_build_cross_route">Deseja baixar o mapa e traçar uma rota melhor, mas que se estenda por mais de um mapa?</string>
@@ -629,7 +628,6 @@
 	<string name="clear_search">Limpar histórico de pesquisa</string>
 	<!-- Title for settings to enable/disable showcase menu button -->
 	<string name="showcase_settings_title">Mostrar ofertas</string>
-	<string name="showcase_more_apps">Mais aplicativos do My.com</string>
 	<string name="p2p_route_planning">Planejar rota</string>
 	<string name="p2p_your_location">Localização atual</string>
 	<string name="p2p_from">O ponto de partida</string>
@@ -697,7 +695,7 @@
 	<string name="forgot_password">Esqueceu sua senha?</string>
 	<!-- Forgot Password dialog title -->
 	<string name="restore_password">Recuperar senha</string>
-	<string name="enter_email_address_to_reset_password">Digite o endereço de e-mail que você usou ao cadastrar-se, e nós lhe enviaremos o link para renovar a sua senha.</string>
+	<string name="enter_email_address_to_reset_password">Digite o endereço de email que você usou ao cadastrar-se, e nós lhe enviaremos o link para renovar a sua senha.</string>
 	<string name="reset_password">Redefinir senha</string>
 	<string name="username">Nome de usuário</string>
 	<string name="osm_account">Conta OSM</string>
@@ -713,9 +711,12 @@
 	<string name="login_with_openstreetmap">Entrar com www.openstreetmap.org</string>
 	<string name="edit_place">Editar o local</string>
 	<string name="place_name">Nome do local</string>
-	<string name="place_name_caption">Informe o nome como está indicado na sinalização ou na placa</string>
 	<!-- title above languages list cells in the editor, below editable name text field. -->
 	<string name="other_languages">Outros idiomas</string>
+	<!-- small button to open list with names in different languages -->
+	<string name="show_more">Mostrar mais</string>
+	<!-- small button to close list with names in different languages -->
+	<string name="show_less">Mostrar menos</string>
 	<string name="add_language">Adicionar um idioma</string>
 	<string name="street">Rua</string>
 	<!-- Editable House Number text field (in address block). -->
@@ -729,7 +730,7 @@
 	<string name="cuisine">Culinária</string>
 	<string name="select_cuisine">Selecione a Culinária</string>
 	<!-- login text field -->
-	<string name="email_or_username">E-mail ou nome de usuário</string>
+	<string name="email_or_username">Email ou nome de usuário</string>
 	<string name="phone">Telefone</string>
 	<string name="please_note">Por favor note</string>
 	<string name="common_no_wifi_dialog">Nenhuma ligação Wi-Fi. Deseja continuar com os dados móveis?</string>
@@ -761,7 +762,6 @@
 	<string name="editor_edit_place_category_title">Categoria</string>
 	<string name="detailed_problem_description">Descrição detalhada do problema</string>
 	<string name="editor_report_problem_other_title">Um problema diferente</string>
-	<string name="placepage_add_place_button">Adicionar um lugar</string>
 	<string name="placepage_report_problem_button">Comunicar um problema</string>
 	<string name="placepage_add_business_button">Adicionar uma organização</string>
 	<string name="whatsnew_smallmwm_header">Vocês têm pedido por isso e nós atendemos</string>
@@ -796,6 +796,7 @@
 	<string name="download_over_mobile_message">Isto pode ser significativamente caro, com alguns planos ou se roaming.</string>
 	<string name="error_enter_correct_house_number">Introduzir um número de casa correto</string>
 	<string name="editor_storey_number">Número de pisos (máx. %d)</string>
+	<!-- Error message in Editor when a user tries to set the number of floors for a building higher than 25 -->
 	<string name="error_enter_correct_storey_number">Editar o edifício com um máximo de 25 pisos</string>
 	<string name="editor_zip_code">Código Postal</string>
 	<string name="error_enter_correct_zip_code">Introduza o código postal correto</string>
@@ -809,7 +810,6 @@
 	<string name="editor_tag_description">Introduza a empresa, organização ou indivíduo responsável pelas instalações.</string>
 	<string name="editor_no_local_edits_title">Não tem edições locais</string>
 	<string name="editor_no_local_edits_description">Isto demonstra o número das suas alterações sugeridas no mapa que atualmente só são acessíveis no seu dispositivo.</string>
-	<string name="editor_international_names_subtitle">Nome noutras línguas</string>
 	<string name="editor_send_to_osm">Enviar para OSM</string>
 	<string name="editor_remove">Remover</string>
 	<string name="downloader_my_maps_title">Os meus mapas</string>
@@ -832,7 +832,8 @@
 	<string name="location_services_disabled_message">Permitir o acesso à geolocalização nas configurações do dispositivo</string>
 	<string name="location_services_disabled_1">1. Abrir configurações</string>
 	<string name="location_services_disabled_2">2. Tocar em localização</string>
-	<string name="location_services_disabled_3">3. Selecionar sempre</string>
+	<!-- iOS Dialog for the case when the location permission is not granted -->
+	<string name="location_services_disabled_3">3. Selecione Durante Uso do Aplicativo</string>
 	<string name="placepage_parking_surface">Superfície</string>
 	<string name="placepage_parking_multistorey">Vários andares</string>
 	<string name="placepage_parking_underground">Local desconhecido</string>
@@ -850,10 +851,17 @@
 	<string name="place_page_booking_rating">Classificação: %s</string>
 	<string name="place_page_starting_from">a partir de %s</string>
 	<string name="meter">m</string>
-	<string name="kilometer">km</string>
+	<string name="kilometer">Km</string>
+	<string name="kilometers_per_hour">km/h</string>
+	<string name="mile">M</string>
+	<string name="foot">ft</string>
+	<string name="miles_per_hour">mph</string>
+	<string name="day">d</string>
+	<string name="hour">h</string>
+	<string name="minute">min</string>
 	<string name="placepage_place_description">Descrição</string>
 	<string name="placepage_more_button">Mais</string>
-	<string name="bookingcom_book_button">Livro</string>
+	<string name="book_button">Livro</string>
 	<string name="placepage_call_button">Chamada</string>
 	<string name="placepage_edit_bookmark_button">Editar marcador</string>
 	<string name="placepage_bookmark_name_hint">Nome do marcador</string>
@@ -868,18 +876,167 @@
 	<string name="editor_status_sending">A enviar…</string>
 	<string name="editor_place_doesnt_exist">O local não existe</string>
 	<string name="text_more_button">…mais</string>
-	<string name="error_enter_correct_phone">Preencha com o número de telefone sem letras</string>
+	<!-- Phone number error message -->
+	<string name="error_enter_correct_phone">Insira o número correto do telefone</string>
 	<string name="error_enter_correct_web">Preencha com um endereço válido na internet</string>
-	<string name="error_enter_correct_email">Preencha com um endereço válido de e-mail</string>
+	<string name="error_enter_correct_email">Preencha com um endereço válido de email</string>
 	<string name="error_enter_correct">Preencha com um valor válido</string>
 	<string name="editor_profile_changes_for_next_place">Alterações para o próximo lugar: %d</string>
 	<string name="editor_profile_rating_place">Posição na classificação</string>
 	<string name="booking_dialog_not_connect_header">Para reservar o hotel, ative a sua ligação à Internet</string>
-	<string name="whatsnew_booking_header">Reservar um hotel a partir da aplicação</string>
-	<string name="whatsnew_booking_message">Quando procurar um hotel, o mapa irá exibir a categoria de preço e a classificação do hotel.</string>
 	<string name="button_try">Experimente</string>
-	<string name="whatsnew_cycle_navigation_header">Navegação para bicicleta (versão beta)</string>
-	<string name="whatsnew_cycle_navigation_message">Estamos a testar a navegação para bicicleta para a nova temporada. Experimente o seu trilho preferido em bicicleta com a MAPS.ME e partilhe a sua opinião connosco.</string>
 	<string name="refresh">Atualizar</string>
 	<string name="last_update">Última atualização: %s</string>
+	<string name="booking_checkin">check in: %s</string>
+	<string name="booking_checkout">check out: %s</string>
+	<string name="placepage_add_place_button">Adicionar um local ao mapa</string>
+	<!-- Displayed when saving some edits to the map to warn against publishing personal data -->
+	<string name="editor_share_to_all_dialog_title">Deseja enviar para todos os usuários?</string>
+	<!-- iOS Dialog before publishing the modifications to the public map. -->
+	<string name="editor_share_to_all_dialog_message_1">Certifique-se de não ter incluído nenhum dado pessoal.</string>
+	<string name="editor_share_to_all_dialog_message_2">Verificaremos as alterações. Se tivermos perguntas, entraremos em contato com você por email.</string>
+	<string name="navigation_overview_button">visão geral</string>
+	<string name="navigation_stop_button">parar</string>
+	<!-- Text on an empty bookmark page -->
+	<string name="bookmarks_empty_title">Salvar Favoritos</string>
+	<string name="bookmarks_empty_message_1">Toque em ★ para salvar locais favoritos para rápido acesso.</string>
+	<string name="bookmarks_empty_message_2">Importe favoritos do Mail e da web.</string>
+	<string name="bookmarks_empty_message_3">check out: %s</string>
+	<!-- Name of the group for booked hotels -->
+	<string name="bookmarks_group_name">Hotéis reservados</string>
+	<string name="place_page_button_read_descriprion">Leia</string>
+	<!-- iOS dialog for the case when recent track recording is on and the app comes back from background -->
+	<string name="recent_track_background_dialog_title">Desabilitar registro de sua rota recente?</string>
+	<!-- If a hotel is being shared -->
+	<string name="sharing_booking">ou faça sua reserva em booking.com</string>
+	<string name="off_recent_track_background_button">Desabilitar</string>
+	<!-- For sharing via SMS and so on -->
+	<string name="sharing_call_action_look">Procure</string>
+	<string name="continue_recent_track_background_button">Continuar</string>
+	<string name="recent_track_background_dialog_message">O MAPS.ME usa sua localização geográfica em segundo plano para registrar sua rota recente.</string>
+	<string name="whatsnew_car_navigation_header">Navegação de veículos de fácil utilização</string>
+	<string name="whatsnew_car_navigation_message">• Os elementos da navegação ocupam menos espaço.\n• Exibimos a velocidade e acrescentamos ampliação automática.</string>
+	<string name="whatsnew_cycle_navigation_2_header">Navegação de bicicletas</string>
+	<string name="whatsnew_cycle_navigation_2_message">• A navegação de bicicletas leva em consideração dados de terrenos.\n• Criamos rotas mais fáceis levando inclinação da estrada em consideração.</string>
+	<string name="whatsnew_booking_2_header">Busca fácil de hotel</string>
+	<string name="whatsnew_booking_2_message">Os resultados de busca mostram a avaliação do hotel e a categoria de preço.</string>
+	<string name="whatsnew_cycle_navigation_header">Navegação para bicicleta (versão beta)</string>
+	<string name="whatsnew_cycle_navigation_message">Estamos a testar a navegação para bicicleta para a nova temporada. Experimente o seu trilho preferido em bicicleta com a MAPS.ME e partilhe a sua opinião connosco.</string>
+	<!-- Rate on Google Play (Android only) -->
+	<string name="rate_gp">Classificar em Google Play</string>
+	<!-- Share with friends: menu item title -->
+	<string name="tell_friends">Indique a um amigo</string>
+	<!-- Share with friends: sharing text -->
+	<string name="tell_friends_text">Olá! Instale o MAPS.ME!</string>
+	<!-- About short text (below logo) -->
+	<string name="about_description">O MAPS.ME é uma aplicação offline essencial para viajar. O MAPS.ME baseia-se nos dados do OpenStreetMap e permite editá-los.</string>
+	<!-- Text in menu -->
+	<string name="blog">Blogue</string>
+	<!-- Hint near allow statictics checkbox -->
+	<string name="allow_statistics_hint">A recolha de estatísticas de utilização ajuda-nos a melhorar a app.</string>
+	<string name="general_settings">Configurações gerais</string>
+	<string name="date">Data %d</string>
+	<!-- "Report a bug" -> "Generaal Feedback" -> "Something is not working" -->
+	<string name="something_is_not_working">Algo não está a funcionar</string>
+	<!-- For the first routing -->
+	<string name="accept">Aceitar</string>
+	<!-- For the first routing -->
+	<string name="decline">Declinar</string>
+	<string name="whats_new_route_profile_title">Circular é viver</string>
+	<string name="whats_new_route_profile_message">Nas rotas para peões e ciclovias apresentamos agora o perfil de elevação.</string>
+	<string name="whats_new_booking_improve_title">Poupe nas reservas de hotéis</string>
+	<string name="whats_new_booking_improve_message">Agora, os resultados da pesquisa de hotéis contêm a categoria de preços.\nAdicinámos mais de 110.000 hotéis.</string>
+	<!-- For place page hotel facilities block -->
+	<string name="placepage_hotel_facilities">Instalações</string>
+	<!-- For place page hotel nearby block -->
+	<string name="placepage_hotel_nearby">Nas proximidades</string>
+	<!-- For ordering a taxi (as opposed to hotels or other things) -->
+	<string name="taxi_order">Chamar um táxi</string>
+	<!-- How long it is until the taxi arrives -->
+	<string name="taxi_wait">Esperado em %s</string>
+	<!-- When there are no available taxis nearby -->
+	<string name="taxi_not_found">Não consegui encontrar um táxi nas proximidades</string>
+	<string name="install_app">Instalar</string>
+	<!-- `Filter` is a noun here -->
+	<string name="booking_filters">Filtrar</string>
+	<string name="booking_filters_reset">Redefinir</string>
+	<string name="booking_filters_rating">Classificação</string>
+	<string name="booking_filters_rating_any">Qualquer</string>
+	<string name="booking_filters_ragting_good">Bom</string>
+	<string name="booking_filters_rating_very_good">Muito bom</string>
+	<string name="booking_filters_rating_excellent">Excelente</string>
+	<string name="booking_filters_price_category">Categoria de preços</string>
+	<string name="search_no_results_title">Nenhum resultado encontrado</string>
+	<string name="search_no_results_message">Tente um termo de pesquisa mais geral, diminuir o zoom ou redefinir o filtro.</string>
+	<string name="search_no_results_expand_area_button">Diminuir o zoom</string>
+	<string name="search_no_results_reset_button">Redefinir o filtro</string>
+	<!-- noun -->
+	<string name="search_in_table">Lista</string>
+	<string name="booking_based_on_reviews">Com base em %d análises de hotel</string>
+	<string name="booking_show_more">Mostrar mais</string>
+	<string name="booking_reviews">Comentários</string>
+	<string name="booking_hotel">Hotel</string>
+	<!-- hotel room -->
+	<string name="booking_hotel_room">Quarto</string>
+	<!-- A neologism for a chat based on geographical proximity -->
+	<string name="chat">Geochat</string>
+	<!-- Verb. Text on a button that opens the chat. -->
+	<string name="chat_open">Abrir</string>
+	<string name="whatsnew_uber_header">MAPS.ME &amp; Uber</string>
+	<string name="whatsnew_uber_message">Chame um táxi Uber diretamente do aplicativo!</string>
+	<string name="dialog_taxi_offline">O serviço de táxi não está disponível no modo off-line.</string>
+	<string name="dialog_taxi_error">O serviço de táxi está temporariamente indisponível.</string>
+	<string name="advertisement">Anúncio</string>
+	<string name="mobile_data_dialog">Utilizar a internet móvel para mostrar informações detalhadas?</string>
+	<string name="mobile_data_option_always">Utilizar Sempre</string>
+	<string name="mobile_data_option_today">Apenas Hoje</string>
+	<string name="mobile_data_option_not_today">Não Utilizar Hoje</string>
+	<string name="mobile_data">Internet Móvel</string>
+	<string name="mobile_data_description">Para visualizar informações detalhadas sobre os locais, tais como fotos, preços e análises, é necessário acesso à internet móvel.</string>
+	<string name="mobile_data_option_never">Nunca Utilizar</string>
+	<string name="mobile_data_option_ask">Perguntar Sempre</string>
+	<string name="traffic_update_maps_text">Para ver os dados de tráfego, os mapas devem ser atualizados.</string>
+	<string name="traffic_outdated">Os dados sobre o tráfego estão desatualizados.</string>
+	<string name="big_font">Etiquetas maiores</string>
+	<string name="traffic_update_app">Atualize o MAPS. ME</string>
+	<!-- "traffic" as in road congestion -->
+	<string name="traffic_update_app_message">Para mostrar os dados de tráfego, a aplicação deve ser atualizada.</string>
+	<!-- "traffic" as in "road congestion" -->
+	<string name="traffic_data_unavailable">Não existem dados de tráfego</string>
+	<string name="banner_deliveryclub_title">Entrega de alimentos</string>
+	<string name="banner_deliveryclub_message">Entrega rápida de 4.000 restaurantes. Encomente ao Delivery Club.</string>
+	<string name="banner_lamoda_title">Loja online de vestuário e calçado</string>
+	<string name="banner_lamoda_message">Mais de 1.000 marcas. Até 70% de desconto. Entrega gratuita em todo o país.</string>
+	<string name="banner_tutu_title">Bilhetes de comboio online</string>
+	<string name="banner_tutu_message">Bilhetes de comboio online para qualquer cidade - preços, pesquisa e reserva.</string>
+	<string name="banner_geerbest_title">Loja de eletrônica online</string>
+	<string name="banner_geerbest_message">Pesquisa instantânea em mais de 50.000 itens a preços baixos.</string>
+	<string name="banner_rentalcars_title">Aluguer de carros online</string>
+	<string name="banner_rentalcars_message">800 empresas de aluguer de automóveis em mais de 49.000 locais de aluguer de automóveis.</string>
+	<string name="banner_viator_title">Pesquisa de turismo online</string>
+	<string name="banner_viator_message">Procurar em mais de 50.000 visitas em todo o mundo.</string>
+	<!-- december -->
+	<string name="whatsnew_traffic">Dados de tráfego em 36 países</string>
+	<!-- december -->
+	<string name="whatsnew_traffic_text">Informações sobre o trânsito actualizadas para percursos mais rápidos!</string>
+	<!-- december -->
+	<string name="whatsnew_traffic_roaming">Informações sobre o Tráfego em Roaming</string>
+	<!-- december -->
+	<string name="whatsnew_traffic_roaming_text">Requer menos de 1 MB de banda larga móvel por viagem.</string>
+	<!-- december -->
+	<string name="whatsnew_order_taxi">Chamar um Táxi</string>
+	<!-- december -->
+	<string name="whatsnew_order_taxi_text">A maioria das páginas de localização contêm agora um botão para chamar um táxi.</string>
+	<!-- january -->
+	<string name="whatsnew_improved_search">Pesquisa Melhorada</string>
+	<!-- january -->
+	<string name="whatsnew_improved_search_text">Até as pesquisas com erros ortogrtáficos obtêm resultados precisos.</string>
+	<!-- january -->
+	<string name="whatsnew_filters_in_search">Filtros de Pesquisa</string>
+	<!-- january -->
+	<string name="whatsnew_filters_in_search_text">Pesquisar Hotéis com base no preço e classificação.</string>
+	<!-- january -->
+	<string name="whatsnew_font_size">Tamanho da Fonte</string>
+	<!-- january -->
+	<string name="whatsnew_font_size_text">É possível aumentar o tamanho das letras do mapa.</string>
 </resources>

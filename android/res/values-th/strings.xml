@@ -198,6 +198,7 @@
 	<string name="parking">ที่จอดรถ</string>
 	<!-- Search Suggestion -->
 	<string name="shop">ร้านค้า</string>
+	<!-- Search Suggestion -->
 	<string name="hotel">โรงแรม</string>
 	<!-- Search Suggestion -->
 	<string name="tourism">สถานที่ท่องเที่ยว</string>
@@ -277,8 +278,6 @@
 	<string name="copied_to_clipboard">คัดลอกไปยังคลิปบอร์ด: %1$s</string>
 	<!-- Setting label for statistics turn on/off -->
 	<string name="allow_statistics">ส่งสถิติ</string>
-	<!-- Hint near allow statictics checkbox -->
-	<string name="allow_statistics_hint">อนุญาตให้เราเก็บการใช้สถิติเพื่อปรับปรุงแอป</string>
 	<!-- place preview title -->
 	<string name="info">ข้อมูล</string>
 	<!-- Used for bookmark editing -->
@@ -331,6 +330,7 @@
 	<string name="pref_tts_how_to_set_up_voice">วิธีตั้งค่าเสียง</string>
 	<!-- Settings «Map» category: «Record track» title -->
 	<string name="pref_track_record_title">เส้นทางล่าสุด</string>
+	<string name="pref_map_auto_zoom">ซูมอัตโนมัติ</string>
 	<string name="duration_disabled">ปิด</string>
 	<string name="duration_1_hour">1 ชั่วโมง</string>
 	<string name="duration_2_hours">2 ชั่วโมง</string>
@@ -592,7 +592,6 @@
 	<string name="dialog_routing_send_error">รายงานปัญหา</string>
 	<string name="dialog_routing_if_get_cross_route">คุณต้องการสร้างเส้นทางที่อ้อมน้อยลงซึ่งข้ามเกินหนึ่งแผนที่หรือไม่?</string>
 	<string name="dialog_routing_cross_route_is_optimal">มีเส้นทางที่เหมาะสมกว่าซึ่งข้ามเลยขอบของแผนที่นี้</string>
-	<string name="dialog_routing_always_cross_that_border">ข้ามขอบเขตนี้เสมอ</string>
 	<string name="not_now">ไว้คราวหลัง</string>
 	<string name="dialog_routing_build_route">สร้าง</string>
 	<string name="dialog_routing_download_and_build_cross_route">คุณต้องการดาวน์โหลดแผนที่และสร้างเส้นทางที่เหมาะสมกว่าซึ่งข้ามเกินหนึ่งแผนที่หรือไม่?</string>
@@ -636,7 +635,6 @@
 	<string name="clear_search">ล้างการค้นหาประวัติ</string>
 	<!-- Title for settings to enable/disable showcase menu button -->
 	<string name="showcase_settings_title">แสดงข้อเสนอ</string>
-	<string name="showcase_more_apps">แอป My.com เพิ่มเติม</string>
 	<string name="p2p_route_planning">การวางแผนเส้นทาง</string>
 	<string name="p2p_your_location">ตำแหน่งที่ตั้งของคุณ</string>
 	<string name="p2p_from">จุดที่ออกเดินทาง</string>
@@ -720,9 +718,12 @@
 	<string name="login_with_openstreetmap">ล็อกอินที่ www.openstreetmap.org</string>
 	<string name="edit_place">แก้ไขสถานที่</string>
 	<string name="place_name">ชื่อสถานที่</string>
-	<string name="place_name_caption">กรอกชื่อตามที่แสดงในสัญลักษณ์หรือป้ายแสดงชื่อ</string>
 	<!-- title above languages list cells in the editor, below editable name text field. -->
 	<string name="other_languages">ภาษาอื่น ๆ</string>
+	<!-- small button to open list with names in different languages -->
+	<string name="show_more">แสดงมากขึ้น</string>
+	<!-- small button to close list with names in different languages -->
+	<string name="show_less">แสดงน้อยลง</string>
 	<string name="add_language">เพิ่มภาษา</string>
 	<string name="street">ถนน</string>
 	<!-- Editable House Number text field (in address block). -->
@@ -768,7 +769,6 @@
 	<string name="editor_edit_place_category_title">หมวดหมู่</string>
 	<string name="detailed_problem_description">คำอธิบายปัญหาอย่างละเอียด</string>
 	<string name="editor_report_problem_other_title">ปัญหาอีกอย่างหนึ่ง</string>
-	<string name="placepage_add_place_button">เพิ่มสถานที่</string>
 	<string name="placepage_report_problem_button">แจ้งปัญหา</string>
 	<string name="placepage_add_business_button">เพิ่มองค์กร</string>
 	<string name="whatsnew_smallmwm_header">คุณได้ขอมา เราจึงทำมัน</string>
@@ -803,6 +803,7 @@
 	<string name="download_over_mobile_message">มันอาจมีราคาสูงมากหากใช้แผนโทรศัพท์บางประเภทหรือหากทำการโรมมิ่ง</string>
 	<string name="error_enter_correct_house_number">กรอกบ้านเลขที่ให้ถูกต้อง</string>
 	<string name="editor_storey_number">จำนวนชั้น (มากสุด %d)</string>
+	<!-- Error message in Editor when a user tries to set the number of floors for a building higher than 25 -->
 	<string name="error_enter_correct_storey_number">แก้ไขอาคารที่มีจำนวนชั้นมากกว่า 25</string>
 	<string name="editor_zip_code">รหัสไปรษณีย์</string>
 	<string name="error_enter_correct_zip_code">กรุณาใส่รหัสไปรษณีย์ที่ถูกต้อง</string>
@@ -816,7 +817,6 @@
 	<string name="editor_tag_description">ใส่ชื่อบริษัท, องค์กร หรือ บุคคลที่เป็นผู้รับผิดชอบสถานที่นี้</string>
 	<string name="editor_no_local_edits_title">คุณไม่มีการแก้ไขท้องถิ่น</string>
 	<string name="editor_no_local_edits_description">หมายเลขที่แสดงอยู่ คือ หมายเลขที่คุณได้ทำการแนะนำการเปลี่ยนแปลงบนแผนที่ที่สามารถเข้าถึงได้โดยอุปกรณ์ของคุณท่านั้น</string>
-	<string name="editor_international_names_subtitle">ชื่อในภาษาอื่น</string>
 	<string name="editor_send_to_osm">ส่งไปที่ OSM</string>
 	<string name="editor_remove">ลบออก</string>
 	<string name="downloader_my_maps_title">แผนที่ของฉัน</string>
@@ -839,7 +839,8 @@
 	<string name="location_services_disabled_message">เปิดใช้งานการเข้าถึงตำแหน่งภูมิศาสตร์ในการตั้งค่าอุปกรณ์</string>
 	<string name="location_services_disabled_1">1. เปิดการตั้งค่า</string>
 	<string name="location_services_disabled_2">2. แตะตำแหน่งที่ตั้ง</string>
-	<string name="location_services_disabled_3">3. เลือก เสมอ</string>
+	<!-- iOS Dialog for the case when the location permission is not granted -->
+	<string name="location_services_disabled_3">3. เลือกในขณะใช้แอป</string>
 	<string name="placepage_parking_surface">กลางแจ้ง</string>
 	<string name="placepage_parking_multistorey">หลายชั้น</string>
 	<string name="placepage_parking_underground">ชั้นใต้ดิน</string>
@@ -858,9 +859,16 @@
 	<string name="place_page_starting_from">จาก %s</string>
 	<string name="meter">ม.</string>
 	<string name="kilometer">กม.</string>
+	<string name="kilometers_per_hour">กม./ชม.</string>
+	<string name="mile">ไมล์</string>
+	<string name="foot">ฟุต</string>
+	<string name="miles_per_hour">ไมล์/ชม.</string>
+	<string name="day">ว.</string>
+	<string name="hour">ชม.</string>
+	<string name="minute">น.</string>
 	<string name="placepage_place_description">คำอธิบาย</string>
 	<string name="placepage_more_button">เพิ่มเติม</string>
-	<string name="bookingcom_book_button">จอง</string>
+	<string name="book_button">จอง</string>
 	<string name="placepage_call_button">โทร</string>
 	<string name="placepage_edit_bookmark_button">แก้ไข Bookmark</string>
 	<string name="placepage_bookmark_name_hint">ชื่อของ Bookmark</string>
@@ -875,18 +883,167 @@
 	<string name="editor_status_sending">กำลังส่ง…</string>
 	<string name="editor_place_doesnt_exist">ไม่พบสถานที่นี้</string>
 	<string name="text_more_button">…เพิ่มเติม</string>
-	<string name="error_enter_correct_phone">กรอกหมายเลขโทรศัพท์โดยไม่ใช้ตัวอักษร</string>
+	<!-- Phone number error message -->
+	<string name="error_enter_correct_phone">กรอกหมายเลขโทรศัพท์ที่ถูกต้อง</string>
 	<string name="error_enter_correct_web">กรอกที่อยู่เว็บที่ถูกต้อง</string>
 	<string name="error_enter_correct_email">กรอกอีเมลที่ถูกต้อง</string>
 	<string name="error_enter_correct">กรอกค่าที่ถูกต้อง</string>
 	<string name="editor_profile_changes_for_next_place">เปลี่ยนไปยังสถานที่ถัดไป: %d</string>
 	<string name="editor_profile_rating_place">ลำดับของตำแหน่ง</string>
 	<string name="booking_dialog_not_connect_header">โปรดเชื่อมต่อกับอินเตอร์เน็ตเพื่อจองโรงแรมนี้</string>
-	<string name="whatsnew_booking_header">จองโรงแรมจากแอพ</string>
-	<string name="whatsnew_booking_message">หากคุณกำลังมองหาโรงแรมอยู่ แผนที่จะแสดงหมวดหมู่ราคา และเรตติ้งของโรงแรม</string>
 	<string name="button_try">ลองดู</string>
-	<string name="whatsnew_cycle_navigation_header">การนำทางจักรยาน (beta-version)</string>
-	<string name="whatsnew_cycle_navigation_message">เรากำลังทดสอบการนำทางจักรยานในฤดูกาลใหม่ ลองเส้นทางการขี่จักรยานด้วย MAPS.ME และแชร์ความคิดเห็นของคุณมาให้เรา</string>
 	<string name="refresh">อัปเดต</string>
 	<string name="last_update">การอัปเดตล่าสุด: %s</string>
+	<string name="booking_checkin">เช็คอิน: %s</string>
+	<string name="booking_checkout">เช็คเอาท์: %s</string>
+	<string name="placepage_add_place_button">เพิ่มสถานที่ไปยังแผนที่</string>
+	<!-- Displayed when saving some edits to the map to warn against publishing personal data -->
+	<string name="editor_share_to_all_dialog_title">คุณต้องการส่งมันให้ผู้ใช้ทั้งหมดหรือไม่?</string>
+	<!-- iOS Dialog before publishing the modifications to the public map. -->
+	<string name="editor_share_to_all_dialog_message_1">ตรวจสอบว่าคุณไม่ได้กรอกข้อมูลส่วนตัวใด ๆ</string>
+	<string name="editor_share_to_all_dialog_message_2">เราจะตรวจสอบการเปลี่ยนแปลง หากเรามีคำถามใด ๆ เราจะติดต่อคุณผ่านทางอีเมล</string>
+	<string name="navigation_overview_button">ภาพรวม</string>
+	<string name="navigation_stop_button">หยุด</string>
+	<!-- Text on an empty bookmark page -->
+	<string name="bookmarks_empty_title">บันทึกบุ๊กมาร์ก</string>
+	<string name="bookmarks_empty_message_1">แตะ ★ เพื่อบันทึกสถานที่โปรดเพื่อให้เข้าถึงได้อย่างรวดเร็ว</string>
+	<string name="bookmarks_empty_message_2">นำเข้าบุ๊กมาร์กจาก Mail และเว็บ</string>
+	<string name="bookmarks_empty_message_3">เช็คเอาท์: %s</string>
+	<!-- Name of the group for booked hotels -->
+	<string name="bookmarks_group_name">โรงแรมที่จอง</string>
+	<string name="place_page_button_read_descriprion">อ่าน</string>
+	<!-- iOS dialog for the case when recent track recording is on and the app comes back from background -->
+	<string name="recent_track_background_dialog_title">ปิดการใช้งานการบันทึกเส้นทางที่คุณเดินทางเมื่อเร็ว ๆ นี้?</string>
+	<!-- If a hotel is being shared -->
+	<string name="sharing_booking">หรือจองที่ booking.com</string>
+	<string name="off_recent_track_background_button">ปิดการใช้งาน</string>
+	<!-- For sharing via SMS and so on -->
+	<string name="sharing_call_action_look">ตรวจชม</string>
+	<string name="continue_recent_track_background_button">ดำเนินการต่อ</string>
+	<string name="recent_track_background_dialog_message">MAPS.ME ใช้ตำแหน่งทางภูมิศาสตร์ของคุณในพื้นหลังเพื่อบันทึกเส้นทางที่คุณเดินทางเมื่อเร็ว ๆ นี้</string>
+	<string name="whatsnew_car_navigation_header">การนำทางยานพาหนะอย่างเป็นมิตรต่อผู้ใช้</string>
+	<string name="whatsnew_car_navigation_message">• องค์ประกอบการนำทางใช้พื้นที่น้อยลง\n• เราแสดงความเร็ว และได้เพิ่มการซูมอัตโนมัติ</string>
+	<string name="whatsnew_cycle_navigation_2_header">การนำทางจักรยาน</string>
+	<string name="whatsnew_cycle_navigation_2_message">• การนำทางจักรยานพิจารณาถึงข้อมูลด้านภูมิประเทศ\n• เราสร้างเส้นทางที่ง่ายยิ่งขึ้นโดยพิจารณาถึงความลาดเอียงของถนน</string>
+	<string name="whatsnew_booking_2_header">การค้นหาโรงแรมอย่างง่ายดาย</string>
+	<string name="whatsnew_booking_2_message">ผลการค้นหาจะแสดงการให้คะแนนโรงแรมและหมวดหมู่ราคา</string>
+	<string name="whatsnew_cycle_navigation_header">การนำทางจักรยาน (beta-version)</string>
+	<string name="whatsnew_cycle_navigation_message">เรากำลังทดสอบการนำทางจักรยานในฤดูกาลใหม่ ลองเส้นทางการขี่จักรยานด้วย MAPS.ME และแชร์ความคิดเห็นของคุณมาให้เรา</string>
+	<!-- Rate on Google Play (Android only) -->
+	<string name="rate_gp">ให้คะแนนบน Google Play</string>
+	<!-- Share with friends: menu item title -->
+	<string name="tell_friends">บอกเพื่อน</string>
+	<!-- Share with friends: sharing text -->
+	<string name="tell_friends_text">สวัสดี! ติดตั้ง MAPS.ME กันเถอะ!</string>
+	<!-- About short text (below logo) -->
+	<string name="about_description">MAPS.ME เป็นแอปพลิเคชั่นออฟไลน์ที่จำเป็นสำหรับการท่องเที่ยว MAPS.ME นั้นใช้งานบนพื้นฐานของข้อมูล OpenStreetMap และใช้แก้ไขได้ด้วย</string>
+	<!-- Text in menu -->
+	<string name="blog">บล็อก</string>
+	<!-- Hint near allow statictics checkbox -->
+	<string name="allow_statistics_hint">การรวบรวมสถิติการใช้งานจะช่วยให้เราปรับปรุงแอปได้ดียิ่งขึ้น</string>
+	<string name="general_settings">การตั้งค่าทั่วไป</string>
+	<string name="date">วันที่ %d</string>
+	<!-- "Report a bug" -> "Generaal Feedback" -> "Something is not working" -->
+	<string name="something_is_not_working">มีบางอย่างไม่ทำงาน</string>
+	<!-- For the first routing -->
+	<string name="accept">ยอมรับ</string>
+	<!-- For the first routing -->
+	<string name="decline">ปฏิเสธ</string>
+	<string name="whats_new_route_profile_title">ทำให้มันจบดีกว่าปล่อยให้มันรบกวนอยู่</string>
+	<string name="whats_new_route_profile_message">สำหรับเส้นทางคนเดินเท้าและจักรยาน ตอนนี้เราแสดงโปรไฟล์ระดับความสูงแล้ว</string>
+	<string name="whats_new_booking_improve_title">ประหยัดเมื่อจองโรงแรม</string>
+	<string name="whats_new_booking_improve_message">การค้นหาโรงแรมตอนนี้มีหมวดหมู่ราคาแล้ว\nเรายังได้เพิ่มโรงแรมเข้ามากว่า 110,000 โรงแรมอีกด้วย</string>
+	<!-- For place page hotel facilities block -->
+	<string name="placepage_hotel_facilities">สิ่งอำนวยความสะดวก</string>
+	<!-- For place page hotel nearby block -->
+	<string name="placepage_hotel_nearby">บริเวณใกล้เคียง</string>
+	<!-- For ordering a taxi (as opposed to hotels or other things) -->
+	<string name="taxi_order">เรียกแท็กซี่</string>
+	<!-- How long it is until the taxi arrives -->
+	<string name="taxi_wait">คาดว่าภายใน %s</string>
+	<!-- When there are no available taxis nearby -->
+	<string name="taxi_not_found">ไม่พบแท็กซี่ในบริเวณใกล้เคียง</string>
+	<string name="install_app">ติดตั้ง</string>
+	<!-- `Filter` is a noun here -->
+	<string name="booking_filters">ตัวกรอง</string>
+	<string name="booking_filters_reset">รีเซ็ต</string>
+	<string name="booking_filters_rating">อันดับ</string>
+	<string name="booking_filters_rating_any">อะไรก็ได้</string>
+	<string name="booking_filters_ragting_good">ดี</string>
+	<string name="booking_filters_rating_very_good">ดีมาก</string>
+	<string name="booking_filters_rating_excellent">ยอดเยี่ยม</string>
+	<string name="booking_filters_price_category">หมวดหมู่ราคา</string>
+	<string name="search_no_results_title">ไม่พบผลลัพธ์</string>
+	<string name="search_no_results_message">ลองค้นหาด้วยคำทั่ว ๆ ไปดู ซูมออกหรือรีเซ็ตตัวกรอง</string>
+	<string name="search_no_results_expand_area_button">ซูมออก</string>
+	<string name="search_no_results_reset_button">รีเซ็ตตัวกรอง</string>
+	<!-- noun -->
+	<string name="search_in_table">รายการ</string>
+	<string name="booking_based_on_reviews">ตาม %d รีวิวโรงแรม</string>
+	<string name="booking_show_more">แสดงเพิ่มเติม</string>
+	<string name="booking_reviews">รีวิว</string>
+	<string name="booking_hotel">โรงแรม</string>
+	<!-- hotel room -->
+	<string name="booking_hotel_room">ห้องพัก</string>
+	<!-- A neologism for a chat based on geographical proximity -->
+	<string name="chat">Geochat</string>
+	<!-- Verb. Text on a button that opens the chat. -->
+	<string name="chat_open">เปิด</string>
+	<string name="whatsnew_uber_header">MAPS.ME &amp; Uber</string>
+	<string name="whatsnew_uber_message">เรียกแท็กซี่ Uber โดยตรงจากแอป!</string>
+	<string name="dialog_taxi_offline">ไม่สามารถทำการจองแท็กซี่ได้ในโหมดออฟไลน์</string>
+	<string name="dialog_taxi_error">ไม่สามารถทำการจองแท็กซี่ได้ชั่วคราว</string>
+	<string name="advertisement">โฆษณา</string>
+	<string name="mobile_data_dialog">ใช้อินเทอร์เน็ตมือถือแสดงข้อมูลโดยรายละเอียดหรือไม่?</string>
+	<string name="mobile_data_option_always">ใช้เสมอ</string>
+	<string name="mobile_data_option_today">วันนี้เท่านั้น</string>
+	<string name="mobile_data_option_not_today">ไม่ใช้วันนี้</string>
+	<string name="mobile_data">อินเทอร์เน็ตมือถือ</string>
+	<string name="mobile_data_description">จำเป็นต้องใช้อินเทอร์เน็ตมือถือในการแสดงข้อมูลโดยรายละเอียดเกี่ยวกับสถานที่ เช่น รูปถ่าย ราคา และรีวิว</string>
+	<string name="mobile_data_option_never">ไม่ใช้เลย</string>
+	<string name="mobile_data_option_ask">ถามก่อนเสมอ</string>
+	<string name="traffic_update_maps_text">ต้องอัปเดตแผนที่เพื่อแสดงข้อมูลการจราจร</string>
+	<string name="traffic_outdated">ข้อมูลการจราจรเก่าเกินไปแล้ว</string>
+	<string name="big_font">ป้ายใหญ่ขึ้น</string>
+	<string name="traffic_update_app">กรุณาอัปเดต MAPS.ME</string>
+	<!-- "traffic" as in road congestion -->
+	<string name="traffic_update_app_message">ในการแสดงข้อมูลการจราจร แอปพลิเคชั่นจะต้องอัปเดตก่อน</string>
+	<!-- "traffic" as in "road congestion" -->
+	<string name="traffic_data_unavailable">ไม่มีข้อมูลการจราจร</string>
+	<string name="banner_deliveryclub_title">อาหารส่งถึงที่</string>
+	<string name="banner_deliveryclub_message">อาหารส่งถึงที่จาก 4,000 ร้าน สั่งจาก Delivery Club.</string>
+	<string name="banner_lamoda_title">ร้านค้าเสื้อผ้าและรองเท้าออนไลน์</string>
+	<string name="banner_lamoda_message">กว่า 1,000 ยี่ห้อ ลดถึง 70% จัดส่งฟรีทั่วประเทศ</string>
+	<string name="banner_tutu_title">ตั๋วรถไฟออนไลน์</string>
+	<string name="banner_tutu_message">ตั๋วรถไฟออนไลน์ไปทุกเมือง - ราคา การค้นหา และการจอง</string>
+	<string name="banner_geerbest_title">ร้านอุปกรณ์อิเล็กทรอนิกส์ออนไลน์</string>
+	<string name="banner_geerbest_message">การค้นหาทันทีในกว่า 50,000 รายการในราคาที่ต่ำ</string>
+	<string name="banner_rentalcars_title">การเช่ารถออนไลน์</string>
+	<string name="banner_rentalcars_message">800 บริษัทเช่ารถในสถานเช่ารถมากกว่า 49,000 แห่ง</string>
+	<string name="banner_viator_title">การค้นหาทัวร์ออนไลน์</string>
+	<string name="banner_viator_message">ค้นหาในทัวร์มากกว่า 50,000 แห่งทั่วโลก</string>
+	<!-- december -->
+	<string name="whatsnew_traffic">ข้อมูลการจราจรใน 36 ประเทศ</string>
+	<!-- december -->
+	<string name="whatsnew_traffic_text">ข้อมูลการจราจรที่ทันสมัยและเส้นทางการขับรถที่เร็วที่สุดตามข้อมูลนั้น!</string>
+	<!-- december -->
+	<string name="whatsnew_traffic_roaming">ข้อมูลการจราจรในการใช้โรมมิ่ง</string>
+	<!-- december -->
+	<string name="whatsnew_traffic_roaming_text">ใช้แบนด์วิดท์มือถือน้อยกว่า 1 MB ต่อเที่ยว</string>
+	<!-- december -->
+	<string name="whatsnew_order_taxi">เรียกแท็กซี่</string>
+	<!-- december -->
+	<string name="whatsnew_order_taxi_text">หน้าตำแหน่งที่ตั้งส่วนใหญ่ในขณะนี้มีปุ่มเรียกแท็กซี่</string>
+	<!-- january -->
+	<string name="whatsnew_improved_search">การค้นหาที่ได้รับการปรับปรุง</string>
+	<!-- january -->
+	<string name="whatsnew_improved_search_text">แม้แต่คำถามที่สะกดผิดก็ยังให้ผลลัพธ์การค้นหาที่ถูกต้องได้</string>
+	<!-- january -->
+	<string name="whatsnew_filters_in_search">ตัวกรองการค้นหา</string>
+	<!-- january -->
+	<string name="whatsnew_filters_in_search_text">ค้นหาโรงแรมตามราคาและการจัดอันดับ</string>
+	<!-- january -->
+	<string name="whatsnew_font_size">ขนาดฟอนต์</string>
+	<!-- january -->
+	<string name="whatsnew_font_size_text">ป้ายบนแผนที่สามารถทำให้ใหญ่ขึ้นได้</string>
 </resources>

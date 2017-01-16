@@ -4,6 +4,7 @@
 
 #include "base/assert.hpp"
 
+#include "std/array.hpp"
 #include "std/string.hpp"
 
 
@@ -105,6 +106,8 @@ public:
     else
       return false;
   }
+
+  bool HasString(int8_t lang) const;
 
   int8_t FindString(string const & utf8s) const;
 
