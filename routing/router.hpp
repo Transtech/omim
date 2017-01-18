@@ -24,6 +24,7 @@ enum class RouterType
   Pedestrian,   /// For A star pedestrian routing
   Bicycle,      /// For A star bicycle routing
   Taxi,         /// For taxi route calculation Vehicle routing is used.
+  Truck,
 };
 
 string ToString(RouterType type);

@@ -25,7 +25,7 @@ def formatShaderDocName(shaderName):
     return shaderName.replace(".", "_") + ".txt"
 
 def readIndexFile(filePath):
-    f = open(filePath)
+    f = open(filePath,encoding='utf-8')
     gpuPrograms = dict()
     index = 0
     for line in f:
@@ -61,12 +61,12 @@ def definitionChanged(newHeaderContent, defFilePath):
     if not os.path.isfile(defFilePath):
         return True
 
-    defContent = open(defFilePath, 'r').read()
+    defContent = open(defFilePath, 'r', encoding='utf-8').read()
     oldMD5 = hashlib.md5()
-    oldMD5.update(defContent)
+    oldMD5.update(defContent.encode('utf-8'))
 
     newMd5 = hashlib.md5()
-    newMd5.update(newHeaderContent)
+    newMd5.update(newHeaderContent.encode('utf-8'))
 
     return oldMD5.digest() != newMd5.digest()
 

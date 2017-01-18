@@ -9,6 +9,8 @@
 #include "std/utility.hpp"
 #include "std/vector.hpp"
 
+#include <math.h>
+
 namespace search
 {
 // This class can be used to greedily sweep points on a plane that are
