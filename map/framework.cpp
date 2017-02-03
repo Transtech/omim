@@ -15,6 +15,7 @@
 #include "routing/routing_algorithm.hpp"
 #include "routing/routing_helpers.hpp"
 #include "routing/single_mwm_router.hpp"
+#include "routing/external_router.hpp"
 
 #include "search/downloader_search_callback.hpp"
 #include "search/editor_delegate.hpp"
@@ -2380,6 +2381,7 @@ void Framework::BuildRoute(m2::PointD const & start, m2::PointD const & finish, 
     string tag;
     switch (m_currentRouterType)
     {
+    case RouterType::Truck:
     case RouterType::Vehicle:
       tag = isP2P ? marketing::kRoutingP2PVehicleDiscovered : marketing::kRoutingVehicleDiscovered;
       break;
@@ -2477,6 +2479,15 @@ void Framework::SetRouterImpl(RouterType type)
   {
     router = CreateBicycleAStarBidirectionalRouter(m_model.GetIndex(), countryFileGetter);
     m_routingSession.SetRoutingSettings(routing::GetBicycleRoutingSettings());
+  }
+  else if (type == RouterType::Truck)
+  {
+    TRouterMap::iterator it = m_externalRouters.find(static_cast<int>(type));
+    if (it != m_externalRouters.end())
+    {
+      LOG(LINFO, ("Routing type: ", routing::ToString(type)));
+      router.reset(new ExternalRouter(it->second, &m_model.GetIndex(), countryFileGetter));
+    }
   }
   else
   {

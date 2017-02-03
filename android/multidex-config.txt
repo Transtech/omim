@@ -1,0 +1,7 @@
+com/mapswithme/maps/bookmarks/data/Banner.class
+com/mapswithme/util/Utils.class
+com/mapswithme/maps/location/PlatformSocket.class
+com/mapswithme/util/HttpClient$HttpHeader.class
+com/mapswithme/util/HttpClient$Params.class
+com/mapswithme/util/HttpClient.class
+

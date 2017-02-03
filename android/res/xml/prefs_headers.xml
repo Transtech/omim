@@ -11,12 +11,20 @@
     android:title="@string/prefs_group_route"
     android:fragment="com.mapswithme.maps.settings.RoutePrefsFragment"/>
 
+<!-- AG: disbale OSM profile settings
   <header
     android:id="@+id/osm_profile"
     android:key="@string/pref_osm_profile"
     android:title="@string/profile"/>
+-->
 
-  <header
+    <header
+            android:id="@+id/group_vehicle"
+            android:title="@string/prefs_group_vehicle"
+            android:fragment="com.mapswithme.maps.settings.VehiclePrefsFragment"/>
+
+
+    <header
     android:id="@+id/group_misc"
     android:title="@string/prefs_group_misc"
     android:fragment="com.mapswithme.maps.settings.MiscPrefsFragment"/>

@@ -48,6 +48,13 @@
   <string name="pref_showcase_switched_on" translatable="false">DisplayShowcase</string>
   <string name="pref_osm_profile" translatable="false">Osm profile</string>
   <string name="pref_auto_zoom" translatable="false">AutoZoom</string>
+  <string name="pref_route_network" translatable="false">RegulatoryNetwork</string>
+
+  <string name="pref_vehicle_enabled" translatable="false">VehicleEnabled</string>
+  <string name="pref_vehicle_length" translatable="false">VehicleLength</string>
+  <string name="pref_vehicle_width" translatable="false">VehicleWidth</string>
+  <string name="pref_vehicle_height" translatable="false">VehicleHeight</string>
+  <string name="pref_vehicle_weight" translatable="false">VehicleWeight</string>
 
   <string name="notification_ticker_ltr" translatable="false">%1$s: %2$s</string>
   <string name="notification_ticker_rtl" translatable="false">%2$s :%1$s</string>

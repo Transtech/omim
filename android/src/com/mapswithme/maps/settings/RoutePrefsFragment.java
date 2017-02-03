@@ -1,6 +1,5 @@
 package com.mapswithme.maps.settings;
 
-import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.preference.ListPreference;
@@ -10,7 +9,7 @@ import android.preference.TwoStatePreference;
 import android.speech.tts.TextToSpeech;
 import android.support.annotation.NonNull;
 import android.util.Log;
-import au.net.transtech.geo.model.VehicleProfile;
+import au.net.transtech.geo.model.EncoderProfile;
 import com.mapswithme.maps.Framework;
 import com.mapswithme.maps.R;
 import com.mapswithme.maps.location.DemoLocationProvider;
@@ -19,8 +18,6 @@ import com.mapswithme.maps.routing.ComplianceController;
 import com.mapswithme.maps.routing.GraphHopperRouter;
 import com.mapswithme.maps.sound.LanguageData;
 import com.mapswithme.maps.sound.TtsPlayer;
-import com.mapswithme.transtech.Setting;
-import com.mapswithme.transtech.SettingConstants;
 import com.mapswithme.util.Config;
 import com.mapswithme.util.statistics.Statistics;
 
@@ -33,7 +30,7 @@ public class RoutePrefsFragment extends PreferenceFragment
   private static final int REQUEST_INSTALL_DATA = 1;
 
   private TwoStatePreference mPrefEnabled;
-  private TwoStatePreference mDemoEnabled;
+//  private TwoStatePreference mDemoEnabled;
   private ListPreference mPrefLanguages;
   private ListPreference mNetwork;
 
@@ -91,7 +88,7 @@ public class RoutePrefsFragment extends PreferenceFragment
       return false;
     }
   };
-
+/*
     private final Preference.OnPreferenceChangeListener mDemoListener = new Preference.OnPreferenceChangeListener()
     {
         @Override
@@ -102,7 +99,7 @@ public class RoutePrefsFragment extends PreferenceFragment
             return true;
         }
     };
-
+*/
     private final Preference.OnPreferenceChangeListener mNetworkListener = new Preference.OnPreferenceChangeListener()
     {
         @Override
@@ -126,7 +123,7 @@ public class RoutePrefsFragment extends PreferenceFragment
     mPrefEnabled.setOnPreferenceChangeListener( enable ? mEnabledListener : null );
     mPrefLanguages.setOnPreferenceChangeListener(enable ? mLangListener : null);
 //      Log.i( "Maps_RoutePrefsFragment", (enable ? "Enabling" : "Disabling") + " useDemoGPS pref listener " );
-      mDemoEnabled.setOnPreferenceChangeListener( enable ? mDemoListener : null );
+//      mDemoEnabled.setOnPreferenceChangeListener( enable ? mDemoListener : null );
       mNetwork.setOnPreferenceChangeListener(enable ? mNetworkListener : null);
   }
 
@@ -184,21 +181,19 @@ public class RoutePrefsFragment extends PreferenceFragment
 
     mPrefEnabled.setChecked(available && TtsPlayer.INSTANCE.isEnabled());
 
-      mDemoEnabled.setChecked( LocationHelper.INSTANCE.useDemoGPS() );
-      mDemoEnabled.setSummary( "Use fake GPS data from " + DemoLocationProvider.GPS_DATA_SOURCE);
+//      mDemoEnabled.setChecked( LocationHelper.INSTANCE.useDemoGPS() );
+//      mDemoEnabled.setSummary( "Use fake GPS data from " + DemoLocationProvider.GPS_DATA_SOURCE);
 
       GraphHopperRouter truckRouter = ComplianceController.get().getRouter( RoutePrefsFragment.this.getActivity(), Framework.ROUTER_TYPE_TRUCK );
-      List<VehicleProfile> profiles = truckRouter.getGeoEngine().getVehicleProfiles();
+      List<EncoderProfile> profiles = truckRouter.getGeoEngine().getEncoderProfiles();
       if( profiles != null && profiles.size() > 0 )
       {
-          final CharSequence[] entries2 = new CharSequence[ profiles.size() - 1 ];
-          final CharSequence[] values2 = new CharSequence[ profiles.size() - 1 ];
-          int i = 0;
-          for( VehicleProfile vp : profiles )
-          {
-              if( GraphHopperRouter.NETWORK_CAR.equals( vp.getCode() ) )
-                  continue;
+          final CharSequence[] entries2 = new CharSequence[ profiles.size() ];
+          final CharSequence[] values2 = new CharSequence[ profiles.size() ];
 
+          int i = 0;
+          for( EncoderProfile vp : profiles )
+          {
               entries2[ i ] = vp.getDescription();
               values2[ i ] = vp.getCode();
 
@@ -209,7 +204,7 @@ public class RoutePrefsFragment extends PreferenceFragment
           mNetwork.setEntries( entries2 );
           mNetwork.setEntryValues( values2 );
 
-          VehicleProfile vp = truckRouter.getSelectedProfile();
+          EncoderProfile vp = truckRouter.getSelectedProfile();
           mNetwork.setSummary( vp == null ? null : vp.getDescription() + " (" + vp.getCode() + ")" );
           mNetwork.setValue( vp == null ? null : vp.getCode() );
       }
@@ -223,7 +218,7 @@ public class RoutePrefsFragment extends PreferenceFragment
     addPreferencesFromResource(R.xml.prefs_route);
 
     mPrefEnabled = (TwoStatePreference) findPreference(getString(R.string.pref_tts_enabled));
-    mDemoEnabled = (TwoStatePreference) findPreference(getString(R.string.pref_demo_gps));
+//    mDemoEnabled = (TwoStatePreference) findPreference(getString(R.string.pref_demo_gps));
     mPrefLanguages = (ListPreference) findPreference(getString(R.string.pref_tts_language));
       mNetwork = (ListPreference) findPreference(getString(R.string.pref_route_network));
 

@@ -54,10 +54,11 @@ public class RoutingPlanController extends ToolbarController implements SlotFram
   private final ImageView mToggle;
   private final SlotFrame mSlotFrame;
   private final RadioGroup mRouterTypes;
+  private final WheelProgressView mProgressTruck;
   private final WheelProgressView mProgressVehicle;
   private final WheelProgressView mProgressPedestrian;
-  private final WheelProgressView mProgressBicycle;
-  private final WheelProgressView mProgressTaxi;
+//  private final WheelProgressView mProgressBicycle;
+//  private final WheelProgressView mProgressTaxi;
 
   private final View mAltitudeChartFrame;
   private final View mUberFrame;
@@ -122,7 +123,18 @@ public class RoutingPlanController extends ToolbarController implements SlotFram
     mSlotFrame.setSlotClickListener(this);
     mRouterTypes = (RadioGroup) mToolbar.findViewById(R.id.route_type);
 
-    setupRouterButton(R.id.vehicle, R.drawable.ic_car, new View.OnClickListener()
+      setupRouterButton(R.id.truck, R.drawable.ic_truck, new View.OnClickListener()
+      {
+          @Override
+          public void onClick(View v)
+          {
+//        AlohaHelper.logClick(AlohaHelper.ROUTING_VEHICLE_SET);
+//        Statistics.INSTANCE.trackEvent(Statistics.EventName.ROUTING_VEHICLE_SET);
+              RoutingController.get().setRouterType(Framework.ROUTER_TYPE_TRUCK);
+          }
+      });
+
+      setupRouterButton(R.id.vehicle, R.drawable.ic_car, new View.OnClickListener()
     {
       @Override
       public void onClick(View v)
@@ -143,7 +155,7 @@ public class RoutingPlanController extends ToolbarController implements SlotFram
         RoutingController.get().setRouterType(Framework.ROUTER_TYPE_PEDESTRIAN);
       }
     });
-
+/*
     setupRouterButton(R.id.bicycle, R.drawable.ic_bike, new View.OnClickListener()
     {
       @Override
@@ -165,12 +177,13 @@ public class RoutingPlanController extends ToolbarController implements SlotFram
         RoutingController.get().setRouterType(Framework.ROUTER_TYPE_TAXI);
       }
     });
-
+*/
     View progressFrame = mToolbar.findViewById(R.id.progress_frame);
+    mProgressTruck = (WheelProgressView) progressFrame.findViewById(R.id.progress_truck);
     mProgressVehicle = (WheelProgressView) progressFrame.findViewById(R.id.progress_vehicle);
     mProgressPedestrian = (WheelProgressView) progressFrame.findViewById(R.id.progress_pedestrian);
-    mProgressBicycle = (WheelProgressView) progressFrame.findViewById(R.id.progress_bicycle);
-    mProgressTaxi = (WheelProgressView) progressFrame.findViewById(R.id.progress_taxi);
+//    mProgressBicycle = (WheelProgressView) progressFrame.findViewById(R.id.progress_bicycle);
+//    mProgressTaxi = (WheelProgressView) progressFrame.findViewById(R.id.progress_taxi);
 
     mAltitudeChartFrame = getViewById(R.id.altitude_chart_panel);
     UiUtils.hide(mAltitudeChartFrame);
@@ -308,24 +321,24 @@ public class RoutingPlanController extends ToolbarController implements SlotFram
 
   public void updateBuildProgress(int progress, @Framework.RouterType int router)
   {
-    UiUtils.invisible(mProgressVehicle, mProgressPedestrian, mProgressBicycle, mProgressTaxi);
+    UiUtils.invisible(mProgressTruck, mProgressVehicle, mProgressPedestrian/*, mProgressBicycle, mProgressTaxi */);
     WheelProgressView progressView;
     if (router == Framework.ROUTER_TYPE_TRUCK)
     {
         mRouterTypes.check(R.id.truck);
-        progressView = mProgressVehicle;
+        progressView = mProgressTruck;
     }
-    else //if (router == Framework.ROUTER_TYPE_VEHICLE)
+    else if (router == Framework.ROUTER_TYPE_VEHICLE)
     {
         mRouterTypes.check(R.id.vehicle);
         progressView = mProgressVehicle;
     }
-    /*
-    else if (router == Framework.ROUTER_TYPE_PEDESTRIAN)
+    else// if (router == Framework.ROUTER_TYPE_PEDESTRIAN)
     {
       mRouterTypes.check(R.id.pedestrian);
       progressView = mProgressPedestrian;
     }
+/*
     else if (router == Framework.ROUTER_TYPE_TAXI)
     {
       mRouterTypes.check(R.id.taxi);
@@ -336,7 +349,7 @@ public class RoutingPlanController extends ToolbarController implements SlotFram
       mRouterTypes.check(R.id.bicycle);
       progressView = mProgressBicycle;
     }
-
+*/
     RoutingToolbarButton button = (RoutingToolbarButton)mRouterTypes
         .findViewById(mRouterTypes.getCheckedRadioButtonId());
     button.progress();

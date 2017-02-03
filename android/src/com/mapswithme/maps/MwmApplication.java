@@ -8,15 +8,9 @@ import android.os.Handler;
 import android.os.Message;
 import android.preference.PreferenceManager;
 import android.support.annotation.UiThread;
+import android.support.multidex.MultiDexApplication;
 import android.text.TextUtils;
 import android.util.Log;
-
-import android.support.multidex.MultiDex;
-import android.content.Context;
-
-import java.io.File;
-import java.util.List;
-
 import com.crashlytics.android.Crashlytics;
 import com.crashlytics.android.ndk.CrashlyticsNdk;
 import com.mapswithme.maps.background.AppBackgroundTracker;
@@ -30,11 +24,7 @@ import com.mapswithme.maps.routing.RoutingController;
 import com.mapswithme.maps.settings.StoragePathManager;
 import com.mapswithme.maps.sound.TtsPlayer;
 import com.mapswithme.maps.traffic.TrafficManager;
-import com.mapswithme.util.Config;
-import com.mapswithme.util.Constants;
-import com.mapswithme.util.ThemeSwitcher;
-import com.mapswithme.util.UiUtils;
-import com.mapswithme.util.Utils;
+import com.mapswithme.util.*;
 import com.mapswithme.util.statistics.PushwooshHelper;
 import com.mapswithme.util.statistics.Statistics;
 import com.my.tracker.MyTracker;
@@ -43,7 +33,10 @@ import com.pushwoosh.PushManager;
 import io.fabric.sdk.android.Fabric;
 import net.hockeyapp.android.CrashManager;
 
-public class MwmApplication extends Application
+import java.io.File;
+import java.util.List;
+
+public class MwmApplication extends MultiDexApplication
 {
   private final static String TAG = "MwmApplication";
 

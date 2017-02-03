@@ -17,4 +17,9 @@
   <CheckBoxPreference
       android:key="@string/pref_auto_zoom"
       android:title="@string/pref_map_auto_zoom"/>
+
+    <ListPreference
+            android:key="@string/pref_route_network"
+            android:title="@string/pref_route_network_title"/>
+
 </PreferenceScreen>

@@ -13,7 +13,6 @@ import android.util.Log;
 import android.view.View;
 import android.widget.*;
 import com.mapswithme.maps.base.BaseMwmFragmentActivity;
-import com.mapswithme.maps.bookmarks.data.BookmarkManager;
 import com.mapswithme.maps.bookmarks.data.MapObject;
 import com.mapswithme.maps.downloader.MapManager;
 import com.mapswithme.maps.location.DemoLocationProvider;
@@ -227,7 +226,7 @@ public class DemoActivity extends BaseMwmFragmentActivity
         LocationHelper.INSTANCE.onLocationUpdated( DEMO2_START );
         Log.i( TAG, "Set start position to " + DEMO2_START.getLatitude() + ", " + DEMO2_START.getLongitude() );
         //create a dummy bookmarked end point as our end position
-        MapObject endPoint = new MapObject(MapObject.API_POINT, "Spirit of Tasmania", null, null, -37.84241170038242, 144.93850708007812, null );
+        MapObject endPoint = new MapObject(MapObject.API_POINT, "Spirit of Tasmania", null, null, -37.84241170038242, 144.93850708007812, null, null, false );
         Log.i( TAG, "Set end position to " + endPoint.getLat() + ", " + endPoint.getLon() );
 
         RoutingController.get().attach( mwmActivity );
@@ -263,7 +262,7 @@ public class DemoActivity extends BaseMwmFragmentActivity
 
         Log.i( TAG, "Set start position to " + DEMO3_START.getLatitude() + ", " + DEMO3_START.getLongitude() );
         //create a dummy bookmarked end point as our end position
-        MapObject endPoint = new MapObject(MapObject.API_POINT, "Mitcham Hotel", null, null, -37.816931, 145.193893, null );
+        MapObject endPoint = new MapObject(MapObject.API_POINT, "Mitcham Hotel", null, null, -37.816931, 145.193893, null, null, false );
         Log.i( TAG, "Set end position to " + endPoint.getLat() + ", " + endPoint.getLon() );
 
         RoutingController.get().attach( mwmActivity );

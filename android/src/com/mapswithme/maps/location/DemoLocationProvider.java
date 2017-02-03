@@ -266,7 +266,7 @@ public class DemoLocationProvider extends BaseLocationProvider
                         if( currentIndex % 10 == 0 )
                             Log.d( TAG, "" + currentIndex + ": fake location -> " + loc );
 
-                        onLocationChanged( loc );
+                        //TODO: onLocationChanged( loc );
                     }
                     catch( Exception e )
                     {

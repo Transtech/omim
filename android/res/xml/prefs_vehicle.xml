@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  android:persistent="false">
+    <EditTextPreference
+            android:key="@string/pref_vehicle_length"
+            android:title="@string/pref_vehicle_length_title"
+            android:inputType="numberDecimal"
+            android:order="1"/>
+
+    <EditTextPreference
+            android:key="@string/pref_vehicle_height"
+            android:title="@string/pref_vehicle_height_title"
+            android:inputType="numberDecimal"
+            android:order="2"/>
+
+    <EditTextPreference
+            android:key="@string/pref_vehicle_width"
+            android:title="@string/pref_vehicle_width_title"
+            android:inputType="numberDecimal"
+            android:order="3"/>
+
+    <EditTextPreference
+            android:key="@string/pref_vehicle_weight"
+            android:title="@string/pref_vehicle_weight_title"
+            android:inputType="numberDecimal"
+            android:order="4"/>
+
+</PreferenceScreen>

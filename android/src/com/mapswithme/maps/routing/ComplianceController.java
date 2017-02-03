@@ -11,7 +11,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
-import au.net.transtech.geo.model.VehicleProfile;
+import au.net.transtech.geo.model.EncoderProfile;
 import com.mapswithme.maps.Framework;
 import com.mapswithme.maps.R;
 import com.mapswithme.maps.location.DemoLocationProvider;
@@ -20,8 +20,6 @@ import com.mapswithme.maps.location.LocationListener;
 import com.mapswithme.maps.location.MockLocation;
 import com.mapswithme.maps.sound.TtsPlayer;
 import com.mapswithme.transtech.RouteConstants;
-import com.mapswithme.transtech.Setting;
-import com.mapswithme.transtech.SettingConstants;
 import com.mapswithme.util.concurrency.UiThread;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -44,7 +42,9 @@ public class ComplianceController implements LocationListener
 
     private static final ComplianceController sInstance = new ComplianceController();
 
-    private ComplianceController() {}
+    private ComplianceController()
+    {
+    }
 
     public static ComplianceController get()
     {
@@ -112,7 +112,7 @@ public class ComplianceController implements LocationListener
 
         if( truckRouter != null )
         {
-            VehicleProfile profile = truckRouter.getSelectedProfile();
+            EncoderProfile profile = truckRouter.getSelectedProfile();
             groupId = UUID.randomUUID();
             tripEvent( RouteConstants.MESSAGE_TYPE_TRIP_STARTED,
                     RouteConstants.SUB_TYPE_DEVICE_NETWORK,
@@ -128,7 +128,7 @@ public class ComplianceController implements LocationListener
 
         if( truckRouter != null && groupId != null )
         {
-            VehicleProfile profile = truckRouter.getSelectedProfile();
+            EncoderProfile profile = truckRouter.getSelectedProfile();
             tripEvent( RouteConstants.MESSAGE_TYPE_TRIP_FINISHED,
                     RouteConstants.SUB_TYPE_DEVICE_NETWORK,
                     groupId.toString(), profile );
@@ -150,7 +150,7 @@ public class ComplianceController implements LocationListener
                 Log.w( TAG, "BEEEP! OFF ROUTE!" );
                 complianceState = State.OFF_ROUTE;
 
-                VehicleProfile profile = truckRouter.getSelectedProfile();
+                EncoderProfile profile = truckRouter.getSelectedProfile();
                 tripEvent( RouteConstants.MESSAGE_TYPE_TRIP_EXIT,
                         RouteConstants.SUB_TYPE_DEVICE_NETWORK,
                         groupId.toString(), profile );
@@ -179,7 +179,7 @@ public class ComplianceController implements LocationListener
                     Log.w( TAG, "Whew, Back ON route!" );
                     lastTts = 0L;
 
-                    VehicleProfile profile = truckRouter.getSelectedProfile();
+                    EncoderProfile profile = truckRouter.getSelectedProfile();
                     tripEvent( RouteConstants.MESSAGE_TYPE_TRIP_ENTRY,
                             RouteConstants.SUB_TYPE_DEVICE_NETWORK,
                             groupId.toString(), profile );
@@ -192,7 +192,7 @@ public class ComplianceController implements LocationListener
                         msg.append( "You are now back on the \"" )
                                 .append( profile.getDescription() )
                                 .append( "\" network" );
-                        showToast( "Route Compliance", msg.toString(), Color.parseColor("#FF558B2F") );
+                        showToast( "Route Compliance", msg.toString(), Color.parseColor( "#FF558B2F" ) );
                     }
                 }
                 complianceState = State.ON_ROUTE;
@@ -254,24 +254,24 @@ public class ComplianceController implements LocationListener
 //                Utils.toastShortcut(callback.getActivity(), msg);
                 LayoutInflater inflater = callback.getActivity().getLayoutInflater();
                 ViewGroup group = (ViewGroup) callback.getActivity().findViewById( R.id.custom_toast_container );
-                View layout = inflater.inflate(R.layout.custom_toast, group);
+                View layout = inflater.inflate( R.layout.custom_toast, group );
                 layout.setBackgroundColor( color );
                 layout.setTextAlignment( View.TEXT_ALIGNMENT_CENTER );
 
-                TextView text = (TextView) layout.findViewById(R.id.compliance_text);
-                text.setText(msg);
+                TextView text = (TextView) layout.findViewById( R.id.compliance_text );
+                text.setText( msg );
                 text.setTextAlignment( View.TEXT_ALIGNMENT_CENTER );
 
-                Toast toast = new Toast(callback.getActivity().getApplicationContext());
-                toast.setGravity( Gravity.FILL_HORIZONTAL | Gravity.BOTTOM, 0, 80);
-                toast.setDuration(Toast.LENGTH_LONG);
-                toast.setView(layout);
+                Toast toast = new Toast( callback.getActivity().getApplicationContext() );
+                toast.setGravity( Gravity.FILL_HORIZONTAL | Gravity.BOTTOM, 0, 80 );
+                toast.setDuration( Toast.LENGTH_LONG );
+                toast.setView( layout );
                 toast.show();
             }
         } );
     }
 
-    private void tripEvent( String type, String subType, String groupId, VehicleProfile profile )
+    private void tripEvent( String type, String subType, String groupId, EncoderProfile profile )
     {
         try
         {
@@ -292,13 +292,13 @@ public class ComplianceController implements LocationListener
         }
         catch( Exception e )
         {
-            Log.e(TAG, "Failed to send trip event " + type, e);
+            Log.e( TAG, "Failed to send trip event " + type, e );
         }
     }
 
-    public final static DecimalFormat sixDecimalDigitFormat = new DecimalFormat("0.000000");
-    public final static DecimalFormat oneDecimalDigitFormat = new DecimalFormat("0.0");
-    public final static DecimalFormat twoDecimalDigitFormat = new DecimalFormat("0.00");
+    public final static DecimalFormat sixDecimalDigitFormat = new DecimalFormat( "0.000000" );
+    public final static DecimalFormat oneDecimalDigitFormat = new DecimalFormat( "0.0" );
+    public final static DecimalFormat twoDecimalDigitFormat = new DecimalFormat( "0.00" );
 
     private JSONObject toJSON( Location loc ) throws JSONException
     {
@@ -334,7 +334,7 @@ public class ComplianceController implements LocationListener
         return gps;
     }
 
-    private JSONObject toJSON( VehicleProfile profile ) throws JSONException
+    private JSONObject toJSON( EncoderProfile profile ) throws JSONException
     {
         JSONObject obj = new JSONObject();
         obj.put( RouteConstants.NETWORK_CODE, profile.getCode() );
@@ -347,7 +347,7 @@ public class ComplianceController implements LocationListener
         if( distInMetres < 1000 )
             return distInMetres + "m";
 
-        DecimalFormat df = new DecimalFormat("#.#");
+        DecimalFormat df = new DecimalFormat( "#.#" );
         return df.format( distInMetres / 1000.0 ) + "km";
     }
 

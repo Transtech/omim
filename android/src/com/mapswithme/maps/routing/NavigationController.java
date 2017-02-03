@@ -223,7 +223,7 @@ public class NavigationController implements TrafficManager.TrafficCallback
 
   public void update(RoutingInfo info)
   {
-      Log.i("Map_NavigationController", "Updating routing info " + info);
+//      Log.i("Map_NavigationController", "Updating routing info " + info);
     if (info == null)
       return;
 

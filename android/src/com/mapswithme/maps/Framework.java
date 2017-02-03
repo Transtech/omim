@@ -29,7 +29,7 @@ public class Framework
   public static final int MAP_STYLE_CLEAR = 2;
 
   @Retention(RetentionPolicy.SOURCE)
-  @IntDef({ROUTER_TYPE_VEHICLE, ROUTER_TYPE_PEDESTRIAN, ROUTER_TYPE_BICYCLE, ROUTER_TYPE_TAXI})
+  @IntDef({ROUTER_TYPE_VEHICLE, ROUTER_TYPE_PEDESTRIAN, ROUTER_TYPE_BICYCLE, ROUTER_TYPE_TAXI, ROUTER_TYPE_TRUCK})
 
   public @interface RouterType {}
 
@@ -37,6 +37,7 @@ public class Framework
   public static final int ROUTER_TYPE_PEDESTRIAN = 1;
   public static final int ROUTER_TYPE_BICYCLE = 2;
   public static final int ROUTER_TYPE_TAXI = 3;
+  public static final int ROUTER_TYPE_TRUCK = 4;
 
   @SuppressWarnings("unused")
   public interface MapObjectListener
@@ -57,10 +58,6 @@ public class Framework
   {
     void onRouteBuildingProgress(float progress);
   }
-
-    public interface ExternalRouter
-    {
-    }
 
   public static class Params3dMode
   {

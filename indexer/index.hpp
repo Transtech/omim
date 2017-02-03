@@ -178,7 +178,7 @@ private:
         int const lastScale = header.GetLastScale();
 
         // In case of WorldCoasts we should pass correct scale in ForEachInIntervalAndScale.
-        if (scale > lastScale)
+        if (scale > static_cast<uint32_t>(lastScale))
           scale = lastScale;
 
         // Use last coding scale for covering (see index_builder.cpp).

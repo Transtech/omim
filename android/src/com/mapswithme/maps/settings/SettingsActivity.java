@@ -82,6 +82,7 @@ public class SettingsActivity extends PreferenceActivity
     loadHeadersFromResource(R.xml.prefs_headers, target);
 
     mHeaders.clear();
+/* AG: disable OSM profile settings
     for (Header h : target)
     {
       mHeaders.put(h.id, h);
@@ -92,6 +93,7 @@ public class SettingsActivity extends PreferenceActivity
         h.title = OsmOAuth.getUsername();
       }
     }
+*/
   }
 
   @Override
@@ -113,12 +115,13 @@ public class SettingsActivity extends PreferenceActivity
       Statistics.INSTANCE.trackEvent(Statistics.EventName.Settings.ABOUT);
       AlohaHelper.logClick(AlohaHelper.Settings.ABOUT);
     }
+/* AG: disable OSM profile settings
     else if (header.id == R.id.osm_profile)
     {
       Statistics.INSTANCE.trackEvent(Statistics.EventName.Settings.OSM_PROFILE);
       startActivity(new Intent(this, ProfileActivity.class));
     }
-
+*/
     super.onHeaderClick(header, position);
   }
 

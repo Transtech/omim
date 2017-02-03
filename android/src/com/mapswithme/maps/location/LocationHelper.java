@@ -10,9 +10,6 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AlertDialog;
 import android.util.Log;
-
-import java.lang.ref.WeakReference;
-
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.mapswithme.maps.Framework;
@@ -30,7 +27,9 @@ import com.mapswithme.util.concurrency.UiThread;
 import com.mapswithme.util.log.DebugLogger;
 import com.mapswithme.util.log.Logger;
 
-import static com.mapswithme.maps.background.AppBackgroundTracker.*;
+import java.lang.ref.WeakReference;
+
+import static com.mapswithme.maps.background.AppBackgroundTracker.OnTransitionListener;
 
 public enum LocationHelper
 {
@@ -54,6 +53,8 @@ public enum LocationHelper
 
   private static final long STOP_DELAY_MS = 5000;
   static final int REQUEST_RESOLVE_ERROR = 101;
+
+    private boolean mUseDemoGPS = false;
 
   public interface UiCallback
   {
