@@ -1,9 +1,10 @@
-package com.mapswithme.maps.transtech;
+package com.mapswithme.transtech;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
+import com.mapswithme.transtech.MDMHandler;
 
 /**
  * Class MDMReceiver

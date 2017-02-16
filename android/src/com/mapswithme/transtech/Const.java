@@ -1,4 +1,4 @@
-package com.mapswithme.maps.transtech;
+package com.mapswithme.transtech;
 
 /**
  * Class Const
@@ -20,6 +20,7 @@ public class Const
     public static final String EXTRA_COMMS_EVENT_ROUTE              = "CommsEventRoute";
     public static final String EXTRA_COMMS_EVENT_HEADERS            = "CommsEventHeaders";
     public static final String EXTRA_COMMS_EVENT_CONTENT            = "CommsEventContent";
+    public static final String EXTRA_COMMS_EVENT_PRIORITY           = "CommsEventPriority";
     public static final String EXTRA_COMMS_EVENT_EXPIRY_DATE        = "CommsEventExpiryDate";
     public static final String EXTRA_COMMS_EVENT_URI                = "CommsEventURI";
     public static final String EXTRA_COMMS_EVENT_SKIP_ROUTING_KEY_SUBSTITUTION = "CommsEventSkipRoutingKeySubstitution";
@@ -44,4 +45,10 @@ public class Const
     public static final String AMQP_MSG_TYPE_MDM_COMMAND			= "transtech.command";
     public static final String AMQP_MSG_TYPE_MDM_RESPONSE			= "transtech.response";
 
+    // Priorities
+    public static final int COMMS_EVENT_PRIORITY_HIGH 	= 1;
+    public static final int COMMS_EVENT_PRIORITY_NORMAL = 5;
+    public static final int COMMS_EVENT_PRIORITY_LOW 	= 9;
+
+    public static final String AMQP_ROUTING_KEY_ROUTE_TRIP     		= "iface.trip";
 }

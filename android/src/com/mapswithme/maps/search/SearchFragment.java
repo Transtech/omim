@@ -13,13 +13,11 @@ import android.support.v4.view.ViewPager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-
-import java.util.ArrayList;
-import java.util.List;
-
+import au.net.transtech.geo.model.Segment;
 import com.mapswithme.maps.Framework;
 import com.mapswithme.maps.MwmActivity;
 import com.mapswithme.maps.MwmApplication;
@@ -32,13 +30,20 @@ import com.mapswithme.maps.downloader.CountrySuggestFragment;
 import com.mapswithme.maps.downloader.MapManager;
 import com.mapswithme.maps.location.LocationHelper;
 import com.mapswithme.maps.location.LocationListener;
+import com.mapswithme.maps.routing.ComplianceController;
 import com.mapswithme.maps.routing.RoutingController;
 import com.mapswithme.maps.widget.PlaceholderView;
 import com.mapswithme.maps.widget.SearchToolbarController;
+import com.mapswithme.transtech.route.RouteLeg;
+import com.mapswithme.transtech.route.RouteManager;
+import com.mapswithme.transtech.route.RouteTrip;
 import com.mapswithme.util.Animations;
 import com.mapswithme.util.UiUtils;
 import com.mapswithme.util.Utils;
 import com.mapswithme.util.statistics.Statistics;
+
+import java.util.ArrayList;
+import java.util.List;
 
 
 public class SearchFragment extends BaseMwmFragment
@@ -46,6 +51,7 @@ public class SearchFragment extends BaseMwmFragment
                                     NativeSearchListener,
                                     SearchToolbarController.Container,
                                     CategoriesAdapter.OnCategorySelectedListener,
+                                    RoutesAdapter.OnRouteSelectedListener,
                                     HotelsFilterHolder
 {
   private static final float NESTED_SCROLL_DELTA =
@@ -349,8 +355,8 @@ public class SearchFragment extends BaseMwmFragment
 
     SearchEngine.INSTANCE.addListener(this);
 
-    if (SearchRecents.getSize() == 0)
-      pager.setCurrentItem(TabAdapter.Tab.CATEGORIES.ordinal());
+//    if (SearchRecents.getSize() == 0)
+//      pager.setCurrentItem(TabAdapter.Tab.CATEGORIES.ordinal());
 
     tabAdapter.setTabSelectedListener(new TabAdapter.OnTabSelectedListener()
     {
@@ -458,7 +464,7 @@ public class SearchFragment extends BaseMwmFragment
   void showSingleResultOnMap(SearchResult result, int resultIndex)
   {
     final String query = getQuery();
-    SearchRecents.add(query);
+    SearchRecents.add( query );
     SearchEngine.cancelApiCall();
 
     if (!mFromRoutePlan)
@@ -482,7 +488,7 @@ public class SearchFragment extends BaseMwmFragment
     SearchEngine.searchInteractive(
         query, mLastQueryTimestamp, false /* isMapAndTable */, hotelsFilter);
     SearchEngine.showAllResults(query);
-    Utils.navigateToParent(getActivity());
+    Utils.navigateToParent( getActivity() );
 
     Statistics.INSTANCE.trackEvent(Statistics.EventName.SEARCH_ON_MAP_CLICKED);
   }
@@ -490,7 +496,7 @@ public class SearchFragment extends BaseMwmFragment
   private void onSearchEnd()
   {
     mSearchRunning = false;
-    mToolbarController.showProgress(false);
+    mToolbarController.showProgress( false );
     updateFrames();
     updateResultsPlaceholder();
   }
@@ -541,7 +547,8 @@ public class SearchFragment extends BaseMwmFragment
     updateFrames();
     mSearchAdapter.refreshData(results);
     mToolbarController.showProgress(true);
-    updateFilterButton(isHotel);
+    updateFilterButton( isHotel );
+      ComplianceController.get().setPlannedRoute( null, null );
   }
 
   @Override
@@ -555,9 +562,54 @@ public class SearchFragment extends BaseMwmFragment
   public void onCategorySelected(String category)
   {
     mToolbarController.setQuery(category);
+      ComplianceController.get().setPlannedRoute( null, null );
+
   }
 
-  private void updateFilterButton(boolean isHotel)
+    @Override
+    public void onRouteSelected(int routeId, String routeName)
+    {
+        Log.i( "SmartNav2_SearchFragment", "Selected route: " + routeId + " - " + routeName );
+        RouteTrip trip = RouteManager.findById( getActivity(), routeId );
+        if( trip != null )
+        {
+            //legs are expected to be in order after this call...
+            List<RouteLeg> legs = RouteManager.findLegsByTripId( getActivity(), routeId );
+
+            Log.i( "SmartNav2_SearchFragment", "There are " + legs.size() + " legs on route " + routeId );
+            if( legs.size() > 1 )
+            {
+                RouteLeg startLeg = legs.get(0);
+                RouteLeg endLeg = legs.get(legs.size() - 1);
+
+                Segment firstSeg = null, lastSeg = null;
+                if( startLeg.getRouteSegments() != null && startLeg.getRouteSegments().size() > 0 )
+                    firstSeg = startLeg.getRouteSegments().get( 0 );
+                if( endLeg.getRouteSegments() != null && endLeg.getRouteSegments().size() > 0 )
+                    lastSeg = endLeg.getRouteSegments().get( endLeg.getRouteSegments().size() - 1 );
+
+                ComplianceController.get().setPlannedRoute( routeId, routeName );
+
+                if( firstSeg != null )
+                {
+                    //AG: hack - replace the MapObject name with the route name for display purposes
+                    MapObject mapObj = new MapObject( MapObject.POI, routeName, null, null,
+                            firstSeg.getStart().getLatitude(), firstSeg.getStart().getLongitude(), null, null, false );
+                    RoutingController.get().setStartPoint( mapObj );
+                }
+
+                if( lastSeg != null )
+                {
+                    //AG: hack - replace the MapObject name with the route name for display purposes
+                    MapObject mapObj = new MapObject( MapObject.POI, routeName, null, null,
+                            lastSeg.getStart().getLatitude(), lastSeg.getStart().getLongitude(), null, null, false );
+                    RoutingController.get().setEndPoint( mapObj );
+                }
+            }
+        }
+    }
+
+    private void updateFilterButton(boolean isHotel)
   {
     if (mFilterController != null)
     {

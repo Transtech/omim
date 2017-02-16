@@ -2,7 +2,6 @@ package com.mapswithme.maps.search;
 
 import android.content.Context;
 import android.content.res.ColorStateList;
-import android.content.res.Configuration;
 import android.support.annotation.NonNull;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
@@ -12,14 +11,13 @@ import android.support.v4.view.ViewPager;
 import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.widget.TextView;
-
-import java.util.ArrayList;
-import java.util.List;
-
 import com.mapswithme.maps.R;
 import com.mapswithme.util.Graphics;
 import com.mapswithme.util.ThemeUtils;
 import com.mapswithme.util.UiUtils;
+
+import java.util.ArrayList;
+import java.util.List;
 
 class TabAdapter extends FragmentPagerAdapter
 {
@@ -45,8 +43,30 @@ class TabAdapter extends FragmentPagerAdapter
         return SearchHistoryFragment.class;
       }
     },
-
+/*
     CATEGORIES
+    {
+      @Override
+      public int getIconRes()
+                {
+                    return R.drawable.ic_search_tab_categories;
+                }
+
+      @Override
+      public int getTitleRes()
+                {
+                    return R.string.categories;
+                }
+
+      @Override
+      public Class<? extends Fragment> getFragmentClass()
+      {
+        return SearchCategoriesFragment.class;
+      }
+
+    },
+*/
+    ROUTES
     {
       @Override
       public int getIconRes()
@@ -57,14 +77,15 @@ class TabAdapter extends FragmentPagerAdapter
       @Override
       public int getTitleRes()
       {
-        return R.string.categories;
+        return R.string.routes;
       }
 
       @Override
       public Class<? extends Fragment> getFragmentClass()
       {
-        return SearchCategoriesFragment.class;
+        return SearchRoutesFragment.class;
       }
+
     };
 
     public abstract int getIconRes();

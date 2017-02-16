@@ -9,11 +9,9 @@ import android.preference.TwoStatePreference;
 import android.speech.tts.TextToSpeech;
 import android.support.annotation.NonNull;
 import android.util.Log;
-import au.net.transtech.geo.model.EncoderProfile;
+import au.net.transtech.geo.model.VehicleProfile;
 import com.mapswithme.maps.Framework;
 import com.mapswithme.maps.R;
-import com.mapswithme.maps.location.DemoLocationProvider;
-import com.mapswithme.maps.location.LocationHelper;
 import com.mapswithme.maps.routing.ComplianceController;
 import com.mapswithme.maps.routing.GraphHopperRouter;
 import com.mapswithme.maps.sound.LanguageData;
@@ -110,7 +108,7 @@ public class RoutePrefsFragment extends PreferenceFragment
 
             mSelectedNetwork = (String)newValue;
             mNetwork.setValue( mSelectedNetwork );
-            GraphHopperRouter router = ComplianceController.get().getRouter( RoutePrefsFragment.this.getActivity(), Framework.ROUTER_TYPE_TRUCK );
+            GraphHopperRouter router = ComplianceController.get().getRouter( RoutePrefsFragment.this.getActivity() );
             boolean result = router.setSelectedProfile( mSelectedNetwork );
             update();
             return result;
@@ -184,15 +182,15 @@ public class RoutePrefsFragment extends PreferenceFragment
 //      mDemoEnabled.setChecked( LocationHelper.INSTANCE.useDemoGPS() );
 //      mDemoEnabled.setSummary( "Use fake GPS data from " + DemoLocationProvider.GPS_DATA_SOURCE);
 
-      GraphHopperRouter truckRouter = ComplianceController.get().getRouter( RoutePrefsFragment.this.getActivity(), Framework.ROUTER_TYPE_TRUCK );
-      List<EncoderProfile> profiles = truckRouter.getGeoEngine().getEncoderProfiles();
+      GraphHopperRouter truckRouter = ComplianceController.get().getRouter( RoutePrefsFragment.this.getActivity() );
+      List<VehicleProfile> profiles = truckRouter.getGeoEngine().getVehicleProfiles();
       if( profiles != null && profiles.size() > 0 )
       {
           final CharSequence[] entries2 = new CharSequence[ profiles.size() ];
           final CharSequence[] values2 = new CharSequence[ profiles.size() ];
 
           int i = 0;
-          for( EncoderProfile vp : profiles )
+          for( VehicleProfile vp : profiles )
           {
               entries2[ i ] = vp.getDescription();
               values2[ i ] = vp.getCode();
@@ -204,7 +202,7 @@ public class RoutePrefsFragment extends PreferenceFragment
           mNetwork.setEntries( entries2 );
           mNetwork.setEntryValues( values2 );
 
-          EncoderProfile vp = truckRouter.getSelectedProfile();
+          VehicleProfile vp = truckRouter.getSelectedProfile();
           mNetwork.setSummary( vp == null ? null : vp.getDescription() + " (" + vp.getCode() + ")" );
           mNetwork.setValue( vp == null ? null : vp.getCode() );
       }

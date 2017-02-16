@@ -146,6 +146,7 @@ string Router::GetName() const
         res = nameUtf8;
         env->ReleaseStringUTFChars(name, nameUtf8);
     }
+    LOG(LINFO, ("External Router::GetName() returned", res.c_str()));
     return res;
 }
 
@@ -161,6 +162,7 @@ void Router::ClearState()
     ASSERT(methodID != nullptr, ());
 
     env->CallVoidMethod(m_self, methodID);
+    LOG(LINFO, ("External Router::ClearState()"));
 }
 
 IRouter::ResultCode Router::CalculateRoute(m2::PointD const & startPoint,
@@ -169,6 +171,8 @@ IRouter::ResultCode Router::CalculateRoute(m2::PointD const & startPoint,
                                   Route & route)
 {
 //        int calculateRoute(double startLat, double startLon, double finishLat, double finishLon);
+
+    LOG(LINFO, ("External Router::CalculateRoute() - start"));
 
     JNIEnv * env = jni::GetEnv();
     ASSERT( env, ());
@@ -189,6 +193,8 @@ IRouter::ResultCode Router::CalculateRoute(m2::PointD const & startPoint,
     ms::LatLon startPos = MercatorBounds::ToLatLon(startPoint);
     ms::LatLon finalPos = MercatorBounds::ToLatLon(finalPoint);
 
+    delegate.OnProgress(15.0f);
+
     //TODO: add delegate progress calls: eg. delegate.OnProgress(kPathFoundProgress);
     LOG(LDEBUG,("JNI Router callback CalculateRoute(",startPos.lat, ",", startPos.lon, ",", finalPos.lat, ",", finalPos.lon, ")" ));
     jobject jRoute = env->CallObjectMethod(m_self, calcMethodID, startPos.lat, startPos.lon, finalPos.lat, finalPos.lon);
@@ -198,6 +204,8 @@ IRouter::ResultCode Router::CalculateRoute(m2::PointD const & startPoint,
         return ResultCode::RouteNotFound;
     }
     ASSERT(jRoute, (jni::DescribeException()));
+
+    delegate.OnProgress(65.0f);
 
     LOG(LDEBUG,("JNI Router callback CalculateRoute - result 1" ));
     jobjectArray jPositionArr = (jobjectArray) env->GetObjectField(jRoute, fPathId);
@@ -233,6 +241,8 @@ IRouter::ResultCode Router::CalculateRoute(m2::PointD const & startPoint,
         }
     }
 
+    delegate.OnProgress(75.0f);
+
     if( jTurnsArr != nullptr )
     {
         //Extract turns from route.turns -> turnsDir
@@ -263,6 +273,8 @@ IRouter::ResultCode Router::CalculateRoute(m2::PointD const & startPoint,
             turnsDir.push_back( ti );
         }
     }
+
+    delegate.OnProgress(85.0f);
 
     if( jTimesArr != nullptr )
     {
@@ -307,15 +319,19 @@ IRouter::ResultCode Router::CalculateRoute(m2::PointD const & startPoint,
 
     LOG(LDEBUG,("JNI Router callback - all data extracted OK" ));
     route.SetGeometry(points.begin(), points.end());
-    route.SetTurnInstructions(turnsDir);
-    route.SetSectionTimes(times);
-    route.SetStreetNames(streets);
+    route.SetTurnInstructions(move(turnsDir));
+    route.SetSectionTimes(move(times));
+    route.SetStreetNames(move(streets));
+    route.SetTraffic({} /* No traffic info in case of GH */);
 
     env->DeleteLocalRef(jRoute);
     env->DeleteLocalRef(jPositionArr);
     env->DeleteLocalRef(jTimesArr);
     env->DeleteLocalRef(jTurnsArr);
 
+    delegate.OnProgress(95.0f);
+
+    LOG(LINFO, ("External Router::CalculateRoute() - end - no error"));
     return ResultCode::NoError;
 }
 

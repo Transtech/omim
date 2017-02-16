@@ -8,6 +8,8 @@
 #include "map/chart_generator.hpp"
 #include "map/user_mark.hpp"
 
+#include "com/mapswithme/routing/Router.hpp"
+
 #include "search/everywhere_search_params.hpp"
 
 #include "storage/storage_helpers.hpp"
@@ -592,6 +594,8 @@ extern "C"
 {
 void CallRoutingListener(shared_ptr<jobject> listener, int errorCode, vector<storage::TCountryId> const & absentMaps)
 {
+  LOG(LINFO, ("CallRoutingListener::onRoutingEvent() - event code ", errorCode));
+
   JNIEnv * env = jni::GetEnv();
   jmethodID const method = jni::GetMethodID(env, *listener, "onRoutingEvent", "(I[Ljava/lang/String;)V");
   ASSERT(method, ());
@@ -1047,6 +1051,8 @@ JNIEXPORT void JNICALL
 Java_com_mapswithme_maps_Framework_nativeSetRoutingListener(JNIEnv * env, jclass, jobject listener)
 {
   CHECK(g_framework, ("Framework isn't created yet!"));
+  LOG(LINFO, ("nativeSetRoutingListener() - setting native route listener"));
+
   frm()->SetRouteBuildingListener(bind(&CallRoutingListener, jni::make_global_ref(listener), _1, _2));
 }
 
@@ -1247,5 +1253,12 @@ JNIEXPORT void JNICALL
 Java_com_mapswithme_maps_Framework_nativeSetVisibleRect(JNIEnv * env, jclass, jint left, jint top, jint right, jint bottom)
 {
   frm()->SetVisibleViewport(m2::RectD(left, top, right, bottom));
+}
+JNIEXPORT void JNICALL
+Java_com_mapswithme_maps_Framework_nativeSetExternalRouter(JNIEnv * env, jclass, jobject router)
+{
+    LOG(LDEBUG, ("Setting external router"));
+    routing::Router *pRouter = new routing::Router( router );
+    frm()->SetExternalRouter( pRouter );
 }
 }  // extern "C"

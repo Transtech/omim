@@ -1,4 +1,4 @@
-package com.mapswithme.maps.transtech;
+package com.mapswithme.transtech;
 
 import android.content.ContentValues;
 import android.content.Context;
@@ -9,6 +9,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
 import android.util.Base64;
 import android.util.Log;
+import com.mapswithme.transtech.Const;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -124,7 +125,7 @@ public class MDMHandler
             {
                 //package the response back into a 'transtech.response' for publishing
                 JSONObject respHeaders = new JSONObject();
-                respHeaders.put(Const.AMQP_HEADER_MESSAGE_TYPE, Const.AMQP_MSG_TYPE_MDM_RESPONSE);
+                respHeaders.put( Const.AMQP_HEADER_MESSAGE_TYPE, Const.AMQP_MSG_TYPE_MDM_RESPONSE);
                 respHeaders.put(Const.AMQP_HEADER_MESSAGE_VERSION, "1.0.0" );
                 respHeaders.put(Const.AMQP_HEADER_MESSAGE_FORMAT, "application/json");
                 respHeaders.put(Const.AMQP_HEADER_CORRELATION_ID, headers.getString(Const.AMQP_HEADER_MESSAGE_ID));

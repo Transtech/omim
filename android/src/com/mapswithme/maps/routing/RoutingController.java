@@ -3,12 +3,7 @@ package com.mapswithme.maps.routing;
 import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.graphics.Rect;
-import android.support.annotation.DimenRes;
-import android.support.annotation.IntRange;
-import android.support.annotation.MainThread;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+import android.support.annotation.*;
 import android.support.v4.app.FragmentActivity;
 import android.support.v7.app.AlertDialog;
 import android.text.SpannableStringBuilder;
@@ -16,21 +11,18 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
-
 import com.mapswithme.maps.Framework;
 import com.mapswithme.maps.MwmApplication;
 import com.mapswithme.maps.R;
 import com.mapswithme.maps.bookmarks.data.MapObject;
 import com.mapswithme.maps.downloader.MapManager;
+import com.mapswithme.maps.location.DemoLocationProvider;
 import com.mapswithme.maps.location.LocationHelper;
 import com.mapswithme.maps.uber.Uber;
 import com.mapswithme.maps.uber.UberInfo;
 import com.mapswithme.maps.uber.UberLinks;
-import com.mapswithme.util.Config;
-import com.mapswithme.util.ConnectionState;
-import com.mapswithme.util.StringUtils;
-import com.mapswithme.util.ThemeSwitcher;
-import com.mapswithme.util.Utils;
+import com.mapswithme.transtech.TranstechUtil;
+import com.mapswithme.util.*;
 import com.mapswithme.util.concurrency.UiThread;
 import com.mapswithme.util.log.DebugLogger;
 import com.mapswithme.util.log.Logger;
@@ -106,15 +98,13 @@ public class RoutingController
   private boolean mUberPlanning;
   private boolean mInternetConnected;
 
-  private ComplianceController complianceController;
-
   @SuppressWarnings("FieldCanBeLocal")
   private final Framework.RoutingListener mRoutingListener = new Framework.RoutingListener()
   {
     @Override
     public void onRoutingEvent(final int resultCode, @Nullable final String[] missingMaps)
     {
-      mLogger.d("onRoutingEvent(resultCode: " + resultCode + ")");
+      Log.i("RCSTATE", "onRoutingEvent(resultCode: " + resultCode + ")");
 
       UiThread.run(new Runnable()
       {
@@ -187,7 +177,7 @@ public class RoutingController
   private void setState(State newState)
   {
     mLogger.d("[S] State: " + mState + " -> " + newState + ", BuildState: " + mBuildState);
-      Log.i( "Maps_RoutingController", "[S] State: " + mState + " -> " + newState + ", BuildState: " + mBuildState );
+      Log.i( "RCSTATE", "[S] State: " + mState + " -> " + newState + ", BuildState: " + mBuildState );
     mState = newState;
 
     if (mContainer != null)
@@ -197,10 +187,14 @@ public class RoutingController
   private void setBuildState(BuildState newState)
   {
     mLogger.d("[B] State: " + mState + ", BuildState: " + mBuildState + " -> " + newState);
+      Log.i( "RCSTATE", "[S] State: " + mState + " -> " + newState + ", BuildState: " + mBuildState );
     mBuildState = newState;
 
-    if (mBuildState == BuildState.BUILT && !MapObject.isOfType(MapObject.MY_POSITION, mStartPoint))
-      Framework.nativeDisableFollowing();
+//TODO - need to fix this such that we can follow a route even if it's not our position, but is
+//       close - whatever close may mean
+
+//    if (mBuildState == BuildState.BUILT && !MapObject.isOfType(MapObject.MY_POSITION, mStartPoint))
+//      Framework.nativeDisableFollowing();
 
     if (mContainer != null)
       mContainer.updateMenu();
@@ -231,12 +225,13 @@ public class RoutingController
   public void attach(@NonNull Container container)
   {
     mContainer = container;
+    ComplianceController.get().init( mContainer.getActivity() );
   }
 
   public void initialize()
   {
     Framework.nativeSetRoutingListener(mRoutingListener);
-    Framework.nativeSetRouteProgressListener(mRoutingProgressListener);
+    Framework.nativeSetRouteProgressListener( mRoutingProgressListener );
   }
 
   public void detach()
@@ -345,9 +340,11 @@ public class RoutingController
       return;
     }
 
-    if (startPoint != null && endPoint != null)
-      mLastRouterType = Framework.nativeGetBestRouter(startPoint.getLat(), startPoint.getLon(),
-                                                      endPoint.getLat(), endPoint.getLon());
+//    if (startPoint != null && endPoint != null)
+//      mLastRouterType = Framework.nativeGetBestRouter(startPoint.getLat(), startPoint.getLon(),
+//                                                      endPoint.getLat(), endPoint.getLon());
+
+      mLastRouterType = Framework.ROUTER_TYPE_EXTERNAL;
     prepare(startPoint, endPoint, mLastRouterType);
   }
 
@@ -383,24 +380,50 @@ public class RoutingController
   {
     mLogger.d("start");
 
+      if( ComplianceController.DEMO_MODE )
+      {
+          mLogger.d("Starting DEMO location provider for TEST only!");
+          DemoLocationProvider.GPS_DATA_SOURCE = "/sdcard/MapsWithMe/Demo2.txt";
+          LocationHelper.INSTANCE.setUseDemoGPS( true );
+
+          MapObject my = LocationHelper.INSTANCE.getMyPosition();
+          if (my == null)
+          {
+              mLogger.d("No MY_POSITION available");
+              return;
+          }
+          //the start point is just the start of the planned route and a POI MapObject type.
+          //The navigation won't work if we are not routing from our current location, so we check whether
+          //we're "close enough" and change the starting point to MY_POSITION instead
+          double distFromMyLoc = TranstechUtil.haversineDistance(
+                  my.getLat(), my.getLon(), mStartPoint.getLat(), mStartPoint.getLon() );
+          if( distFromMyLoc <= ComplianceController.OFFROUTE_THRESHOLD * 10 )
+          {
+              mLogger.d("We are only " + distFromMyLoc + "m from the route start point - start from my location instead");
+              mStartPoint = my;
+          }
+      }
+      else
+          mLogger.d( "Compliance controller is NOT in DEMO mode as expected!" );
+
     if (!MapObject.isOfType(MapObject.MY_POSITION, mStartPoint))
     {
         mLogger.d("No MY_POSITION available");
       Statistics.INSTANCE.trackEvent(Statistics.EventName.ROUTING_START_SUGGEST_REBUILD);
-      AlohaHelper.logClick(AlohaHelper.ROUTING_START_SUGGEST_REBUILD);
+      AlohaHelper.logClick( AlohaHelper.ROUTING_START_SUGGEST_REBUILD );
       suggestRebuildRoute();
       return;
     }
 
-    MapObject my = LocationHelper.INSTANCE.getMyPosition();
-    if (my == null)
-    {
-        mLogger.d("No MY_POSITION available");
-      mRoutingListener.onRoutingEvent(ResultCodesHelper.NO_POSITION, null);
-      return;
-    }
+      MapObject my = LocationHelper.INSTANCE.getMyPosition();
+      if (my == null)
+      {
+          mLogger.d("No MY_POSITION available");
+          mRoutingListener.onRoutingEvent( ResultCodesHelper.NO_POSITION, null );
+          return;
+      }
 
-    mStartPoint = my;
+      mStartPoint = my;
     Statistics.INSTANCE.trackEvent(Statistics.EventName.ROUTING_START);
     AlohaHelper.logClick( AlohaHelper.ROUTING_START );
     setState(State.NAVIGATION);
@@ -412,6 +435,8 @@ public class RoutingController
 
     Framework.nativeFollowRoute();
     LocationHelper.INSTANCE.restart();
+
+    ComplianceController.get().start();
   }
 
   private void suggestRebuildRoute()
@@ -471,6 +496,9 @@ public class RoutingController
 
     setBuildState(BuildState.NONE);
     setState(State.NONE);
+
+      LocationHelper.INSTANCE.setUseDemoGPS( false );
+    ComplianceController.get().stop();
 
     ThemeSwitcher.restart();
     Framework.nativeCloseRouting();
@@ -536,7 +564,7 @@ public class RoutingController
 
   boolean isVehicleRouterType()
   {
-    return mLastRouterType == Framework.ROUTER_TYPE_VEHICLE;
+    return mLastRouterType == Framework.ROUTER_TYPE_VEHICLE || mLastRouterType == Framework.ROUTER_TYPE_EXTERNAL;
   }
 
   public boolean isNavigating()

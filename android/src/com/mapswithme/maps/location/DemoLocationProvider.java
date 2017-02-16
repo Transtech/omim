@@ -3,6 +3,7 @@ package com.mapswithme.maps.location;
 import android.location.Location;
 import android.os.SystemClock;
 import android.util.Log;
+import com.mapswithme.util.concurrency.UiThread;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -22,9 +23,9 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class DemoLocationProvider extends BaseLocationProvider
 {
-    private static final String TAG = "Maps_DemoLocationProvider";
+    private static final String TAG = "DemoLocationProvider";
     public static String GPS_DATA_SOURCE = "/sdcard/MapsWithMe/GpsData.txt";
-    public static boolean LOOP = true;
+    public static boolean LOOP = false;
 
     /**
      * Conversion factor converting MPS to KNOTS.
@@ -206,6 +207,9 @@ public class DemoLocationProvider extends BaseLocationProvider
         {
             Log.e( TAG, Log.getStackTraceString( e ) );
         }
+
+        if( fakeData != null && fakeData.size() > 0 )
+            sendUpdatedLocation( fakeData.get( 0 ) );
     }
 
     /**
@@ -225,6 +229,29 @@ public class DemoLocationProvider extends BaseLocationProvider
         return f + (signum * (t / 60));
     }
 
+    private void sendUpdatedLocation( Location location )
+    {
+        try
+        {
+            final Location loc = new Location( location );
+            loc.setTime( new Date().getTime() );
+            loc.setElapsedRealtimeNanos( SystemClock.elapsedRealtimeNanos() );
+
+            UiThread.runLater( new Runnable()
+            {
+                @Override
+                public void run()
+                {
+                    LocationHelper.INSTANCE.onLocationUpdated( loc );
+                    LocationHelper.INSTANCE.notifyLocationUpdated();
+                }
+            } );
+        }
+        catch( Exception e )
+        {
+            Log.e( TAG, "Error creating a fake location", e );
+        }
+    }
     private class FakerThread extends Thread
     {
         volatile boolean keepSending = true;
@@ -256,23 +283,7 @@ public class DemoLocationProvider extends BaseLocationProvider
 
                 Location mockLoc = currentIndex < fakeData.size() ? fakeData.get( currentIndex ) : null;
                 if( mockLoc != null )
-                {
-                    try
-                    {
-                        Location loc = new Location( mockLoc );
-                        loc.setTime( new Date().getTime() );
-                        loc.setElapsedRealtimeNanos( SystemClock.elapsedRealtimeNanos() );
-
-                        if( currentIndex % 10 == 0 )
-                            Log.d( TAG, "" + currentIndex + ": fake location -> " + loc );
-
-                        //TODO: onLocationChanged( loc );
-                    }
-                    catch( Exception e )
-                    {
-                        Log.e( TAG, "Error creating a fake location", e );
-                    }
-                }
+                    sendUpdatedLocation( mockLoc );
 
                 long delay = 250;
                 if( mockLoc != null && prevLoc != null )

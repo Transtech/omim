@@ -450,7 +450,7 @@
       </intent-filter>
     </receiver>
 
-    <receiver android:name="com.mapswithme.maps.transtech.MDMReceiver">
+    <receiver android:name="com.mapswithme.transtech.MDMReceiver">
       <intent-filter>
         <action android:name="transtech.AF.Android.Comms.action.AMQP_MESSAGE"/>
         <category android:name="transtech.AF.Android.Comms.category.transtech.command"/>

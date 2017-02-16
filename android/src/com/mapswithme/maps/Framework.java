@@ -1,12 +1,7 @@
 package com.mapswithme.maps;
 
 import android.graphics.Bitmap;
-import android.support.annotation.IntDef;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.annotation.Size;
-import android.support.annotation.UiThread;
-
+import android.support.annotation.*;
 import com.mapswithme.maps.api.ParsedRoutingData;
 import com.mapswithme.maps.api.ParsedUrlMwmRequest;
 import com.mapswithme.maps.bookmarks.data.DistanceAndAzimut;
@@ -29,7 +24,7 @@ public class Framework
   public static final int MAP_STYLE_CLEAR = 2;
 
   @Retention(RetentionPolicy.SOURCE)
-  @IntDef({ROUTER_TYPE_VEHICLE, ROUTER_TYPE_PEDESTRIAN, ROUTER_TYPE_BICYCLE, ROUTER_TYPE_TAXI, ROUTER_TYPE_TRUCK})
+  @IntDef({ROUTER_TYPE_VEHICLE, ROUTER_TYPE_PEDESTRIAN, ROUTER_TYPE_BICYCLE, ROUTER_TYPE_TAXI, ROUTER_TYPE_EXTERNAL})
 
   public @interface RouterType {}
 
@@ -37,7 +32,7 @@ public class Framework
   public static final int ROUTER_TYPE_PEDESTRIAN = 1;
   public static final int ROUTER_TYPE_BICYCLE = 2;
   public static final int ROUTER_TYPE_TAXI = 3;
-  public static final int ROUTER_TYPE_TRUCK = 4;
+  public static final int ROUTER_TYPE_EXTERNAL = 4;
 
   @SuppressWarnings("unused")
   public interface MapObjectListener
@@ -219,7 +214,9 @@ public class Framework
 
   public static native void nativeSetRouteEndPoint(double lat, double lon, boolean valid);
 
-  /**
+  public native static void nativeSetExternalRouter(IRouter router);
+
+    /**
    * Registers all maps(.mwms). Adds them to the models, generates indexes and does all necessary stuff.
    */
   public static native void nativeRegisterMaps();
@@ -238,8 +235,6 @@ public class Framework
   public static native void nativeGet3dMode(Params3dMode result);
 
   public native static void nativeSet3dMode(boolean allow3d, boolean allow3dBuildings);
-
-  public native static void nativeSetExternalRouter(int routerType, IRouter router);
 
   public static native boolean nativeGetAutoZoomEnabled();
 

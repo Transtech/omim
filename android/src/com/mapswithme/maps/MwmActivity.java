@@ -636,8 +636,8 @@ public class MwmActivity extends BaseMwmFragmentActivity
 
   public void closeMenu(String statEvent, String alohaStatEvent, @Nullable Runnable procAfterClose)
   {
-    Statistics.INSTANCE.trackEvent(statEvent);
-    AlohaHelper.logClick(alohaStatEvent);
+//    Statistics.INSTANCE.trackEvent(statEvent);
+//    AlohaHelper.logClick(alohaStatEvent);
 
     mFadeView.fadeOut();
     mMainMenu.close(true, procAfterClose);

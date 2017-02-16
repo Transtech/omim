@@ -102,9 +102,7 @@ public class DemoActivity extends BaseMwmFragmentActivity
         }
 
         //locate the 2 router types to trigger initilisation
-        GraphHopperRouter carRouter = ComplianceController.get().getRouter( get(), Framework.ROUTER_TYPE_VEHICLE);
-        GraphHopperRouter truckRouter = ComplianceController.get().getRouter( get(), Framework.ROUTER_TYPE_TRUCK);
-
+        GraphHopperRouter truckRouter = ComplianceController.get().getRouter( get() );
         processIntent( getIntent() );
     }
 
@@ -179,12 +177,12 @@ public class DemoActivity extends BaseMwmFragmentActivity
             return;
 
         Log.i( TAG, "Found required country " + country);
-        GraphHopperRouter truckRouter = ComplianceController.get().getRouter( get(), Framework.ROUTER_TYPE_TRUCK );
+        GraphHopperRouter truckRouter = ComplianceController.get().getRouter( get() );
         if( !truckRouter.setSelectedProfile( NETWORK_BDOUBLE ) )
             Log.i( TAG, "Failed to set selected GH profile to '" + NETWORK_BDOUBLE + "'");
 
-        RoutingController.get().setRouterType( Framework.ROUTER_TYPE_TRUCK );
-        ComplianceController.get().setCurrentRouterType( Framework.ROUTER_TYPE_TRUCK );
+        RoutingController.get().setRouterType( Framework.ROUTER_TYPE_EXTERNAL );
+        ComplianceController.get().setCurrentRouterType( Framework.ROUTER_TYPE_EXTERNAL );
 
         //set our start position
         LocationHelper.INSTANCE.onLocationUpdated( TRANSTECH_OFFICE );
@@ -210,14 +208,13 @@ public class DemoActivity extends BaseMwmFragmentActivity
             return;
 
         Log.i( TAG, "Found required country " + country);
-        GraphHopperRouter carRouter = ComplianceController.get().getRouter( get(), Framework.ROUTER_TYPE_TRUCK );
-        GraphHopperRouter truckRouter = ComplianceController.get().getRouter( get(), Framework.ROUTER_TYPE_TRUCK );
+        GraphHopperRouter truckRouter = ComplianceController.get().getRouter( get() );
         if( !truckRouter.setSelectedProfile( NETWORK_BDOUBLE ) )
             Log.i( TAG, "Failed to set selected GH profile to '" + NETWORK_BDOUBLE + "'");
 
 
-        RoutingController.get().setRouterType( Framework.ROUTER_TYPE_TRUCK );
-        ComplianceController.get().setCurrentRouterType( Framework.ROUTER_TYPE_TRUCK );
+        RoutingController.get().setRouterType( Framework.ROUTER_TYPE_EXTERNAL );
+        ComplianceController.get().setCurrentRouterType( Framework.ROUTER_TYPE_EXTERNAL );
 
         //turn off demo GPS feed
         LocationHelper.INSTANCE.setUseDemoGPS( false );
@@ -249,13 +246,12 @@ public class DemoActivity extends BaseMwmFragmentActivity
             return;
 
         Log.i( TAG, "Found required country " + country);
-        GraphHopperRouter carRouter = ComplianceController.get().getRouter( get(), Framework.ROUTER_TYPE_TRUCK );
-        GraphHopperRouter truckRouter = ComplianceController.get().getRouter( get(), Framework.ROUTER_TYPE_TRUCK );
+        GraphHopperRouter truckRouter = ComplianceController.get().getRouter( get() );
         if( !truckRouter.setSelectedProfile( NETWORK_BDOUBLE ) )
             Log.i( TAG, "Failed to set selected GH profile to '" + NETWORK_BDOUBLE + "'");
 
-        RoutingController.get().setRouterType( Framework.ROUTER_TYPE_TRUCK );
-        ComplianceController.get().setCurrentRouterType( Framework.ROUTER_TYPE_TRUCK );
+        RoutingController.get().setRouterType( Framework.ROUTER_TYPE_EXTERNAL );
+        ComplianceController.get().setCurrentRouterType( Framework.ROUTER_TYPE_EXTERNAL );
 
         //set our start position
         LocationHelper.INSTANCE.onLocationUpdated( DEMO3_START );

@@ -1,31 +1,32 @@
-package com.mapswithme.transtech;
+package com.mapswithme.transtech.route;
+
+import android.net.Uri;
 
 /**
- * Class RouteConstants
- * <p/>
- * Created by agough on 5/08/16 10:06 AM
+ * Created by Afzal on 6/10/2015.
  */
-public class RouteConstants
-{
+public class RouteConstants {
 
     public static final String AUTHORITY = "transtech.af.android.route.routeprovider";
+    public static final Uri TRIPS_CONTENT_URI = Uri.parse("content://" + AUTHORITY + "/trips");
+    public static final Uri LEGS_CONTENT_URI = Uri.parse("content://" + AUTHORITY + "/legs");
 
     public static final String EXTRA_SELECTED_ROUTE_ID = "transtech.AF.Android.route.EXTRA_SELECTED_ROUTE_ID";
     public static final String EXTRA_SELECTED_ROUTE_NAME = "transtech.AF.Android.route.EXTRA_SELECTED_ROUTE_NAME";
     public static final String EXTRA_CURRENT_QJ_TRIP_ID = "transtech.AF.Android.route.EXTRA_CURRENT_QJ_TRIP_ID";
 
     // For payload
-    public static final String MESSAGE_TYPE_MFT = "TRIP-MFT";
-    public static final String MESSAGE_TYPE_TRIP_STARTED = "TRIP-STARTED";
-    public static final String MESSAGE_TYPE_TRIP_FINISHED = "TRIP-FINISHED";
-    public static final String MESSAGE_TYPE_TRIP_ENTRY = "TRIP-ENTRY";
-    public static final String MESSAGE_TYPE_TRIP_EXIT = "TRIP-EXIT";
+    public static final String MESSAGE_TYPE_MFT             = "TRIP-MFT";
+    public static final String MESSAGE_TYPE_TRIP_STARTED    = "TRIP-STARTED";
+    public static final String MESSAGE_TYPE_TRIP_FINISHED   = "TRIP-FINISHED";
+    public static final String MESSAGE_TYPE_TRIP_ENTRY      = "TRIP-ENTRY";
+    public static final String MESSAGE_TYPE_TRIP_EXIT       = "TRIP-EXIT";
 
     public static final String TRIPS = "trips";
+    public static final String RECORD_TYPE = "RecordType";
     public static final String SUB_TYPE = "SubType";
     public static final String ID = "id";
     public static final String VERSION = "version";
-    public static final String NETWORK = "Network";
     public static final String ESTIMATED_DUR = "estimatedDuration";
     public static final String STOPS = "stops";
     public static final String LOCATION = "location";
@@ -48,26 +49,25 @@ public class RouteConstants
     public static final String GEOFENCE_ID = "Id";
 
     // for trip events from device
+    public static final String TRIP = "Trip";
     public static final String TRIP_ID = "TripId";
     public static final String TRIP_VERSION = "TripVersion";
     public static final String CORRELATION_ID = "CorrelationId";
     public static final String SOURCE = "Source";
     public static final String STOP_ID = "StopId";
     public static final String GROUP_ID = "GroupId";
+    public static final String NETWORK = "Network";
+    public static final String MODE = "Mode";
 
     // for sync response
     public static final String DELETE = "delete";
     public static final String ADD = "add";
 
+
     public static final String NETWORK_CODE = "Code";
     public static final String NETWORK_DESC = "Desc";
-
 
     public static final String SUB_TYPE_ROUTE_PLANNED = "ROUTE_PLANNED";
     public static final String SUB_TYPE_DEVICE_NETWORK = "NETWORK_ACTUAL";
 
-    public static final String TRIP_EVENT_PREFIX = "TRIP-";
-
-    public static final String AMQP_ROUTING_KEY_ROUTE_TRIP     		= "iface.trip";
-    public static final String ACTION_COMMS_RECORD = "transtech.AF.Android.Comms.action.CREATE_RECORD";
 }

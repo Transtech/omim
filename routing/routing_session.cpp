@@ -116,7 +116,7 @@ void RoutingSession::DoReadyCallback::operator()(Route & route, IRouter::ResultC
     for (string const & country : route.GetAbsentCountries())
       m_rs.m_route->AddAbsentCountry(country);
   }
-
+  LOG(LINFO,("RoutingSession::DoReadyCallback::operator() - route erro code ", e));
   m_callback(*m_rs.m_route, e);
 }
 

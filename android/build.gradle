@@ -288,7 +288,7 @@ android {
 
   buildTypes {
     debug {
-      applicationIdSuffix '.debug'   // Allows to install debug and release builds together
+//      applicationIdSuffix '.debug'   // Allows to install debug and release builds together
       versionNameSuffix '-debug'
       jniDebuggable true           // Enable jni debug build
       zipAlignEnabled true
@@ -304,13 +304,14 @@ android {
       proguardFile('proguard-mwm.txt')
       multiDexKeepFile file('multidex-config.txt')
     }
-
+/*
     beta {
       applicationIdSuffix '.beta'
       versionNameSuffix '-beta'
       signingConfig signingConfigs.mapswithme
       android.sourceSets.beta.setRoot('flavors/beta')
     }
+*/
   }
 
   // We don't compress these extensions in assets/ because our random FileReader can't read zip-compressed files from apk.

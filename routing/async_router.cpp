@@ -288,7 +288,7 @@ void AsyncRouter::CalculateRoute()
 
   try
   {
-    LOG(LDEBUG, ("Calculating the route from", startPoint, "to", finalPoint, "startDirection", startDirection));
+    LOG(LDEBUG, ("Calculating the route using router ", route.GetName().c_str(), " from", startPoint, "to", finalPoint, "startDirection", startDirection));
 
     if (absentFetcher)
       absentFetcher->GenerateRequest(startPoint, finalPoint);
@@ -303,17 +303,19 @@ void AsyncRouter::CalculateRoute()
   {
     code = IRouter::InternalError;
     LOG(LERROR, ("Exception happened while calculating route:", e.Msg()));
-    SendStatistics(startPoint, startDirection, finalPoint, e.Msg());
+//    SendStatistics(startPoint, startDirection, finalPoint, e.Msg());
     delegate->OnReady(route, code);
     return;
   }
 
-  SendStatistics(startPoint, startDirection, finalPoint, code, route, elapsedSec);
+//  SendStatistics(startPoint, startDirection, finalPoint, code, route, elapsedSec);
 
   // Draw route without waiting network latency.
   if (code == IRouter::NoError)
+  {
+    LOG(LDEBUG, ("Signalling routing delegate OnReady()"));
     delegate->OnReady(route, code);
-
+  }
   bool const needFetchAbsent = (code != IRouter::Cancelled);
 
   // Check online response if we have.

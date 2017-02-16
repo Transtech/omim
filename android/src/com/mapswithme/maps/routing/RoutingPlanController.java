@@ -7,22 +7,13 @@ import android.graphics.Bitmap;
 import android.graphics.Rect;
 import android.location.Location;
 import android.os.Bundle;
-import android.support.annotation.DrawableRes;
-import android.support.annotation.IdRes;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.annotation.StringRes;
+import android.support.annotation.*;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.CompoundButton;
-import android.widget.ImageView;
-import android.widget.RadioButton;
-import android.widget.RadioGroup;
-import android.widget.TextView;
-
+import android.widget.*;
 import com.mapswithme.maps.Framework;
 import com.mapswithme.maps.MwmActivity;
 import com.mapswithme.maps.MwmApplication;
@@ -33,11 +24,7 @@ import com.mapswithme.maps.uber.Uber;
 import com.mapswithme.maps.uber.UberAdapter;
 import com.mapswithme.maps.uber.UberInfo;
 import com.mapswithme.maps.uber.UberLinks;
-import com.mapswithme.maps.widget.DotPager;
-import com.mapswithme.maps.widget.RotateDrawable;
-import com.mapswithme.maps.widget.RoutingToolbarButton;
-import com.mapswithme.maps.widget.ToolbarController;
-import com.mapswithme.maps.widget.WheelProgressView;
+import com.mapswithme.maps.widget.*;
 import com.mapswithme.util.UiUtils;
 import com.mapswithme.util.Utils;
 import com.mapswithme.util.statistics.AlohaHelper;
@@ -51,12 +38,12 @@ public class RoutingPlanController extends ToolbarController implements SlotFram
 
 
   protected final View mFrame;
-  private final ImageView mToggle;
+//  private final ImageView mToggle;
   private final SlotFrame mSlotFrame;
   private final RadioGroup mRouterTypes;
   private final WheelProgressView mProgressTruck;
-  private final WheelProgressView mProgressVehicle;
-  private final WheelProgressView mProgressPedestrian;
+//  private final WheelProgressView mProgressVehicle;
+//  private final WheelProgressView mProgressPedestrian;
 //  private final WheelProgressView mProgressBicycle;
 //  private final WheelProgressView mProgressTaxi;
 
@@ -118,11 +105,11 @@ public class RoutingPlanController extends ToolbarController implements SlotFram
     super(root, activity);
     mFrame = root;
 
-    mToggle = (ImageView) mToolbar.findViewById(R.id.toggle);
+//    mToggle = (ImageView) mToolbar.findViewById(R.id.toggle);
     mSlotFrame = (SlotFrame) root.findViewById(R.id.slots);
     mSlotFrame.setSlotClickListener(this);
     mRouterTypes = (RadioGroup) mToolbar.findViewById(R.id.route_type);
-
+/*
       setupRouterButton(R.id.truck, R.drawable.ic_truck, new View.OnClickListener()
       {
           @Override
@@ -155,7 +142,7 @@ public class RoutingPlanController extends ToolbarController implements SlotFram
         RoutingController.get().setRouterType(Framework.ROUTER_TYPE_PEDESTRIAN);
       }
     });
-/*
+
     setupRouterButton(R.id.bicycle, R.drawable.ic_bike, new View.OnClickListener()
     {
       @Override
@@ -180,8 +167,8 @@ public class RoutingPlanController extends ToolbarController implements SlotFram
 */
     View progressFrame = mToolbar.findViewById(R.id.progress_frame);
     mProgressTruck = (WheelProgressView) progressFrame.findViewById(R.id.progress_truck);
-    mProgressVehicle = (WheelProgressView) progressFrame.findViewById(R.id.progress_vehicle);
-    mProgressPedestrian = (WheelProgressView) progressFrame.findViewById(R.id.progress_pedestrian);
+//    mProgressVehicle = (WheelProgressView) progressFrame.findViewById(R.id.progress_vehicle);
+//    mProgressPedestrian = (WheelProgressView) progressFrame.findViewById(R.id.progress_pedestrian);
 //    mProgressBicycle = (WheelProgressView) progressFrame.findViewById(R.id.progress_bicycle);
 //    mProgressTaxi = (WheelProgressView) progressFrame.findViewById(R.id.progress_taxi);
 
@@ -191,15 +178,15 @@ public class RoutingPlanController extends ToolbarController implements SlotFram
     mUberFrame = getViewById(R.id.uber_panel);
     UiUtils.hide(mUberFrame);
 
-    mToggle.setImageDrawable(mToggleImage);
-    mToggle.setOnClickListener(new View.OnClickListener()
-    {
-      @Override
-      public void onClick(View v)
-      {
-        toggleSlots();
-      }
-    });
+//    mToggle.setImageDrawable(mToggleImage);
+//    mToggle.setOnClickListener(new View.OnClickListener()
+//    {
+//      @Override
+//      public void onClick(View v)
+//      {
+//        toggleSlots();
+//      }
+//    });
   }
 
   @Override
@@ -262,6 +249,7 @@ public class RoutingPlanController extends ToolbarController implements SlotFram
     RoutingController.BuildState buildState = RoutingController.get().getBuildState();
 
     boolean ready = (buildState == RoutingController.BuildState.BUILT);
+      Log.i( "RoutingPlanController", "updateProgressLabels() ready == " + ready );
 
     if (!ready) 
     {
@@ -271,6 +259,7 @@ public class RoutingPlanController extends ToolbarController implements SlotFram
 
     if (!isTaxiRouterType())
       setStartButton();
+
     showAltitudeChartAndRoutingDetails();
   }
 
@@ -321,13 +310,12 @@ public class RoutingPlanController extends ToolbarController implements SlotFram
 
   public void updateBuildProgress(int progress, @Framework.RouterType int router)
   {
-    UiUtils.invisible(mProgressTruck, mProgressVehicle, mProgressPedestrian/*, mProgressBicycle, mProgressTaxi */);
+//    UiUtils.invisible(mProgressTruck/*, mProgressVehicle, mProgressPedestrian, mProgressBicycle, mProgressTaxi */);
     WheelProgressView progressView;
-    if (router == Framework.ROUTER_TYPE_TRUCK)
-    {
-        mRouterTypes.check(R.id.truck);
-        progressView = mProgressTruck;
-    }
+//    mRouterTypes.check(R.id.truck);
+    progressView = mProgressTruck;
+
+/*
     else if (router == Framework.ROUTER_TYPE_VEHICLE)
     {
         mRouterTypes.check(R.id.vehicle);
@@ -338,7 +326,6 @@ public class RoutingPlanController extends ToolbarController implements SlotFram
       mRouterTypes.check(R.id.pedestrian);
       progressView = mProgressPedestrian;
     }
-/*
     else if (router == Framework.ROUTER_TYPE_TAXI)
     {
       mRouterTypes.check(R.id.taxi);
@@ -350,12 +337,12 @@ public class RoutingPlanController extends ToolbarController implements SlotFram
       progressView = mProgressBicycle;
     }
 */
-    RoutingToolbarButton button = (RoutingToolbarButton)mRouterTypes
-        .findViewById(mRouterTypes.getCheckedRadioButtonId());
-    button.progress();
+//    RoutingToolbarButton button = (RoutingToolbarButton)mRouterTypes
+//        .findViewById(mRouterTypes.getCheckedRadioButtonId());
+//    button.progress();
 
     updateProgressLabels();
-
+/*
     if (RoutingController.get().isUberRequestHandled())
     {
       if (!RoutingController.get().isInternetConnected())
@@ -366,12 +353,12 @@ public class RoutingPlanController extends ToolbarController implements SlotFram
       button.complete();
       return;
     }
-
-    if (!RoutingController.get().isBuilding() && !RoutingController.get().isUberPlanning())
-    {
-      button.complete();
-      return;
-    }
+*/
+//    if (!RoutingController.get().isBuilding() && !RoutingController.get().isUberPlanning())
+//    {
+////      button.complete();
+//      return;
+//    }
 
     UiUtils.show(progressView);
     progressView.setPending(progress == 0);
@@ -458,7 +445,7 @@ public class RoutingPlanController extends ToolbarController implements SlotFram
 
   void disableToggle()
   {
-    UiUtils.hide(mToggle);
+//    UiUtils.hide(mToggle);
     showSlots(true, false);
   }
 
@@ -594,7 +581,8 @@ public class RoutingPlanController extends ToolbarController implements SlotFram
           }
         }
       });
-    } else
+    }
+    else
     {
       start.setText(mActivity.getText(R.string.p2p_start));
       start.setOnClickListener(new View.OnClickListener()
@@ -607,6 +595,7 @@ public class RoutingPlanController extends ToolbarController implements SlotFram
             @Override
             public void run()
             {
+                Log.i( "RoutingPlanController", "START button clicked..." );
               RoutingController.get().start();
             }
           });

@@ -9,7 +9,6 @@ import android.location.LocationManager;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AlertDialog;
-import android.util.Log;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.mapswithme.maps.Framework;
@@ -303,17 +302,21 @@ public enum LocationHelper
   {
     if (!LocationState.isTurnedOn())
     {
+      mLogger.d("LocationState.isTurnedOn == false");
       mMyPosition = null;
       return null;
     }
 
     if (mSavedLocation == null)
+    {
+      mLogger.d( "mSavedLocation == null" );
       return null;
-
+    }
     if (mMyPosition == null)
       mMyPosition = new MapObject(MapObject.MY_POSITION, "", "", "", mSavedLocation.getLatitude(),
           mSavedLocation.getLongitude(), "", Banner.EMPTY, false);
 
+    mLogger.d( "mMyPosition = " + mMyPosition.getLat() + ", " + mMyPosition.getLon() );
     return mMyPosition;
   }
 
@@ -336,7 +339,7 @@ public enum LocationHelper
 
   void notifyLocationUpdated()
   {
-    mLogger.d("notifyLocationUpdated()");
+//    mLogger.d("notifyLocationUpdated()");
 
     if (mSavedLocation == null)
     {
@@ -548,7 +551,7 @@ public enum LocationHelper
         mInterval = INTERVAL_NAVIGATION_BICYCLE_MS;
         break;
 
-      case Framework.ROUTER_TYPE_TRUCK:
+      case Framework.ROUTER_TYPE_EXTERNAL:
         mInterval = INTERVAL_NAVIGATION_VEHICLE_MS;
         break;
 
@@ -765,14 +768,14 @@ public enum LocationHelper
         return mUseDemoGPS;
     }
 
-    private static final String TAG = "Maps_LocationHelper";
+    private static final String TAG = "LocationHelper";
     public void setUseDemoGPS(boolean b, String dataFile)
     {
     }
 
     public void setUseDemoGPS(boolean b)
     {
-        Log.i(TAG,"Setting demo location provider to " + b + ", number of listeners " + mListeners.getSize());
+        mLogger.d("Setting demo location provider to " + b + ", number of listeners " + mListeners.getSize());
         Config.setUseDemoGPS( b );
         if( b == mUseDemoGPS )
             return;
@@ -780,7 +783,7 @@ public enum LocationHelper
         mUseDemoGPS = b;
         if( mLocationProvider != null )
         {
-            Log.i( TAG, "Stopping current location provider" );
+            mLogger.d("Stopping current location provider" );
             mLocationProvider.stop();
         }
         initProvider( false );

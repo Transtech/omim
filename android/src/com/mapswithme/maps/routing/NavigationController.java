@@ -2,6 +2,7 @@ package com.mapswithme.maps.routing;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.database.Cursor;
 import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
@@ -11,7 +12,6 @@ import android.util.Pair;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
-
 import com.mapswithme.maps.Framework;
 import com.mapswithme.maps.MwmActivity;
 import com.mapswithme.maps.R;
@@ -20,16 +20,26 @@ import com.mapswithme.maps.location.LocationHelper;
 import com.mapswithme.maps.settings.SettingsActivity;
 import com.mapswithme.maps.sound.TtsPlayer;
 import com.mapswithme.maps.traffic.TrafficManager;
+import com.mapswithme.transtech.route.RouteConstants;
+import com.mapswithme.transtech.route.RouteManager;
+import com.mapswithme.transtech.route.RouteTrip;
 import com.mapswithme.maps.widget.FlatProgressView;
 import com.mapswithme.maps.widget.menu.NavMenu;
+import com.mapswithme.transtech.Const;
+import com.mapswithme.transtech.TranstechUtil;
 import com.mapswithme.util.StringUtils;
 import com.mapswithme.util.UiUtils;
 import com.mapswithme.util.Utils;
 import com.mapswithme.util.statistics.AlohaHelper;
 import com.mapswithme.util.statistics.Statistics;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.text.DateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public class NavigationController implements TrafficManager.TrafficCallback
@@ -118,6 +128,9 @@ public class NavigationController implements TrafficManager.TrafficCallback
 
     mSearchButtonFrame = activity.findViewById(R.id.search_button_frame);
     mSearchWheel = new SearchWheel(mSearchButtonFrame);
+
+      //TRANSTECH
+      requestRouteSync(activity);
   }
 
   public void onResume()
@@ -375,4 +388,32 @@ public class NavigationController implements TrafficManager.TrafficCallback
   {
     // no op
   }
+
+    private void requestRouteSync(Activity activity)
+    {
+        try
+        {
+            JSONObject payload = new JSONObject();
+            payload.put( RouteConstants.RECORD_TYPE, RouteConstants.MESSAGE_TYPE_MFT);
+            payload.put( RouteConstants.SUB_TYPE, RouteConstants.SUB_TYPE_ROUTE_PLANNED );
+
+            // populate all local trips
+            List<RouteTrip> allTrips = RouteManager.findPlannedRoutes(activity);
+            JSONArray tripsJSON = new JSONArray();
+            for (RouteTrip trip : allTrips) {
+                JSONObject tripObj = new JSONObject();
+                tripObj.put(RouteConstants.ID, trip.getId());
+                tripObj.put(RouteConstants.VERSION, trip.getVersion());
+
+                tripsJSON.put(tripObj);
+            }
+            payload.put(RouteConstants.TRIPS, tripsJSON);
+
+            TranstechUtil.publish( activity, Const.AMQP_ROUTING_KEY_ROUTE_TRIP, Const.COMMS_EVENT_PRIORITY_NORMAL, payload );
+        }
+        catch(JSONException ex)
+        {
+
+        }
+    }
 }

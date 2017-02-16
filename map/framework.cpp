@@ -366,6 +366,7 @@ Framework::Framework()
     CallDrapeFunction(bind(&df::DrapeEngine::SetDisplacementMode, _1, mode));
   })
   , m_lastReportedCountry(kInvalidCountryId)
+  , m_externalRouter( nullptr )
 {
   m_startBackgroundTime = my::Timer::LocalTime();
 
@@ -2381,7 +2382,7 @@ void Framework::BuildRoute(m2::PointD const & start, m2::PointD const & finish, 
     string tag;
     switch (m_currentRouterType)
     {
-    case RouterType::Truck:
+    case RouterType::External:
     case RouterType::Vehicle:
       tag = isP2P ? marketing::kRoutingP2PVehicleDiscovered : marketing::kRoutingVehicleDiscovered;
       break;
@@ -2468,7 +2469,7 @@ void Framework::SetRouterImpl(RouterType type)
     // instances instead of plain strings.
     return m_infoGetter->GetRegionCountryId(p);
   };
-
+/*
   if (type == RouterType::Pedestrian)
   {
     LOG(LINFO, ("Routing type: Pedestrian"));
@@ -2480,14 +2481,13 @@ void Framework::SetRouterImpl(RouterType type)
     router = CreateBicycleAStarBidirectionalRouter(m_model.GetIndex(), countryFileGetter);
     m_routingSession.SetRoutingSettings(routing::GetBicycleRoutingSettings());
   }
-  else if (type == RouterType::Truck)
+  else
+*/
+  if (type == RouterType::External && m_externalRouter != nullptr )
   {
-    TRouterMap::iterator it = m_externalRouters.find(static_cast<int>(type));
-    if (it != m_externalRouters.end())
-    {
-      LOG(LINFO, ("Routing type: ", routing::ToString(type)));
-      router.reset(new ExternalRouter(it->second, &m_model.GetIndex(), countryFileGetter));
-    }
+      LOG(LINFO, ("Framework::SetRouterImpl(): Routing type: ", routing::ToString(type)));
+      router.reset(new ExternalRouter(m_externalRouter, &m_model.GetIndex(), countryFileGetter));
+      m_routingSession.SetRoutingSettings(routing::GetCarRoutingSettings());
   }
   else
   {
@@ -2496,6 +2496,7 @@ void Framework::SetRouterImpl(RouterType type)
       return m_model.GetIndex().GetMwmIdByCountryFile(CountryFile(countryFile)).IsAlive();
     };
 
+    LOG(LINFO, ("Framework::SetRouterImpl(): Routing type: ", routing::ToString(type)));
     router.reset(
         new CarRouter(m_model.GetIndex(), countryFileGetter,
                       SingleMwmRouter::CreateCarRouter(m_model.GetIndex(), m_routingSession)));
@@ -2662,6 +2663,9 @@ void Framework::OnRebuildRouteReady(Route const & route, IRouter::ResultCode cod
 
 RouterType Framework::GetBestRouter(m2::PointD const & startPoint, m2::PointD const & finalPoint)
 {
+    if(m_externalRouter != nullptr )
+        return RouterType::External;
+
   if (MercatorBounds::DistanceOnEarth(startPoint, finalPoint) < kKeepPedestrianDistanceMeters)
   {
     auto const lastUsedRouter = GetLastUsedRouter();
@@ -2673,7 +2677,7 @@ RouterType Framework::GetBestRouter(m2::PointD const & startPoint, m2::PointD co
       case RouterType::Taxi:
         ASSERT(false, ("GetLastUsedRouter sould not to return RouterType::Taxi"));
       case RouterType::Vehicle:
-      case RouterType::Truck:
+      case RouterType::External:
         ; // fall through
     }
 
@@ -2688,7 +2692,7 @@ RouterType Framework::GetBestRouter(m2::PointD const & startPoint, m2::PointD co
       return RouterType::Pedestrian;
     }
   }
-  return (GetLastUsedRouter() == RouterType::Truck) ? RouterType::Truck : RouterType::Vehicle;
+  return (GetLastUsedRouter() == RouterType::External) ? RouterType::External : RouterType::Vehicle;
 }
 
 RouterType Framework::GetLastUsedRouter() const
@@ -2700,8 +2704,9 @@ RouterType Framework::GetLastUsedRouter() const
     return  RouterType::Pedestrian;
   if (routerType == routing::ToString(RouterType::Bicycle))
     return RouterType::Bicycle;
-  if (routerType == routing::ToString(RouterType::Truck))
-    return RouterType::Truck;
+  if (routerType == routing::ToString(RouterType::External))
+    return RouterType::External;
+
   return RouterType::Vehicle;
 }
 

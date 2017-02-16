@@ -1,7 +1,7 @@
 package com.mapswithme.maps.routing;
 
+import android.app.Activity;
 import android.content.Context;
-import android.content.Intent;
 import android.graphics.Color;
 import android.location.Location;
 import android.util.Log;
@@ -11,7 +11,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
-import au.net.transtech.geo.model.EncoderProfile;
+import au.net.transtech.geo.model.Position;
+import au.net.transtech.geo.model.VehicleProfile;
 import com.mapswithme.maps.Framework;
 import com.mapswithme.maps.R;
 import com.mapswithme.maps.location.DemoLocationProvider;
@@ -19,12 +20,17 @@ import com.mapswithme.maps.location.LocationHelper;
 import com.mapswithme.maps.location.LocationListener;
 import com.mapswithme.maps.location.MockLocation;
 import com.mapswithme.maps.sound.TtsPlayer;
-import com.mapswithme.transtech.RouteConstants;
+import com.mapswithme.transtech.Const;
+import com.mapswithme.transtech.TranstechUtil;
+import com.mapswithme.transtech.route.RouteConstants;
+import com.mapswithme.transtech.route.RouteTrip;
+import com.mapswithme.util.concurrency.ThreadPool;
 import com.mapswithme.util.concurrency.UiThread;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.text.DecimalFormat;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -34,13 +40,23 @@ import java.util.UUID;
  */
 public class ComplianceController implements LocationListener
 {
-    private static final String TAG = "Map_ComplianceController";
+    private static final String TAG = "SmartNav2_ComplianceController";
 
     private static final long CHECK_FREQUENCY_MS = 3000L; //check network compliance frequency
     private static final long NOTIFY_FREQUENCY_MS = 10000L; //check network compliance frequency
-    public static final double OFFROUTE_THRESHOLD = 150.0;  //150 metres
+    public static final double OFFROUTE_THRESHOLD = 250.0;  //250 metres
 
-    private static final ComplianceController sInstance = new ComplianceController();
+    public static final ComplianceController INSTANCE = new ComplianceController();
+
+    public static enum ComplianceMode
+    {
+        ROUTE_COMPLIANCE,
+        NETWORK_ADHERENCE,
+        NONE
+    }
+
+    private ComplianceMode requestedMode = ComplianceMode.NONE;
+    private ComplianceMode currentMode = ComplianceMode.NONE;
 
     private ComplianceController()
     {
@@ -48,40 +64,52 @@ public class ComplianceController implements LocationListener
 
     public static ComplianceController get()
     {
-        return sInstance;
+        return INSTANCE;
     }
 
-    private LocationHelper.UiCallback callback;
+    private Activity context;
     private Location lastLoc;
     private UUID groupId;
     private long lastTts = 0L;
     private GraphHopperRouter carRouter;
     private GraphHopperRouter truckRouter;
-    private int currentRouterType = Framework.ROUTER_TYPE_TRUCK;
+    private int currentRouterType = Framework.ROUTER_TYPE_EXTERNAL;
 
-    private static enum State
+    static final boolean DEMO_MODE = true;
+
+    private static enum ComplianceState
     {
         UNKNOWN,
         ON_ROUTE,
         OFF_ROUTE
     }
 
-    private State complianceState = State.UNKNOWN;
+    private ComplianceState complianceState = ComplianceState.UNKNOWN;
 
-    public GraphHopperRouter getRouter( Context context, int routerType )
+    public void init(final Activity context)
     {
-        if( routerType == Framework.ROUTER_TYPE_TRUCK )
+        this.context = context;
+
+        //trigger GraphHopper initialisation
+        ThreadPool.getWorker().submit( new Runnable()
         {
-            if( truckRouter == null )
-                truckRouter = new GraphHopperRouter( context, routerType );
+            @Override
+            public void run()
+            {
+                Log.i( TAG, "Enforcing routing engine to external TRUCK router (GH)" );
+                GraphHopperRouter router = getRouter( context );
+                Framework.nativeSetExternalRouter( router );
+                router.getGeoEngine(); //trigger initialisation
+            }
+        } );
+    }
 
-            return truckRouter;
-        }
+    public GraphHopperRouter getRouter( Context context )
+    {
+        if( truckRouter == null )
+            truckRouter = new GraphHopperRouter( context );
 
-        if( carRouter == null )
-            carRouter = new GraphHopperRouter( context, Framework.ROUTER_TYPE_VEHICLE );
-
-        return carRouter;
+        return truckRouter;
     }
 
     public void setCurrentRouterType( int routerType )
@@ -94,122 +122,113 @@ public class ComplianceController implements LocationListener
         return currentRouterType;
     }
 
-    public void attach( LocationHelper.UiCallback cb )
+    public void setPlannedRoute( Integer routeId, String routeName )
     {
-        callback = cb;
+        if( getCurrentRouterType() == Framework.ROUTER_TYPE_EXTERNAL && truckRouter != null && routeId != null )
+        {
+            truckRouter.setPlannedRouteId( routeId );
+            Log.i( TAG, "Setting selected planned route to trip: " + routeId + " - " + routeName );
+            requestedMode = ComplianceMode.ROUTE_COMPLIANCE;
+        }
+        else
+            requestedMode = ComplianceMode.NONE;
     }
 
-    public void detach()
-    {
-        callback = null;
-    }
+    public ComplianceMode getRequestedMode() { return requestedMode; }
+    public ComplianceMode getCurrentMode() { return currentMode; }
 
     public void start()
     {
-        complianceState = State.ON_ROUTE; //benefit of the doubt
+        complianceState = ComplianceState.ON_ROUTE; //benefit of the doubt
         LocationHelper.INSTANCE.addListener( this, false );
         lastTts = 0L;
+        currentMode = requestedMode;
 
         if( truckRouter != null )
         {
-            EncoderProfile profile = truckRouter.getSelectedProfile();
+            VehicleProfile profile = truckRouter.getSelectedProfile();
             groupId = UUID.randomUUID();
-            tripEvent( RouteConstants.MESSAGE_TYPE_TRIP_STARTED,
-                    RouteConstants.SUB_TYPE_DEVICE_NETWORK,
-                    groupId.toString(), profile );
+            switch( currentMode )
+            {
+                case ROUTE_COMPLIANCE:
+                    tripEvent( RouteConstants.MESSAGE_TYPE_TRIP_STARTED,
+                            RouteConstants.SUB_TYPE_ROUTE_PLANNED,
+                            groupId.toString(), profile, truckRouter.getComplianceTrip() );
+                    break;
+
+                case NETWORK_ADHERENCE:
+                    tripEvent( RouteConstants.MESSAGE_TYPE_TRIP_STARTED,
+                            RouteConstants.SUB_TYPE_DEVICE_NETWORK,
+                            groupId.toString(), profile, null );
+                    break;
+
+                case NONE:
+                default:
+                    break; //no trip event
+            }
         }
     }
 
     public void stop()
     {
         LocationHelper.INSTANCE.removeListener( this );
-        complianceState = State.UNKNOWN;
+        complianceState = ComplianceState.UNKNOWN;
         lastTts = 0L;
 
         if( truckRouter != null && groupId != null )
         {
-            EncoderProfile profile = truckRouter.getSelectedProfile();
-            tripEvent( RouteConstants.MESSAGE_TYPE_TRIP_FINISHED,
-                    RouteConstants.SUB_TYPE_DEVICE_NETWORK,
-                    groupId.toString(), profile );
+            VehicleProfile profile = truckRouter.getSelectedProfile();
+
+            switch( currentMode )
+            {
+                case ROUTE_COMPLIANCE:
+                    tripEvent( RouteConstants.MESSAGE_TYPE_TRIP_FINISHED,
+                            RouteConstants.SUB_TYPE_ROUTE_PLANNED,
+                            groupId.toString(), profile, truckRouter.getComplianceTrip() );
+                    break;
+
+                case NETWORK_ADHERENCE:
+                    tripEvent( RouteConstants.MESSAGE_TYPE_TRIP_FINISHED,
+                            RouteConstants.SUB_TYPE_DEVICE_NETWORK,
+                            groupId.toString(), profile, null );
+                    break;
+
+                case NONE:
+                default:
+                    break; //no trip event
+            }
         }
+        currentMode = requestedMode = ComplianceMode.NONE;
     }
 
     @Override
     public void onLocationUpdated( final Location location )
     {
-        if( complianceState == State.UNKNOWN )
+        if( complianceState == ComplianceState.UNKNOWN )
             return;
 
         if( isCheckRequired( location ) )
         {
-            final Double dist = truckRouter.distanceFromNetwork( location.getLatitude(), location.getLongitude() );
-            Log.i( TAG, "Checking network compliance: distance from network is " + dist + " meters" );
-            if( dist > OFFROUTE_THRESHOLD )
+            lastLoc = location;
+
+            boolean isOffRoute = isOffRoute( location.getLatitude(), location.getLongitude() );
+            if( isOffRoute )
             {
                 Log.w( TAG, "BEEEP! OFF ROUTE!" );
-                complianceState = State.OFF_ROUTE;
-
-                EncoderProfile profile = truckRouter.getSelectedProfile();
-                tripEvent( RouteConstants.MESSAGE_TYPE_TRIP_EXIT,
-                        RouteConstants.SUB_TYPE_DEVICE_NETWORK,
-                        groupId.toString(), profile );
-
-                if( callback != null )
-                {
-                    if( isNotifyRequired( location ) )
-                    {
-                        TtsPlayer.INSTANCE.sayThis( "you are currently off rowt" );
-                        lastTts = location.getTime();
-                    }
-
-                    StringBuilder msg = new StringBuilder();
-                    msg.append( "You are approximately " )
-                            .append( userFacingDistance( dist.intValue() ) )
-                            .append( " off the \"" )
-                            .append( profile.getDescription() )
-                            .append( "\" network" );
-                    showToast( "Route Compliance", msg.toString(), Color.parseColor( "#FFF54137" ) );
-                }
+                complianceState = ComplianceState.OFF_ROUTE;
+                doOffRouteProcessing( location );
             }
             else
             {
-                if( complianceState == State.OFF_ROUTE )
+                if( complianceState == ComplianceState.OFF_ROUTE )
                 {
                     Log.w( TAG, "Whew, Back ON route!" );
                     lastTts = 0L;
-
-                    EncoderProfile profile = truckRouter.getSelectedProfile();
-                    tripEvent( RouteConstants.MESSAGE_TYPE_TRIP_ENTRY,
-                            RouteConstants.SUB_TYPE_DEVICE_NETWORK,
-                            groupId.toString(), profile );
-
-                    if( callback != null )
-                    {
-                        TtsPlayer.INSTANCE.sayThis( "you are back on a compliant rowt" );
-
-                        StringBuilder msg = new StringBuilder();
-                        msg.append( "You are now back on the \"" )
-                                .append( profile.getDescription() )
-                                .append( "\" network" );
-                        showToast( "Route Compliance", msg.toString(), Color.parseColor( "#FF558B2F" ) );
-                    }
+                    doOnRouteProcessing( location );
                 }
-                complianceState = State.ON_ROUTE;
+                complianceState = ComplianceState.ON_ROUTE;
             }
-            lastLoc = location;
 
-            if( LocationHelper.INSTANCE.useDemoGPS() )
-            {
-                UiThread.run( new Runnable()
-                {
-                    @Override
-                    public void run()
-                    {
-                        callback.onLocationUpdated( location );
-                    }
-                } );
-            }
         }
     }
 
@@ -227,7 +246,7 @@ public class ComplianceController implements LocationListener
 
     private boolean isCheckRequired( Location loc )
     {
-        if( truckRouter == null || loc == null || currentRouterType != Framework.ROUTER_TYPE_TRUCK )
+        if( truckRouter == null || loc == null || currentRouterType != Framework.ROUTER_TYPE_EXTERNAL )
             return false;
 
         if( lastLoc == null )
@@ -238,10 +257,114 @@ public class ComplianceController implements LocationListener
 
     private boolean isNotifyRequired( Location loc )
     {
-        if( truckRouter == null || loc == null || currentRouterType != Framework.ROUTER_TYPE_TRUCK )
+        if( truckRouter == null || loc == null || currentRouterType != Framework.ROUTER_TYPE_EXTERNAL )
             return false;
 
         return loc.getTime() - lastTts > NOTIFY_FREQUENCY_MS;
+    }
+
+    public boolean isOffRoute( double fromLat, double fromLon )
+    {
+        boolean offRoute = false;
+        switch( currentMode )
+        {
+            case ROUTE_COMPLIANCE:
+                //TODO: check whether we are off route by seeing if we are in _any_ of
+                //the trips geofences...
+                int numGeofences = 1; //TODO!!
+                double minDist = distanceFromRoute(fromLat, fromLon, truckRouter.getComplianceTrip().getPath());
+                offRoute = numGeofences == 0 || minDist > OFFROUTE_THRESHOLD;
+                Log.i( TAG, "Checking route compliance: we are " + minDist + "m from route and inside " + numGeofences + " geofences" );
+                break;
+            case NETWORK_ADHERENCE:
+                Double dist = truckRouter.distanceFromNetwork( fromLat, fromLon );
+                offRoute = dist > OFFROUTE_THRESHOLD;
+                Log.i( TAG, "Checking network compliance: distance from network is " + dist + " meters" );
+                break;
+            case NONE:
+            default:
+                break;
+        }
+
+        return offRoute;
+    }
+
+    private double distanceFromRoute( double fromLat, double fromLon, List<Position> path )
+    {
+        if( path == null || path.size() == 0 )
+            return 0.0;
+
+        double minDist = Double.MAX_VALUE;
+        for( Position p : path )
+        {
+            double d = TranstechUtil.haversineDistance( fromLat, fromLon, p.getLatitude(), p.getLongitude() );
+            minDist = Math.min( minDist, d );
+        }
+        return minDist == Double.MAX_VALUE ? 0.0 : minDist;
+    }
+
+    private void doOffRouteProcessing( Location location )
+    {
+        if( currentMode == ComplianceMode.ROUTE_COMPLIANCE )
+        {
+            VehicleProfile profile = truckRouter.getSelectedProfile();
+            tripEvent( RouteConstants.MESSAGE_TYPE_TRIP_EXIT,
+                    RouteConstants.SUB_TYPE_ROUTE_PLANNED,
+                    groupId.toString(), profile, truckRouter.getComplianceTrip() );
+
+            if( isNotifyRequired( location ) )
+            {
+                TtsPlayer.INSTANCE.sayThis( "you are currently off the planned rowt" );
+                lastTts = location.getTime();
+            }
+        }
+        else if( currentMode == ComplianceMode.NETWORK_ADHERENCE )
+        {
+            VehicleProfile profile = truckRouter.getSelectedProfile();
+            tripEvent( RouteConstants.MESSAGE_TYPE_TRIP_EXIT,
+                    RouteConstants.SUB_TYPE_DEVICE_NETWORK,
+                    groupId.toString(), profile, null );
+
+            if( isNotifyRequired( location ) )
+            {
+                TtsPlayer.INSTANCE.sayThis( "you are currently off the " + profile.getDescription() + " network" );
+                lastTts = location.getTime();
+            }
+
+            StringBuilder msg = new StringBuilder();
+            msg.append( "You are off the \"" )
+                    .append( profile.getDescription() )
+                    .append( "\" network" );
+            showToast( "Network Adherence", msg.toString(), Color.parseColor( "#FFF54137" ) );
+        }
+    }
+
+    private void doOnRouteProcessing( Location location )
+    {
+        if( currentMode == ComplianceMode.ROUTE_COMPLIANCE )
+        {
+            VehicleProfile profile = truckRouter.getSelectedProfile();
+            tripEvent( RouteConstants.MESSAGE_TYPE_TRIP_ENTRY,
+                    RouteConstants.SUB_TYPE_ROUTE_PLANNED,
+                    groupId.toString(), profile, truckRouter.getComplianceTrip() );
+
+            TtsPlayer.INSTANCE.sayThis( "you are back on the planned rowt" );
+        }
+        else if( currentMode == ComplianceMode.NETWORK_ADHERENCE )
+        {
+            VehicleProfile profile = truckRouter.getSelectedProfile();
+            tripEvent( RouteConstants.MESSAGE_TYPE_TRIP_ENTRY,
+                    RouteConstants.SUB_TYPE_DEVICE_NETWORK,
+                    groupId.toString(), profile, null );
+
+            TtsPlayer.INSTANCE.sayThis( "you are back on the " + profile.getDescription() + " network" );
+
+            StringBuilder msg = new StringBuilder();
+            msg.append( "You are now back on the \"" )
+                    .append( profile.getDescription() )
+                    .append( "\" network" );
+            showToast( "Network Adherence", msg.toString(), Color.parseColor( "#FF558B2F" ) );
+        }
     }
 
     public void showToast( String title, final String msg, final int color )
@@ -252,8 +375,8 @@ public class ComplianceController implements LocationListener
             public void run()
             {
 //                Utils.toastShortcut(callback.getActivity(), msg);
-                LayoutInflater inflater = callback.getActivity().getLayoutInflater();
-                ViewGroup group = (ViewGroup) callback.getActivity().findViewById( R.id.custom_toast_container );
+                LayoutInflater inflater = context.getLayoutInflater();
+                ViewGroup group = (ViewGroup) context.findViewById( R.id.custom_toast_container );
                 View layout = inflater.inflate( R.layout.custom_toast, group );
                 layout.setBackgroundColor( color );
                 layout.setTextAlignment( View.TEXT_ALIGNMENT_CENTER );
@@ -262,7 +385,7 @@ public class ComplianceController implements LocationListener
                 text.setText( msg );
                 text.setTextAlignment( View.TEXT_ALIGNMENT_CENTER );
 
-                Toast toast = new Toast( callback.getActivity().getApplicationContext() );
+                Toast toast = new Toast( context.getApplicationContext() );
                 toast.setGravity( Gravity.FILL_HORIZONTAL | Gravity.BOTTOM, 0, 80 );
                 toast.setDuration( Toast.LENGTH_LONG );
                 toast.setView( layout );
@@ -271,7 +394,7 @@ public class ComplianceController implements LocationListener
         } );
     }
 
-    private void tripEvent( String type, String subType, String groupId, EncoderProfile profile )
+    private void tripEvent( String type, String subType, String groupId, VehicleProfile profile, RouteTrip trip )
     {
         try
         {
@@ -279,16 +402,22 @@ public class ComplianceController implements LocationListener
             event.put( "GPS", toJSON( lastLoc ) );
             event.put( "RecordType", type );
             event.put( RouteConstants.SUB_TYPE, subType );
-            event.put( RouteConstants.TRIP_ID, -1L );
-            event.put( RouteConstants.NETWORK, toJSON( profile ) );
+            if( profile != null )
+                event.put( RouteConstants.NETWORK, toJSON( profile ) );
             event.put( RouteConstants.GROUP_ID, groupId );
             event.put( RouteConstants.SOURCE, "Device" );
+            event.put( RouteConstants.MODE, currentMode.name() );
 
-            Intent intent = new Intent( RouteConstants.ACTION_COMMS_RECORD );
-            intent.putExtra( "CommsEventRoute", RouteConstants.AMQP_ROUTING_KEY_ROUTE_TRIP );
-            intent.putExtra( "CommsEventContent", event.toString() );
+            if( trip != null )
+            {
+                event.put( RouteConstants.TRIP_ID, trip.getId() );
+                event.put( RouteConstants.TRIP_VERSION, trip.getVersion() );
+            }
+            else
+                event.put( RouteConstants.TRIP_ID, -1L );
 
-            callback.getActivity().startService( intent );
+            TranstechUtil.publish( context, Const.AMQP_ROUTING_KEY_ROUTE_TRIP,
+                    Const.COMMS_EVENT_PRIORITY_NORMAL, event );
         }
         catch( Exception e )
         {
@@ -334,7 +463,7 @@ public class ComplianceController implements LocationListener
         return gps;
     }
 
-    private JSONObject toJSON( EncoderProfile profile ) throws JSONException
+    private JSONObject toJSON( VehicleProfile profile ) throws JSONException
     {
         JSONObject obj = new JSONObject();
         obj.put( RouteConstants.NETWORK_CODE, profile.getCode() );
@@ -350,5 +479,4 @@ public class ComplianceController implements LocationListener
         DecimalFormat df = new DecimalFormat( "#.#" );
         return df.format( distInMetres / 1000.0 ) + "km";
     }
-
 }
