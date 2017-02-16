@@ -54,7 +54,7 @@ class RoutesAdapter extends RecyclerView.Adapter<RoutesAdapter.ViewHolder>
     @Override
     public void onBindViewHolder( ViewHolder holder, int position )
     {
-        holder.setTextAndIcon( allTrips.get( position ).getName(), R.drawable.ic_route_to );
+        holder.setTextAndIcon( allTrips.get( position ).getName(), R.drawable.ic_category_pharmacy );
     }
 
     @Override
