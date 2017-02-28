@@ -2,7 +2,6 @@ package com.mapswithme.maps.routing;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.database.Cursor;
 import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
@@ -21,11 +20,11 @@ import com.mapswithme.maps.settings.SettingsActivity;
 import com.mapswithme.maps.sound.TtsPlayer;
 import com.mapswithme.maps.traffic.TrafficManager;
 import com.mapswithme.transtech.route.RouteConstants;
-import com.mapswithme.transtech.route.RouteManager;
+import com.mapswithme.transtech.route.RouteUtil;
 import com.mapswithme.transtech.route.RouteTrip;
 import com.mapswithme.maps.widget.FlatProgressView;
 import com.mapswithme.maps.widget.menu.NavMenu;
-import com.mapswithme.transtech.Const;
+import com.mapswithme.transtech.TranstechConstants;
 import com.mapswithme.transtech.TranstechUtil;
 import com.mapswithme.util.StringUtils;
 import com.mapswithme.util.UiUtils;
@@ -37,7 +36,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.text.DateFormat;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -151,7 +149,7 @@ public class NavigationController implements TrafficManager.TrafficCallback
         {
         case STOP:
           RoutingController.get().cancel();
-          stop(parent);
+          stop( parent );
           break;
         case SETTINGS:
           parent.closeMenu(Statistics.EventName.ROUTING_SETTINGS, AlohaHelper.MENU_SETTINGS, new Runnable()
@@ -398,7 +396,7 @@ public class NavigationController implements TrafficManager.TrafficCallback
             payload.put( RouteConstants.SUB_TYPE, RouteConstants.SUB_TYPE_ROUTE_PLANNED );
 
             // populate all local trips
-            List<RouteTrip> allTrips = RouteManager.findPlannedRoutes(activity);
+            List<RouteTrip> allTrips = RouteUtil.findPlannedRoutes( activity );
             JSONArray tripsJSON = new JSONArray();
             for (RouteTrip trip : allTrips) {
                 JSONObject tripObj = new JSONObject();
@@ -409,7 +407,7 @@ public class NavigationController implements TrafficManager.TrafficCallback
             }
             payload.put(RouteConstants.TRIPS, tripsJSON);
 
-            TranstechUtil.publish( activity, Const.AMQP_ROUTING_KEY_ROUTE_TRIP, Const.COMMS_EVENT_PRIORITY_NORMAL, payload );
+            TranstechUtil.publish( activity, TranstechConstants.AMQP_ROUTING_KEY_ROUTE_TRIP, TranstechConstants.COMMS_EVENT_PRIORITY_NORMAL, payload );
         }
         catch(JSONException ex)
         {

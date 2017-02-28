@@ -182,7 +182,6 @@ public class DemoActivity extends BaseMwmFragmentActivity
             Log.i( TAG, "Failed to set selected GH profile to '" + NETWORK_BDOUBLE + "'");
 
         RoutingController.get().setRouterType( Framework.ROUTER_TYPE_EXTERNAL );
-        ComplianceController.get().setCurrentRouterType( Framework.ROUTER_TYPE_EXTERNAL );
 
         //set our start position
         LocationHelper.INSTANCE.onLocationUpdated( TRANSTECH_OFFICE );
@@ -214,7 +213,6 @@ public class DemoActivity extends BaseMwmFragmentActivity
 
 
         RoutingController.get().setRouterType( Framework.ROUTER_TYPE_EXTERNAL );
-        ComplianceController.get().setCurrentRouterType( Framework.ROUTER_TYPE_EXTERNAL );
 
         //turn off demo GPS feed
         LocationHelper.INSTANCE.setUseDemoGPS( false );
@@ -251,7 +249,6 @@ public class DemoActivity extends BaseMwmFragmentActivity
             Log.i( TAG, "Failed to set selected GH profile to '" + NETWORK_BDOUBLE + "'");
 
         RoutingController.get().setRouterType( Framework.ROUTER_TYPE_EXTERNAL );
-        ComplianceController.get().setCurrentRouterType( Framework.ROUTER_TYPE_EXTERNAL );
 
         //set our start position
         LocationHelper.INSTANCE.onLocationUpdated( DEMO3_START );

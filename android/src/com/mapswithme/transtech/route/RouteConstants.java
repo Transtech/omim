@@ -7,9 +7,12 @@ import android.net.Uri;
  */
 public class RouteConstants {
 
-    public static final String AUTHORITY = "transtech.af.android.route.routeprovider";
-    public static final Uri TRIPS_CONTENT_URI = Uri.parse("content://" + AUTHORITY + "/trips");
-    public static final Uri LEGS_CONTENT_URI = Uri.parse("content://" + AUTHORITY + "/legs");
+    public static final String ROUTE_AUTHORITY = "transtech.af.android.route.routeprovider";
+    public static final Uri TRIPS_CONTENT_URI = Uri.parse("content://" + ROUTE_AUTHORITY + "/trips");
+    public static final Uri LEGS_CONTENT_URI = Uri.parse("content://" + ROUTE_AUTHORITY + "/legs");
+
+    public static final String GEOFENCE_AUTHORITY = "transtech.af.android.geofence.geofenceprovider";
+
 
     public static final String EXTRA_SELECTED_ROUTE_ID = "transtech.AF.Android.route.EXTRA_SELECTED_ROUTE_ID";
     public static final String EXTRA_SELECTED_ROUTE_NAME = "transtech.AF.Android.route.EXTRA_SELECTED_ROUTE_NAME";
@@ -21,6 +24,7 @@ public class RouteConstants {
     public static final String MESSAGE_TYPE_TRIP_FINISHED   = "TRIP-FINISHED";
     public static final String MESSAGE_TYPE_TRIP_ENTRY      = "TRIP-ENTRY";
     public static final String MESSAGE_TYPE_TRIP_EXIT       = "TRIP-EXIT";
+    public static final String MESSAGE_TYPE_TRIP_REROUTE    = "TRIP-REROUTE";
 
     public static final String TRIPS = "trips";
     public static final String RECORD_TYPE = "RecordType";

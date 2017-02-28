@@ -2,7 +2,6 @@ package com.mapswithme.maps.search;
 
 import android.content.res.Resources;
 import android.support.annotation.DrawableRes;
-import android.support.annotation.StringRes;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -10,7 +9,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 import com.mapswithme.maps.R;
-import com.mapswithme.transtech.route.RouteManager;
+import com.mapswithme.transtech.route.RouteUtil;
 import com.mapswithme.transtech.route.RouteTrip;
 import com.mapswithme.util.Graphics;
 import com.mapswithme.util.ThemeUtils;
@@ -36,7 +35,7 @@ class RoutesAdapter extends RecyclerView.Adapter<RoutesAdapter.ViewHolder>
         final boolean isNightTheme = ThemeUtils.isNightTheme();
         final Resources resources = fragment.getActivity().getResources();
 
-        allTrips = RouteManager.findPlannedRoutes( fragment.getActivity() );
+        allTrips = RouteUtil.findPlannedRoutes( fragment.getActivity() );
 
         if( fragment instanceof OnRouteSelectedListener )
             mListener = (OnRouteSelectedListener) fragment;

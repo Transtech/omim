@@ -763,23 +763,10 @@ public enum LocationHelper
     return mCompassData;
   }
 
-    public boolean useDemoGPS()
-    {
-        return mUseDemoGPS;
-    }
-
     private static final String TAG = "LocationHelper";
-    public void setUseDemoGPS(boolean b, String dataFile)
-    {
-    }
-
     public void setUseDemoGPS(boolean b)
     {
         mLogger.d("Setting demo location provider to " + b + ", number of listeners " + mListeners.getSize());
-        Config.setUseDemoGPS( b );
-        if( b == mUseDemoGPS )
-            return;
-
         mUseDemoGPS = b;
         if( mLocationProvider != null )
         {

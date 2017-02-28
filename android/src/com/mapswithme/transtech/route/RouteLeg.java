@@ -39,7 +39,7 @@ public class RouteLeg implements Serializable
      * URI used to represent the list of stop.
      * Individual stops will be represented with this plus /ID on the end
      */
-    public static final Uri CONTENT_URI = Uri.parse( "content://" + RouteConstants.AUTHORITY + "/legs" );
+    public static final Uri CONTENT_URI = Uri.parse( "content://" + RouteConstants.ROUTE_AUTHORITY + "/legs" );
 
     /**
      * Content types used for the list, or an individual item of this type.

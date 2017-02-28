@@ -21,7 +21,7 @@ import com.mapswithme.maps.location.LocationHelper;
 import com.mapswithme.maps.uber.Uber;
 import com.mapswithme.maps.uber.UberInfo;
 import com.mapswithme.maps.uber.UberLinks;
-import com.mapswithme.transtech.TranstechUtil;
+import com.mapswithme.transtech.route.RouteUtil;
 import com.mapswithme.util.*;
 import com.mapswithme.util.concurrency.UiThread;
 import com.mapswithme.util.log.DebugLogger;
@@ -206,26 +206,27 @@ public class RoutingController
       return;
 
     if (mContainer != null)
-      mContainer.updateBuildProgress(mLastBuildProgress, mLastRouterType);
+      mContainer.updateBuildProgress( mLastBuildProgress, mLastRouterType );
   }
 
   private void showRoutePlan()
   {
     if (mContainer != null)
-      mContainer.showRoutePlan(true, new Runnable()
+      mContainer.showRoutePlan( true, new Runnable()
       {
-        @Override
-        public void run()
-        {
-          updatePlan();
-        }
-      });
+          @Override
+          public void run()
+          {
+              updatePlan();
+          }
+      } );
   }
 
   public void attach(@NonNull Container container)
   {
     mContainer = container;
-    ComplianceController.get().init( mContainer.getActivity() );
+    if( container instanceof LocationHelper.UiCallback )
+        ComplianceController.get().init( (LocationHelper.UiCallback) container );
   }
 
   public void initialize()
@@ -327,7 +328,7 @@ public class RoutingController
 
   public void prepare(@Nullable MapObject endPoint)
   {
-    prepare(LocationHelper.INSTANCE.getMyPosition(), endPoint);
+    prepare( LocationHelper.INSTANCE.getMyPosition(), endPoint );
   }
 
   public void prepare(@Nullable MapObject startPoint, @Nullable MapObject endPoint)
@@ -354,7 +355,7 @@ public class RoutingController
     cancel();
     mStartPoint = startPoint;
     mEndPoint = endPoint;
-    setState(State.PREPARE);
+    setState( State.PREPARE );
 
     mLastRouterType = routerType;
     Framework.nativeSetRouter(mLastRouterType);
@@ -378,7 +379,7 @@ public class RoutingController
 
   public void start()
   {
-    mLogger.d("start");
+    mLogger.d( "start" );
 
       if( ComplianceController.DEMO_MODE )
       {
@@ -395,7 +396,7 @@ public class RoutingController
           //the start point is just the start of the planned route and a POI MapObject type.
           //The navigation won't work if we are not routing from our current location, so we check whether
           //we're "close enough" and change the starting point to MY_POSITION instead
-          double distFromMyLoc = TranstechUtil.haversineDistance(
+          double distFromMyLoc = RouteUtil.haversineDistance(
                   my.getLat(), my.getLon(), mStartPoint.getLat(), mStartPoint.getLon() );
           if( distFromMyLoc <= ComplianceController.OFFROUTE_THRESHOLD * 10 )
           {

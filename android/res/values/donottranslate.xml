@@ -49,6 +49,7 @@
   <string name="pref_osm_profile" translatable="false">Osm profile</string>
   <string name="pref_auto_zoom" translatable="false">AutoZoom</string>
   <string name="pref_route_network" translatable="false">RegulatoryNetwork</string>
+  <string name="pref_route_mode" translatable="false">AdherenceMode</string>
 
   <string name="pref_vehicle_enabled" translatable="false">VehicleEnabled</string>
   <string name="pref_vehicle_length" translatable="false">VehicleLength</string>

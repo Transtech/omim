@@ -5,7 +5,7 @@ package com.mapswithme.transtech;
  * <p/>
  * Created by agough on 30/01/17 1:27 PM
  */
-public class Const
+public class TranstechConstants
 {
     private static final String PREFIX = "transtech.AF.Android.Comms.action.";
 
@@ -24,6 +24,8 @@ public class Const
     public static final String EXTRA_COMMS_EVENT_EXPIRY_DATE        = "CommsEventExpiryDate";
     public static final String EXTRA_COMMS_EVENT_URI                = "CommsEventURI";
     public static final String EXTRA_COMMS_EVENT_SKIP_ROUTING_KEY_SUBSTITUTION = "CommsEventSkipRoutingKeySubstitution";
+    public static final String EXTRA_COMMS_EVENT_INJECT_BINARY_CONTENT_TO = "CommsInjectToField";
+
 
     // AMQP Headers
     public static final String	AMQP_HEADER_APPLICATION_NAME		= "applicationName";

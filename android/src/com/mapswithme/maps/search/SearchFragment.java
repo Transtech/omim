@@ -35,7 +35,7 @@ import com.mapswithme.maps.routing.RoutingController;
 import com.mapswithme.maps.widget.PlaceholderView;
 import com.mapswithme.maps.widget.SearchToolbarController;
 import com.mapswithme.transtech.route.RouteLeg;
-import com.mapswithme.transtech.route.RouteManager;
+import com.mapswithme.transtech.route.RouteUtil;
 import com.mapswithme.transtech.route.RouteTrip;
 import com.mapswithme.util.Animations;
 import com.mapswithme.util.UiUtils;
@@ -548,7 +548,7 @@ public class SearchFragment extends BaseMwmFragment
     mSearchAdapter.refreshData(results);
     mToolbarController.showProgress(true);
     updateFilterButton( isHotel );
-      ComplianceController.get().setPlannedRoute( null, null );
+      ComplianceController.get().selectPlannedRoute( null );
   }
 
   @Override
@@ -562,7 +562,7 @@ public class SearchFragment extends BaseMwmFragment
   public void onCategorySelected(String category)
   {
     mToolbarController.setQuery(category);
-      ComplianceController.get().setPlannedRoute( null, null );
+      ComplianceController.get().selectPlannedRoute( null );
 
   }
 
@@ -570,11 +570,11 @@ public class SearchFragment extends BaseMwmFragment
     public void onRouteSelected(int routeId, String routeName)
     {
         Log.i( "SmartNav2_SearchFragment", "Selected route: " + routeId + " - " + routeName );
-        RouteTrip trip = RouteManager.findById( getActivity(), routeId );
+        RouteTrip trip = RouteUtil.findById( getActivity(), routeId );
         if( trip != null )
         {
             //legs are expected to be in order after this call...
-            List<RouteLeg> legs = RouteManager.findLegsByTripId( getActivity(), routeId );
+            List<RouteLeg> legs = RouteUtil.findLegsByTripId( getActivity(), routeId );
 
             Log.i( "SmartNav2_SearchFragment", "There are " + legs.size() + " legs on route " + routeId );
             if( legs.size() > 1 )
@@ -588,7 +588,7 @@ public class SearchFragment extends BaseMwmFragment
                 if( endLeg.getRouteSegments() != null && endLeg.getRouteSegments().size() > 0 )
                     lastSeg = endLeg.getRouteSegments().get( endLeg.getRouteSegments().size() - 1 );
 
-                ComplianceController.get().setPlannedRoute( routeId, routeName );
+                ComplianceController.get().selectPlannedRoute( routeId );
 
                 if( firstSeg != null )
                 {

@@ -9,7 +9,6 @@ import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
 import android.util.Base64;
 import android.util.Log;
-import com.mapswithme.transtech.Const;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -125,18 +124,18 @@ public class MDMHandler
             {
                 //package the response back into a 'transtech.response' for publishing
                 JSONObject respHeaders = new JSONObject();
-                respHeaders.put( Const.AMQP_HEADER_MESSAGE_TYPE, Const.AMQP_MSG_TYPE_MDM_RESPONSE);
-                respHeaders.put(Const.AMQP_HEADER_MESSAGE_VERSION, "1.0.0" );
-                respHeaders.put(Const.AMQP_HEADER_MESSAGE_FORMAT, "application/json");
-                respHeaders.put(Const.AMQP_HEADER_CORRELATION_ID, headers.getString(Const.AMQP_HEADER_MESSAGE_ID));
+                respHeaders.put( TranstechConstants.AMQP_HEADER_MESSAGE_TYPE, TranstechConstants.AMQP_MSG_TYPE_MDM_RESPONSE);
+                respHeaders.put( TranstechConstants.AMQP_HEADER_MESSAGE_VERSION, "1.0.0" );
+                respHeaders.put( TranstechConstants.AMQP_HEADER_MESSAGE_FORMAT, "application/json");
+                respHeaders.put( TranstechConstants.AMQP_HEADER_CORRELATION_ID, headers.getString( TranstechConstants.AMQP_HEADER_MESSAGE_ID));
                 //any missing headers (device id/company id/message id etc will be filled in during publishing...)
 
-                Log.d(LOG_TAG, "Starting Comms service with Intent " + Const.CREATE_COMMS_RECORD + ", route " + replyTo);
-                intent = new Intent(Const.CREATE_COMMS_RECORD);
-                intent.putExtra(Const.EXTRA_COMMS_EVENT_ROUTE, replyTo);
-                intent.putExtra(Const.EXTRA_COMMS_EVENT_HEADERS, respHeaders.toString());
-                intent.putExtra(Const.EXTRA_COMMS_EVENT_CONTENT, responseBody);
-                intent.putExtra(Const.EXTRA_COMMS_EVENT_SKIP_ROUTING_KEY_SUBSTITUTION, true);
+                Log.d(LOG_TAG, "Starting Comms service with Intent " + TranstechConstants.CREATE_COMMS_RECORD + ", route " + replyTo);
+                intent = new Intent( TranstechConstants.CREATE_COMMS_RECORD);
+                intent.putExtra( TranstechConstants.EXTRA_COMMS_EVENT_ROUTE, replyTo);
+                intent.putExtra( TranstechConstants.EXTRA_COMMS_EVENT_HEADERS, respHeaders.toString());
+                intent.putExtra( TranstechConstants.EXTRA_COMMS_EVENT_CONTENT, responseBody);
+                intent.putExtra( TranstechConstants.EXTRA_COMMS_EVENT_SKIP_ROUTING_KEY_SUBSTITUTION, true);
 
                 context.startService(intent);
             }
@@ -164,7 +163,7 @@ public class MDMHandler
     {
         JSONObject resp = new JSONObject();
         resp.put("RecordType", body.getString("RecordType"));
-        resp.put("DeviceId", headers.getString(Const.AMQP_HEADER_DEVICE_ID));
+        resp.put("DeviceId", headers.getString( TranstechConstants.AMQP_HEADER_DEVICE_ID));
         resp.put( "EventDateTime", getDateTimeFormatter().format( new Date()));
 
         JSONObject rspData = new JSONObject();
@@ -184,7 +183,7 @@ public class MDMHandler
 
         JSONObject resp = new JSONObject();
         resp.put("RecordType", body.getString("RecordType"));
-        resp.put("DeviceId", headers.getString(Const.AMQP_HEADER_DEVICE_ID));
+        resp.put("DeviceId", headers.getString( TranstechConstants.AMQP_HEADER_DEVICE_ID));
         resp.put("EventDateTime", getDateTimeFormatter().format(new Date()));
 
         JSONObject rspData = new JSONObject();
@@ -228,7 +227,7 @@ public class MDMHandler
         String eventDate = getDateTimeFormatter().format(new Date());
         JSONObject resp = new JSONObject();
         resp.put("RecordType", body.getString("RecordType"));
-        resp.put("DeviceId", headers.getString(Const.AMQP_HEADER_DEVICE_ID));
+        resp.put("DeviceId", headers.getString( TranstechConstants.AMQP_HEADER_DEVICE_ID));
         resp.put("EventDateTime", eventDate);
 
         JSONObject rspData = new JSONObject();
@@ -274,7 +273,7 @@ public class MDMHandler
     {
         JSONObject resp = new JSONObject();
         resp.put("RecordType", body.getString("RecordType"));
-        resp.put("DeviceId", headers.getString(Const.AMQP_HEADER_DEVICE_ID));
+        resp.put("DeviceId", headers.getString( TranstechConstants.AMQP_HEADER_DEVICE_ID));
         resp.put("EventDateTime", getDateTimeFormatter().format(new Date()));
 
         JSONObject rspData = new JSONObject();
@@ -294,7 +293,7 @@ public class MDMHandler
         String eventDate = getDateTimeFormatter().format(new Date());
         JSONObject resp = new JSONObject();
         resp.put("RecordType", body.getString("RecordType"));
-        resp.put("DeviceId", headers.getString(Const.AMQP_HEADER_DEVICE_ID));
+        resp.put("DeviceId", headers.getString( TranstechConstants.AMQP_HEADER_DEVICE_ID));
         resp.put("EventDateTime", eventDate);
 
         JSONObject rspData = new JSONObject();
@@ -395,7 +394,7 @@ public class MDMHandler
         {
             JSONObject resp = new JSONObject();
             resp.put("RecordType", body.getString("RecordType"));
-            resp.put("DeviceId", headers.getString(Const.AMQP_HEADER_DEVICE_ID));
+            resp.put("DeviceId", headers.getString( TranstechConstants.AMQP_HEADER_DEVICE_ID));
             resp.put("EventDateTime", getDateTimeFormatter().format(new Date()));
 
             JSONObject rspData = new JSONObject();

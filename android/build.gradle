@@ -247,7 +247,7 @@ android {
 
   dexOptions {
 //    jumboMode true
-    javaMaxHeapSize "2g"
+    javaMaxHeapSize "3g"
   }
 
   gradle.projectsEvaluated {
