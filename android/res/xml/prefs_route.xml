@@ -22,8 +22,4 @@
             android:key="@string/pref_route_network"
             android:title="@string/pref_route_network_title"/>
 
-    <CheckBoxPreference
-            android:key="@string/pref_route_mode"
-            android:title="@string/pref_route_mode_title"/>
-
 </PreferenceScreen>
