@@ -11,6 +11,7 @@ import android.util.Pair;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
+import au.net.transtech.geo.model.VehicleProfile;
 import com.mapswithme.maps.Framework;
 import com.mapswithme.maps.MwmActivity;
 import com.mapswithme.maps.R;
@@ -243,11 +244,32 @@ public class NavigationController implements TrafficManager.TrafficCallback
     else
       updateVehicle(info);
 
-    boolean hasStreet = !TextUtils.isEmpty(info.nextStreet);
-    UiUtils.showIf(hasStreet, mStreetFrame);
-    if (!TextUtils.isEmpty(info.nextStreet))
-      mNextStreet.setText(info.nextStreet);
+      StringBuilder complianceText = new StringBuilder();
+      if( ComplianceController.get().getCurrentMode() != ComplianceController.ComplianceMode.NONE )
+      {
+          VehicleProfile profile = ComplianceController.get().getRouter( mFrame.getContext() ).getSelectedProfile();
+          String[] words = TextUtils.split( ComplianceController.get().getCurrentMode().name(), "_" );
+          for( int i = 0; i < words.length; ++i )
+          {
+              if( !TextUtils.isEmpty(words[i]) )
+                complianceText.append( (i > 0 ? " " : "") )
+                        .append( words[ i ].substring( 0, 1 ).toUpperCase() )
+                        .append( words[ i ].substring( 1 ).toLowerCase() );
+          }
+          complianceText.append( " (" ).append( profile.getDescription() ).append( ")" );
+      }
 
+    boolean hasStreet = !TextUtils.isEmpty(info.nextStreet) || !TextUtils.isEmpty( complianceText );
+    UiUtils.showIf(hasStreet, mStreetFrame);
+    if (hasStreet)
+    {
+        if( TextUtils.isEmpty(complianceText))
+            mNextStreet.setText( info.nextStreet );
+        else if( TextUtils.isEmpty(info.nextStreet))
+            mNextStreet.setText( complianceText );
+        else
+            mNextStreet.setText( info.nextStreet + " | " + complianceText );
+    }
     final Location last = LocationHelper.INSTANCE.getLastKnownLocation();
     if (last != null)
     {
