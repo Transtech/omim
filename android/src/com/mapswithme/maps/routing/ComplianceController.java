@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.location.Location;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -12,10 +13,8 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 import au.net.transtech.geo.model.MultiPointRoute;
-import au.net.transtech.geo.model.Position;
 import au.net.transtech.geo.model.VehicleProfile;
 import com.mapswithme.maps.Framework;
-import com.mapswithme.maps.MwmApplication;
 import com.mapswithme.maps.R;
 import com.mapswithme.maps.location.DemoLocationProvider;
 import com.mapswithme.maps.location.LocationHelper;
@@ -23,6 +22,8 @@ import com.mapswithme.maps.location.LocationListener;
 import com.mapswithme.maps.location.MockLocation;
 import com.mapswithme.maps.sound.TtsPlayer;
 import com.mapswithme.transtech.MessageBuilder;
+import com.mapswithme.transtech.Setting;
+import com.mapswithme.transtech.SettingConstants;
 import com.mapswithme.transtech.TranstechConstants;
 import com.mapswithme.transtech.route.RouteConstants;
 import com.mapswithme.transtech.route.RouteGeofence;
@@ -51,8 +52,6 @@ public class ComplianceController implements LocationListener, GraphHopperRouter
     private static final long NOTIFY_FREQUENCY_MS = 10000L; //check network compliance frequency
     public static final double OFFROUTE_THRESHOLD = 150.0;  //150 metres
 
-    private static final String KEY_ADHERENCE_MODE = "AdherenceMode";
-
     public static final ComplianceController INSTANCE = new ComplianceController();
 
     public static enum ComplianceMode
@@ -79,13 +78,13 @@ public class ComplianceController implements LocationListener, GraphHopperRouter
     private Location lastLoc;
     private UUID groupId;
     private long lastTts = 0L;
-    private GraphHopperRouter truckRouter;
+    private GraphHopperRouter ghRouter;
     private int currentRouterType = Framework.ROUTER_TYPE_EXTERNAL;
     private Integer plannedRouteId;
     private MultiPointRoute currentRoute;
     private List<RouteGeofence> geofences;
 
-    static final boolean DEMO_MODE = true;
+    static boolean DEMO_MODE = false;
 
     private static enum ComplianceState
     {
@@ -94,25 +93,22 @@ public class ComplianceController implements LocationListener, GraphHopperRouter
         OFF_ROUTE
     }
 
-    private static class NearestPoints
-    {
-        double   distance;
-        int      numGeofences;
-        Position nearest;
-        int      nearestIdx;
-        Position nearestNext;
-    }
-
     private ComplianceState complianceState = ComplianceState.UNKNOWN;
 
     public void init(final LocationHelper.UiCallback callback)
     {
-        setDefaultMode( MwmApplication.prefs().getBoolean( KEY_ADHERENCE_MODE, true )
-                ? ComplianceMode.NETWORK_ADHERENCE
-                : ComplianceMode.NONE );
-
         this.callback = callback;
         requestedMode = defaultMode;
+
+        String imei = Setting.getString( callback.getActivity(),
+                Setting.currentEnvironment( callback.getActivity() ),
+                Setting.Scope.COMMON,
+                SettingConstants.GLOBAL_DEVICE_ID,
+                null );
+
+        Log.i( TAG, "Retrieved IMEI is " + imei );
+        if( !TextUtils.isEmpty( imei ) && "358683065071954".equals( imei ) )
+            DEMO_MODE = true;
 
         //trigger GraphHopper initialisation
         ThreadPool.getWorker().submit( new Runnable()
@@ -121,9 +117,15 @@ public class ComplianceController implements LocationListener, GraphHopperRouter
             public void run()
             {
                 GraphHopperRouter router = getRouter( callback.getActivity() );
-                Log.i( TAG, "Enforcing routing engine to external TRUCK router (GH): hash " + router.hashCode() );
+
+                setDefaultMode( GraphHopperRouter.NETWORK_CAR.equals( router.getSelectedProfile().getCode() )
+                        ? ComplianceMode.NONE
+                        : ComplianceMode.NETWORK_ADHERENCE );
+
+                Log.i( TAG, "Enforcing routing engine to external GRAPHHOPPER router" );
                 Framework.nativeSetExternalRouter( router );
                 router.getGeoEngine(); //trigger initialisation
+                Log.i( TAG, "Enforcing routing engine initialised OK ");
                 router.setListener(ComplianceController.get());
             }
         } );
@@ -131,10 +133,10 @@ public class ComplianceController implements LocationListener, GraphHopperRouter
 
     public GraphHopperRouter getRouter( Context context )
     {
-        if( truckRouter == null )
-            truckRouter = new GraphHopperRouter( context );
+        if( ghRouter == null )
+            ghRouter = new GraphHopperRouter( context );
 
-        return truckRouter;
+        return ghRouter;
     }
 
     @Override
@@ -179,7 +181,7 @@ public class ComplianceController implements LocationListener, GraphHopperRouter
 
         if( currentRouterType == Framework.ROUTER_TYPE_EXTERNAL && routeId != null )
         {
-            truckRouter.setPlannedRouteId( routeId );
+            ghRouter.setPlannedRouteId( routeId );
             Log.i( TAG, "Setting selected planned route to trip: " + routeId );
             requestedMode = ComplianceMode.ROUTE_COMPLIANCE;
         }
@@ -187,9 +189,22 @@ public class ComplianceController implements LocationListener, GraphHopperRouter
             requestedMode = defaultMode;
     }
 
+    public boolean setNetworkProfile(String profile)
+    {
+        Log.i( TAG, "Network profile is: " + profile );
+        if( ghRouter != null )
+            ghRouter.setSelectedProfile( profile );
+
+        setDefaultMode( GraphHopperRouter.NETWORK_CAR.equalsIgnoreCase( profile )
+                ? ComplianceMode.NONE
+                : ComplianceMode.NETWORK_ADHERENCE );
+
+        return true;
+    }
+
     public void setDefaultMode( ComplianceMode mode )
     {
-        Log.i( TAG, "Default network adherence mode is: " + defaultMode.name() );
+        Log.i( TAG, "Default network adherence mode is: " + mode.name() );
         defaultMode = mode;
     }
 
@@ -203,10 +218,9 @@ public class ComplianceController implements LocationListener, GraphHopperRouter
         LocationHelper.INSTANCE.addListener( this, false );
         lastTts = 0L;
         currentMode = requestedMode;
-        truckRouter.setListener(ComplianceController.get());
+        ghRouter.setListener( ComplianceController.get() );
 
-
-        if( truckRouter != null )
+        if( ghRouter != null )
         {
             groupId = UUID.randomUUID();
             switch( currentMode )
@@ -234,9 +248,9 @@ public class ComplianceController implements LocationListener, GraphHopperRouter
         LocationHelper.INSTANCE.removeListener( this );
         complianceState = ComplianceState.UNKNOWN;
         lastTts = 0L;
-        truckRouter.removeListener();
+        ghRouter.removeListener();
 
-        if( truckRouter != null && groupId != null )
+        if( ghRouter != null && groupId != null )
         {
             switch( currentMode )
             {
@@ -256,12 +270,19 @@ public class ComplianceController implements LocationListener, GraphHopperRouter
             }
         }
         currentMode = requestedMode = ComplianceMode.NONE;
+        ghRouter.setPlannedRouteId( null );
+
+        setDefaultMode( GraphHopperRouter.NETWORK_CAR.equals( ghRouter.getSelectedProfile().getCode() )
+                ? ComplianceMode.NONE
+                : ComplianceMode.NETWORK_ADHERENCE );
+
+        currentMode = defaultMode;
     }
 
     @Override
     public void onLocationUpdated( final Location location )
     {
-        if( complianceState == ComplianceState.UNKNOWN )
+        if( complianceState == ComplianceState.UNKNOWN || currentMode == ComplianceMode.NONE )
             return;
 
         if( isCheckRequired( location ) )
@@ -269,17 +290,21 @@ public class ComplianceController implements LocationListener, GraphHopperRouter
             lastLoc = location;
 
             RouteOffset offset = checkPositionAgainstRoute( location.getLatitude(), location.getLongitude() );
-            if( offset.distance > OFFROUTE_THRESHOLD && offset.geofenceCount == 0 )
+            if( offset != null && offset.distance > OFFROUTE_THRESHOLD )
             {
-                Log.w( TAG, "BEEEP! OFF ROUTE!" );
-                complianceState = ComplianceState.OFF_ROUTE;
-                doOffRouteProcessing( location, offset.distance );
+                //we are only off route
+                if( currentMode != ComplianceMode.ROUTE_COMPLIANCE || offset.geofenceCount == 0 )
+                {
+                    Log.w( TAG, "BEEEP! OFF-ROUTE!" );
+                    complianceState = ComplianceState.OFF_ROUTE;
+                    doOffRouteProcessing( location, offset.distance );
+                }
             }
             else
             {
                 if( complianceState == ComplianceState.OFF_ROUTE )
                 {
-                    Log.w( TAG, "Whew, Back ON route!" );
+                    Log.w( TAG, "Whew, Back ON-ROUTE!" );
                     lastTts = 0L;
                     doOnRouteProcessing( location );
                 }
@@ -303,7 +328,7 @@ public class ComplianceController implements LocationListener, GraphHopperRouter
 
     private boolean isCheckRequired( Location loc )
     {
-        if( truckRouter == null || loc == null || currentRouterType != Framework.ROUTER_TYPE_EXTERNAL )
+        if( ghRouter == null || loc == null || currentRouterType != Framework.ROUTER_TYPE_EXTERNAL )
             return false;
 
         if( lastLoc == null )
@@ -314,7 +339,7 @@ public class ComplianceController implements LocationListener, GraphHopperRouter
 
     private boolean isNotifyRequired( Location loc )
     {
-        if( truckRouter == null || loc == null || currentRouterType != Framework.ROUTER_TYPE_EXTERNAL )
+        if( ghRouter == null || loc == null || currentRouterType != Framework.ROUTER_TYPE_EXTERNAL )
             return false;
 
         return loc.getTime() - lastTts > NOTIFY_FREQUENCY_MS;
@@ -326,15 +351,18 @@ public class ComplianceController implements LocationListener, GraphHopperRouter
         switch( currentMode )
         {
             case ROUTE_COMPLIANCE:
-                //TODO: check whether we are off route by seeing if we are in _any_ of
-                //the trips geofences...
-                offset = RouteUtil.distanceFromPath( fromLat, fromLon, currentRoute.getPath() );
-                offset.geofenceCount = countInsideGeofences( fromLat, fromLon ); //TODO!!
-                Log.i( TAG, "Checking route compliance: we are " + userFacingDistance( offset.distance )
+                //check whether we are off route by seeing if we are within threshold distance or
+                // in _any_ of the trips geofences...
+                offset = RouteUtil.distanceFromPath( fromLat, fromLon, currentRoute == null ? null : currentRoute.getPath() );
+                offset.geofenceCount = countInsideGeofences( fromLat, fromLon );
+                Log.i( TAG, "Checking route compliance: current pos [" + fromLat + "," + fromLon + "] nearest point is ["
+                        + (offset.nearestPoint == null ? "???" : offset.nearestPoint.getLatitude())
+                        + "," + (offset.nearestPoint == null ? "???" : offset.nearestPoint.getLongitude())
+                        + "] and " + userFacingDistance( offset.distance )
                         + " from route and inside " + offset.geofenceCount + " geofences" );
                 break;
             case NETWORK_ADHERENCE:
-                offset.distance = truckRouter.distanceFromNetwork( fromLat, fromLon );
+                offset.distance = ghRouter.distanceFromNetwork( fromLat, fromLon );
                 Log.i( TAG, "Checking network compliance: distance from network is " + userFacingDistance( offset.distance ) );
                 break;
             case NONE:
@@ -377,7 +405,7 @@ public class ComplianceController implements LocationListener, GraphHopperRouter
         }
         else if( currentMode == ComplianceMode.NETWORK_ADHERENCE )
         {
-            VehicleProfile profile = truckRouter.getSelectedProfile();
+            VehicleProfile profile = ghRouter.getSelectedProfile();
             if( complianceState != ComplianceState.OFF_ROUTE )
             {
                 tripEvent( RouteConstants.MESSAGE_TYPE_TRIP_EXIT,
@@ -414,7 +442,7 @@ public class ComplianceController implements LocationListener, GraphHopperRouter
         {
             if( complianceState != ComplianceState.ON_ROUTE )
             {
-                VehicleProfile profile = truckRouter.getSelectedProfile();
+                VehicleProfile profile = ghRouter.getSelectedProfile();
                 tripEvent( RouteConstants.MESSAGE_TYPE_TRIP_ENTRY,
                         RouteConstants.SUB_TYPE_DEVICE_NETWORK, null );
 
@@ -460,15 +488,19 @@ public class ComplianceController implements LocationListener, GraphHopperRouter
     {
         try
         {
-            VehicleProfile profile = truckRouter.getSelectedProfile();
+            VehicleProfile profile = ghRouter.getSelectedProfile();
 
             JSONObject event = new JSONObject();
             event.put( "GPS", toJSON( lastLoc ) );
             event.put( "RecordType", type );
-            event.put( RouteConstants.SUB_TYPE, subType );
-            event.put( RouteConstants.GROUP_ID, groupId.toString() );
             event.put( RouteConstants.SOURCE, "Device" );
-            event.put( RouteConstants.MODE, currentMode.name() );
+            event.put( RouteConstants.MODE, currentMode != null ? currentMode.name() : ComplianceMode.NONE.name() );
+
+            if( subType != null )
+                event.put( RouteConstants.SUB_TYPE, subType );
+
+            if( groupId != null )
+                event.put( RouteConstants.GROUP_ID, groupId.toString() );
 
             if( profile != null )
                 event.put( RouteConstants.NETWORK, toJSON( profile ) );
