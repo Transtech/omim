@@ -10,9 +10,9 @@ import au.net.transtech.geo.model.Position;
 public class RouteOffset
 {
     public Position nearestPoint;
-    public Double distance;
+    public double distance;
     public int geofenceCount;
-    public Position nextNearestPoint;
+    public int index = -1;
 
     @Override
     public String toString()
@@ -21,7 +21,6 @@ public class RouteOffset
                 "distance=" + distance +
                 ", geofenceCount=" + geofenceCount +
                 ", nearestPoint=" + (nearestPoint == null ? "[null]" : "[" + nearestPoint.getLatitude() + "," + nearestPoint.getLongitude() + "]") +
-                ", nextNearestPoint=" + (nextNearestPoint == null ? "[null]" : "[" + nextNearestPoint.getLatitude() + "," + nextNearestPoint.getLongitude() + "]") +
                 '}';
     }
 }

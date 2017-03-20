@@ -66,6 +66,8 @@ dependencies {
   compile 'com.timehop.stickyheadersrecyclerview:library:0.4.3@aar'
   //Glide
   compile 'com.github.bumptech.glide:glide:3.7.0'
+  // https://mvnrepository.com/artifact/net.sf.geographiclib/GeographicLib-Java
+  compile group: 'net.sf.geographiclib', name: 'GeographicLib-Java', version: '1.47'
   //GraphHopper
   compile 'com.graphhopper:graphhopper-core:0.9-SNAPSHOT'
   compile 'com.graphhopper:graphhopper-reader-overlay-data:0.9-SNAPSHOT'

@@ -15,6 +15,7 @@ import com.mapswithme.transtech.route.RouteOffset;
 import com.mapswithme.transtech.route.RouteTrip;
 import com.mapswithme.transtech.route.RouteUtil;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,7 +27,7 @@ import java.util.List;
 public class GraphHopperRouter implements IRouter
 {
     private static final String TAG = "SmartNav2_GraphHopper";
-    private static final String GRAPHHOPPER_PATH = "/sdcard/MapsWithMe/heavy-vehicle-gh";
+    private static final String GRAPHHOPPER_PATH = "heavy-vehicle-gh";
 
     public static final String NETWORK_CAR = "car";
     public static final double EPSILON = 0.00001;
@@ -37,6 +38,7 @@ public class GraphHopperRouter implements IRouter
     private VehicleProfile selectedProfile;
     private RouteListener listener;
     private Integer plannedRouteId = null;
+    private MultiPointRoute originalPlannedRoute;
 
     public static final double TRUCK_MULTIPLIER = 1.4;  //Increase estimated times for TRUCK routing
     public static final double CAR_MULTIPLIER = 1.0;  //Increase estimated times for CAR routing
@@ -80,8 +82,15 @@ public class GraphHopperRouter implements IRouter
     {
         if( geoEngine == null )
         {
-            geoEngine = new GeoEngine( GRAPHHOPPER_PATH );
+            String path = Framework.nativeGetWritableDir();
+            if( !path.endsWith( File.separator ) )
+                path = path + File.separator;
+
+            geoEngine = new GeoEngine( path + GRAPHHOPPER_PATH );
+            geoEngine.setInMemory( false );
+//            Log.i( TAG, "PRE loading Graphopper data");
             geoEngine.loadGraph();
+//            Log.i( TAG, "POST loading Graphopper data");
         }
         return geoEngine;
     }
@@ -99,12 +108,26 @@ public class GraphHopperRouter implements IRouter
     @Override
     public Route calculateRoute( double startLat, double startLon, double finishLat, double finishLon )
     {
+        try
+        {
+            return calculateRouteImpl( startLat, startLon, finishLat, finishLon );
+        }
+        catch( Exception e )
+        {
+            Log.e( TAG, "Failed to calculate route", e );
+        }
+        return null;
+    }
+
+    private Route calculateRouteImpl(double startLat, double startLon, double finishLat, double finishLon )
+    {
         MultiPointRoute route = null;
         Log.i( TAG, "Received routing request for GH network '" + routerType + "': hash " + hashCode() + ", listener " + listener);
         if( plannedRouteId != null && plannedRouteId.intValue() > 0 )
         {
             Log.i( TAG, "Returning pre-planned route ID '" + plannedRouteId + "'");
             route = constructPreplannedRoute( plannedRouteId.intValue() );
+            originalPlannedRoute = route;
         }
         else if( routerType != Framework.ROUTER_TYPE_EXTERNAL )
             route = routeByCar(startLat, startLon, finishLat, finishLon);
@@ -124,7 +147,7 @@ public class GraphHopperRouter implements IRouter
                         //the listener does not like our current route and would like it reworked
                         //using the nearest point on the preplanned route, and our current
                         //position as the initial point
-                        Log.i( TAG, "Reconstructing pre-planned route ID '" + plannedRouteId + "' to nearest point" );
+                        Log.i( TAG, "REROUTE: Reconstructing pre-planned route ID '" + plannedRouteId + "' to nearest point" );
                         route = reconstructPlannedRoute();
                         break;
                     case REROUTE_TO_DESTINATION:
@@ -289,72 +312,132 @@ public class GraphHopperRouter implements IRouter
 
     private MultiPointRoute reconstructPlannedRoute()
     {
-        MultiPointRoute originalRoute = constructPreplannedRoute( plannedRouteId );
         Location currentLoc = LocationHelper.INSTANCE.getSavedLocation();
         if( currentLoc == null )
-            return originalRoute;
-
-        RouteOffset offset = RouteUtil.distanceFromPath( currentLoc.getLatitude(), currentLoc.getLongitude(),
-                originalRoute.getPath() );
-
-        //distance from our last know location to the nearest calculated point
-        Double d1 = offset.distance;
-
-        //distance from our last know location to the next point on the route _after_ the nearest
-        //as it may be worthwhile just going to the next point
-        Double d2 = offset.nextNearestPoint == null ? null :
-                RouteUtil.haversineDistance( currentLoc.getLatitude(), currentLoc.getLongitude(),
-                        offset.nextNearestPoint.getLatitude(), offset.nextNearestPoint.getLongitude() );
-
-        Position newPos = null;
-        if( d2 != null && d1 != null && d1 > ComplianceController.OFFROUTE_THRESHOLD && offset.nextNearestPoint != null )
-            newPos =  (d2 <= d1 * 2.0 ? offset.nextNearestPoint : offset.nearestPoint);
-        else if( d1 != null && d1 > ComplianceController.OFFROUTE_THRESHOLD && offset.nearestPoint != null )
-            newPos = offset.nearestPoint;
-
-        if( newPos == null )
-            return originalRoute;
-
-        // Try to locate a compliant route back to the nearest point on the original planned route
-        Log.i(TAG, "REROUTE: Creating compliant re-route from current[" + currentLoc.getLatitude() + "," + currentLoc.getLongitude() + "] -> nearest[" + newPos.getLatitude() + "," + newPos.getLongitude() + "] - reconfiguring reconstructed route");
-        MultiPointRoute backToPlannedRoute = routeOnSelectedProfile( currentLoc.getLatitude(), currentLoc.getLongitude(),
-                newPos.getLatitude(), newPos.getLongitude() );
-
-        if( backToPlannedRoute != null && backToPlannedRoute.getPath() != null && backToPlannedRoute.getPath().size() > 0 )
         {
-            //we need to remove the path, legs & segments up to 'newStartPos' from originalRoute as
-            //we've already travelled that part of the path
-            int validPathIndex = findIndex( originalRoute.getPath(), newPos );
-            if( validPathIndex > -1 )
-            {
-                Log.i(TAG, "REROUTE: Found index to nearest point on original route at index " + validPathIndex + " - reconfiguring reconstructed route");
-                List<Position> newPath = new ArrayList<Position>();
-                newPath.addAll( backToPlannedRoute.getPath() );
-
-                List<Leg> newLegs = new ArrayList<Leg>();
-                newLegs.addAll( backToPlannedRoute.getLegs() );
-
-                Leg newLeg = new Leg();
-                for( Leg l : originalRoute.getLegs() )
-                {
-                    for( Segment seg : l.getSegments() )
-                    {
-                        int index = findIndex( originalRoute.getPath(), seg.getPath() != null && seg.getPath().size() > 0 ? seg.getPath().get( 0 ) : seg.getStart() );
-                        if( index >= validPathIndex )
-                            newLeg.getSegments().add( seg );
-                    }
-                }
-                newLegs.add( newLeg );
-
-                for( int i = validPathIndex; i < originalRoute.getPath().size(); ++i )
-                    newPath.add( originalRoute.getPath().get( i ) );
-
-                originalRoute.setPath( newPath );
-                originalRoute.setLegs( newLegs );
-            }
+            Log.w( TAG, "REROUTE: Failed to retrieve LocationHelper.savedLocation?! - returning original route" );
+            return originalPlannedRoute;
         }
 
-        return originalRoute;
+        RouteOffset offset = RouteUtil.distanceFromPath( currentLoc.getLatitude(), currentLoc.getLongitude(),
+                originalPlannedRoute.getPath() );
+
+        if( offset == null || offset.index < 0 )
+        {
+            Log.w( TAG, "REROUTE: Failed to determine valid route offset - returning original route" );
+            return originalPlannedRoute;
+        }
+
+        MultiPointRoute backToPlannedRoute = findBestPathToPlannedRoute( offset, currentLoc );
+        if( backToPlannedRoute != null && backToPlannedRoute.getPath() != null && backToPlannedRoute.getPath().size() > 0 )
+        {
+            //we need to remove the path, legs & segments up to 'newPos' from originalRoute as
+            //we've already travelled that part of the path
+            MultiPointRoute updatedRoute = new MultiPointRoute();
+
+            Log.i(TAG, "REROUTE: Updating pre-planned route from index " +
+                    offset.index + ": new route path size " + backToPlannedRoute.getPath().size()
+                    + ", original path size " + originalPlannedRoute.getPath().size()
+                    + ", original legs size " + originalPlannedRoute.getLegs().size() );
+
+            List<Position> newPath = new ArrayList<Position>();
+            newPath.addAll( backToPlannedRoute.getPath() );
+
+            List<Leg> newLegs = new ArrayList<Leg>();
+            newLegs.addAll( backToPlannedRoute.getLegs() );
+
+            //need to remove the last segment from the last leg as that is the 'finish' segment
+            Leg lastLeg = newLegs.get( newLegs.size() - 1 );
+            lastLeg.getSegments().remove( lastLeg.getSegments().size() - 1 );
+
+            Leg newLeg = new Leg();
+            for( Leg l : originalPlannedRoute.getLegs() )
+            {
+                for( Segment seg : l.getSegments() )
+                {
+                    int index = findIndex( originalPlannedRoute.getPath(), seg.getPath() != null && seg.getPath().size() > 0 ? seg.getPath().get( 0 ) : seg.getStart() );
+                    if( index >= offset.index )
+                        newLeg.getSegments().add( seg );
+                }
+            }
+            newLegs.add( newLeg );
+
+            for( int i = offset.index; i < originalPlannedRoute.getPath().size(); ++i )
+                newPath.add( originalPlannedRoute.getPath().get( i ) );
+
+            updatedRoute.setPath( newPath );
+            updatedRoute.setLegs( newLegs );
+            Log.i( TAG, "REROUTE: Updated route path size " + updatedRoute.getPath().size()
+                    + ", updated legs size " + updatedRoute.getLegs().size() );
+            return updatedRoute;
+        }
+        else
+            Log.w(TAG, "REROUTE: No updated route found - returning original route");
+
+        return originalPlannedRoute;
+    }
+
+    private MultiPointRoute findBestPathToPlannedRoute(RouteOffset offset, Location currentLoc)
+    {
+        int diff = originalPlannedRoute.getPath().size() - offset.index;
+
+        Position newPos = null;
+        if( diff > 10 ) //if we're far enough from the finish, do route bisect to determine best/shortest path
+        {
+            Log.w( TAG, "REROUTE: We are " + diff + " segments from the finish, try bisecting the route" );
+            return bisectRoute(offset, currentLoc);
+        }
+        else if( diff < 5 ) //we're very close to the end, so just route straight to the finish
+        {
+            Log.w( TAG, "REROUTE: Close enough to the finish, just reroute to the end" );
+            newPos = originalPlannedRoute.getPath().get( originalPlannedRoute.getPath().size() - 1 ); //just reroute to the finish
+            offset.index = originalPlannedRoute.getPath().size();
+        }
+        else
+        {
+            Log.w( TAG, "REROUTE: Rerouting to the found closest point+1" );
+            newPos = originalPlannedRoute.getPath().get( offset.index + 1 ); //find the next segment along from the closest point
+        }
+
+        if( newPos == null )
+        {
+            Log.w( TAG, "REROUTE: Failed to determine nearest point - returning original route" );
+            return originalPlannedRoute;
+        }
+
+        // Try to locate a compliant route back to the nearest point on the original planned route
+        Log.i(TAG, "REROUTE: Creating compliant re-route from current["
+                + currentLoc.getLatitude() + "," + currentLoc.getLongitude() + "] -> nearest["
+                + newPos.getLatitude() + "," + newPos.getLongitude() + "] distance " + offset.distance + " - reconfiguring reconstructed route");
+        return routeOnSelectedProfile( currentLoc.getLatitude(), currentLoc.getLongitude(),
+                newPos.getLatitude(), newPos.getLongitude() );
+    }
+
+    private MultiPointRoute bisectRoute(RouteOffset offset, Location currentLoc)
+    {
+        int diff = originalPlannedRoute.getPath().size() - offset.index;
+
+        //Find the position 1/3 between closest point and the route end, and route to it
+        int r1Idx = offset.index + (diff / 3);
+        Position pos = originalPlannedRoute.getPath().get( r1Idx );
+        MultiPointRoute r1 = routeOnSelectedProfile( currentLoc.getLatitude(), currentLoc.getLongitude(),
+                pos.getLatitude(), pos.getLongitude() );
+
+        //Find the position 2/3 between closest point and the route end, and route to it
+        int r2Idx = originalPlannedRoute.getPath().size() - (diff / 3);
+        pos = originalPlannedRoute.getPath().get( r2Idx );
+        MultiPointRoute r2 = routeOnSelectedProfile( currentLoc.getLatitude(), currentLoc.getLongitude(),
+                pos.getLatitude(), pos.getLongitude() );
+
+        Log.i( TAG, "R1 [" + r1.getTime() + "ms, " + r1.getDistance() + "m] - R2 ["
+                + r2.getTime() + "ms, " + r2.getDistance() + "m] - returning " + (r1.getTime() < r2.getTime() ? "R1" : "R2") );
+        if( r1.getTime() < r2.getTime() )
+        {
+            offset.index = r1Idx;
+            return r1;
+        }
+        offset.index = r2Idx;
+        return r2;
     }
 
     private Route toMwmRoute( MultiPointRoute ghStartCar, MultiPointRoute ghRoute, MultiPointRoute ghFinishCar )
@@ -416,7 +499,7 @@ public class GraphHopperRouter implements IRouter
                 segLen += ghFinishCar.getLegs().get( j ).getSegments().size();
         }
 
-        Log.i( TAG, "Number of segments " + segLen );
+//        Log.i( TAG, "Number of segments " + segLen );
         result.turns = new Route.TurnItem[ segLen ];
         result.times = new Route.TimeItem[ segLen ];
         result.streets = new Route.StreetItem[ segLen ];
@@ -487,6 +570,9 @@ public class GraphHopperRouter implements IRouter
 
     private RoutingInfo.VehicleTurnDirection toMwmDirection( Segment.Direction dir )
     {
+        if( dir == null )
+            return RoutingInfo.VehicleTurnDirection.GO_STRAIGHT;
+
         switch( dir )
         {
             case USE_ROUNDABOUT:
@@ -598,7 +684,9 @@ public class GraphHopperRouter implements IRouter
             return -0.2;
 
         Position posFromSeg = result.get(0).getSnapped();
-        return RouteUtil.haversineDistance( lat, lon, posFromSeg.getLatitude(), posFromSeg.getLongitude() );
+        return posFromSeg == null
+                ? 0.0
+                : RouteUtil.haversineDistance( lat, lon, posFromSeg.getLatitude(), posFromSeg.getLongitude() );
     }
 
     private void dumpRoute(Route route)
@@ -622,6 +710,9 @@ public class GraphHopperRouter implements IRouter
 
     public void setPlannedRouteId( Integer routeId )
     {
+        if( routeId == null || plannedRouteId != routeId )
+            originalPlannedRoute = null;
+
         plannedRouteId = routeId;
     }
 }
