@@ -8,7 +8,6 @@ import android.preference.PreferenceFragment;
 import android.preference.TwoStatePreference;
 import android.speech.tts.TextToSpeech;
 import android.support.annotation.NonNull;
-import android.util.Log;
 import au.net.transtech.geo.model.VehicleProfile;
 import com.mapswithme.maps.Framework;
 import com.mapswithme.maps.R;
@@ -36,7 +35,7 @@ public class RoutePrefsFragment extends PreferenceFragment
   private LanguageData mCurrentLanguage;
   private String mSelectedLanguage;
   private String mSelectedNetwork;
-  private TwoStatePreference mAdherenceMode;
+//  private TwoStatePreference mAdherenceMode;
 
   private final Preference.OnPreferenceChangeListener mEnabledListener = new Preference.OnPreferenceChangeListener()
   {
@@ -88,20 +87,6 @@ public class RoutePrefsFragment extends PreferenceFragment
     }
   };
 
-    private final Preference.OnPreferenceChangeListener mModeListener = new Preference.OnPreferenceChangeListener()
-    {
-        @Override
-        public boolean onPreferenceChange(Preference preference, Object newValue)
-        {
-            boolean set = (Boolean)newValue;
-
-            ComplianceController.get().setDefaultMode( set
-                    ? ComplianceController.ComplianceMode.NETWORK_ADHERENCE
-                    : ComplianceController.ComplianceMode.NONE );
-            return true;
-        }
-    };
-
     private final Preference.OnPreferenceChangeListener mNetworkListener = new Preference.OnPreferenceChangeListener()
     {
         @Override
@@ -112,8 +97,7 @@ public class RoutePrefsFragment extends PreferenceFragment
 
             mSelectedNetwork = (String)newValue;
             mNetwork.setValue( mSelectedNetwork );
-            GraphHopperRouter router = ComplianceController.get().getRouter( RoutePrefsFragment.this.getActivity() );
-            boolean result = router.setSelectedProfile( mSelectedNetwork );
+            boolean result = ComplianceController.get().setNetworkProfile( mSelectedNetwork );
             update();
             return result;
         }
@@ -127,7 +111,7 @@ public class RoutePrefsFragment extends PreferenceFragment
 //      Log.i( "Maps_RoutePrefsFragment", (enable ? "Enabling" : "Disabling") + " useDemoGPS pref listener " );
 //      mDemoEnabled.setOnPreferenceChangeListener( enable ? mDemoListener : null );
       mNetwork.setOnPreferenceChangeListener(enable ? mNetworkListener : null);
-      mAdherenceMode.setOnPreferenceChangeListener(enable ? mModeListener : null);
+//      mAdherenceMode.setOnPreferenceChangeListener(enable ? mModeListener : null);
   }
 
   private void setLanguage(@NonNull LanguageData lang)
@@ -184,7 +168,7 @@ public class RoutePrefsFragment extends PreferenceFragment
 
     mPrefEnabled.setChecked(available && TtsPlayer.INSTANCE.isEnabled());
 
-      mAdherenceMode.setChecked( ComplianceController.get().getDefaultMode() == ComplianceController.ComplianceMode.NETWORK_ADHERENCE );
+//      mAdherenceMode.setChecked( ComplianceController.get().getDefaultMode() == ComplianceController.ComplianceMode.NETWORK_ADHERENCE );
 
       GraphHopperRouter truckRouter = ComplianceController.get().getRouter( RoutePrefsFragment.this.getActivity() );
       List<VehicleProfile> profiles = truckRouter.getGeoEngine().getVehicleProfiles();
@@ -198,8 +182,6 @@ public class RoutePrefsFragment extends PreferenceFragment
           {
               entries2[ i ] = vp.getDescription();
               values2[ i ] = vp.getCode();
-
-              Log.i( "Maps_RoutePrefsFragment", "Adding vehicle profile: " + vp.getDescription() + " (" + vp.getCode() + ")" );
               i++;
           }
 
@@ -223,7 +205,7 @@ public class RoutePrefsFragment extends PreferenceFragment
 //    mDemoEnabled = (TwoStatePreference) findPreference(getString(R.string.pref_demo_gps));
     mPrefLanguages = (ListPreference) findPreference(getString(R.string.pref_tts_language));
       mNetwork = (ListPreference) findPreference(getString(R.string.pref_route_network));
-      mAdherenceMode = (TwoStatePreference) findPreference(getString(R.string.pref_route_mode));
+//      mAdherenceMode = (TwoStatePreference) findPreference(getString(R.string.pref_route_mode));
 
     final Framework.Params3dMode _3d = new Framework.Params3dMode();
     Framework.nativeGet3dMode(_3d);
