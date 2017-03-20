@@ -35,8 +35,8 @@ import com.mapswithme.maps.routing.RoutingController;
 import com.mapswithme.maps.widget.PlaceholderView;
 import com.mapswithme.maps.widget.SearchToolbarController;
 import com.mapswithme.transtech.route.RouteLeg;
-import com.mapswithme.transtech.route.RouteUtil;
 import com.mapswithme.transtech.route.RouteTrip;
+import com.mapswithme.transtech.route.RouteUtil;
 import com.mapswithme.util.Animations;
 import com.mapswithme.util.UiUtils;
 import com.mapswithme.util.Utils;
@@ -577,7 +577,7 @@ public class SearchFragment extends BaseMwmFragment
             List<RouteLeg> legs = RouteUtil.findLegsByTripId( getActivity(), routeId );
 
             Log.i( "SmartNav2_SearchFragment", "There are " + legs.size() + " legs on route " + routeId );
-            if( legs.size() > 1 )
+            if( legs.size() > 0 )
             {
                 RouteLeg startLeg = legs.get(0);
                 RouteLeg endLeg = legs.get(legs.size() - 1);
