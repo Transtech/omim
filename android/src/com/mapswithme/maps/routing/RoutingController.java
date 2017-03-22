@@ -177,7 +177,6 @@ public class RoutingController
   private void setState(State newState)
   {
     mLogger.d("[S] State: " + mState + " -> " + newState + ", BuildState: " + mBuildState);
-      Log.i( "RCSTATE", "[S] State: " + mState + " -> " + newState + ", BuildState: " + mBuildState );
     mState = newState;
 
     if (mContainer != null)
@@ -187,7 +186,6 @@ public class RoutingController
   private void setBuildState(BuildState newState)
   {
     mLogger.d("[B] State: " + mState + ", BuildState: " + mBuildState + " -> " + newState);
-      Log.i( "RCSTATE", "[S] State: " + mState + " -> " + newState + ", BuildState: " + mBuildState );
     mBuildState = newState;
 
 //TODO - need to fix this such that we can follow a route even if it's not our position, but is
@@ -225,8 +223,8 @@ public class RoutingController
   public void attach(@NonNull Container container)
   {
     mContainer = container;
-    if( container instanceof LocationHelper.UiCallback )
-        ComplianceController.get().init( (LocationHelper.UiCallback) container );
+//    if( container instanceof LocationHelper.UiCallback )
+//        ComplianceController.get().init( (LocationHelper.UiCallback) container );
   }
 
   public void initialize()

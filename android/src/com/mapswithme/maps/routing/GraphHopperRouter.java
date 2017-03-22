@@ -448,10 +448,10 @@ public class GraphHopperRouter implements IRouter
                 + (ghStartCar == null ? 0 : ghStartCar.getPath().size() - 1)
                 + (ghFinishCar == null ? 0 : ghFinishCar.getPath().size() - 1);
 
-        Log.i( TAG, "Starting route path length " + (ghStartCar == null ? 0 : ghStartCar.getPath().size())
-                + ", final route path length " + (ghFinishCar == null ? 0 : ghFinishCar.getPath().size())
-                + ", core path length " + ghRoute.getPath().size()
-                + ", total length " + pathLen );
+//        Log.i( TAG, "Starting route path length " + (ghStartCar == null ? 0 : ghStartCar.getPath().size())
+//                + ", final route path length " + (ghFinishCar == null ? 0 : ghFinishCar.getPath().size())
+//                + ", core path length " + ghRoute.getPath().size()
+//                + ", total length " + pathLen );
 
         result.path = new Route.Position[ pathLen ];
         int i = 0;
@@ -483,74 +483,69 @@ public class GraphHopperRouter implements IRouter
                 result.path[ i++ ] = new Route.Position( pos.getLatitude(), pos.getLongitude() );
         }
 
-        int segLen = 0;
+        Segment finishSeg = null;
+        List<Segment> segments = new ArrayList<Segment>();
         if( ghStartCar != null )
         {
-            for( int j = 0; j < ghStartCar.getLegs().size() - 1; j++ )
-                segLen += ghStartCar.getLegs().get( j ).getSegments().size();
+            for( Leg leg : ghRoute.getLegs() )
+            {
+                for( Segment s : leg.getSegments() )
+                {
+                    if( s.getDirection() != Segment.Direction.FINISH )
+                        segments.add( s );
+                }
+            }
         }
 
         for( Leg leg : ghRoute.getLegs() )
-            segLen += leg.getSegments().size();
+        {
+            for( Segment s : leg.getSegments() )
+            {
+                if( s.getDirection() != Segment.Direction.FINISH )
+                    segments.add( s );
+                else
+                    finishSeg = s;
+            }
+        }
 
         if( ghFinishCar != null )
         {
-            for( int j = 1; j < ghFinishCar.getLegs().size(); j++ )
-                segLen += ghFinishCar.getLegs().get( j ).getSegments().size();
+            for( Leg leg : ghRoute.getLegs() )
+            {
+                for( Segment s : leg.getSegments() )
+                {
+                    if( s.getDirection() != Segment.Direction.FINISH )
+                        segments.add( s );
+                    else
+                        finishSeg = s;
+                }
+            }
         }
 
+        if( finishSeg != null )
+            segments.add( finishSeg );
+
 //        Log.i( TAG, "Number of segments " + segLen );
+        int segLen = segments.size();
         result.turns = new Route.TurnItem[ segLen ];
         result.times = new Route.TimeItem[ segLen ];
         result.streets = new Route.StreetItem[ segLen ];
 
         i = 0;
         Long timeTotal = 0L;
-        if( ghStartCar != null )
+        for( Segment seg : segments )
         {
-            for( int j = 0; j < ghStartCar.getLegs().size() - 1; j++ )
-            {
-                Leg leg = ghStartCar.getLegs().get( j );
-                for( Segment seg : leg.getSegments() )
-                {
-                    addSegment( result, i, timeTotal, seg );
-                    timeTotal += new Double( seg.getTime() * MULTIPLIER ).longValue();
-                    i++;
-                }
-            }
+            addSegment( result, i, timeTotal, seg );
+            timeTotal += new Double( seg.getTime() * MULTIPLIER ).longValue();
+            i++;
         }
 
-        for( Leg leg : ghRoute.getLegs() )
-        {
-            for( Segment seg : leg.getSegments() )
-            {
-                addSegment( result, i, timeTotal, seg );
-                timeTotal += new Double( seg.getTime() * MULTIPLIER ).longValue();
-                i++;
-            }
-        }
-
-        if( ghFinishCar != null )
-        {
-            for( int j = 1; j < ghFinishCar.getLegs().size(); j++ )
-            {
-                Leg leg = ghFinishCar.getLegs().get( j );
-                for( Segment seg : leg.getSegments() )
-                {
-                    addSegment( result, i, timeTotal, seg );
-                    timeTotal += new Double( seg.getTime() * MULTIPLIER ).longValue();
-                    i++;
-                }
-            }
-        }
-
-        dumpRoute(result);
+//        dumpRoute(result);
         return result;
     }
 
     private void addSegment( Route result, int pos, Long timeTotal, Segment seg )
     {
-        Log.i(TAG, "Add segment " + pos + " to MWM route: segment name = " + seg.getName() );
         int index = findIndex( result.path, seg.getPath() != null && seg.getPath().size() > 0 ? seg.getPath().get( 0 ) : seg.getStart() );
 
         result.turns[ pos ] = new Route.TurnItem();
@@ -566,6 +561,8 @@ public class GraphHopperRouter implements IRouter
         result.streets[ pos ] = new Route.StreetItem();
         result.streets[ pos ].index = index;
         result.streets[ pos ].name = seg.getName();
+
+        Log.i(TAG, "Add segment to MWM route: pos = " + pos + ", index= " + index + ", name = " + seg.getName() + ", direction = " + seg.getDirection().name() );
     }
 
     private RoutingInfo.VehicleTurnDirection toMwmDirection( Segment.Direction dir )

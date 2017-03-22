@@ -20,13 +20,13 @@ import com.mapswithme.maps.location.LocationHelper;
 import com.mapswithme.maps.settings.SettingsActivity;
 import com.mapswithme.maps.sound.TtsPlayer;
 import com.mapswithme.maps.traffic.TrafficManager;
-import com.mapswithme.transtech.route.RouteConstants;
-import com.mapswithme.transtech.route.RouteUtil;
-import com.mapswithme.transtech.route.RouteTrip;
 import com.mapswithme.maps.widget.FlatProgressView;
 import com.mapswithme.maps.widget.menu.NavMenu;
 import com.mapswithme.transtech.TranstechConstants;
 import com.mapswithme.transtech.TranstechUtil;
+import com.mapswithme.transtech.route.RouteConstants;
+import com.mapswithme.transtech.route.RouteTrip;
+import com.mapswithme.transtech.route.RouteUtil;
 import com.mapswithme.util.StringUtils;
 import com.mapswithme.util.UiUtils;
 import com.mapswithme.util.Utils;
@@ -130,12 +130,15 @@ public class NavigationController implements TrafficManager.TrafficCallback
 
       //TRANSTECH
       requestRouteSync(activity);
+      if( activity instanceof LocationHelper.UiCallback)
+        ComplianceController.get().init( (LocationHelper.UiCallback) activity );
   }
 
   public void onResume()
   {
     mNavMenu.onResume(null);
     mSearchWheel.onResume();
+      ComplianceController.get().start();
   }
 
   private NavMenu createNavMenu()
@@ -187,6 +190,7 @@ public class NavigationController implements TrafficManager.TrafficCallback
     AlohaHelper.logClick(AlohaHelper.ROUTING_CLOSE);
     parent.refreshFade();
     mSearchWheel.reset();
+      ComplianceController.get().stop();
   }
 
   private void updateVehicle(RoutingInfo info)

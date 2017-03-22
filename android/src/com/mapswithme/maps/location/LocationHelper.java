@@ -97,7 +97,7 @@ public enum LocationHelper
     @Override
     public void onLocationUpdated(Location location)
     {
-      mLogger.d("onLocationUpdated()");
+//      mLogger.d("onLocationUpdated()");
 
       mPredictor.onLocationUpdated(location);
 
