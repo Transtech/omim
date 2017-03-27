@@ -81,7 +81,8 @@ def getDate() {
   return formattedDate
 }
 
-project.ext.versionCodes = ['armeabi-v7a': 1, 'x86': 2]
+// project.ext.versionCodes = ['armeabi-v7a': 1, 'x86': 2]
+project.ext.versionCodes = ['armeabi-v7a': 1]
 project.ext.appId = 'com.mapswithme.maps.pro'
 
 crashlytics {
@@ -238,7 +239,8 @@ android {
   splits.abi {
     enable true
     reset()
-    include 'x86', 'armeabi-v7a'
+    //include 'x86', 'armeabi-v7a'
+    include 'armeabi-v7a'
     universalApk true
   }
 
@@ -357,7 +359,8 @@ project.ext.NDK_BUILD = android.getNdkDirectory().toString() + '/ndk-build'
 if (System.properties['os.name'].toLowerCase().contains('windows'))
   project.ext.NDK_BUILD += ".cmd"
 
-def archs = ['x86', 'armeabi-v7a-hard']
+//def archs = ['x86', 'armeabi-v7a-hard']
+def archs = ['armeabi-v7a-hard']
 def buildTypes = [[ndkType: 'release', cppType: "production", flags: propReleaseNdkFlags], [ndkType: 'debug', cppType: "debug", flags: propDebugNdkFlags]]
 
 buildTypes.each { type ->

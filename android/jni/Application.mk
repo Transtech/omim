@@ -8,7 +8,8 @@ APP_STL := c++_static
 APP_CPPFLAGS += -Wno-deprecated-register
 
 ifeq (x$(NDK_ABI_TO_BUILD), x)
-  APP_ABI := armeabi-v7a-hard x86
+#  APP_ABI := armeabi-v7a-hard x86
+  APP_ABI := armeabi-v7a-hard
 else
   APP_ABI := $(NDK_ABI_TO_BUILD)
 endif
