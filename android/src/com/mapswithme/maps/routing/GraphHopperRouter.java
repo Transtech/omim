@@ -165,8 +165,15 @@ public class GraphHopperRouter implements IRouter
         else
             Log.w( TAG, "No RouteListener registered!" );
 
+        //if we are within some threshold of the calculated route start, we replace the first entry with our
+        //current location as maps.me will just attempt to re-route if the route isn't our current loc
+        Position firstPos = (route.getPath() != null && route.getPath().size() > 0 ? route.getPath().get( 0 ) : null);
+        if( firstPos != null && RouteUtil.haversineDistance( firstPos.getLatitude(), firstPos.getLongitude(), startLat, startLon ) <= ComplianceController.OFFROUTE_THRESHOLD )
+        {
+            Log.i( TAG, "REROUTE: Replacing first route point with current location" );
+            route.getPath().set( 0, new Position( startLat, startLon ) );
+        }
         return toMwmRoute( null, route, null );
-//        return supplementJourneyIfRequired( route, startLat, startLon, finishLat, finishLon );
     }
 
     private MultiPointRoute routeOnSelectedProfile(double startLat, double startLon, double finishLat, double finishLon)
@@ -440,6 +447,18 @@ public class GraphHopperRouter implements IRouter
         return r2;
     }
 
+    private boolean isDifferrent(Segment s1, Segment s2)
+    {
+        if( s1 == null && s2 != null )
+            return true;
+        if( s2 == null && s1 != null )
+            return true;
+
+        return s1.getDirection() != s2.getDirection()
+                || !s1.getName().equals( s2.getName() )
+                || !s1.getInstruction().equals( s2.getInstruction() );
+    }
+
     private Route toMwmRoute( MultiPointRoute ghStartCar, MultiPointRoute ghRoute, MultiPointRoute ghFinishCar )
     {
         Route result = new Route();
@@ -483,7 +502,7 @@ public class GraphHopperRouter implements IRouter
                 result.path[ i++ ] = new Route.Position( pos.getLatitude(), pos.getLongitude() );
         }
 
-        Segment finishSeg = null;
+        Segment lastSeg = null, finishSeg = null;
         List<Segment> segments = new ArrayList<Segment>();
         if( ghStartCar != null )
         {
@@ -491,8 +510,11 @@ public class GraphHopperRouter implements IRouter
             {
                 for( Segment s : leg.getSegments() )
                 {
-                    if( s.getDirection() != Segment.Direction.FINISH )
+                    if( s.getDirection() != Segment.Direction.FINISH && isDifferrent(lastSeg, s) )
+                    {
                         segments.add( s );
+                        lastSeg = s;
+                    }
                 }
             }
         }
@@ -501,8 +523,11 @@ public class GraphHopperRouter implements IRouter
         {
             for( Segment s : leg.getSegments() )
             {
-                if( s.getDirection() != Segment.Direction.FINISH )
+                if( s.getDirection() != Segment.Direction.FINISH && isDifferrent(lastSeg, s) )
+                {
                     segments.add( s );
+                    lastSeg = s;
+                }
                 else
                     finishSeg = s;
             }
@@ -514,8 +539,11 @@ public class GraphHopperRouter implements IRouter
             {
                 for( Segment s : leg.getSegments() )
                 {
-                    if( s.getDirection() != Segment.Direction.FINISH )
+                    if( s.getDirection() != Segment.Direction.FINISH && isDifferrent(lastSeg, s) )
+                    {
                         segments.add( s );
+                        lastSeg = s;
+                    }
                     else
                         finishSeg = s;
                 }
@@ -548,18 +576,21 @@ public class GraphHopperRouter implements IRouter
     {
         int index = findIndex( result.path, seg.getPath() != null && seg.getPath().size() > 0 ? seg.getPath().get( 0 ) : seg.getStart() );
 
+        if( index < 0 && pos > 0 )
+            return;
+
         result.turns[ pos ] = new Route.TurnItem();
-        result.turns[ pos ].index = index;
+        result.turns[ pos ].index = Math.max( 0, index );
         result.turns[ pos ].direction = toMwmDirection( seg.getDirection() ).ordinal();
         result.turns[ pos ].sourceName = seg.getInstruction();
         result.turns[ pos ].targetName = seg.getInstruction();
 
         result.times[ pos ] = new Route.TimeItem();
-        result.times[ pos ].index = index;
-        result.times[ pos ].time = timeTotal;
+        result.times[ pos ].index = Math.max( 0, index );
+        result.times[ pos ].time = Math.max(0,timeTotal);
 
         result.streets[ pos ] = new Route.StreetItem();
-        result.streets[ pos ].index = index;
+        result.streets[ pos ].index = Math.max( 0, index );
         result.streets[ pos ].name = seg.getName();
 
         Log.i(TAG, "Add segment to MWM route: pos = " + pos + ", index= " + index + ", name = " + seg.getName() + ", direction = " + seg.getDirection().name() );
