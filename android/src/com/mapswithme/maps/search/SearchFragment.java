@@ -548,7 +548,7 @@ public class SearchFragment extends BaseMwmFragment
     mSearchAdapter.refreshData(results);
     mToolbarController.showProgress(true);
     updateFilterButton( isHotel );
-      ComplianceController.get().selectPlannedRoute( null );
+      ComplianceController.get().selectPlannedRoute( null, null );
   }
 
   @Override
@@ -562,7 +562,7 @@ public class SearchFragment extends BaseMwmFragment
   public void onCategorySelected(String category)
   {
     mToolbarController.setQuery(category);
-      ComplianceController.get().selectPlannedRoute( null );
+      ComplianceController.get().selectPlannedRoute( null, null );
 
   }
 
@@ -588,9 +588,12 @@ public class SearchFragment extends BaseMwmFragment
                 if( endLeg.getRouteSegments() != null && endLeg.getRouteSegments().size() > 0 )
                     lastSeg = endLeg.getRouteSegments().get( endLeg.getRouteSegments().size() - 1 );
 
-                ComplianceController.get().selectPlannedRoute( routeId );
+                ComplianceController.get().selectPlannedRoute( routeId, routeName );
 
-                if( firstSeg != null )
+                MapObject myPos = LocationHelper.INSTANCE.getMyPosition();
+                if( myPos != null )
+                    RoutingController.get().setStartPoint( myPos );
+                else if( firstSeg != null )
                 {
                     //AG: hack - replace the MapObject name with the route name for display purposes
                     MapObject mapObj = new MapObject( MapObject.POI, routeName, null, null,

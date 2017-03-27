@@ -62,6 +62,7 @@ public class RouteConstants {
     public static final String GROUP_ID = "GroupId";
     public static final String NETWORK = "Network";
     public static final String MODE = "Mode";
+    public static final String PARAMS = "Params";
 
     // for sync response
     public static final String DELETE = "delete";

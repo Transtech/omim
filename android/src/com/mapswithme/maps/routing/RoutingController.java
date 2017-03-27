@@ -176,7 +176,7 @@ public class RoutingController
 
   private void setState(State newState)
   {
-    mLogger.d("[S] State: " + mState + " -> " + newState + ", BuildState: " + mBuildState);
+    mLogger.d( "[S] State: " + mState + " -> " + newState + ", BuildState: " + mBuildState );
     mState = newState;
 
     if (mContainer != null)
@@ -185,7 +185,7 @@ public class RoutingController
 
   private void setBuildState(BuildState newState)
   {
-    mLogger.d("[B] State: " + mState + ", BuildState: " + mBuildState + " -> " + newState);
+    mLogger.d( "[B] State: " + mState + ", BuildState: " + mBuildState + " -> " + newState );
     mBuildState = newState;
 
 //TODO - need to fix this such that we can follow a route even if it's not our position, but is
@@ -223,8 +223,6 @@ public class RoutingController
   public void attach(@NonNull Container container)
   {
     mContainer = container;
-//    if( container instanceof LocationHelper.UiCallback )
-//        ComplianceController.get().init( (LocationHelper.UiCallback) container );
   }
 
   public void initialize()
@@ -384,26 +382,27 @@ public class RoutingController
           mLogger.d("Starting DEMO location provider for TEST only!");
           DemoLocationProvider.GPS_DATA_SOURCE = "/sdcard/MapsWithMe/Demo2.txt";
           LocationHelper.INSTANCE.setUseDemoGPS( true );
-
-          MapObject my = LocationHelper.INSTANCE.getMyPosition();
-          if (my == null)
-          {
-              mLogger.d("No MY_POSITION available");
-              return;
-          }
-          //the start point is just the start of the planned route and a POI MapObject type.
-          //The navigation won't work if we are not routing from our current location, so we check whether
-          //we're "close enough" and change the starting point to MY_POSITION instead
-          double distFromMyLoc = RouteUtil.haversineDistance(
-                  my.getLat(), my.getLon(), mStartPoint.getLat(), mStartPoint.getLon() );
-          if( distFromMyLoc <= ComplianceController.OFFROUTE_THRESHOLD * 10 )
-          {
-              mLogger.d("We are only " + distFromMyLoc + "m from the route start point - start from my location instead");
-              mStartPoint = my;
-          }
       }
       else
           mLogger.d( "Compliance controller is NOT in DEMO mode as expected!" );
+
+      MapObject my = LocationHelper.INSTANCE.getMyPosition();
+      if (my == null)
+      {
+          mLogger.d("No MY_POSITION available");
+          mRoutingListener.onRoutingEvent( ResultCodesHelper.NO_POSITION, null );
+          return;
+      }
+      //the start point is just the start of the planned route and a POI MapObject type.
+      //The navigation won't work if we are not routing from our current location, so we check whether
+      //we're "close enough" and change the starting point to MY_POSITION instead
+      double distFromMyLoc = RouteUtil.haversineDistance(
+              my.getLat(), my.getLon(), mStartPoint.getLat(), mStartPoint.getLon() );
+      if( distFromMyLoc <= ComplianceController.OFFROUTE_THRESHOLD * 3 )
+      {
+          mLogger.d("We are only " + distFromMyLoc + "m from the route start point - start from my location instead");
+          mStartPoint = my;
+      }
 
     if (!MapObject.isOfType(MapObject.MY_POSITION, mStartPoint))
     {
@@ -413,7 +412,7 @@ public class RoutingController
       suggestRebuildRoute();
       return;
     }
-
+/*
       MapObject my = LocationHelper.INSTANCE.getMyPosition();
       if (my == null)
       {
@@ -421,7 +420,7 @@ public class RoutingController
           mRoutingListener.onRoutingEvent( ResultCodesHelper.NO_POSITION, null );
           return;
       }
-
+*/
       mStartPoint = my;
     Statistics.INSTANCE.trackEvent(Statistics.EventName.ROUTING_START);
     AlohaHelper.logClick( AlohaHelper.ROUTING_START );
@@ -434,8 +433,7 @@ public class RoutingController
 
     Framework.nativeFollowRoute();
     LocationHelper.INSTANCE.restart();
-
-    ComplianceController.get().start();
+      ComplianceController.get().start( "RoutingController::start()" );
   }
 
   private void suggestRebuildRoute()
@@ -495,9 +493,6 @@ public class RoutingController
 
     setBuildState(BuildState.NONE);
     setState(State.NONE);
-
-      LocationHelper.INSTANCE.setUseDemoGPS( false );
-    ComplianceController.get().stop();
 
     ThemeSwitcher.restart();
     Framework.nativeCloseRouting();

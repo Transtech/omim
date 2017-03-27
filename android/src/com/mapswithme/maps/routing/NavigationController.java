@@ -138,7 +138,7 @@ public class NavigationController implements TrafficManager.TrafficCallback
   {
     mNavMenu.onResume(null);
     mSearchWheel.onResume();
-      ComplianceController.get().start();
+      ComplianceController.get().start("NavigationController::onResume()");
   }
 
   private NavMenu createNavMenu()
@@ -190,7 +190,7 @@ public class NavigationController implements TrafficManager.TrafficCallback
     AlohaHelper.logClick(AlohaHelper.ROUTING_CLOSE);
     parent.refreshFade();
     mSearchWheel.reset();
-      ComplianceController.get().stop();
+      ComplianceController.get().stop("NavigationController::stop()");
   }
 
   private void updateVehicle(RoutingInfo info)

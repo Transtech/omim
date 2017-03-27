@@ -88,6 +88,7 @@ public interface SettingConstants
 
     static final String ROUTE_NETWORK = "route.network";
     static final String ROUTE_ALERT_REPEAT_DUR = "route.alert.repeat.dur";
+    static final String ROUTE_CURRENT = "route.current";
 
     //////////////////////////////////////////////////////////////////////////////////////////
 
