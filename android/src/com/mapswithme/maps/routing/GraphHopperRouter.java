@@ -168,7 +168,8 @@ public class GraphHopperRouter implements IRouter
         //if we are within some threshold of the calculated route start, we replace the first entry with our
         //current location as maps.me will just attempt to re-route if the route isn't our current loc
         Position firstPos = (route.getPath() != null && route.getPath().size() > 0 ? route.getPath().get( 0 ) : null);
-        if( firstPos != null && RouteUtil.haversineDistance( firstPos.getLatitude(), firstPos.getLongitude(), startLat, startLon ) <= ComplianceController.OFFROUTE_THRESHOLD )
+        if( firstPos != null && route.getPath().size() > 2 &&
+                RouteUtil.haversineDistance( firstPos.getLatitude(), firstPos.getLongitude(), startLat, startLon ) <= ComplianceController.OFFROUTE_THRESHOLD )
         {
             Log.i( TAG, "REROUTE: Replacing first route point with current location" );
             route.getPath().set( 0, new Position( startLat, startLon ) );
