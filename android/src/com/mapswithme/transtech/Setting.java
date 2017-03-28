@@ -480,7 +480,7 @@ public class Setting implements Parcelable
         final String source = record.getSource();
 
         Setting existing = getSettingRecord( context, Environment.valueOf( env ), Scope.valueOf( scope ), key );
-        if( existing != null && !existing.getValue().equals( value ) )
+        if( existing != null )
         {
             ContentValues values = new ContentValues();
             values.put( Setting.VALUE, record.getValue() );

@@ -377,14 +377,12 @@ public class RoutingController
   {
     mLogger.d( "start" );
 
-      if( ComplianceController.DEMO_MODE )
+      if( DemoLocationProvider.DEMO_MODE )
       {
           mLogger.d("Starting DEMO location provider for TEST only!");
           DemoLocationProvider.GPS_DATA_SOURCE = "/sdcard/MapsWithMe/Demo2.txt";
           LocationHelper.INSTANCE.setUseDemoGPS( true );
       }
-      else
-          mLogger.d( "Compliance controller is NOT in DEMO mode as expected!" );
 
       MapObject my = LocationHelper.INSTANCE.getMyPosition();
       if (my == null)
@@ -398,7 +396,7 @@ public class RoutingController
       //we're "close enough" and change the starting point to MY_POSITION instead
       double distFromMyLoc = RouteUtil.haversineDistance(
               my.getLat(), my.getLon(), mStartPoint.getLat(), mStartPoint.getLon() );
-      if( distFromMyLoc <= ComplianceController.OFFROUTE_THRESHOLD * 3 )
+      if( distFromMyLoc <= ComplianceController.OFFROUTE_THRESHOLD * 2 )
       {
           mLogger.d("We are only " + distFromMyLoc + "m from the route start point - start from my location instead");
           mStartPoint = my;

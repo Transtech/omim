@@ -26,6 +26,7 @@ public class DemoLocationProvider extends BaseLocationProvider
     private static final String TAG = "DemoLocationProvider";
     public static String GPS_DATA_SOURCE = "/sdcard/MapsWithMe/GpsData.txt";
     public static boolean LOOP = false;
+    public static boolean DEMO_MODE = false;
 
     /**
      * Conversion factor converting MPS to KNOTS.
@@ -83,6 +84,23 @@ public class DemoLocationProvider extends BaseLocationProvider
     DemoLocationProvider( String fileName )
     {
         setDataSource( fileName );
+    }
+
+    private DemoLocationProvider( int ignored )
+    {
+    }
+
+    public static void setLocation( double lat, double lng )
+    {
+        MockLocation fakeLoc = new MockLocation( "DemoLocationProvider" );
+        fakeLoc.setLatitude( lat );
+        fakeLoc.setLongitude( lng );
+        fakeLoc.setTime( System.currentTimeMillis() );
+        fakeLoc.setSpeed( 0.0f );
+        fakeLoc.setBearing( 0.0f );
+        fakeLoc.setAltitude( 0.0f );
+
+        new DemoLocationProvider( 0 ).sendUpdatedLocation( fakeLoc );
     }
 
     @Override

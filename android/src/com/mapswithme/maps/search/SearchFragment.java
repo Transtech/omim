@@ -569,14 +569,14 @@ public class SearchFragment extends BaseMwmFragment
     @Override
     public void onRouteSelected(int routeId, String routeName)
     {
-        Log.i( "SmartNav2_SearchFragment", "Selected route: " + routeId + " - " + routeName );
+        Log.i( "SearchFragment", "Selected route: " + routeId + " - " + routeName );
         RouteTrip trip = RouteUtil.findById( getActivity(), routeId );
         if( trip != null )
         {
             //legs are expected to be in order after this call...
             List<RouteLeg> legs = RouteUtil.findLegsByTripId( getActivity(), routeId );
 
-            Log.i( "SmartNav2_SearchFragment", "There are " + legs.size() + " legs on route " + routeId );
+            Log.i( "SearchFragment", "There are " + legs.size() + " legs on route " + routeId );
             if( legs.size() > 0 )
             {
                 RouteLeg startLeg = legs.get(0);

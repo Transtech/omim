@@ -1086,4 +1086,6 @@
     <string name="pref_vehicle_height_summary">Height of vehicle in metres</string>
     <string name="pref_vehicle_weight_title">Weight (tonnes)</string>
     <string name="pref_vehicle_weight_summary">Weight of vehicle in tonnes</string>
+
+	<string name="message_restart_planned_route">A planned route is in progress and will be restarted</string>
 </resources>

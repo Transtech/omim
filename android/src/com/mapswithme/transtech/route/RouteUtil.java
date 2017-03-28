@@ -19,7 +19,7 @@ import java.util.List;
  */
 public class RouteUtil
 {
-    private static final String TAG = "SmartNav2_RouteUtil";
+    private static final String TAG = "RouteUtil";
 
     public static List<RouteTrip> findSelectedRoutes(Context ctx)
     {

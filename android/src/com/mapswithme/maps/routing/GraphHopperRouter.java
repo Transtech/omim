@@ -26,7 +26,7 @@ import java.util.List;
  */
 public class GraphHopperRouter implements IRouter
 {
-    private static final String TAG = "SmartNav2_GraphHopper";
+    private static final String TAG = "GraphHopper";
     private static final String GRAPHHOPPER_PATH = "heavy-vehicle-gh";
 
     public static final String NETWORK_CAR = "car";
@@ -88,11 +88,24 @@ public class GraphHopperRouter implements IRouter
 
             geoEngine = new GeoEngine( path + GRAPHHOPPER_PATH );
             geoEngine.setInMemory( false );
-//            Log.i( TAG, "PRE loading Graphopper data");
             geoEngine.loadGraph();
-//            Log.i( TAG, "POST loading Graphopper data");
         }
         return geoEngine;
+    }
+
+    public void setPlannedRouteId( Integer routeId )
+    {
+        if( routeId == null || plannedRouteId != routeId )
+            originalPlannedRoute = null;
+
+        plannedRouteId = routeId;
+        if( plannedRouteId != null )
+            originalPlannedRoute = constructPreplannedRoute( plannedRouteId.intValue() );
+    }
+
+    public MultiPointRoute getPlannedRoute()
+    {
+        return originalPlannedRoute;
     }
 
     public void setListener( RouteListener listener )
@@ -126,8 +139,7 @@ public class GraphHopperRouter implements IRouter
         if( plannedRouteId != null && plannedRouteId.intValue() > 0 )
         {
             Log.i( TAG, "Returning pre-planned route ID '" + plannedRouteId + "'");
-            route = constructPreplannedRoute( plannedRouteId.intValue() );
-            originalPlannedRoute = route;
+            route = originalPlannedRoute;
         }
         else if( routerType != Framework.ROUTER_TYPE_EXTERNAL )
             route = routeByCar(startLat, startLon, finishLat, finishLon);
@@ -735,13 +747,5 @@ public class GraphHopperRouter implements IRouter
         i = 0;
         for(Route.StreetItem st : route.streets)
             Log.d(TAG, "Street[" + (i++) + "] - i:" + st.index + ",n:" + st.name );
-    }
-
-    public void setPlannedRouteId( Integer routeId )
-    {
-        if( routeId == null || plannedRouteId != routeId )
-            originalPlannedRoute = null;
-
-        plannedRouteId = routeId;
     }
 }

@@ -13,9 +13,11 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 import au.net.transtech.geo.model.MultiPointRoute;
+import au.net.transtech.geo.model.Position;
 import au.net.transtech.geo.model.VehicleProfile;
 import com.mapswithme.maps.Framework;
 import com.mapswithme.maps.R;
+import com.mapswithme.maps.bookmarks.data.MapObject;
 import com.mapswithme.maps.location.DemoLocationProvider;
 import com.mapswithme.maps.location.LocationHelper;
 import com.mapswithme.maps.location.LocationListener;
@@ -46,9 +48,9 @@ import java.util.UUID;
  */
 public class ComplianceController implements LocationListener, GraphHopperRouter.RouteListener
 {
-    private static final String TAG = "SmartNav2_ComplianceController";
+    private static final String TAG = "ComplianceController";
 
-    private static final long CHECK_FREQUENCY_MS = 3000L; //check network compliance frequency
+    private static final long CHECK_FREQUENCY_MS = 5000L; //check network compliance frequency
     private static final long NOTIFY_FREQUENCY_MS = 10000L; //check network compliance frequency
     public static final double OFFROUTE_THRESHOLD = 150.0;  //150 metres
 
@@ -81,10 +83,8 @@ public class ComplianceController implements LocationListener, GraphHopperRouter
     private GraphHopperRouter ghRouter;
     private int currentRouterType = Framework.ROUTER_TYPE_EXTERNAL;
     private Integer plannedRouteId;
-    private MultiPointRoute currentRoute;
     private List<RouteGeofence> geofences;
-
-    static boolean DEMO_MODE = false;
+    private int rerouteCount = 0;
 
     private static enum ComplianceState
     {
@@ -95,10 +95,11 @@ public class ComplianceController implements LocationListener, GraphHopperRouter
 
     private ComplianceState complianceState = ComplianceState.UNKNOWN;
 
-    public void init(final LocationHelper.UiCallback callback)
+    public String init( final LocationHelper.UiCallback callback )
     {
         this.callback = callback;
         requestedMode = defaultMode;
+        rerouteCount = 0;
 
         String imei = Setting.getString( callback.getActivity(),
                 Setting.Environment.ALL,
@@ -108,7 +109,10 @@ public class ComplianceController implements LocationListener, GraphHopperRouter
 
         Log.i( TAG, "Retrieved IMEI is " + imei );
 //        if( !TextUtils.isEmpty( imei ) && "358683065071954".equals( imei ) ) //GOUGHY TEST
-//            DEMO_MODE = true;
+//        {
+//            DemoLocationProvider.DEMO_MODE = true;
+//            DemoLocationProvider.setLocation( -37.8496619, 145.0684303 );
+//        }
 
         //trigger GraphHopper initialisation
         ThreadPool.getWorker().submit( new Runnable()
@@ -123,9 +127,11 @@ public class ComplianceController implements LocationListener, GraphHopperRouter
                         ? ComplianceMode.NONE
                         : ComplianceMode.NETWORK_ADHERENCE );
 
-                router.setListener(INSTANCE);
+                router.setListener( INSTANCE );
             }
         } );
+
+        return null;
     }
 
     public GraphHopperRouter getRouter( Context context )
@@ -141,8 +147,8 @@ public class ComplianceController implements LocationListener, GraphHopperRouter
     {
         GraphHopperRouter.RouteListener.Response response = Response.SUCCESS;
 
-        if( currentRoute == null )
-            currentRoute = route;
+        if( rerouteCount++ == 0 )
+            ; //do nothing
         else if( currentMode == ComplianceMode.ROUTE_COMPLIANCE )
         {
             RouteOffset offset = checkPositionAgainstRoute( lastLoc.getLatitude(), lastLoc.getLongitude() );
@@ -171,10 +177,9 @@ public class ComplianceController implements LocationListener, GraphHopperRouter
 
     public void selectPlannedRoute( Integer routeId, String routeName )
     {
-        if( currentRoute != null )
-            stop("ComplianceController::selectPlannedRoute()");
+        if( ghRouter.getPlannedRoute() != null )
+            stop( "ComplianceController::selectPlannedRoute()" );
 
-        currentRoute = null;
         plannedRouteId = routeId;
 
         if( currentRouterType == Framework.ROUTER_TYPE_EXTERNAL && routeId != null )
@@ -182,14 +187,12 @@ public class ComplianceController implements LocationListener, GraphHopperRouter
             ghRouter.setPlannedRouteId( routeId );
             Log.i( TAG, "Setting selected planned route to trip: " + routeId );
             requestedMode = ComplianceMode.ROUTE_COMPLIANCE;
-
-
         }
         else
             requestedMode = defaultMode;
     }
 
-    public boolean setNetworkProfile(String profile)
+    public boolean setNetworkProfile( String profile )
     {
         Log.i( TAG, "Network profile is: " + profile );
         if( ghRouter != null )
@@ -208,47 +211,67 @@ public class ComplianceController implements LocationListener, GraphHopperRouter
         defaultMode = mode;
     }
 
-    public ComplianceMode getDefaultMode() { return defaultMode; }
-    public ComplianceMode getRequestedMode() { return requestedMode; }
-    public ComplianceMode getCurrentMode() { return currentMode; }
+    public ComplianceMode getDefaultMode()
+    {
+        return defaultMode;
+    }
 
-    public void start(String where)
+    public ComplianceMode getRequestedMode()
+    {
+        return requestedMode;
+    }
+
+    public ComplianceMode getCurrentMode()
+    {
+        return currentMode;
+    }
+
+    public void start( String where )
     {
         Log.i( TAG, "ComplianceController::start() called from " + where + ". Starting a " + currentMode + " trip: groupId " + groupId );
 
         if( plannedRouteId == null )
         {
-            final String plannedId = Setting.getString( callback.getActivity(),
+            final String previousRoute = Setting.getString( callback.getActivity(),
                     Setting.currentEnvironment( callback.getActivity() ),
                     Setting.Scope.SMARTNAV2,
                     SettingConstants.ROUTE_CURRENT,
                     "" );
 
-            if( !TextUtils.isEmpty( plannedId ) )
+            if( !TextUtils.isEmpty( previousRoute ) )
             {
                 try
                 {
-                    selectPlannedRoute( Integer.parseInt( plannedId ), "Restarting" );
-                    Log.i( TAG, "We were in the middle of planned route " + plannedId + " - restarting" );
+                    JSONObject obj = new JSONObject( previousRoute );
+                    final int plannedId = obj.optInt( "id", 0 );
+                    final double endLat = obj.optDouble( "endLat", 0.0 );
+                    final double endLng = obj.optDouble( "endLng", 0.0 );
+                    final String grpId = obj.optString( "groupId" );
 
-                    showToast( "RouteCompliance", "Resuming planned route " + plannedId, Color.parseColor( "#FF276FC6" ) );
-/*
-                    final Intent intent = new Intent(callback.getActivity(), MwmActivity.class);
-                    intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
-                    intent.putExtra( MwmActivity.EXTRA_TASK, new MwmActivity.MapTask() {
+                    if( plannedId > 0 )
+                    {
+                        groupId = UUID.fromString( grpId );
+                        selectPlannedRoute( plannedId, "Restarting" );
+                        Log.i( TAG, "We were in the middle of planned route " + plannedId + " - restarting" );
 
-                        @Override
-                        public boolean run( MwmActivity target )
+                        UiThread.runLater( new Runnable()
                         {
-                            RoutingController.get().start();
-                            return true;
-                        }
-                    });
-                    callback.getActivity().startActivity( intent );
-                    return;
-*/
+                            @Override
+                            public void run()
+                            {
+                                showToast( "RouteCompliance", "Resuming planned route " + plannedId,
+                                        Color.parseColor( "#FF276FC6" ) );
+
+                                Log.i( TAG, "ComplianceController::start() Calling RoutingController::start() for planned route " + plannedId );
+                                RoutingController.get().setEndPoint( new MapObject( MapObject.POI, "", null, null,
+                                        endLat, endLng, null, null, false ) );
+                                RoutingController.get().start();
+                            }
+                        }, 2000 );
+                        return;
+                    }
                 }
-                catch( NumberFormatException nfe )
+                catch( Exception e )
                 {
                 }
             }
@@ -264,18 +287,21 @@ public class ComplianceController implements LocationListener, GraphHopperRouter
         complianceState = ComplianceState.ON_ROUTE; //benefit of the doubt
         LocationHelper.INSTANCE.addListener( this, false );
         lastTts = 0L;
+        rerouteCount = 0;
 
         if( requestedMode != ComplianceMode.NONE && (currentMode != requestedMode || groupId == null) )
         {
             currentMode = requestedMode;
 
-            groupId = UUID.randomUUID();
+            if( groupId == null )
+                groupId = UUID.randomUUID();
+
             Log.i( TAG, "ComplianceController::start() starting a " + currentMode + " trip: groupId " + groupId );
 
             switch( currentMode )
             {
                 case ROUTE_COMPLIANCE:
-                    startRouteComplianceTrip();
+                    startRouteComplianceTrip( groupId );
                     break;
 
                 case NETWORK_ADHERENCE:
@@ -290,10 +316,11 @@ public class ComplianceController implements LocationListener, GraphHopperRouter
         }
     }
 
-    public void stop(String where)
+    public void stop( String where )
     {
         complianceState = ComplianceState.UNKNOWN;
         lastTts = 0L;
+        rerouteCount = 0;
 
         Log.i( TAG, "ComplianceController::stop() called from " + where + ". Stopping " + currentMode + " trip: groupId " + groupId );
         if( ghRouter != null && groupId != null )
@@ -322,21 +349,42 @@ public class ComplianceController implements LocationListener, GraphHopperRouter
         groupId = null;
     }
 
-    private void startRouteComplianceTrip()
+    private void startRouteComplianceTrip( UUID groupId )
     {
         ghRouter.setPlannedRouteId( plannedRouteId );
         tripEvent( RouteConstants.MESSAGE_TYPE_TRIP_STARTED,
                 RouteConstants.SUB_TYPE_ROUTE_PLANNED, null );
         geofences = RouteUtil.findTripGeofences( callback.getActivity(), plannedRouteId.intValue() );
 
-        //persist the current route compliance trip id...
-        Setting.setString( callback.getActivity(),
-                Setting.currentEnvironment( callback.getActivity() ),
-                Setting.Scope.SMARTNAV2,
-                SettingConstants.ROUTE_CURRENT,
-                String.valueOf( plannedRouteId),
-                Setting.Origin.LOCAL,
-                "ComplianceController" );
+        Position lastPos = null;
+        if( ghRouter.getPlannedRoute() != null
+                && ghRouter.getPlannedRoute().getPath() != null
+                && ghRouter.getPlannedRoute().getPath().size() > 0 )
+        {
+            lastPos = ghRouter.getPlannedRoute().getPath().get( ghRouter.getPlannedRoute().getPath().size() - 1 );
+        }
+
+        try
+        {
+            JSONObject obj = new JSONObject();
+            obj.put( "id", plannedRouteId );
+            obj.put( "groupId", groupId.toString() );
+            obj.put( "endLat", lastPos == null ? JSONObject.NULL : lastPos.getLatitude() );
+            obj.put( "endLat", lastPos == null ? JSONObject.NULL : lastPos.getLongitude() );
+
+            //persist the current route compliance trip id...
+            Setting.setString( callback.getActivity(),
+                    Setting.currentEnvironment( callback.getActivity() ),
+                    Setting.Scope.SMARTNAV2,
+                    SettingConstants.ROUTE_CURRENT,
+                    obj.toString(),
+                    Setting.Origin.LOCAL,
+                    "ComplianceController" );
+        }
+        catch( JSONException e )
+        {
+        }
+
     }
 
     private void stopRouteComplianceTrip()
@@ -345,6 +393,7 @@ public class ComplianceController implements LocationListener, GraphHopperRouter
                 RouteConstants.SUB_TYPE_ROUTE_PLANNED, null );
         ghRouter.setPlannedRouteId( null );
         geofences.clear();
+        groupId = null;
 
         Setting.setString( callback.getActivity(),
                 Setting.currentEnvironment( callback.getActivity() ),
@@ -410,6 +459,10 @@ public class ComplianceController implements LocationListener, GraphHopperRouter
         if( lastLoc == null )
             return true;
 
+        //network adherence takes a _lot_ more effort, so do it less...
+        if( currentMode == ComplianceMode.NETWORK_ADHERENCE )
+            return loc.getTime() - lastLoc.getTime() > CHECK_FREQUENCY_MS * 4;
+
         return loc.getTime() - lastLoc.getTime() > CHECK_FREQUENCY_MS;
     }
 
@@ -429,7 +482,8 @@ public class ComplianceController implements LocationListener, GraphHopperRouter
             case ROUTE_COMPLIANCE:
                 //check whether we are off route by seeing if we are within threshold distance or
                 // in _any_ of the trips geofences...
-                offset = RouteUtil.distanceFromPath( fromLat, fromLon, currentRoute == null ? null : currentRoute.getPath() );
+                offset = RouteUtil.distanceFromPath( fromLat, fromLon,
+                        ghRouter.getPlannedRoute() == null ? null : ghRouter.getPlannedRoute().getPath() );
                 offset.geofenceCount = countInsideGeofences( fromLat, fromLon );
                 Log.i( TAG, "Checking route compliance: current pos [" + fromLat + "," + fromLon + "] nearest point is ["
                         + (offset.nearestPoint == null ? "???" : offset.nearestPoint.getLatitude())
@@ -455,7 +509,7 @@ public class ComplianceController implements LocationListener, GraphHopperRouter
         if( geofences == null || geofences.size() == 0 )
             return 0;
 
-        GeoPoint pos = new GeoPoint(lat, lng);
+        GeoPoint pos = new GeoPoint( lat, lng );
         int numInside = 0;
         for( RouteGeofence gf : geofences )
         {

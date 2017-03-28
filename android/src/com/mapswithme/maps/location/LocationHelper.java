@@ -467,8 +467,8 @@ public enum LocationHelper
   @android.support.annotation.UiThread
   public void addListener(LocationListener listener, boolean forceUpdate)
   {
-    mLogger.d("addListener(): " + listener + ", forceUpdate: " + forceUpdate);
-    mLogger.d(" - listener count was: " + mListeners.getSize());
+//    mLogger.d("addListener(): " + listener + ", forceUpdate: " + forceUpdate);
+//    mLogger.d(" - listener count was: " + mListeners.getSize());
 
     UiThread.cancelDelayedTasks(mStopLocationTask);
 
