@@ -607,10 +607,10 @@ public enum LocationHelper
 
     boolean oldHighAccuracy = mHighAccuracy;
     long oldInterval = mInterval;
-    mLogger.d("restart. Old params: " + oldInterval + " / " + (oldHighAccuracy ? "high" : "normal"));
+//    mLogger.d("restart. Old params: " + oldInterval + " / " + (oldHighAccuracy ? "high" : "normal"));
 
     calcParams();
-    mLogger.d("New params: " + mInterval + " / " + (mHighAccuracy ? "high" : "normal"));
+//    mLogger.d("New params: " + mInterval + " / " + (mHighAccuracy ? "high" : "normal"));
 
     if (mHighAccuracy != oldHighAccuracy || mInterval != oldInterval)
     {

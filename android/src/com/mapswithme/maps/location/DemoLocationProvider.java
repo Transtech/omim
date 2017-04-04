@@ -305,7 +305,7 @@ public class DemoLocationProvider extends BaseLocationProvider
 
                 long delay = 250;
                 if( mockLoc != null && prevLoc != null )
-                    delay = Math.min(Math.max( Math.abs( mockLoc.getTime() - prevLoc.getTime() ) / 4, 250), 1000);
+                    delay = Math.min(Math.max( Math.abs( mockLoc.getTime() - prevLoc.getTime() ) / 4, 500), 1000);
 
                 try
                 {
