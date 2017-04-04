@@ -379,7 +379,7 @@ public class RoutingController
 
       if( DemoLocationProvider.DEMO_MODE )
       {
-          mLogger.d("Starting DEMO location provider for TEST only!");
+//          mLogger.d("Starting DEMO location provider for TEST only!");
           DemoLocationProvider.GPS_DATA_SOURCE = "/sdcard/MapsWithMe/Demo2.txt";
           LocationHelper.INSTANCE.setUseDemoGPS( true );
       }

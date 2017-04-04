@@ -739,7 +739,7 @@ public:
   void SetLastUsedRouter(routing::RouterType type);
   /// Returns the most situable router engine type. Bases on distance and the last used router.
   routing::RouterType GetBestRouter(m2::PointD const & startPoint, m2::PointD const & finalPoint);
-  void SetExternalRouter(routing::IRouter * router) { m_externalRouter = router; SetRouterImpl(routing::RouterType::External); }
+  void SetExternalRouter(routing::IRouter * router) { m_externalRouter = router; }
   // Sound notifications for turn instructions.
   inline void EnableTurnNotifications(bool enable) { m_routingSession.EnableTurnNotifications(enable); }
   inline bool AreTurnNotificationsEnabled() const { return m_routingSession.AreTurnNotificationsEnabled(); }

@@ -23,6 +23,7 @@ public class Route
         public String sourceName;            /*!< Name of the street which the ingoing edge belongs to */
         public String targetName;            /*!< Name of the street which the outgoing edge belongs to */
         public boolean keepAnyway;
+        public String instruction;
 //        vector<SingleLaneInfo> m_lanes; /*!< Lane information on the edge before the turn. */
     }
 

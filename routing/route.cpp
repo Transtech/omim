@@ -218,7 +218,7 @@ bool Route::GetCurrentTurn(double & distanceToTurnMeters, turns::TurnItem & turn
   auto it = GetCurrentTurn();
   if (it == m_turns.end())
   {
-    ASSERT(false, ());
+//    ASSERT(false, ());
     return false;
   }
 
@@ -233,7 +233,9 @@ bool Route::GetNextTurn(double & distanceToTurnMeters, turns::TurnItem & turn) c
 {
   auto it = GetCurrentTurn();
   auto const turnsEnd = m_turns.end();
-  ASSERT(it != turnsEnd, ());
+  if(it == turnsEnd)
+      return false;
+//  ASSERT(it != turnsEnd, ());
 
   if (it == turnsEnd || (it + 1) == turnsEnd)
   {

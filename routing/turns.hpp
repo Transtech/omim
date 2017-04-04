@@ -194,6 +194,7 @@ struct TurnItem
    * if there is no pedestrian specific direction
    */
   PedestrianDirection m_pedestrianTurn;
+  string m_instruction;
 };
 
 string DebugPrint(TurnItem const & turnItem);

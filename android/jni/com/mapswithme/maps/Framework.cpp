@@ -929,13 +929,17 @@ Java_com_mapswithme_maps_Framework_nativeGetRouteFollowingInfo(JNIEnv * env, jcl
 {
   ::Framework * fr = frm();
   if (!fr->IsRoutingActive())
+  {
+    LOG(LDEBUG, ("Routing is not active?!"));
     return nullptr;
-
+  }
   location::FollowingInfo info;
   fr->GetRouteFollowingInfo(info);
   if (!info.IsValid())
+  {
+    LOG(LDEBUG, ("Routing info is not valid?!"));
     return nullptr;
-
+  }
   static jclass const klass = jni::GetGlobalClassRef(env, "com/mapswithme/maps/routing/RoutingInfo");
   // Java signature : RoutingInfo(String distToTarget, String units, String distTurn, String turnSuffix, String currentStreet, String nextStreet,
   //                              double completionPercent, int vehicleTurnOrdinal, int vehicleNextTurnOrdinal, int pedestrianTurnOrdinal,
@@ -943,7 +947,7 @@ Java_com_mapswithme_maps_Framework_nativeGetRouteFollowingInfo(JNIEnv * env, jcl
   static jmethodID const ctorRouteInfoID = jni::GetConstructorID(env, klass,
                                                "(Ljava/lang/String;Ljava/lang/String;"
                                                "Ljava/lang/String;Ljava/lang/String;"
-                                               "Ljava/lang/String;Ljava/lang/String;DIIIDDII"
+                                               "Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;DIIIDDIII"
                                                "[Lcom/mapswithme/maps/routing/SingleLaneInfo;)V");
 
   vector<location::FollowingInfo::SingleLaneInfoClient> const & lanes = info.m_lanes;
@@ -973,8 +977,8 @@ Java_com_mapswithme_maps_Framework_nativeGetRouteFollowingInfo(JNIEnv * env, jcl
       klass, ctorRouteInfoID, jni::ToJavaString(env, info.m_distToTarget),
       jni::ToJavaString(env, info.m_targetUnitsSuffix), jni::ToJavaString(env, info.m_distToTurn),
       jni::ToJavaString(env, info.m_turnUnitsSuffix), jni::ToJavaString(env, info.m_sourceName),
-      jni::ToJavaString(env, info.m_targetName), info.m_completionPercent, info.m_turn, info.m_nextTurn, info.m_pedestrianTurn,
-      info.m_pedestrianDirectionPos.lat, info.m_pedestrianDirectionPos.lon, info.m_exitNum, info.m_time, jLanes);
+      jni::ToJavaString(env, info.m_targetName), jni::ToJavaString(env, info.m_instruction), info.m_completionPercent, info.m_turn, info.m_nextTurn, info.m_pedestrianTurn,
+      info.m_pedestrianDirectionPos.lat, info.m_pedestrianDirectionPos.lon, info.m_exitNum, info.m_time, info.m_index, jLanes);
   ASSERT(result, (jni::DescribeException()));
   return result;
 }

@@ -45,14 +45,14 @@ void GetTtsText::ForTestingSetLocaleWithJson(string const & jsonBuffer, string c
   m_getCurLang = platform::ForTestingGetTextByIdFactory(jsonBuffer, locale);
 }
 
-string GetTtsText::operator()(Notification const & notification) const
+string GetTtsText::operator()(Notification const & notification, const string & fallbackInstr) const
 {
   if (notification.m_distanceUnits == 0 && !notification.m_useThenInsteadOfDistance)
-    return GetTextById(GetDirectionTextId(notification));
+    return fallbackInstr.length() > 0 ? fallbackInstr : GetTextById(GetDirectionTextId(notification));
   if (notification.m_useThenInsteadOfDistance && notification.m_turnDir == TurnDirection::NoTurn)
     return string();
 
-  string const dirStr = GetTextById(GetDirectionTextId(notification));
+  string const dirStr = fallbackInstr.length() > 0 ? fallbackInstr : GetTextById(GetDirectionTextId(notification));
   if (dirStr.empty())
     return string();
 

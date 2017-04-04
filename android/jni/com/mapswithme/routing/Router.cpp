@@ -28,6 +28,7 @@ jfieldID fExitNum;
 jfieldID fSource;
 jfieldID fTarget;
 jfieldID fKeep;
+jfieldID fInstruction;
 
 jclass timeClass;
 jfieldID fIndex2;
@@ -99,6 +100,8 @@ Router::Router(jobject obj)
     ASSERT(fTarget, (jni::DescribeException()));
     fKeep = env->GetFieldID(turnClass, "keepAnyway", "Z");
     ASSERT(fKeep, (jni::DescribeException()));
+    fInstruction = env->GetFieldID(turnClass, "instruction", "Ljava/lang/String;");
+    ASSERT(fInstruction, (jni::DescribeException()));
 
     fIndex2 = env->GetFieldID(timeClass, "index", "I");
     ASSERT(fIndex2, (jni::DescribeException()));
@@ -265,9 +268,13 @@ IRouter::ResultCode Router::CalculateRoute(m2::PointD const & startPoint,
             jstring jsTarget = (jstring) env->GetObjectField(jTurnObj, fTarget);
             ti.m_targetName = jni::ToNativeString(env, jsTarget);
 
+            jstring jsInstr = (jstring) env->GetObjectField(jTurnObj, fInstruction);
+            ti.m_instruction = jni::ToNativeString(env, jsInstr);
+
             ti.m_keepAnyway = env->GetBooleanField(jTurnObj, fKeep);
             env->DeleteLocalRef(jsSource);
             env->DeleteLocalRef(jsTarget);
+            env->DeleteLocalRef(jsInstr);
             env->DeleteLocalRef(jTurnObj);
 
             turnsDir.push_back( ti );

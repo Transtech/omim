@@ -72,7 +72,7 @@ dependencies {
   compile 'com.graphhopper:graphhopper-core:0.9-SNAPSHOT'
   compile 'com.graphhopper:graphhopper-reader-overlay-data:0.9-SNAPSHOT'
   compile 'com.graphhopper:graphhopper-reader-osm:0.9-SNAPSHOT'
-  compile 'au.net.transtech.geo:geo-engine:1.1-SNAPSHOT'
+  compile 'au.net.transtech.geo:geo-engine:1.2-SNAPSHOT'
 }
 
 def getDate() {

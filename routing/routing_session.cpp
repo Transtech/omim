@@ -316,6 +316,8 @@ void RoutingSession::GetRouteFollowingInfo(FollowingInfo & info) const
     info.m_nextTurn = routing::turns::TurnDirection::NoTurn;
 
   info.m_exitNum = turn.m_exitNum;
+  info.m_index = turn.m_index;
+  info.m_instruction = turn.m_instruction;
   info.m_time = max(kMinimumETASec, m_route->GetCurrentTimeToEndSec());
   m_route->GetCurrentStreetName(info.m_sourceName);
   m_route->GetStreetNameAfterIdx(turn.m_index, info.m_targetName);

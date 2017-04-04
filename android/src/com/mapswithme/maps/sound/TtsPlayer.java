@@ -7,16 +7,15 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
 import android.util.Log;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-
 import com.mapswithme.maps.Framework;
 import com.mapswithme.maps.MwmApplication;
 import com.mapswithme.maps.R;
 import com.mapswithme.util.Config;
 import com.mapswithme.util.statistics.Statistics;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 
 /**
  * {@code TtsPlayer} class manages available TTS voice languages.
@@ -184,8 +183,13 @@ public enum TtsPlayer
     final String[] turnNotifications = Framework.nativeGenerateTurnNotifications();
 
     if (turnNotifications != null && isReady())
-      for (String textToSpeak : turnNotifications)
-        speak(textToSpeak);
+    {
+      for( String textToSpeak : turnNotifications )
+      {
+        Log.d("TtsPlayer", "TTS: \"" + textToSpeak + "\"");
+        speak( textToSpeak );
+      }
+    }
   }
 
     public void sayThis(String text)

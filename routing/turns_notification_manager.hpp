@@ -101,7 +101,7 @@ class NotificationManager
   uint32_t m_secondTurnNotificationIndex;
 
   string GenerateTurnText(uint32_t distanceUnits, uint8_t exitNum, bool useThenInsteadOfDistance,
-                          TurnDirection turnDir, measurement_utils::Units lengthUnits) const;
+                          TurnDirection turnDir, measurement_utils::Units lengthUnits, const string instruction) const;
   /// Generates turn sound notification for the nearest to the current position turn.
   string GenerateFirstTurnSound(TurnItem const & turn, double distanceToTurnMeters);
   /// Changes the state of the class to emulate that first turn notification is pronouned

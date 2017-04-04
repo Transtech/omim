@@ -31,6 +31,9 @@ public class RoutingInfo
   public final PedestrianTurnDirection pedestrianTurnDirection;
   public final Location pedestrianNextDirection;
 
+  public final int index;
+  public final String instruction;
+
   /**
    * IMPORTANT : Order of enum values MUST BE the same as native TurnDirection enum.
    */
@@ -126,9 +129,9 @@ public class RoutingInfo
     SHARP_RIGHT
   }
 
-  public RoutingInfo(String distToTarget, String units, String distTurn, String turnSuffix, String currentStreet, String nextStreet, double completionPercent,
+  public RoutingInfo(String distToTarget, String units, String distTurn, String turnSuffix, String currentStreet, String nextStreet, String instruction, double completionPercent,
                      int vehicleTurnOrdinal, int vehicleNextTurnOrdinal, int pedestrianTurnOrdinal, double pedestrianDirectionLat, double pedestrianDirectionLon, int exitNum,
-                     int totalTime, SingleLaneInfo[] lanes)
+                     int totalTime, int index, SingleLaneInfo[] lanes)
   {
     this.distToTarget = distToTarget;
     this.targetUnits = units;
@@ -142,6 +145,8 @@ public class RoutingInfo
     this.vehicleNextTurnDirection = VehicleTurnDirection.values()[vehicleNextTurnOrdinal];
     this.lanes = lanes;
     this.exitNum = exitNum;
+    this.index = index;
+    this.instruction = instruction;
     this.pedestrianTurnDirection = PedestrianTurnDirection.values()[pedestrianTurnOrdinal];
     this.pedestrianNextDirection = new Location("");
     this.pedestrianNextDirection.setLatitude(pedestrianDirectionLat);

@@ -32,11 +32,11 @@ namespace sound
 {
 string NotificationManager::GenerateTurnText(uint32_t distanceUnits, uint8_t exitNum,
                                              bool useThenInsteadOfDistance, TurnDirection turnDir,
-                                             measurement_utils::Units lengthUnits) const
+                                             measurement_utils::Units lengthUnits, const string instruction) const
 {
   Notification const notification(distanceUnits, exitNum, useThenInsteadOfDistance, turnDir,
                                   lengthUnits);
-  return m_getTtsText(notification);
+  return m_getTtsText(notification, instruction);
 }
 
 void NotificationManager::GenerateTurnNotifications(vector<TurnItemDist> const & turns,
@@ -68,7 +68,7 @@ void NotificationManager::GenerateTurnNotifications(vector<TurnItemDist> const &
   }
   string secondNotification = GenerateTurnText(
       0 /* distanceUnits is not used because of "Then" is used */, secondTurn.m_turnItem.m_exitNum,
-      true, secondTurn.m_turnItem.m_turn, m_settings.GetLengthUnits());
+      true, secondTurn.m_turnItem.m_turn, m_settings.GetLengthUnits(), secondTurn.m_turnItem.m_instruction);
   if (secondNotification.empty())
     return;
   turnNotifications.emplace_back(move(secondNotification));
@@ -120,7 +120,7 @@ string NotificationManager::GenerateFirstTurnSound(TurnItem const & turn,
           m_nextTurnNotificationProgress = PronouncedNotification::First;
           return GenerateTurnText(roundedDistToPronounceUnits, turn.m_exitNum,
                                   false /* useThenInsteadOfDistance */, turn.m_turn,
-                                  m_settings.GetLengthUnits());
+                                  m_settings.GetLengthUnits(), turn.m_instruction);
         }
       }
     }
@@ -141,7 +141,7 @@ string NotificationManager::GenerateFirstTurnSound(TurnItem const & turn,
     FastForwardFirstTurnNotification();
     return GenerateTurnText(0 /* distanceUnits */, turn.m_exitNum,
                             false /* useThenInsteadOfDistance */, turn.m_turn,
-                            m_settings.GetLengthUnits());
+                            m_settings.GetLengthUnits(), turn.m_instruction);
   }
   return string();
 }

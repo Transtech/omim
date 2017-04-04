@@ -131,7 +131,8 @@ namespace location
           m_completionPercent(0),
           m_speedWarningSignal(false),
           m_pedestrianTurn(routing::turns::PedestrianDirection::None),
-          m_pedestrianDirectionPos(0., 0.)
+          m_pedestrianDirectionPos(0., 0.),
+          m_index(-1)
     {
     }
 
@@ -193,6 +194,10 @@ namespace location
     routing::turns::PedestrianDirection m_pedestrianTurn;
     ms::LatLon m_pedestrianDirectionPos;
     //@}
+
+    //TRANSTECH
+    int m_index; //index into path
+    string m_instruction;
 
     bool IsValid() const { return !m_distToTarget.empty(); }
   };
