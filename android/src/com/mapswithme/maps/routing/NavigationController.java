@@ -7,6 +7,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.text.TextUtils;
+import android.util.Log;
 import android.util.Pair;
 import android.view.View;
 import android.widget.ImageView;
@@ -267,9 +268,9 @@ public class NavigationController implements TrafficManager.TrafficCallback
     UiUtils.showIf(hasStreet, mStreetFrame);
     if (hasStreet)
     {
-        if( TextUtils.isEmpty(complianceText))
+        if(TextUtils.isEmpty(complianceText))
             mNextStreet.setText( info.nextStreet );
-        else if( TextUtils.isEmpty(info.nextStreet))
+        else if(TextUtils.isEmpty(info.nextStreet))
             mNextStreet.setText( complianceText );
         else
             mNextStreet.setText( info.nextStreet + " | " + complianceText );
