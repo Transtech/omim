@@ -262,6 +262,7 @@ public class RouteLeg implements Serializable
                         seg.setDirection( Segment.Direction.valueOf( jsonSeg.getString( "direction" ) ) );
                     seg.setTime( jsonSeg.optLong( "time" ) );
                     seg.setDistance( jsonSeg.optDouble( "distance" ) );
+                    seg.setExitNumber( jsonSeg.optInt( "exitNumber" ) );
 
                     if( jsonSeg.has( "start" ) && !jsonSeg.isNull( "start" ) )
                     {

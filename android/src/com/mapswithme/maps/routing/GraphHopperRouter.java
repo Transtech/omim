@@ -610,6 +610,7 @@ public class GraphHopperRouter implements IRouter
         result.turns[ pos ].direction = toMwmDirection( seg.getDirection() ).ordinal();
         result.turns[ pos ].sourceName = seg.getName();
         result.turns[ pos ].targetName = seg.getName();
+        result.turns[ pos ].exitNum = seg.getExitNumber() == null ? 0 : seg.getExitNumber();
         result.turns[ pos ].instruction = seg.getDirection() == Segment.Direction.FINISH ? "" : seg.getInstruction();
 
         result.times[ pos ] = new Route.TimeItem();
@@ -622,7 +623,7 @@ public class GraphHopperRouter implements IRouter
 
         Log.i(TAG, "Add segment to MWM route: pos = " + pos + ", index= " + index
                 + ", name = " + seg.getName() + ", direction = " + seg.getDirection().name()
-                + ", instruction = " + seg.getInstruction() );
+                + ", exit = " + seg.getExitNumber() + ", instruction = " + seg.getInstruction() );
     }
 
     private RoutingInfo.VehicleTurnDirection toMwmDirection( Segment.Direction dir )

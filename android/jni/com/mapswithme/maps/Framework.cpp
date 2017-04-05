@@ -973,6 +973,7 @@ Java_com_mapswithme_maps_Framework_nativeGetRouteFollowingInfo(JNIEnv * env, jcl
     }
   }
 
+//    LOG(LDEBUG, ("RoutingInfo.m_exitNum = ", info.m_exitNum));
   jobject const result = env->NewObject(
       klass, ctorRouteInfoID, jni::ToJavaString(env, info.m_distToTarget),
       jni::ToJavaString(env, info.m_targetUnitsSuffix), jni::ToJavaString(env, info.m_distToTurn),
