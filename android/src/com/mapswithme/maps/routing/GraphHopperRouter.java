@@ -622,7 +622,7 @@ public class GraphHopperRouter implements IRouter
         result.streets[ pos ].name = seg.getName();
 
         Log.i(TAG, "Add segment to MWM route: pos = " + pos + ", index= " + index
-                + ", name = " + seg.getName() + ", direction = " + seg.getDirection().name()
+                + ", name = " + seg.getName() + ", direction = " + (seg.getDirection() == null ? "<none>" : seg.getDirection().name())
                 + ", exit = " + seg.getExitNumber() + ", instruction = " + seg.getInstruction() );
     }
 
