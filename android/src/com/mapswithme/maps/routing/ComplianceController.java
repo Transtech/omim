@@ -50,8 +50,8 @@ public class ComplianceController implements LocationListener, GraphHopperRouter
 {
     private static final String TAG = "ComplianceController";
 
-    private static final long CHECK_FREQUENCY_MS = 5000L; //check network compliance frequency
-    private static final long NOTIFY_FREQUENCY_MS = 15000L; //driver notification frequency
+    private static final long CHECK_FREQUENCY_MS = 10000L; //check network compliance frequency
+    private static final long NOTIFY_FREQUENCY_MS = 20000L; //driver notification frequency
     public static final double OFFROUTE_THRESHOLD = 150.0;  //150 metres
 
     private static final String NOTIFY_GREEN = "#C0197841";
@@ -483,10 +483,6 @@ public class ComplianceController implements LocationListener, GraphHopperRouter
         if( lastLoc == null )
             return true;
 
-        //network adherence takes a _lot_ more effort, so do it less...
-        if( currentMode == ComplianceMode.NETWORK_ADHERENCE )
-            return loc.getTime() - lastLoc.getTime() > CHECK_FREQUENCY_MS * 4;
-
         return loc.getTime() - lastLoc.getTime() > CHECK_FREQUENCY_MS;
     }
 
@@ -501,6 +497,7 @@ public class ComplianceController implements LocationListener, GraphHopperRouter
     public RouteOffset checkPositionAgainstRoute( double fromLat, double fromLon )
     {
         RouteOffset offset = new RouteOffset();
+        long startMs = System.currentTimeMillis();
         switch( currentMode )
         {
             case ROUTE_COMPLIANCE:
@@ -513,13 +510,15 @@ public class ComplianceController implements LocationListener, GraphHopperRouter
                         + (offset.nearestPoint == null ? "???" : offset.nearestPoint.getLatitude())
                         + "," + (offset.nearestPoint == null ? "???" : offset.nearestPoint.getLongitude())
                         + "] and " + df.format( offset.distance )
-                        + "m from route and inside " + offset.geofenceCount + " geofences" );
+                        + "m from route and inside " + offset.geofenceCount + " geofences - checked in "
+                        + (System.currentTimeMillis() - startMs) + "ms");
                 break;
 
             case NETWORK_ADHERENCE:
                 offset.distance = ghRouter.distanceFromNetwork( fromLat, fromLon );
                 Log.i( TAG, "Checking network compliance: distance from network is "
-                        + df.format( offset.distance ) + "m" );
+                        + df.format( offset.distance ) + "m - checked in "
+                        + (System.currentTimeMillis() - startMs) + "ms");
                 break;
             case NONE:
             default:
