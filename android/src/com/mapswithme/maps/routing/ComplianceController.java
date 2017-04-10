@@ -235,7 +235,7 @@ public class ComplianceController implements LocationListener, GraphHopperRouter
 //            DemoLocationProvider.DEMO_MODE = true;
 //            LocationHelper.INSTANCE.restart();
 //        }
-//
+
         if( restartRequired )
             return;
 

@@ -574,14 +574,24 @@ public class GraphHopperRouter implements IRouter
             finishSeg.setName( "" );
             finishSeg.setTime( 0L );
             finishSeg.setStart( new Position( finishLat, finishLon ) );
+
+            Route.Position lastPath = result.path[result.path.length - 1];
+            if( !equalEpsilon( finishLat, lastPath.lat ) || !equalEpsilon( finishLon, lastPath.lng ) )
+            {
+                //the finish segment is not actually on the route path itself, but it needs to be,
+                //so we manually add it...
+                Route.Position[] newPath = new Route.Position[ result.path.length + 1 ];
+                System.arraycopy( result.path, 0, newPath, 0, result.path.length );
+                newPath[newPath.length - 1] = new Route.Position( finishLat, finishLon );
+                result.path = newPath;
+            }
         }
         segments.add( finishSeg );
 
 //        Log.i( TAG, "Number of segments " + segLen );
-        int segLen = segments.size();
-        result.turns = new Route.TurnItem[ segLen ];
-        result.times = new Route.TimeItem[ segLen ];
-        result.streets = new Route.StreetItem[ segLen ];
+        result.turns = new Route.TurnItem[ segments.size() ];
+        result.times = new Route.TimeItem[ segments.size() ];
+        result.streets = new Route.StreetItem[ segments.size() ];
 
         i = 0;
         Long timeTotal = 0L;
