@@ -134,14 +134,14 @@ public class BookmarkCategoriesAdapter extends BaseBookmarkCategoryAdapter<Bookm
       Drawable drawable;
       if (visible)
       {
-        visibilityMarker.setBackgroundResource(R.drawable.bg_active_icon);
-        drawable = Graphics.tint(visibilityMarker.getContext(), R.drawable.ic_bookmark_show, R.attr.activeIconTint);
+        // disabled for troublesome vector drawable support in multidex
+        //visibilityMarker.setBackgroundResource(R.drawable.bg_active_icon);
+        drawable = Graphics.tint(visibilityMarker.getContext(), R.drawable.ic_bookmark_show, R.attr.steadyIconTint);
       }
       else
       {
-        visibilityMarker.setBackgroundResource(R.drawable.bg_steady_icon);
-        drawable = Graphics.tint(visibilityMarker.getContext(), R.drawable.ic_bookmark_hide,
-                                 R.attr.steadyIconTint);
+        //visibilityMarker.setBackgroundResource(R.drawable.bg_steady_icon);
+        drawable = Graphics.tint(visibilityMarker.getContext(), R.drawable.ic_bookmark_hide, R.attr.steadyIconTint);
       }
       visibilityMarker.setImageDrawable(drawable);
     }
