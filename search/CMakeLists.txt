@@ -1,5 +1,7 @@
 project(search)
 
+include_directories(${OMIM_ROOT}/3party/jansson/src ${OMIM_ROOT}/platform)
+
 set(
   SRC
   algos.hpp
@@ -87,6 +89,8 @@ set(
   processor_factory.hpp
   processor.cpp
   processor.hpp
+  processor_online.cpp
+  processor_online.hpp
   projection_on_street.cpp
   projection_on_street.hpp
   query_params.cpp
@@ -135,4 +139,6 @@ add_library(${PROJECT_NAME} ${SRC})
 omim_add_test_subdirectory(search_tests_support)
 omim_add_test_subdirectory(search_tests)
 omim_add_test_subdirectory(search_integration_tests)
+omim_add_test_subdirectory(search_online_tests)
+
 add_subdirectory(search_quality)

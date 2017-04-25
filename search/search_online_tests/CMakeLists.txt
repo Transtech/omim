@@ -4,7 +4,7 @@ set(
   SRC
   helpers.cpp
   helpers.hpp
-  search_online_tests.cpp
+  online_search_test.cpp
 )
 
 omim_add_test(${PROJECT_NAME} ${SRC})
