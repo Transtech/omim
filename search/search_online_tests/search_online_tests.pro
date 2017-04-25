@@ -1,6 +1,6 @@
 # Map library tests.
 
-TARGET = search_integration_tests
+TARGET = search_online_tests
 CONFIG += console warn_on
 CONFIG -= app_bundle
 TEMPLATE = app
@@ -25,14 +25,8 @@ win32*|linux* {
 
 SOURCES += \
     ../../testing/testingmain.cpp \
-    downloader_search_test.cpp \
-    generate_tests.cpp \
     helpers.cpp \
-    interactive_search_test.cpp \
-    pre_ranker_test.cpp \
-    processor_test.cpp \
-    search_edited_features_test.cpp \
-    smoke_test.cpp \
+    online_search_test.cpp \
 
 HEADERS += \
     helpers.hpp \
