@@ -70,50 +70,50 @@ public:
 
   static double const kMinViewportRadiusM;
   static double const kMaxViewportRadiusM;
-
+  
   Processor(Index const & index, CategoriesHolder const & categories,
             vector<Suggest> const & suggests, storage::CountryInfoGetter const & infoGetter);
 
-  inline void SupportOldFormat(bool b) { m_supportOldFormat = b; }
+  virtual inline void SupportOldFormat(bool b) { m_supportOldFormat = b; }
 
-  void Init(bool viewportSearch);
+  virtual void Init(bool viewportSearch);
 
   /// @param[in]  forceUpdate Pass true (default) to recache feature's ids even
   /// if viewport is a part of the old cached rect.
-  void SetViewport(m2::RectD const & viewport, bool forceUpdate);
-  void SetPreferredLocale(string const & locale);
-  void SetInputLocale(string const & locale);
+  virtual void SetViewport(m2::RectD const & viewport, bool forceUpdate);
+  virtual void SetPreferredLocale(string const & locale);
+  virtual void SetInputLocale(string const & locale);
   void SetQuery(string const & query);
   // TODO (@y): this function must be removed.
   void SetRankPivot(m2::PointD const & pivot);
-  inline void SetMode(Mode mode) { m_mode = mode; }
-  inline void SetSuggestsEnabled(bool enabled) { m_suggestsEnabled = enabled; }
-  inline void SetPosition(m2::PointD const & position) { m_position = position; }
-  inline void SetMinDistanceOnMapBetweenResults(double distance)
+  virtual inline void SetMode(Mode mode) { m_mode = mode; }
+  virtual inline void SetSuggestsEnabled(bool enabled) { m_suggestsEnabled = enabled; }
+  virtual inline void SetPosition(m2::PointD const & position) { m_position = position; }
+  virtual inline void SetMinDistanceOnMapBetweenResults(double distance)
   {
     m_minDistanceOnMapBetweenResults = distance;
   }
-  inline void SetOnResults(SearchParams::TOnResults const & onResults) { m_onResults = onResults; }
-  inline string const & GetPivotRegion() const { return m_region; }
-  inline m2::PointD const & GetPosition() const { return m_position; }
+  virtual inline void SetOnResults(SearchParams::TOnResults const & onResults) { m_onResults = onResults; }
+  virtual inline string const & GetPivotRegion() const { return m_region; }
+  virtual inline m2::PointD const & GetPosition() const { return m_position; }
 
   /// Suggestions language code, not the same as we use in mwm data
   int8_t m_inputLocaleCode, m_currentLocaleCode;
 
-  inline bool IsEmptyQuery() const { return (m_prefix.empty() && m_tokens.empty()); }
-  void Search(SearchParams const & params, m2::RectD const & viewport);
+  virtual inline bool IsEmptyQuery() const { return (m_prefix.empty() && m_tokens.empty()); }
+  virtual void Search(SearchParams const & params, m2::RectD const & viewport);
 
   // Tries to generate a (lat, lon) result from |m_query|.
-  void SearchCoordinates();
+  virtual void SearchCoordinates();
 
-  void InitParams(QueryParams & params);
+  virtual void InitParams(QueryParams & params);
 
-  void InitGeocoder(Geocoder::Params & params);
-  void InitPreRanker(Geocoder::Params const & geocoderParams);
-  void InitRanker(Geocoder::Params const & geocoderParams);
-  void InitEmitter();
+  virtual void InitGeocoder(Geocoder::Params & params);
+  virtual void InitPreRanker(Geocoder::Params const & geocoderParams);
+  virtual void InitRanker(Geocoder::Params const & geocoderParams);
+  virtual void InitEmitter();
 
-  void ClearCaches();
+  virtual void ClearCaches();
 
 protected:
   enum ViewportID

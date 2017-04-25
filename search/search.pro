@@ -6,6 +6,8 @@ CONFIG += staticlib warn_on
 
 ROOT_DIR = ..
 
+INCLUDEPATH *= $$ROOT_DIR/3party/jansson/src
+
 include($$ROOT_DIR/common.pri)
 
 HEADERS += \
@@ -79,7 +81,8 @@ HEADERS += \
     types_skipper.hpp \
     utils.hpp \
     viewport_search_callback.hpp \
-    viewport_search_params.hpp
+    viewport_search_params.hpp \
+    processor_online.hpp
 
 SOURCES += \
     approximate_string_match.cpp \
@@ -136,4 +139,5 @@ SOURCES += \
     streets_matcher.cpp \
     token_slice.cpp \
     types_skipper.cpp \
-    viewport_search_callback.cpp
+    viewport_search_callback.cpp \
+    processor_online.cpp

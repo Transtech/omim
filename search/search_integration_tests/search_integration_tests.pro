@@ -25,14 +25,15 @@ win32*|linux* {
 
 SOURCES += \
     ../../testing/testingmain.cpp \
-    downloader_search_test.cpp \
-    generate_tests.cpp \
+#    downloader_search_test.cpp \
+#    generate_tests.cpp \
     helpers.cpp \
-    interactive_search_test.cpp \
-    pre_ranker_test.cpp \
-    processor_test.cpp \
-    search_edited_features_test.cpp \
-    smoke_test.cpp \
+#    interactive_search_test.cpp \
+#    pre_ranker_test.cpp \
+#    processor_test.cpp \
+#    search_edited_features_test.cpp \
+#    smoke_test.cpp \
+    online_search_test.cpp \
 
 HEADERS += \
     helpers.hpp \
