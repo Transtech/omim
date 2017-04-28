@@ -18,13 +18,13 @@
     android:title="@string/profile"/>
 -->
 
-    <header
-            android:id="@+id/group_vehicle"
-            android:title="@string/prefs_group_vehicle"
-            android:fragment="com.mapswithme.maps.settings.VehiclePrefsFragment"/>
+  <header
+    android:id="@+id/group_vehicle"
+    android:title="@string/prefs_group_vehicle"
+    android:fragment="com.mapswithme.maps.settings.VehiclePrefsFragment"/>
 
-
-    <header
+  <!--
+  <header
     android:id="@+id/group_misc"
     android:title="@string/prefs_group_misc"
     android:fragment="com.mapswithme.maps.settings.MiscPrefsFragment"/>
@@ -38,4 +38,5 @@
     android:id="@+id/about"
     android:title="@string/about_menu_title"
     android:fragment="com.mapswithme.maps.settings.AboutFragment"/>
+  -->
 </preference-headers>

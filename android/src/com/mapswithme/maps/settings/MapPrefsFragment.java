@@ -30,6 +30,7 @@ public class MapPrefsFragment extends BaseXmlSettingsFragment
     return !mPathManager.hasMoreThanOneStorage();
   }
 
+  /*
   private void updateStoragePrefs()
   {
     Preference old = findPreference(getString(R.string.pref_storage));
@@ -45,6 +46,7 @@ public class MapPrefsFragment extends BaseXmlSettingsFragment
         getPreferenceScreen().addPreference(mStoragePref);
     }
   }
+  */
 
   @Override
   protected int getXmlResources()
@@ -57,6 +59,7 @@ public class MapPrefsFragment extends BaseXmlSettingsFragment
   {
     super.onCreate(savedInstanceState);
 
+    /*
     mStoragePref = findPreference(getString(R.string.pref_storage));
     updateStoragePrefs();
 
@@ -77,6 +80,7 @@ public class MapPrefsFragment extends BaseXmlSettingsFragment
         return true;
       }
     });
+    */
 
     Preference pref = findPreference(getString(R.string.pref_munits));
     ((ListPreference)pref).setValue(String.valueOf(UnitLocale.getUnits()));
@@ -135,6 +139,7 @@ public class MapPrefsFragment extends BaseXmlSettingsFragment
       }
     });
 
+    /*
     TwoStatePreference prefAutodownload = (TwoStatePreference)findPreference(getString(R.string.pref_autodownload));
     prefAutodownload.setChecked(Config.isAutodownloadEnabled());
     prefAutodownload.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener()
@@ -151,6 +156,7 @@ public class MapPrefsFragment extends BaseXmlSettingsFragment
         return true;
       }
     });
+    */
 
     final Framework.Params3dMode _3d = new Framework.Params3dMode();
     Framework.nativeGet3dMode(_3d);
@@ -196,6 +202,7 @@ public class MapPrefsFragment extends BaseXmlSettingsFragment
     });
   }
 
+  /*
   @Override
   public void onAttach(Activity activity)
   {
@@ -216,4 +223,5 @@ public class MapPrefsFragment extends BaseXmlSettingsFragment
     super.onDetach();
     mPathManager.stopExternalStorageWatching();
   }
+  */
 }

@@ -1,11 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen
   xmlns:android="http://schemas.android.com/apk/res/android">
+  <!--
   <Preference
     android:key="@string/pref_storage"
     android:title="@string/maps_storage"
     android:summary="@string/maps_storage_summary"
     android:order="1"/>
+  -->
 
   <ListPreference
     android:key="@string/pref_munits"
@@ -28,10 +30,12 @@
     android:entryValues="@array/map_style_values"
     android:order="4"/>
 
+  <!--
   <CheckBoxPreference
     android:key="@string/pref_autodownload"
     android:title="@string/autodownload"
     android:order="5"/>
+  -->
 
   <CheckBoxPreference
     android:key="@string/pref_3d_buildings"

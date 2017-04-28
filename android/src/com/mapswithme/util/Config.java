@@ -210,7 +210,8 @@ public final class Config
 
   public static boolean isAutodownloadEnabled()
   {
-    return getBool(KEY_DOWNLOADER_AUTO, true);
+    return false; // WC: always disabled
+    // return getBool(KEY_DOWNLOADER_AUTO, true);
   }
 
   public static void setAutodownloadEnabled(boolean enabled)
@@ -230,7 +231,8 @@ public final class Config
 
   public static boolean isStatisticsEnabled()
   {
-    return getBool(KEY_PREF_STATISTICS, true);
+    return false; // WC: always disabled
+    // return getBool(KEY_PREF_STATISTICS, true);
   }
 
   public static void setStatisticsEnabled(boolean enabled)
@@ -240,7 +242,8 @@ public final class Config
 
   public static boolean useGoogleServices()
   {
-    return getBool(KEY_PREF_USE_GS, true);
+    return false; // WC: always disabled
+    // return getBool(KEY_PREF_USE_GS, true);
   }
 
   public static void setUseGoogleService(boolean use)

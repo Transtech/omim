@@ -103,6 +103,7 @@ public class SettingsActivity extends PreferenceActivity
       Statistics.INSTANCE.trackEvent(Statistics.EventName.Settings.GROUP_MAP);
     else if (header.id == R.id.group_route)
       Statistics.INSTANCE.trackEvent(Statistics.EventName.Settings.GROUP_ROUTE);
+    /*
     else if (header.id == R.id.group_misc)
       Statistics.INSTANCE.trackEvent(Statistics.EventName.Settings.GROUP_MISC);
     else if (header.id == R.id.help)
@@ -115,6 +116,8 @@ public class SettingsActivity extends PreferenceActivity
       Statistics.INSTANCE.trackEvent(Statistics.EventName.Settings.ABOUT);
       AlohaHelper.logClick(AlohaHelper.Settings.ABOUT);
     }
+    */
+
 /* AG: disable OSM profile settings
     else if (header.id == R.id.osm_profile)
     {
