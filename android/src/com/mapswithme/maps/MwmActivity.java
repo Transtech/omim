@@ -137,7 +137,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
   private MainMenu mMainMenu;
 
   private PanelAnimator mPanelAnimator;
-  private OnmapDownloader mOnmapDownloader;
+  //private OnmapDownloader mOnmapDownloader;
 
   private FadeView mFadeView;
 
@@ -477,7 +477,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
 
     mNavigationController = new NavigationController(this);
     initMainMenu();
-    initOnmapDownloader();
+    //initOnmapDownloader();
     initPositionChooser();
     initFilterViews();
   }
@@ -803,12 +803,14 @@ public class MwmActivity extends BaseMwmFragmentActivity
       mPlacePage.setLeftAnimationTrackListener(mMainMenu.getLeftAnimationTrackListener());
   }
 
+  /*
   private void initOnmapDownloader()
   {
     mOnmapDownloader = new OnmapDownloader(this);
     if (mIsFragmentContainer)
       mPanelAnimator.registerListener(mOnmapDownloader);
   }
+  */
 
   @Override
   public void onDestroy()
@@ -936,7 +938,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
         }
       }
     });
-    mOnmapDownloader.onResume();
+    //mOnmapDownloader.onResume();
     if (mNavigationController != null)
       mNavigationController.onResume();
     if (mNavAnimationController != null)
@@ -995,7 +997,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
   {
     TtsPlayer.INSTANCE.stop();
     LikesManager.INSTANCE.cancelDialogs();
-    mOnmapDownloader.onPause();
+    //mOnmapDownloader.onPause();
     super.onPause();
   }
 
@@ -1623,7 +1625,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
     if (mNavigationController != null)
       mNavigationController.show(show);
     refreshFade();
-    mOnmapDownloader.updateState(false);
+    //mOnmapDownloader.updateState(false); WC: disable download
     adjustCompass(UiUtils.getCompassYOffset(this));
   }
 
