@@ -99,9 +99,9 @@ public class BookmarkCategoriesFragment extends BaseMwmRecyclerFragment
       getAdapter().notifyDataSetChanged();
       break;
 
-    case R.id.set_share:
-      SharingHelper.shareBookmarksCategory(getActivity(), mSelectedPosition);
-      break;
+//    case R.id.set_share:
+//      SharingHelper.shareBookmarksCategory(getActivity(), mSelectedPosition);
+//      break;
 
     case R.id.set_delete:
       BookmarkManager.INSTANCE.nativeDeleteCategory(mSelectedPosition);

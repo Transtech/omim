@@ -211,6 +211,7 @@ public final class UiUtils
 
   public static void showIf(boolean condition, View view)
   {
+    if (view == null) return;
     view.setVisibility(condition ? View.VISIBLE : View.GONE);
   }
 

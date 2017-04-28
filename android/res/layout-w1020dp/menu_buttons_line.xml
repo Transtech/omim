@@ -32,21 +32,25 @@
     style="@style/MwmTheme.Menu.Line.Button"
     android:src="@drawable/ic_menu_bookmarks"/>
 
+  <!--
   <ImageView
     android:id="@+id/share"
     style="@style/MwmTheme.Menu.Line.Button"
     android:src="@drawable/ic_menu_share"/>
+  -->
 
   <Space
     android:layout_width="0dp"
     android:layout_height="match_parent"
     android:layout_weight="1"/>
 
+  <!--
   <ImageView
     android:id="@+id/add_place"
     style="@style/MwmTheme.Menu.Line.Button"
     android:src="@drawable/ic_plus"/>
-
+  -->
+  <!--
   <FrameLayout
     android:layout_width="wrap_content"
     android:layout_height="match_parent">
@@ -57,6 +61,7 @@
 
     <include layout="@layout/menu_news_marker"/>
   </FrameLayout>
+  -->
 
   <ImageView
     android:id="@+id/settings"

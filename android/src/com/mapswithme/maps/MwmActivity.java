@@ -753,6 +753,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
           });
           break;
 
+        /*
         case SHARE:
           closeMenu(Statistics.EventName.MENU_SHARE, AlohaHelper.MENU_SHARE, new Runnable()
           {
@@ -775,6 +776,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
             }
           });
           break;
+        */
 
         case SETTINGS:
           closeMenu(Statistics.EventName.MENU_SETTINGS, AlohaHelper.MENU_SETTINGS, new Runnable()
@@ -971,6 +973,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
             }
           });
       }
+      /*
       else if (!NewsFragment.showOn(this))
       {
         if (ViralFragment.shouldDisplay())
@@ -978,6 +981,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
         else
           LikesManager.INSTANCE.showDialogs(this);
       }
+      */
     }
 
     RoutingController.get().restore();
@@ -1663,6 +1667,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
   @Override
   public void onUberInfoReceived(@NonNull UberInfo info)
   {
+    /*
     if (mIsFragmentContainer)
     {
       RoutingPlanFragment fragment = (RoutingPlanFragment) getFragment(RoutingPlanFragment.class);
@@ -1673,11 +1678,13 @@ public class MwmActivity extends BaseMwmFragmentActivity
     {
       mRoutingPlanInplaceController.showUberInfo(info);
     }
+    */
   }
 
   @Override
   public void onUberError(@NonNull Uber.ErrorCode code)
   {
+    /*
     if (mIsFragmentContainer)
     {
       RoutingPlanFragment fragment = (RoutingPlanFragment) getFragment(RoutingPlanFragment.class);
@@ -1688,6 +1695,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
     {
       mRoutingPlanInplaceController.showUberError(code);
     }
+    */
   }
 
   boolean isFirstStart()

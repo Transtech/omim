@@ -194,11 +194,11 @@ public class BookmarksListFragment extends BaseMwmListFragment
   @Override
   public boolean onOptionsItemSelected(MenuItem item)
   {
-    if (item.getItemId() == R.id.set_share)
-    {
-      SharingHelper.shareBookmarksCategory(getActivity(), mCategory.getId());
-      return true;
-    }
+//    if (item.getItemId() == R.id.set_share)
+//    {
+//      SharingHelper.shareBookmarksCategory(getActivity(), mCategory.getId());
+//      return true;
+//    }
 
     return super.onOptionsItemSelected(item);
   }

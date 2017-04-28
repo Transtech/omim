@@ -51,6 +51,7 @@ public class RoutingPlanFragment extends BaseMwmFragment
     mPlanController.updateBuildProgress(progress, router);
   }
 
+  /*
   public void showUberInfo(@NonNull UberInfo info)
   {
     mPlanController.showUberInfo(info);
@@ -60,6 +61,7 @@ public class RoutingPlanFragment extends BaseMwmFragment
   {
     mPlanController.showUberError(code);
   }
+  */
 
   @Override
   public boolean onBackPressed()

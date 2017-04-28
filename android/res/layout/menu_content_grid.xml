@@ -58,10 +58,12 @@
     android:text="@string/settings"
     tools:background="#200000FF"/>
 
+  <!--
   <TextView
     android:id="@+id/share"
     style="@style/MwmTheme.Menu.Content.GridItem.Text"
     android:drawableTop="@drawable/ic_menu_share"
     android:text="@string/share_my_location"
     tools:background="#200000FF"/>
+   -->
 </LinearLayout>

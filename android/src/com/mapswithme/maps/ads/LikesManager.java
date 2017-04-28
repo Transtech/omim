@@ -77,6 +77,7 @@ public enum LikesManager
 
   public void showDialogs(FragmentActivity activity)
   {
+    /*
     mActivityRef = new WeakReference<>(activity);
 
     if (!ConnectionState.isConnected())
@@ -85,6 +86,7 @@ public enum LikesManager
     final LikeType type = mIsNewUser ? sNewUsersMapping.get(SESSION_NUM) : sOldUsersMapping.get(SESSION_NUM);
     if (type != null)
       displayLikeDialog(type.clazz, type.delay);
+     */
   }
 
   public void cancelDialogs()
@@ -92,6 +94,7 @@ public enum LikesManager
     UiThread.cancelDelayedTasks(mLikeRunnable);
   }
 
+  /*
   private void displayLikeDialog(final Class<? extends DialogFragment> dialogFragmentClass, final int delayMillis)
   {
     if (Config.isSessionRated(SESSION_NUM) || Config.isRatingApplied(dialogFragmentClass))
@@ -126,4 +129,5 @@ public enum LikesManager
     };
     UiThread.runLater(mLikeRunnable, delayMillis);
   }
+  */
 }

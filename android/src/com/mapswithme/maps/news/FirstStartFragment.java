@@ -133,10 +133,10 @@ public class FirstStartFragment extends BaseNewsFragment
         !recreate(activity, FirstStartFragment.class))
       return false;
 
-    create(activity, FirstStartFragment.class);
+    //create(activity, FirstStartFragment.class);
 
     Config.setFirstStartDialogSeen();
-    Statistics.INSTANCE.trackEvent(Statistics.EventName.FIRST_START_SHOWN);
+    //Statistics.INSTANCE.trackEvent(Statistics.EventName.FIRST_START_SHOWN);
 
     return true;
   }

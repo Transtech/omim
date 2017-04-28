@@ -310,8 +310,8 @@ public class PlacePageView extends RelativeLayout
     mEntrance = mDetails.findViewById(R.id.ll__place_entrance);
     mTvEntrance = (TextView) mEntrance.findViewById(R.id.tv__place_entrance);
     mTaxi = mDetails.findViewById(R.id.ll__place_page_taxi);
-    TextView orderTaxi = (TextView) mTaxi.findViewById(R.id.tv__place_page_order_taxi);
-    orderTaxi.setOnClickListener(this);
+    //TextView orderTaxi = (TextView) mTaxi.findViewById(R.id.tv__place_page_order_taxi);
+    //orderTaxi.setOnClickListener(this);
     mEditPlace = mDetails.findViewById(R.id.ll__place_editor);
     mEditPlace.setOnClickListener(this);
     mAddOrganisation = mDetails.findViewById(R.id.ll__add_organisation);
@@ -396,11 +396,13 @@ public class PlacePageView extends RelativeLayout
           toggleIsBookmark();
           break;
 
+        /*
         case SHARE:
           Statistics.INSTANCE.trackEvent(Statistics.EventName.PP_SHARE);
           AlohaHelper.logClick(AlohaHelper.PP_SHARE);
           ShareOption.ANY.shareMapObject(getActivity(), mMapObject, mSponsored);
           break;
+        */
 
         case BACK:
           if (ParsedMwmRequest.hasRequest())
@@ -872,7 +874,8 @@ public class PlacePageView extends RelativeLayout
       return;
 
     mMapObject = mapObject;
-    mSponsored = (mMapObject == null ? null : Sponsored.nativeGetCurrent());
+    // mSponsored = (mMapObject == null ? null : Sponsored.nativeGetCurrent());
+    mSponsored = null;
 
     detachCountry();
     if (mMapObject != null)
@@ -1170,7 +1173,7 @@ public class PlacePageView extends RelativeLayout
       buttons.add(PlacePageButtons.Item.ROUTE_TO);
     }
 
-    buttons.add(PlacePageButtons.Item.SHARE);
+    //buttons.add(PlacePageButtons.Item.SHARE);
 
     mButtons.setItems(buttons);
   }
@@ -1363,11 +1366,13 @@ public class PlacePageView extends RelativeLayout
 
   private void followUrl(String url)
   {
+    /* IFACE-1160 disable launching web browser
     final Intent intent = new Intent(Intent.ACTION_VIEW);
     if (!url.startsWith("http://") && !url.startsWith("https://"))
       url = "http://" + url;
     intent.setData(Uri.parse(url));
     getContext().startActivity(intent);
+    */
   }
 
   private void toggleIsBookmark()

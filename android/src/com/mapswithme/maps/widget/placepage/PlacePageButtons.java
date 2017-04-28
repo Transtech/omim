@@ -123,6 +123,7 @@ final class PlacePageButtons
       }
     },
 
+    /*
     SHARE
     {
       @Override
@@ -137,6 +138,7 @@ final class PlacePageButtons
         return R.drawable.ic_share;
       }
     },
+    */
 
     // Must not be used outside
     MORE

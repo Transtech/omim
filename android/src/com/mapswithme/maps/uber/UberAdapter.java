@@ -11,6 +11,7 @@ import android.widget.TextView;
 import com.mapswithme.maps.R;
 import com.mapswithme.maps.routing.RoutingController;
 
+/*
 public class UberAdapter extends PagerAdapter
 {
   @NonNull
@@ -58,3 +59,4 @@ public class UberAdapter extends PagerAdapter
     container.removeView((View) object);
   }
 }
+*/

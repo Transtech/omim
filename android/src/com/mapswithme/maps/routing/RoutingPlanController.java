@@ -21,7 +21,7 @@ import com.mapswithme.maps.R;
 import com.mapswithme.maps.bookmarks.data.MapObject;
 import com.mapswithme.maps.location.LocationHelper;
 import com.mapswithme.maps.uber.Uber;
-import com.mapswithme.maps.uber.UberAdapter;
+//import com.mapswithme.maps.uber.UberAdapter;
 import com.mapswithme.maps.uber.UberInfo;
 import com.mapswithme.maps.uber.UberLinks;
 import com.mapswithme.maps.widget.*;
@@ -48,7 +48,7 @@ public class RoutingPlanController extends ToolbarController implements SlotFram
 //  private final WheelProgressView mProgressTaxi;
 
   private final View mAltitudeChartFrame;
-  private final View mUberFrame;
+//  private final View mUberFrame;
 
   private final RotateDrawable mToggleImage = new RotateDrawable(R.drawable.ic_down);
   int mFrameHeight;
@@ -175,8 +175,8 @@ public class RoutingPlanController extends ToolbarController implements SlotFram
     mAltitudeChartFrame = getViewById(R.id.altitude_chart_panel);
     UiUtils.hide(mAltitudeChartFrame);
 
-    mUberFrame = getViewById(R.id.uber_panel);
-    UiUtils.hide(mUberFrame);
+//    mUberFrame = getViewById(R.id.uber_panel);
+//    UiUtils.hide(mUberFrame);
 
 //    mToggle.setImageDrawable(mToggleImage);
 //    mToggle.setOnClickListener(new View.OnClickListener()
@@ -269,7 +269,7 @@ public class RoutingPlanController extends ToolbarController implements SlotFram
       return;
 
     UiUtils.hide(getViewById(R.id.error));
-    UiUtils.hide(mUberFrame);
+//    UiUtils.hide(mUberFrame);
 
     showRouteAltitudeChart();
     showRoutingDetails();
@@ -478,6 +478,7 @@ public class RoutingPlanController extends ToolbarController implements SlotFram
     }
   }
 
+  /*
   public void showUberInfo(@NonNull UberInfo info)
   {
     UiUtils.hide(getViewById(R.id.error), mAltitudeChartFrame);
@@ -516,6 +517,7 @@ public class RoutingPlanController extends ToolbarController implements SlotFram
         throw new AssertionError("Unsupported uber error: " + code);
     }
   }
+  */
 
   private void showNoInternetError()
   {
@@ -528,7 +530,7 @@ public class RoutingPlanController extends ToolbarController implements SlotFram
 
   private void showError(@StringRes int message)
   {
-    UiUtils.hide(mUberFrame, mAltitudeChartFrame);
+//    UiUtils.hide(mUberFrame, mAltitudeChartFrame);
     TextView error = (TextView) getViewById(R.id.error);
     error.setText(message);
     error.setVisibility(View.VISIBLE);
@@ -555,9 +557,9 @@ public class RoutingPlanController extends ToolbarController implements SlotFram
     if (state.getBoolean(STATE_ALTITUDE_CHART_SHOWN))
       showRouteAltitudeChart();
 
-    UberInfo info = state.getParcelable(STATE_TAXI_INFO);
-    if (info != null)
-      showUberInfo(info);
+//    UberInfo info = state.getParcelable(STATE_TAXI_INFO);
+//    if (info != null)
+//      showUberInfo(info);
   }
 
   private void setStartButton()

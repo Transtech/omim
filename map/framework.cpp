@@ -474,24 +474,24 @@ Framework::~Framework()
 
 BookingApi * Framework::GetBookingApi(platform::NetworkPolicy const & policy)
 {
-  if (policy.CanUse())
-    return m_bookingApi.get();
+//  if (policy.CanUse())
+//    return m_bookingApi.get();
 
   return nullptr;
 }
 
 BookingApi const * Framework::GetBookingApi(platform::NetworkPolicy const & policy) const
 {
-  if (policy.CanUse())
-    return m_bookingApi.get();
+//  if (policy.CanUse())
+//    return m_bookingApi.get();
 
   return nullptr;
 }
 
 uber::Api * Framework::GetUberApi(platform::NetworkPolicy const & policy)
 {
-  if (policy.CanUse())
-    return m_uberApi.get();
+//  if (policy.CanUse())
+//    return m_uberApi.get();
 
   return nullptr;
 }

@@ -274,7 +274,7 @@ public class RoutingController
         completeUberRequest();
         return;
       }
-      requestUberInfo();
+//      requestUberInfo();
     }
 
     setBuildState(BuildState.BUILDING);

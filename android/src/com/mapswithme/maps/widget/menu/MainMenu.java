@@ -57,9 +57,9 @@ public class MainMenu extends BaseMenu
   private final View mRoutePlanFrame;
   private final View mAnimationSpacer;
   private final View mAnimationSymmetricalGap;
-  private final View mNewsMarker;
+//  private final View mNewsMarker;
 
-  private final TextView mNewsCounter;
+//  private final TextView mNewsCounter;
 
   private boolean mCollapsed;
   private final List<View> mCollapseViews = new ArrayList<>();
@@ -126,8 +126,8 @@ public class MainMenu extends BaseMenu
     SEARCH(R.id.search),
     P2P(R.id.p2p),
     BOOKMARKS(R.id.bookmarks),
-    SHARE(R.id.share),
-    DOWNLOADER(R.id.download_maps),
+    //SHARE(R.id.share),
+    //DOWNLOADER(R.id.download_maps),
     SETTINGS(R.id.settings);
 
     private final int mViewId;
@@ -191,6 +191,7 @@ public class MainMenu extends BaseMenu
   @Override
   protected void updateMarker()
   {
+    /*
     UpdateInfo info = MapManager.nativeGetUpdateInfo(null);
     int count = (info == null ? 0 : info.filesCount);
 
@@ -203,6 +204,7 @@ public class MainMenu extends BaseMenu
 
     if (count > 0)
       mNewsCounter.setText(String.valueOf(count));
+    */
   }
 
   @Override
@@ -213,12 +215,12 @@ public class MainMenu extends BaseMenu
 
   private void init()
   {
-    mapItem(Item.ADD_PLACE);
+    //mapItem(Item.ADD_PLACE);
     mapItem(Item.SEARCH);
     mapItem(Item.P2P);
     mapItem(Item.BOOKMARKS);
-    mapItem(Item.SHARE);
-    mapItem(Item.DOWNLOADER);
+    //mapItem(Item.SHARE);
+    //mapItem(Item.DOWNLOADER);
     mapItem(Item.SETTINGS);
 
     adjustCollapsedItems();
@@ -238,8 +240,8 @@ public class MainMenu extends BaseMenu
     mToggle = new MenuToggle(mLineFrame, getHeightResId());
     mapItem(Item.TOGGLE, mLineFrame);
 
-    mNewsMarker = mButtonsFrame.findViewById(R.id.marker);
-    mNewsCounter = (TextView) mContentFrame.findViewById(R.id.counter);
+//    mNewsMarker = mButtonsFrame.findViewById(R.id.marker);
+//    mNewsCounter = (TextView) mContentFrame.findViewById(R.id.counter);
 
     init();
   }
