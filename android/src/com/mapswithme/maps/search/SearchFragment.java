@@ -103,6 +103,9 @@ public class SearchFragment extends BaseMwmFragment
       if (tryChangeMapStyle(query))
         return;
 
+      if (query.length() < 3)
+        return;
+
       runSearch();
     }
 
@@ -180,6 +183,7 @@ public class SearchFragment extends BaseMwmFragment
   @Nullable
   private HotelsFilter mInitialHotelsFilter;
   private boolean mFromRoutePlan;
+  private int mErrorCode;
 
   private final LocationListener mLocationListener = new LocationListener.Simple()
   {
@@ -267,6 +271,18 @@ public class SearchFragment extends BaseMwmFragment
     final boolean show = (!mSearchRunning &&
                           mSearchAdapter.getItemCount() == 0 &&
                           mToolbarController.hasQuery());
+
+    if (show) {
+      if (mErrorCode == 0)
+        mResultsPlaceholder.setContent(R.drawable.img_search_nothing_found_light,
+                R.string.search_not_found, R.string.search_not_found_query);
+      else if (mErrorCode == 401)
+        mResultsPlaceholder.setContent(R.drawable.img_search_nothing_found_light,
+                "Unauthorized", "API Key not accepted.");
+      else
+        mResultsPlaceholder.setContent(R.drawable.img_search_nothing_found_light,
+                "Ops! An Error Occurred", "Code: " + Integer.toString(mErrorCode));
+    }
 
     UiUtils.showIf(show, mResultsPlaceholder);
     if (mFilterController != null)
@@ -510,6 +526,7 @@ public class SearchFragment extends BaseMwmFragment
 
   private void runSearch()
   {
+    mErrorCode = 0;
     HotelsFilter hotelsFilter = null;
     if (mFilterController != null)
       hotelsFilter = mFilterController.getFilter();
@@ -556,6 +573,13 @@ public class SearchFragment extends BaseMwmFragment
   {
     if (mSearchRunning && isAdded())
       onSearchEnd();
+  }
+
+  @Override
+  public void onError(int errorCode)
+  {
+    mErrorCode = errorCode;
+    onSearchEnd();
   }
 
   @Override

@@ -142,10 +142,20 @@ public:
   inline bool IsEndMarker() const { return m_status != Status::None; }
   inline bool IsEndedNormal() const { return m_status == Status::EndedNormal; }
   inline bool IsEndedCancelled() const { return m_status == Status::EndedCancelled; }
+  inline bool IsEndedError() const { return m_status == Status::EndedError; }
+  
+  inline int GetCode() const { return m_code; }
 
   void SetEndMarker(bool cancelled)
   {
-    m_status = cancelled ? Status::EndedCancelled : Status::EndedNormal;
+    if (m_status != Status::EndedError)
+      m_status = cancelled ? Status::EndedCancelled : Status::EndedNormal;
+  }
+  
+  void SetError(int code)
+  {
+    m_status = Status::EndedError;
+    m_code = code;
   }
 
   bool AddResult(Result && result);
@@ -180,7 +190,8 @@ private:
   {
     None,
     EndedCancelled,
-    EndedNormal
+    EndedNormal,
+    EndedError
   };
 
   // Inserts |result| in |m_results| at position denoted by |where|.
@@ -191,6 +202,7 @@ private:
 
   vector<Result> m_results;
   Status m_status;
+  int m_code;
 };
 
 struct AddressInfo

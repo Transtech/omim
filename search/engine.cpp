@@ -123,6 +123,17 @@ Engine::~Engine()
   for (auto & thread : m_threads)
     thread.join();
 }
+  
+void Engine::ConfigureOnlineSearch(string url, string apiKey)
+{
+  PostMessage(Message::TYPE_BROADCAST, [this, url, apiKey](Processor & processor)
+    {
+      if (ProcessorOnline* processorOnline = dynamic_cast<ProcessorOnline*>(&processor)) {
+        processorOnline->ConfigureOnlineSearch(url, apiKey);
+        LOG(LINFO, ("ConfigireOnlineSearch: " + url + ", " + apiKey));
+      }
+    });
+}
 
 weak_ptr<ProcessorHandle> Engine::Search(SearchParams const & params, m2::RectD const & viewport)
 {

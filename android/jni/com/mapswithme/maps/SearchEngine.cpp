@@ -210,6 +210,8 @@ uint64_t g_queryTimestamp;
 jobject g_javaListener;
 jmethodID g_updateResultsId;
 jmethodID g_endResultsId;
+jmethodID g_endErrorId;
+
 // Cached classes and methods to return results.
 jclass g_resultClass;
 jmethodID g_resultConstructor;
@@ -314,9 +316,14 @@ void OnResults(Results const & results, long long timestamp, bool isMapAndTable,
 
   if (results.IsEndMarker())
   {
-    env->CallVoidMethod(g_javaListener, g_endResultsId, static_cast<jlong>(timestamp));
-    if (isMapAndTable && results.IsEndedNormal())
-      g_framework->NativeFramework()->UpdateUserViewportChanged();
+    if (results.IsEndedError()) {
+        env->CallVoidMethod(g_javaListener, g_endErrorId, static_cast<jint>(results.GetCode()));
+    }
+    else {
+        env->CallVoidMethod(g_javaListener, g_endResultsId, static_cast<jlong>(timestamp));
+        if (isMapAndTable && results.IsEndedNormal())
+            g_framework->NativeFramework()->UpdateUserViewportChanged();
+    }
   }
 }
 
@@ -359,6 +366,8 @@ extern "C"
     g_updateResultsId = jni::GetMethodID(env, g_javaListener, "onResultsUpdate",
                                          "([Lcom/mapswithme/maps/search/SearchResult;JZ)V");
     g_endResultsId = jni::GetMethodID(env, g_javaListener, "onResultsEnd", "(J)V");
+    g_endErrorId = jni::GetMethodID(env, g_javaListener, "onError", "(I)V");
+
     g_resultClass = jni::GetGlobalClassRef(env, "com/mapswithme/maps/search/SearchResult");
     g_resultConstructor = jni::GetConstructorID(
         env, g_resultClass,
@@ -448,4 +457,11 @@ extern "C"
       g_framework->NativeFramework()->CancelSearch(search::Mode::Viewport);
     });
   }
+
+  JNIEXPORT void JNICALL
+  Java_com_mapswithme_maps_search_SearchEngine_nativeConfigureOnlineSearch(JNIEnv * env, jclass clazz, jstring url, jstring apiKey)
+  {
+    g_framework->NativeFramework()->ConfigureOnlineSearch(jni::ToNativeString(env, url), jni::ToNativeString(env, apiKey));
+  }
+
 } // extern "C"

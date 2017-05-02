@@ -483,7 +483,7 @@ private:
 
   void InitCountryInfoGetter();
   void InitSearchEngine();
-
+    
   DisplacementModeManager m_displacementModeManager;
 
   bool m_connectToGpsTrack; // need to connect to tracker when Drape is being constructed
@@ -520,6 +520,8 @@ public:
   using TSearchRequest = search::QuerySaver::TSearchRequest;
 
   void UpdateUserViewportChanged();
+
+  void ConfigureOnlineSearch(string url, string apiKey);
 
   /// Search everywhere.
   bool SearchEverywhere(search::EverywhereSearchParams const & params);

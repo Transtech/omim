@@ -192,6 +192,7 @@ void Results::Clear()
 {
   m_results.clear();
   m_status = Status::None;
+  m_code = 0;
 }
 
 size_t Results::GetSuggestsCount() const

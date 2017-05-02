@@ -37,6 +37,11 @@ public:
     else
       LOG(LERROR, ("OnResults is not set."));
   }
+  
+  inline void SetError(int code)
+  {
+    m_results.SetError(code);
+  }
 
 private:
   SearchParams::TOnResults m_onResults;

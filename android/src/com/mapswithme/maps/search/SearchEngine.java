@@ -2,8 +2,12 @@ package com.mapswithme.maps.search;
 
 import java.io.UnsupportedEncodingException;
 
+import android.content.Context;
+import android.util.Log;
 import com.mapswithme.maps.Framework;
 import com.mapswithme.maps.api.ParsedMwmRequest;
+import com.mapswithme.transtech.Setting;
+import com.mapswithme.transtech.SettingConstants;
 import com.mapswithme.util.Language;
 import com.mapswithme.util.Listeners;
 import com.mapswithme.util.concurrency.UiThread;
@@ -14,6 +18,8 @@ public enum SearchEngine implements NativeSearchListener,
                                     NativeMapSearchListener
 {
   INSTANCE;
+
+  private static final String TAG = "SearchEngine";
 
   // Query, which results are shown on the map.
   private static String sSavedQuery;
@@ -44,6 +50,21 @@ public enum SearchEngine implements NativeSearchListener,
       {
         for (NativeSearchListener listener : mListeners)
           listener.onResultsEnd(timestamp);
+        mListeners.finishIterate();
+      }
+    });
+  }
+
+  @Override
+  public void onError(final int errorCode)
+  {
+    UiThread.run(new Runnable()
+    {
+      @Override
+      public void run()
+      {
+        for (NativeSearchListener listener : mListeners)
+          listener.onError(errorCode);
         mListeners.finishIterate();
       }
     });
@@ -154,6 +175,24 @@ public enum SearchEngine implements NativeSearchListener,
     nativeShowAllResults();
   }
 
+  public void configureOnlineSearch(Context context) {
+    Setting.Environment env = Setting.currentEnvironment(context);
+
+    String url = Setting.getString(context,
+            env,
+            Setting.Scope.SMARTNAV2,
+            SettingConstants.SMARTNAV2_SEARCH_URL,
+            "https://api.transtech.net.au/v1/geo/geocode?input=" );
+
+    String apiKey = Setting.getString(context,
+            env,
+            Setting.Scope.COMMON,
+            SettingConstants.GLOBAL_WEBSERVICE_API_KEY,
+            "" );
+
+    nativeConfigureOnlineSearch(url, apiKey);
+  }
+
   /**
    * @param bytes utf-8 formatted bytes of query.
    */
@@ -174,4 +213,7 @@ public enum SearchEngine implements NativeSearchListener,
   private static native void nativeShowAllResults();
 
   public static native void nativeCancelInteractiveSearch();
+
+  private static native void nativeConfigureOnlineSearch(String url, String apiKey);
+
 }

@@ -45,6 +45,10 @@ void ProcessorOnline::Search(SearchParams const & params, m2::RectD const & view
   SetOnResults(params.m_onResults);
   
   InitEmitter();
+  if (m_query.size() < 3) {
+    m_emitter.Finish(true);
+    return;
+  }
 
   try
   {
@@ -81,11 +85,17 @@ void ProcessorOnline::SearchCoordinates()
 bool ProcessorOnline::SearchOnline(string const & query, string & result)
 {
   LOG(LDEBUG, ("SearchOnline: " + query));
-  platform::HttpClient request("https://api.transtech.net.au/v1/geo/geocode?key=e4dadcf531324f079de1d3b039ae7bef&input=" + UrlEncode(query));
+  platform::HttpClient request(m_url + UrlEncode(query));
+    
+  if (!m_apiKey.empty())
+    request.SetRawHeader("Authorization", "Token token=\"" + m_apiKey + "\"");
   
   if (request.RunHttpRequest() && !request.WasRedirected() && request.ErrorCode() == 200) {
     result = request.ServerResponse();
     return true;
+  }
+  else {
+      m_emitter.SetError(request.ErrorCode());
   }
   
   return false;

@@ -96,6 +96,8 @@ public:
          storage::CountryInfoGetter const & infoGetter, unique_ptr<ProcessorFactory> factory,
          Params const & params);
   ~Engine();
+  
+  void ConfigureOnlineSearch(string url, string apiKey);
 
   // Posts search request to the queue and returns its handle.
   weak_ptr<ProcessorHandle> Search(SearchParams const & params, m2::RectD const & viewport);

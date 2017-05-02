@@ -137,7 +137,12 @@ public final class HttpClient
         }
       }
       // GET data from the server or receive response body
-      p.httpResponseCode = connection.getResponseCode();
+      try {
+        p.httpResponseCode = connection.getResponseCode();
+      } catch (IOException e) {
+        p.httpResponseCode = connection.getResponseCode();
+      }
+
       LOGGER.d("Received HTTP ", p.httpResponseCode, " from server.");
 
       if (p.httpResponseCode >= 300 && p.httpResponseCode < 400)

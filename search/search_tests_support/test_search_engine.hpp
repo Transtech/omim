@@ -37,6 +37,10 @@ public:
                                            m2::RectD const & viewport);
 
   storage::CountryInfoGetter & GetCountryInfoGetter() { return *m_infoGetter; }
+  
+  void ConfigureOnlineSearch(string url, string apiKey) {
+    m_engine.ConfigureOnlineSearch(url, apiKey);
+  }
 
 private:
   Platform & m_platform;

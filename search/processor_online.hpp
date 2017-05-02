@@ -23,6 +23,11 @@ public:
 
   void InitParams(QueryParams & params) {};
   void InitEmitter();
+  
+  void ConfigureOnlineSearch(string url, string apiKey) {
+    m_url = url;
+    m_apiKey = apiKey;
+  }
 
 protected:
   
@@ -30,5 +35,9 @@ protected:
   void EmitFromJson(char const * jsonStr);
 
   Emitter m_emitter;
+  
+private:
+  string m_url;
+  string m_apiKey;
 };
 }  // namespace search

@@ -60,6 +60,8 @@ namespace search
         UNIT_CLASS_TEST(OnlineSearchTest, Smoke)
         {
             {
+              m_engine.ConfigureOnlineSearch("http://vm-tst-ngapp5.nw.local:8066/v1/geo/geocode?input=", "1f387bebbc9378bc9a3d2403e399f936");
+              
                 bool mode = false;
                 SearchRequest request(m_engine, "transtech, melb", m2::RectD(m2::PointD(-1.5, -1.5), m2::PointD(-0.5, -0.5)), mode);
                 request.Run();

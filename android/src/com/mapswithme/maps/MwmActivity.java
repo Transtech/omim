@@ -447,6 +447,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
     SharingHelper.prepare();
 
     SearchEngine.INSTANCE.addListener(this);
+    SearchEngine.INSTANCE.configureOnlineSearch(this);
 
     //TODO: uncomment after correct visible rect calculation.
     //mVisibleRectMeasurer = new VisibleRectMeasurer(new VisibleRectListener() {
@@ -1615,6 +1616,11 @@ public class MwmActivity extends BaseMwmFragmentActivity
 
   @Override
   public void onResultsEnd(long timestamp)
+  {
+  }
+
+  @Override
+  public void onError(int errorCode)
   {
   }
 

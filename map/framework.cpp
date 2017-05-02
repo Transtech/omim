@@ -1218,6 +1218,11 @@ void Framework::UpdateUserViewportChanged()
   Search(params);
 }
 
+void Framework::ConfigureOnlineSearch(string url, string apiKey)
+{
+    m_searchEngine->ConfigureOnlineSearch(url, apiKey);
+}
+
 bool Framework::SearchEverywhere(search::EverywhereSearchParams const & params)
 {
   search::SearchParams p;
