@@ -498,4 +498,30 @@ public class Setting implements Parcelable
             context.getContentResolver().insert( Setting.CONTENT_URI, values );
         }
     }
+
+    public static String getSearchUrl( Context context )
+    {
+        Setting.Environment env = Setting.currentEnvironment(context);
+
+        String defaultValue;
+        if (env == Environment.PRODUCTION) defaultValue = "https://api.transtech.net.au/v1/geo/geocode?input=";
+        else if (env == Environment.STAGING) defaultValue = "https://api-staging.transtech.net.au:8067/v1/geo/geocode?input=";
+        else defaultValue = "https://api-test.transtech.net.au:9067/v1/geo/geocode?input=";
+
+        return Setting.getString(context,
+                env,
+                Setting.Scope.SMARTNAV2,
+                SettingConstants.SMARTNAV2_SEARCH_URL,
+                defaultValue );
+    }
+
+    public static String getApiKey( Context context )
+    {
+        Setting.Environment env = Setting.currentEnvironment(context);
+        return Setting.getString(context,
+                env,
+                Setting.Scope.COMMON,
+                SettingConstants.GLOBAL_WEBSERVICE_API_KEY,
+                "" );
+    }
 }

@@ -176,20 +176,9 @@ public enum SearchEngine implements NativeSearchListener,
   }
 
   public void configureOnlineSearch(Context context) {
-    Setting.Environment env = Setting.currentEnvironment(context);
-
-    String url = Setting.getString(context,
-            env,
-            Setting.Scope.SMARTNAV2,
-            SettingConstants.SMARTNAV2_SEARCH_URL,
-            "https://api.transtech.net.au/v1/geo/geocode?input=" );
-
-    String apiKey = Setting.getString(context,
-            env,
-            Setting.Scope.COMMON,
-            SettingConstants.GLOBAL_WEBSERVICE_API_KEY,
-            "" );
-
+    String url = Setting.getSearchUrl(context);
+    String apiKey = Setting.getApiKey(context);
+    
     nativeConfigureOnlineSearch(url, apiKey);
   }
 
