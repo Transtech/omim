@@ -675,7 +675,7 @@ public class SearchFragment extends BaseMwmFragment
       return true;
     }
 
-    closeSearch();
+    hideSearch();
     return true;
   }
 
