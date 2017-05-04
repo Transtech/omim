@@ -8,9 +8,9 @@ import android.support.annotation.Nullable;
 
 import java.util.Locale;
 
-import com.facebook.FacebookSdk;
-import com.facebook.share.model.ShareLinkContent;
-import com.facebook.share.widget.ShareDialog;
+//import com.facebook.FacebookSdk;
+//import com.facebook.share.model.ShareLinkContent;
+//import com.facebook.share.widget.ShareDialog;
 import com.mapswithme.util.UiUtils;
 
 public class ViralEditorShareable extends BaseShareable
@@ -45,11 +45,13 @@ public class ViralEditorShareable extends BaseShareable
     Intent intent = getTargetIntent(target);
     String lowerCaseName = target.activityName.toLowerCase();
 
+    /*
     if (lowerCaseName.contains("facebook"))
     {
       shareFacebook();
       return;
     }
+    */
 
     setText(mText + VIRAL_TAIL);
 
@@ -68,6 +70,7 @@ public class ViralEditorShareable extends BaseShareable
     super.share(target);
   }
 
+  /*
   private void shareFacebook()
   {
     FacebookSdk.sdkInitialize(getActivity());
@@ -81,4 +84,5 @@ public class ViralEditorShareable extends BaseShareable
       shareDialog.show(linkContent);
     }
   }
+  */
 }

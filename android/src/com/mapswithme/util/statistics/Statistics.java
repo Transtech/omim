@@ -10,8 +10,8 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
-import com.facebook.appevents.AppEventsLogger;
-import com.flurry.android.FlurryAgent;
+//import com.facebook.appevents.AppEventsLogger;
+//import com.flurry.android.FlurryAgent;
 import com.mapswithme.maps.BuildConfig;
 import com.mapswithme.maps.MwmApplication;
 import com.mapswithme.maps.PrivateVariables;
@@ -237,10 +237,10 @@ public enum Statistics
     Config.setStatisticsEnabled(mEnabled);
     final Context context = MwmApplication.get();
     // At the moment we need special handling for Alohalytics to enable/disable logging of events in core C++ code.
-    if (mEnabled)
-      org.alohalytics.Statistics.enable(context);
-    else
-      org.alohalytics.Statistics.disable(context);
+//    if (mEnabled)
+//      org.alohalytics.Statistics.enable(context);
+//    else
+//      org.alohalytics.Statistics.disable(context);
     configure(context);
   }
 
@@ -249,24 +249,24 @@ public enum Statistics
     if (mEnabled)
     {
       //noinspection ConstantConditions
-      FlurryAgent.setLogLevel(BuildConfig.DEBUG ? Log.DEBUG : Log.ERROR);
-      FlurryAgent.setVersionName(BuildConfig.VERSION_NAME);
-      FlurryAgent.setCaptureUncaughtExceptions(false);
-      FlurryAgent.init(context, PrivateVariables.flurryKey());
+//      FlurryAgent.setLogLevel(BuildConfig.DEBUG ? Log.DEBUG : Log.ERROR);
+//      FlurryAgent.setVersionName(BuildConfig.VERSION_NAME);
+//      FlurryAgent.setCaptureUncaughtExceptions(false);
+//      FlurryAgent.init(context, PrivateVariables.flurryKey());
     }
     // At the moment, need to always initialize engine for correct JNI http part reusing.
     // Statistics is still enabled/disabled separately and never sent anywhere if turned off.
     // TODO (AlexZ): Remove this initialization dependency from JNI part.
-    org.alohalytics.Statistics.setDebugMode(BuildConfig.DEBUG);
-    org.alohalytics.Statistics.setup(PrivateVariables.alohalyticsUrl(), context);
+//    org.alohalytics.Statistics.setDebugMode(BuildConfig.DEBUG);
+//    org.alohalytics.Statistics.setup(PrivateVariables.alohalyticsUrl(), context);
   }
 
   public void trackEvent(@NonNull String name)
   {
     if (mEnabled)
     {
-      FlurryAgent.logEvent(name);
-      org.alohalytics.Statistics.logEvent(name);
+//      FlurryAgent.logEvent(name);
+//      org.alohalytics.Statistics.logEvent(name);
     }
   }
 
@@ -274,8 +274,8 @@ public enum Statistics
   {
     if (mEnabled)
     {
-      FlurryAgent.logEvent(name, params);
-      org.alohalytics.Statistics.logEvent(name, params);
+//      FlurryAgent.logEvent(name, params);
+//      org.alohalytics.Statistics.logEvent(name, params);
     }
   }
 
@@ -290,11 +290,13 @@ public enum Statistics
         eventDictionary.add(entry.getValue());
       }
 
+      /*
       org.alohalytics.Statistics.logEvent(name, eventDictionary.toArray(new String[0]), location);
 
       params.put("lat", (location == null ? "N/A" : String.valueOf(location.getLatitude())));
       params.put("lon", (location == null ? "N/A" : String.valueOf(location.getLongitude())));
       FlurryAgent.logEvent(name, params);
+      */
     }
   }
 
@@ -307,9 +309,9 @@ public enum Statistics
   {
     if (mEnabled)
     {
-      FlurryAgent.onStartSession(activity);
-      AppEventsLogger.activateApp(activity);
-      org.alohalytics.Statistics.onStart(activity);
+//      FlurryAgent.onStartSession(activity);
+//      AppEventsLogger.activateApp(activity);
+//      org.alohalytics.Statistics.onStart(activity);
     }
   }
 
@@ -317,9 +319,9 @@ public enum Statistics
   {
     if (mEnabled)
     {
-      FlurryAgent.onEndSession(activity);
-      AppEventsLogger.deactivateApp(activity);
-      org.alohalytics.Statistics.onStop(activity);
+//      FlurryAgent.onEndSession(activity);
+//      AppEventsLogger.deactivateApp(activity);
+//      org.alohalytics.Statistics.onStop(activity);
     }
   }
 
@@ -410,10 +412,12 @@ public enum Statistics
                editorMwmParams().add(EventParam.IS_AUTHENTICATED, String.valueOf(OsmOAuth.isAuthorized()))
                                 .add(EventParam.IS_ONLINE, String.valueOf(ConnectionState.isConnected())));
 
+    /*
     if (newObject)
       PushwooshHelper.nativeSendEditorAddObjectTag();
     else
       PushwooshHelper.nativeSendEditorEditObjectTag();
+      */
   }
 
   public void trackEditorSuccess(boolean newObject)

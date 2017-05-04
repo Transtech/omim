@@ -5,12 +5,13 @@ import android.content.Context;
 import android.content.Intent;
 
 import com.mapswithme.maps.MwmApplication;
-import com.mapswithme.util.statistics.AlohaHelper;
-import com.my.tracker.campaign.CampaignReceiver;
+//import com.mapswithme.util.statistics.AlohaHelper;
+//import com.my.tracker.campaign.CampaignReceiver;
 
 /**
  * Custom broadcast receiver to send intent to MyTracker & Alohalytics at the same time
  */
+/*
 public class MultipleTrackerReferrerReceiver extends BroadcastReceiver
 {
   @Override
@@ -35,10 +36,10 @@ public class MultipleTrackerReferrerReceiver extends BroadcastReceiver
             parsedValues[i++] = keyValue.length == 2 ? keyValue[1] : "";
           }
 
-          org.alohalytics.Statistics.logEvent(AlohaHelper.GPLAY_INSTALL_REFERRER, parsedValues);
+//          org.alohalytics.Statistics.logEvent(AlohaHelper.GPLAY_INSTALL_REFERRER, parsedValues);
         }
-        else
-          org.alohalytics.Statistics.logEvent(AlohaHelper.GPLAY_INSTALL_REFERRER, referrer);
+//        else
+//          org.alohalytics.Statistics.logEvent(AlohaHelper.GPLAY_INSTALL_REFERRER, referrer);
       }
     } catch (Exception e)
     {
@@ -50,3 +51,4 @@ public class MultipleTrackerReferrerReceiver extends BroadcastReceiver
     receiver.onReceive(context, intent);
   }
 }
+*/

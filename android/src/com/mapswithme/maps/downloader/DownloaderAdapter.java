@@ -35,11 +35,11 @@ import com.mapswithme.util.BottomSheetHelper;
 import com.mapswithme.util.StringUtils;
 import com.mapswithme.util.ThemeUtils;
 import com.mapswithme.util.UiUtils;
-import com.mapswithme.util.statistics.MytargetHelper;
+//import com.mapswithme.util.statistics.MytargetHelper;
 import com.mapswithme.util.statistics.Statistics;
 import com.timehop.stickyheadersrecyclerview.StickyRecyclerHeadersAdapter;
 import com.timehop.stickyheadersrecyclerview.StickyRecyclerHeadersDecoration;
-import ru.mail.android.mytarget.nativeads.banners.NativeAppwallBanner;
+//import ru.mail.android.mytarget.nativeads.banners.NativeAppwallBanner;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -73,15 +73,15 @@ class DownloaderAdapter extends RecyclerView.Adapter<DownloaderAdapter.ViewHolde
 
   private final List<CountryItem> mItems = new ArrayList<>();
   private final Map<String, CountryItem> mCountryIndex = new HashMap<>();  // Country.id -> Country
-  private final List<NativeAppwallBanner> mAds = new ArrayList<>();
+//  private final List<NativeAppwallBanner> mAds = new ArrayList<>();
 
   private final SparseArray<String> mHeaders = new SparseArray<>();
   private final Stack<PathEntry> mPath = new Stack<>();  // Holds navigation history. The last element is the current level.
   private int mNearMeCount;
 
   private int mListenerSlot;
-  @Nullable
-  private MytargetHelper mMytargetHelper;
+  //@Nullable
+  //private MytargetHelper mMytargetHelper;
 
   private enum MenuItem
   {
@@ -330,13 +330,15 @@ class DownloaderAdapter extends RecyclerView.Adapter<DownloaderAdapter.ViewHolde
       super(createViewHolderFrame(parent, kind));
 
       mKind = kind;
-      mHolder = (kind == TYPE_ADVERTISMENT) ? new AdViewHolder(itemView)
-                                            : new ItemViewHolder(itemView);
+//      mHolder = (kind == TYPE_ADVERTISMENT) ? new AdViewHolder(itemView)
+//                                            : new ItemViewHolder(itemView);
+      mHolder = new ItemViewHolder(itemView);
     }
 
     @SuppressWarnings("unchecked")
     void bind(int position)
     {
+      /*
       int kind = DownloaderAdapter.this.getItemViewType(position);
       if (kind == TYPE_ADVERTISMENT)
       {
@@ -346,6 +348,7 @@ class DownloaderAdapter extends RecyclerView.Adapter<DownloaderAdapter.ViewHolde
 
       if (position > mNearMeCount)
         position -= getAdsCount();
+      */
 
       mHolder.bind(mItems.get(position));
     }
@@ -640,13 +643,15 @@ class DownloaderAdapter extends RecyclerView.Adapter<DownloaderAdapter.ViewHolde
     }
   }
 
+
   private void logIndexOutOfBoundsErrorInfoToCrashlytics(int position)
   {
     String tag = DownloaderAdapter.class.getSimpleName();
     int itemSize = mItems.size();
     Crashlytics.log(Log.ERROR, tag, "Index " + position + " is out of bounds, mItem.size = "
                                     + itemSize + ", current thread = " + Thread.currentThread() +
-                                    " mNearMeCount = " + mNearMeCount + ", ads count = " + mAds.size()
+                                    " mNearMeCount = " + mNearMeCount
+                                    // + ", ads count = " + mAds.size()
                                     + ", showAds = " + mShowAds + ", mAdsLoaded = " + mAdsLoaded
                                     + ", mAdsLoading = " + mAdsLoading +
                                     " mSearchResultsMode = " + mSearchResultsMode
@@ -660,6 +665,7 @@ class DownloaderAdapter extends RecyclerView.Adapter<DownloaderAdapter.ViewHolde
     }
   }
 
+  /*
   private class AdViewHolder extends BaseInnerViewHolder<NativeAppwallBanner>
   {
     private final ImageView mIcon;
@@ -700,6 +706,7 @@ class DownloaderAdapter extends RecyclerView.Adapter<DownloaderAdapter.ViewHolde
       mSubtitle.setText(item.getDescription());
     }
   }
+  */
 
   private void collectHeaders()
   {
@@ -770,7 +777,7 @@ class DownloaderAdapter extends RecyclerView.Adapter<DownloaderAdapter.ViewHolde
 
     MapManager.nativeListItems(parent, lat, lon, hasLocation, mMyMapsMode, mItems);
     processData();
-    loadAds();
+    //loadAds();
   }
 
   void setSearchResultsMode(@NonNull Collection<CountryItem> results, String query)
@@ -785,6 +792,7 @@ class DownloaderAdapter extends RecyclerView.Adapter<DownloaderAdapter.ViewHolde
 
   void clearAdsAndCancelMyTarget()
   {
+    /*
     if (mAds.isEmpty())
       return;
 
@@ -792,6 +800,7 @@ class DownloaderAdapter extends RecyclerView.Adapter<DownloaderAdapter.ViewHolde
       mMytargetHelper.cancel();
 
     clearAdsInternal();
+    */
     mAdsLoaded = false;
   }
 
@@ -887,9 +896,11 @@ class DownloaderAdapter extends RecyclerView.Adapter<DownloaderAdapter.ViewHolde
     return mItems.get(position).headerId;
   }
 
+
   private int getAdsCount()
   {
-    return (mShowAds ? mAds.size() : 0);
+    return 0;
+    //return (mShowAds ? mAds.size() : 0);
   }
 
   @Override
@@ -990,6 +1001,7 @@ class DownloaderAdapter extends RecyclerView.Adapter<DownloaderAdapter.ViewHolde
    *   <li>There is at least one map downloaded.</li>
    * </ul>
    */
+  /*
   private void loadAds()
   {
     mShowAds = false;
@@ -1089,6 +1101,7 @@ class DownloaderAdapter extends RecyclerView.Adapter<DownloaderAdapter.ViewHolde
       notifyItemRangeRemoved(mNearMeCount, oldSize);
     }
   }
+  */
 
   void attach()
   {
@@ -1099,8 +1112,8 @@ class DownloaderAdapter extends RecyclerView.Adapter<DownloaderAdapter.ViewHolde
   {
     MapManager.nativeUnsubscribe(mListenerSlot);
 
-    if (mMytargetHelper != null)
-      mMytargetHelper.cancel();
+//    if (mMytargetHelper != null)
+//      mMytargetHelper.cancel();
 
     mAdsLoading = false;
   }

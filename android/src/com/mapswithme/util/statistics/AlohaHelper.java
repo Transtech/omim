@@ -6,17 +6,17 @@ public class AlohaHelper
 
   public static void logClick(String element)
   {
-    org.alohalytics.Statistics.logEvent(ALOHA_CLICK, element);
+//    org.alohalytics.Statistics.logEvent(ALOHA_CLICK, element);
   }
 
   public static void logLongClick(String element)
   {
-    org.alohalytics.Statistics.logEvent(ALOHA_LONG_CLICK, element);
+//    org.alohalytics.Statistics.logEvent(ALOHA_LONG_CLICK, element);
   }
 
   public static void logException(Exception e)
   {
-    org.alohalytics.Statistics.logEvent(ALOHA_EXCEPTION, new String[] {e.getClass().getSimpleName(), e.getMessage()});
+//    org.alohalytics.Statistics.logEvent(ALOHA_EXCEPTION, new String[] {e.getClass().getSimpleName(), e.getMessage()});
   }
 
   public static class Settings

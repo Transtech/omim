@@ -35,7 +35,8 @@ public abstract class OsmAuthFragmentDelegate implements View.OnClickListener
 
   public void onViewCreated(View view, @Nullable Bundle savedInstanceState)
   {
-    for (@IdRes int childId : new int[] {R.id.login_osm, R.id.login_facebook, R.id.login_google, R.id.register})
+    //for (@IdRes int childId : new int[] {R.id.login_osm, R.id.login_facebook, R.id.login_google, R.id.register})
+    for (@IdRes int childId : new int[] {R.id.login_osm, R.id.login_google, R.id.register})
     {
       final View v = view.findViewById(childId);
       if (v != null)
@@ -53,10 +54,10 @@ public abstract class OsmAuthFragmentDelegate implements View.OnClickListener
       Statistics.INSTANCE.trackAuthRequest(OsmOAuth.AuthType.OSM);
       loginOsm();
       break;
-    case R.id.login_facebook:
-      Statistics.INSTANCE.trackAuthRequest(OsmOAuth.AuthType.FACEBOOK);
-      loginWebview(OsmOAuth.AuthType.FACEBOOK);
-      break;
+//    case R.id.login_facebook:
+//      Statistics.INSTANCE.trackAuthRequest(OsmOAuth.AuthType.FACEBOOK);
+//      loginWebview(OsmOAuth.AuthType.FACEBOOK);
+//      break;
     case R.id.login_google:
       Statistics.INSTANCE.trackAuthRequest(OsmOAuth.AuthType.GOOGLE);
       loginWebview(OsmOAuth.AuthType.GOOGLE);

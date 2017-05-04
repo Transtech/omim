@@ -86,15 +86,15 @@ public abstract class BaseMwmRecyclerFragment extends Fragment
   public void onResume()
   {
     super.onResume();
-    org.alohalytics.Statistics.logEvent("$onResume", this.getClass().getSimpleName()
-        + ":" + UiUtils.deviceOrientationAsString(getActivity()));
+//    org.alohalytics.Statistics.logEvent("$onResume", this.getClass().getSimpleName()
+//        + ":" + UiUtils.deviceOrientationAsString(getActivity()));
   }
 
   @Override
   public void onPause()
   {
     super.onPause();
-    org.alohalytics.Statistics.logEvent("$onPause", this.getClass().getSimpleName());
+//    org.alohalytics.Statistics.logEvent("$onPause", this.getClass().getSimpleName());
   }
 
   protected void setupPlaceholder(@NonNull PlaceholderView placeholder) {}

@@ -12,9 +12,9 @@ import com.mapswithme.maps.R;
 import com.mapswithme.util.ConnectionState;
 import com.mapswithme.util.concurrency.ThreadPool;
 import com.mapswithme.util.concurrency.UiThread;
-import ru.mail.android.mytarget.core.net.Hosts;
-import ru.mail.android.mytarget.nativeads.NativeAppwallAd;
-import ru.mail.android.mytarget.nativeads.banners.NativeAppwallBanner;
+//import ru.mail.android.mytarget.core.net.Hosts;
+//import ru.mail.android.mytarget.nativeads.NativeAppwallAd;
+//import ru.mail.android.mytarget.nativeads.banners.NativeAppwallBanner;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -25,6 +25,7 @@ import java.util.List;
 import static com.mapswithme.maps.MwmApplication.prefs;
 import static com.mapswithme.util.SharedPropertiesUtils.isShowcaseSwitchedOnLocal;
 
+/*
 public final class MytargetHelper
 {
   // for caching of myTarget setting achieved from server
@@ -35,8 +36,8 @@ public final class MytargetHelper
 
   private static final int TIMEOUT = 1000;
 
-  @Nullable
-  private NativeAppwallAd mShowcase;
+  //@Nullable
+  //private NativeAppwallAd mShowcase;
   private boolean mCancelled;
 
   public interface Listener<T>
@@ -194,3 +195,4 @@ public final class MytargetHelper
            .apply();
   }
 }
+*/

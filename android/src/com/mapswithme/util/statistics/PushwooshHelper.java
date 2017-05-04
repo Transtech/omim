@@ -6,8 +6,8 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 
-import com.pushwoosh.PushManager;
-import com.pushwoosh.SendPushTagsCallBack;
+//import com.pushwoosh.PushManager;
+//import com.pushwoosh.SendPushTagsCallBack;
 
 import java.lang.ref.WeakReference;
 import java.util.HashMap;
@@ -15,6 +15,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+/*
 public final class PushwooshHelper implements SendPushTagsCallBack
 {
   private static final PushwooshHelper sInstance = new PushwooshHelper();
@@ -144,3 +145,4 @@ public final class PushwooshHelper implements SendPushTagsCallBack
   public static native void nativeSendEditorAddObjectTag();
   public static native void nativeSendEditorEditObjectTag();
 }
+*/

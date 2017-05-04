@@ -8,7 +8,7 @@ import android.support.annotation.NonNull;
 import android.support.v7.app.AlertDialog;
 import android.view.LayoutInflater;
 
-import com.google.android.gms.plus.PlusOneButton;
+//import com.google.android.gms.plus.PlusOneButton;
 import com.mapswithme.maps.R;
 import com.mapswithme.maps.base.BaseMwmDialogFragment;
 import com.mapswithme.util.Config;
@@ -22,6 +22,7 @@ public class GooglePlusDialogFragment extends BaseMwmDialogFragment
   {
     super.onResume();
 
+    /*
     final PlusOneButton plusButton = (PlusOneButton) getDialog().findViewById(R.id.btn__gplus);
     if (plusButton == null)
       return;
@@ -36,6 +37,7 @@ public class GooglePlusDialogFragment extends BaseMwmDialogFragment
         startActivityForResult(intent, 0);
       }
     });
+    */
   }
 
   @NonNull

@@ -66,8 +66,8 @@ namespace android
     m_functorProcessObject = env->NewGlobalRef(functorProcessObject);
     jclass const functorProcessClass = env->GetObjectClass(functorProcessObject);
     m_functorProcessMethod = env->GetMethodID(functorProcessClass, "forwardToMainThread", "(J)V");
-    m_sendPushWooshTagsMethod = env->GetMethodID(functorProcessClass, "sendPushWooshTags", "(Ljava/lang/String;[Ljava/lang/String;)V");
-    m_myTrackerTrackMethod = env->GetStaticMethodID(g_myTrackerClazz, "trackEvent", "(Ljava/lang/String;)V");
+    //m_sendPushWooshTagsMethod = env->GetMethodID(functorProcessClass, "sendPushWooshTags", "(Ljava/lang/String;[Ljava/lang/String;)V");
+    //m_myTrackerTrackMethod = env->GetStaticMethodID(g_myTrackerClazz, "trackEvent", "(Ljava/lang/String;)V");
 
     string const flavor = jni::ToNativeString(env, flavorName);
     string const build = jni::ToNativeString(env, buildType);
@@ -160,6 +160,7 @@ namespace android
 
   void Platform::SendPushWooshTag(string const & tag, vector<string> const & values)
   {
+    /*
     if (values.empty())
       return;
 
@@ -167,10 +168,12 @@ namespace android
     env->CallVoidMethod(m_functorProcessObject, m_sendPushWooshTagsMethod,
                         jni::TScopedLocalRef(env, jni::ToJavaString(env, tag)).get(),
                         jni::TScopedLocalObjectArrayRef(env, jni::ToJavaStringArray(env, values)).get());
+    */
   }
 
   void Platform::SendMarketingEvent(string const & tag, map<string, string> const & params)
   {
+    /*
     JNIEnv * env = jni::GetEnv();
     string eventData = tag;
     for (auto const & item : params)
@@ -178,8 +181,8 @@ namespace android
 
     env->CallStaticVoidMethod(g_myTrackerClazz, m_myTrackerTrackMethod,
                               jni::TScopedLocalRef(env, jni::ToJavaString(env, eventData)).get());
+    */
   }
-
 } // namespace android
 
 Platform & GetPlatform()

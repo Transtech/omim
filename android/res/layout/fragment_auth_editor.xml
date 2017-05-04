@@ -135,6 +135,7 @@
             android:textColor="@color/text_dark"
             tools:targetApi="jelly_bean"/>
 
+          <!--
           <Button
             android:id="@+id/login_facebook"
             android:layout_width="0dp"
@@ -153,6 +154,7 @@
             android:textAppearance="@style/MwmTextAppearance.Body1.Light"
             android:textColor="@color/text_light"
             tools:targetApi="jelly_bean"/>
+            -->
 
         </LinearLayout>
 

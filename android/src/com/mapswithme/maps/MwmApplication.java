@@ -25,13 +25,13 @@ import com.mapswithme.maps.settings.StoragePathManager;
 import com.mapswithme.maps.sound.TtsPlayer;
 import com.mapswithme.maps.traffic.TrafficManager;
 import com.mapswithme.util.*;
-import com.mapswithme.util.statistics.PushwooshHelper;
+//import com.mapswithme.util.statistics.PushwooshHelper;
 import com.mapswithme.util.statistics.Statistics;
-import com.my.tracker.MyTracker;
-import com.my.tracker.MyTrackerParams;
-import com.pushwoosh.PushManager;
+//import com.my.tracker.MyTracker;
+//import com.my.tracker.MyTrackerParams;
+//import com.pushwoosh.PushManager;
 import io.fabric.sdk.android.Fabric;
-import net.hockeyapp.android.CrashManager;
+//import net.hockeyapp.android.CrashManager;
 
 import java.io.File;
 import java.util.List;
@@ -109,14 +109,14 @@ public class MwmApplication extends MultiDexApplication
     super.onCreate();
     mMainLoopHandler = new Handler(getMainLooper());
 
-    initHockeyApp();
+    //initHockeyApp();
 
     initCrashlytics();
-    final boolean isInstallationIdFound =
-      setInstallationIdToCrashlytics();
+//    final boolean isInstallationIdFound =
+//      setInstallationIdToCrashlytics();
 
-    initPushWoosh();
-    initTracker();
+    //initPushWoosh();
+    //initTracker();
 
     String settingsPath = getSettingsPath();
     new File(settingsPath).mkdirs();
@@ -129,8 +129,8 @@ public class MwmApplication extends MultiDexApplication
 
     Statistics s = Statistics.INSTANCE;
 
-    if (!isInstallationIdFound)
-      setInstallationIdToCrashlytics();
+//    if (!isInstallationIdFound)
+//      setInstallationIdToCrashlytics();
 
     mPrefs = getSharedPreferences(getString(R.string.pref_file_name), MODE_PRIVATE);
     mBackgroundTracker = new AppBackgroundTracker();
@@ -182,6 +182,7 @@ public class MwmApplication extends MultiDexApplication
     nativeAddLocalization("place_page_booking_rating", getString(R.string.place_page_booking_rating));
   }
 
+  /*
   private void initHockeyApp()
   {
     String id = ("beta".equals(BuildConfig.BUILD_TYPE) ? PrivateVariables.hockeyAppBetaId()
@@ -189,6 +190,7 @@ public class MwmApplication extends MultiDexApplication
     if (!TextUtils.isEmpty(id))
       CrashManager.register(this, id);
   }
+  */
 
   private void initCrashlytics()
   {
@@ -200,6 +202,7 @@ public class MwmApplication extends MultiDexApplication
     nativeInitCrashlytics();
   }
 
+  /*
   private static boolean setInstallationIdToCrashlytics()
   {
     if (!isCrashlyticsEnabled())
@@ -214,6 +217,7 @@ public class MwmApplication extends MultiDexApplication
     Crashlytics.setString("AlohalyticsInstallationId", installationId);
     return true;
   }
+  */
 
   public boolean isFrameworkInitialized()
   {
@@ -275,6 +279,7 @@ public class MwmApplication extends MultiDexApplication
     System.loadLibrary("mapswithme");
   }
 
+  /*
   private void initPushWoosh()
   {
     try
@@ -295,10 +300,12 @@ public class MwmApplication extends MultiDexApplication
       Log.e("Pushwoosh", e.getLocalizedMessage());
     }
   }
+  */
 
   @SuppressWarnings("unused")
   void sendPushWooshTags(String tag, String[] values)
   {
+    /*
     try
     {
       if (values.length == 1)
@@ -310,8 +317,10 @@ public class MwmApplication extends MultiDexApplication
     {
       Log.e("Pushwoosh", e.getLocalizedMessage());
     }
+    */
   }
 
+  /*
   private void initTracker()
   {
     MyTracker.setDebugMode(BuildConfig.DEBUG);
@@ -320,6 +329,7 @@ public class MwmApplication extends MultiDexApplication
     myParams.setDefaultVendorAppPackage();
     MyTracker.initTracker();
   }
+  */
 
   public void initCounters()
   {

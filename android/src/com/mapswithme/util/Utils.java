@@ -209,7 +209,7 @@ public class Utils
       writer.write("Android version: " + Build.VERSION.SDK_INT + "\n");
       writer.write("Device: " + getDeviceModel() + "\n");
       writer.write("App version: " + BuildConfig.APPLICATION_ID + " " + BuildConfig.VERSION_NAME + "\n");
-      writer.write("Installation ID: " + getInstallationId() + "\n");
+//      writer.write("Installation ID: " + getInstallationId() + "\n");
       writer.write("Locale : " + Locale.getDefault());
       writer.write("\nNetworks : ");
       final ConnectivityManager manager = (ConnectivityManager) MwmApplication.get().getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -387,6 +387,7 @@ public class Utils
                    }).show();
   }
 
+  /*
   public static String getInstallationId()
   {
     final Context context = MwmApplication.get();
@@ -400,6 +401,7 @@ public class Utils
 
     return installationId;
   }
+  */
 
   public static boolean isUberInstalled(@NonNull Activity context)
   {

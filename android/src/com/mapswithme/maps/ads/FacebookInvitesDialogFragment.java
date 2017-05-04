@@ -8,9 +8,9 @@ import android.support.v7.app.AlertDialog;
 import android.view.LayoutInflater;
 import android.view.View;
 
-import com.facebook.FacebookSdk;
-import com.facebook.share.model.AppInviteContent;
-import com.facebook.share.widget.AppInviteDialog;
+//import com.facebook.FacebookSdk;
+//import com.facebook.share.model.AppInviteContent;
+//import com.facebook.share.widget.AppInviteDialog;
 import com.mapswithme.maps.R;
 import com.mapswithme.maps.base.BaseMwmDialogFragment;
 import com.mapswithme.util.UiUtils;
@@ -46,7 +46,7 @@ public class FacebookInvitesDialogFragment extends BaseMwmDialogFragment
                     public void onClick(DialogInterface dialog, int which)
                     {
                       mHasInvited = true;
-                      showAppInviteDialog();
+                      //showAppInviteDialog();
                       Statistics.INSTANCE.trackEvent(Statistics.EventName.FACEBOOK_INVITE_INVITED);
                     }
                   }).create();
@@ -67,6 +67,7 @@ public class FacebookInvitesDialogFragment extends BaseMwmDialogFragment
     Statistics.INSTANCE.trackEvent(Statistics.EventName.FACEBOOK_INVITE_LATER);
   }
 
+  /*
   private void showAppInviteDialog()
   {
     FacebookSdk.sdkInitialize(getActivity());
@@ -82,4 +83,5 @@ public class FacebookInvitesDialogFragment extends BaseMwmDialogFragment
       dismiss();
     }
   }
+  */
 }

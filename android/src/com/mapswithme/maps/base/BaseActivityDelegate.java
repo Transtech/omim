@@ -8,7 +8,7 @@ import com.mapswithme.util.UiUtils;
 import com.mapswithme.util.ViewServer;
 import com.mapswithme.util.concurrency.UiThread;
 import com.mapswithme.util.statistics.Statistics;
-import com.my.tracker.MyTracker;
+//import com.my.tracker.MyTracker;
 
 public class BaseActivityDelegate
 {
@@ -39,25 +39,25 @@ public class BaseActivityDelegate
   public void onStart()
   {
     Statistics.INSTANCE.startActivity(mActivity.get());
-    MyTracker.onStartActivity(mActivity.get());
+//    MyTracker.onStartActivity(mActivity.get());
   }
 
   public void onStop()
   {
     Statistics.INSTANCE.stopActivity(mActivity.get());
-    MyTracker.onStopActivity(mActivity.get());
+//    MyTracker.onStopActivity(mActivity.get());
   }
 
   public void onResume()
   {
-    org.alohalytics.Statistics.logEvent("$onResume", mActivity.getClass().getSimpleName() + ":" +
-                                                     UiUtils.deviceOrientationAsString(mActivity.get()));
+//    org.alohalytics.Statistics.logEvent("$onResume", mActivity.getClass().getSimpleName() + ":" +
+//                                                     UiUtils.deviceOrientationAsString(mActivity.get()));
     ViewServer.get(mActivity.get()).setFocusedWindow(mActivity.get());
   }
 
   public void onPause()
   {
-    org.alohalytics.Statistics.logEvent("$onPause", mActivity.getClass().getSimpleName());
+//    org.alohalytics.Statistics.logEvent("$onPause", mActivity.getClass().getSimpleName());
   }
 
   public void onPostResume()

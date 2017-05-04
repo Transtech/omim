@@ -51,7 +51,7 @@ class PlatformSocket
     sSslConnectionCounter = 0;
     LOGGER.d("***********************************************************************************");
     LOGGER.d("Platform socket is created by core, ssl connection counter is discarded.");
-    LOGGER.d("Installation ID: ", Utils.getInstallationId());
+//    LOGGER.d("Installation ID: ", Utils.getInstallationId());
     LOGGER.d("App version: ", BuildConfig.VERSION_NAME);
     LOGGER.d("App version code: ", BuildConfig.VERSION_CODE);
   }

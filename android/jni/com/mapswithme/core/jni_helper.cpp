@@ -16,7 +16,7 @@ extern JavaVM * GetJVM()
 // Caching is necessary to create class from native threads.
 jclass g_mapObjectClazz;
 jclass g_bookmarkClazz;
-jclass g_myTrackerClazz;
+//jclass g_myTrackerClazz;
 jclass g_httpClientClazz;
 jclass g_httpParamsClazz;
 jclass g_httpHeaderClazz;
@@ -37,7 +37,7 @@ JNI_OnLoad(JavaVM * jvm, void *)
   JNIEnv * env = jni::GetEnv();
   g_mapObjectClazz = jni::GetGlobalClassRef(env, "com/mapswithme/maps/bookmarks/data/MapObject");
   g_bookmarkClazz = jni::GetGlobalClassRef(env, "com/mapswithme/maps/bookmarks/data/Bookmark");
-  g_myTrackerClazz = jni::GetGlobalClassRef(env, "com/my/tracker/MyTracker");
+//  g_myTrackerClazz = jni::GetGlobalClassRef(env, "com/my/tracker/MyTracker");
   g_httpClientClazz = jni::GetGlobalClassRef(env, "com/mapswithme/util/HttpClient");
   g_httpParamsClazz = jni::GetGlobalClassRef(env, "com/mapswithme/util/HttpClient$Params");
   g_httpHeaderClazz = jni::GetGlobalClassRef(env, "com/mapswithme/util/HttpClient$HttpHeader");
@@ -55,7 +55,7 @@ JNI_OnUnload(JavaVM *, void *)
   JNIEnv * env = jni::GetEnv();
   env->DeleteGlobalRef(g_mapObjectClazz);
   env->DeleteGlobalRef(g_bookmarkClazz);
-  env->DeleteGlobalRef(g_myTrackerClazz);
+  //env->DeleteGlobalRef(g_myTrackerClazz);
   env->DeleteGlobalRef(g_httpClientClazz);
   env->DeleteGlobalRef(g_httpParamsClazz);
   env->DeleteGlobalRef(g_httpHeaderClazz);
