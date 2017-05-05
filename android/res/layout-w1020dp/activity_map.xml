@@ -11,9 +11,9 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"/>
 
-  <include
+  <!--include
     android:id="@+id/onmap_downloader"
-    layout="@layout/onmap_downloader"/>
+    layout="@layout/onmap_downloader"/-->
 
   <include
     android:id="@+id/position_chooser"
@@ -58,16 +58,6 @@
       android:layout_width="match_parent"
       android:layout_height="@dimen/height_block_base"
       android:layout_gravity="bottom"/>
-
-    <com.mapswithme.maps.widget.placepage.PlacePageView
-      android:id="@+id/info_box"
-      style="@style/MwmWidget.Floating"
-      android:layout_width="@dimen/place_page_width"
-      android:layout_height="wrap_content"
-      android:layout_marginBottom="@dimen/menu_line_height"
-      android:background="?windowBackgroundForced"
-      placePage:animationType="left"
-      placePage:floating="true"/>
   </LinearLayout>
 
   <include
@@ -76,6 +66,20 @@
     android:layout_height="match_parent"
     android:visibility="invisible"
     tools:visibility="visible"/>
+
+  <com.mapswithme.maps.widget.placepage.PlacePageView
+          android:id="@+id/info_box"
+          style="@style/MwmWidget.Floating"
+          android:layout_width="@dimen/place_page_width"
+          android:layout_height="wrap_content"
+          android:layout_marginBottom="65dp"
+          android:layout_marginLeft="@dimen/margin_base"
+          android:layout_alignParentBottom="true"
+          android:layout_toRightOf="@+id/fragment_container"
+          android:layout_toEndOf="@id/fragment_container"
+          android:background="?windowBackgroundForced"
+          placePage:animationType="left"
+          placePage:floating="true"/>
 
   <include
     android:id="@+id/menu_frame"
@@ -93,9 +97,9 @@
     android:visibility="gone"
     tools:visibility="visible"/>
 
-  <com.mapswithme.maps.search.HotelsFilterView
+  <!--com.mapswithme.maps.search.HotelsFilterView
     android:id="@+id/hotels_filter"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:visibility="gone"/>
+    tools:visibility="gone"/-->
 </RelativeLayout>
