@@ -32,9 +32,9 @@
     android:visibility="gone"
     tools:visibility="visible"/>
 
-  <include layout="@layout/layout_nav_search"
+  <!--IFACE1163 include layout="@layout/layout_nav_search"
     android:visibility="gone"
-    tools:visibility="visible"/>
+    tools:visibility="visible"/-->
 
   <com.mapswithme.maps.widget.FadeView
     android:id="@+id/fade_view"

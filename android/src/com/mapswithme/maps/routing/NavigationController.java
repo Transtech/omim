@@ -48,7 +48,7 @@ public class NavigationController implements TrafficManager.TrafficCallback
 
   private final View mFrame;
   private final View mBottomFrame;
-  private final View mSearchButtonFrame;
+  //IFACE-1163 private final View mSearchButtonFrame;
   private final NavMenu mNavMenu;
 
   private final ImageView mNextTurnImage;
@@ -73,8 +73,8 @@ public class NavigationController implements TrafficManager.TrafficCallback
   private final TextView mDistanceUnits;
   private final FlatProgressView mRouteProgress;
 
-  @NonNull
-  private final SearchWheel mSearchWheel;
+  //IFACE-1163 @NonNull
+  //IFACE-1163 private final SearchWheel mSearchWheel;
 
   private boolean mShowTimeLeft = true;
 
@@ -126,8 +126,8 @@ public class NavigationController implements TrafficManager.TrafficCallback
     mDistanceUnits = (TextView) mBottomFrame.findViewById(R.id.distance_dimen);
     mRouteProgress = (FlatProgressView) mBottomFrame.findViewById(R.id.navigation_progress);
 
-    mSearchButtonFrame = activity.findViewById(R.id.search_button_frame);
-    mSearchWheel = new SearchWheel(mSearchButtonFrame);
+    //IFACE-1163 mSearchButtonFrame = activity.findViewById(R.id.search_button_frame);
+    //IFACE-1163 mSearchWheel = new SearchWheel(mSearchButtonFrame);
 
       //TRANSTECH
       requestRouteSync(activity);
@@ -138,8 +138,8 @@ public class NavigationController implements TrafficManager.TrafficCallback
   public void onResume()
   {
     mNavMenu.onResume(null);
-    mSearchWheel.onResume();
-      ComplianceController.get().start("NavigationController::onResume()");
+    //IFACE-1163 mSearchWheel.onResume();
+    ComplianceController.get().start("NavigationController::onResume()");
   }
 
   private NavMenu createNavMenu()
@@ -190,8 +190,8 @@ public class NavigationController implements TrafficManager.TrafficCallback
     Statistics.INSTANCE.trackEvent(Statistics.EventName.ROUTING_CLOSE);
     AlohaHelper.logClick(AlohaHelper.ROUTING_CLOSE);
     parent.refreshFade();
-    mSearchWheel.reset();
-      ComplianceController.get().stop("NavigationController::stop()");
+    //IFACE-1163 mSearchWheel.reset();
+    ComplianceController.get().stop("NavigationController::stop()");
   }
 
   private void updateVehicle(RoutingInfo info)
@@ -334,7 +334,7 @@ public class NavigationController implements TrafficManager.TrafficCallback
   public void show(boolean show)
   {
     UiUtils.showIf(show, mFrame);
-    UiUtils.showIf(show, mSearchButtonFrame);
+    //IFACE-1163 UiUtils.showIf(show, mSearchButtonFrame);
     mNavMenu.show(show);
   }
 
@@ -346,13 +346,13 @@ public class NavigationController implements TrafficManager.TrafficCallback
   public void onSaveState(@NonNull Bundle outState)
   {
     outState.putBoolean(STATE_SHOW_TIME_LEFT, mShowTimeLeft);
-    mSearchWheel.saveState(outState);
+    //IFACE-1163 mSearchWheel.saveState(outState);
   }
 
   public void onRestoreState(@NonNull Bundle savedInstanceState)
   {
     mShowTimeLeft = savedInstanceState.getBoolean(STATE_SHOW_TIME_LEFT);
-    mSearchWheel.restoreState(savedInstanceState);
+    //IFACE-1163 mSearchWheel.restoreState(savedInstanceState);
   }
 
   public boolean cancel()
