@@ -61,10 +61,13 @@ public class RouteUtil
         List<RouteTrip> trips = new ArrayList<RouteTrip>();
         Cursor tripCursor = ctx.getContentResolver().query(RouteConstants.TRIPS_CONTENT_URI,
                 null, selection, selectionArgs, null);
-        while (tripCursor.moveToNext())
-            trips.add(new RouteTrip(tripCursor));
+        if (tripCursor != null) {
+            while (tripCursor.moveToNext())
+                trips.add(new RouteTrip(tripCursor));
 
-        tripCursor.close();
+            tripCursor.close();
+        }
+
         return trips;
     }
 

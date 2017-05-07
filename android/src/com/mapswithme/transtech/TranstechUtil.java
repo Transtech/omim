@@ -24,6 +24,8 @@ public class TranstechUtil
                 payload.put( "RecordType", routingKey.substring( routingKey.lastIndexOf( "." ) + 1 ).toUpperCase() );
 
             Intent intent = new Intent( TranstechConstants.CREATE_COMMS_RECORD);
+            intent.setPackage("transtech.AF.Android.TranstechCommon"); // API-21 Service Intent must be explicit
+
             intent.putExtra( TranstechConstants.EXTRA_COMMS_EVENT_ROUTE, routingKey);
             intent.putExtra( TranstechConstants.EXTRA_COMMS_EVENT_CONTENT, payload.toString());
             intent.putExtra( TranstechConstants.EXTRA_COMMS_EVENT_PRIORITY, priority);
