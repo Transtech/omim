@@ -480,7 +480,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
     initMainMenu();
     //initOnmapDownloader();
     initPositionChooser();
-    initFilterViews();
+    //initFilterViews();
   }
 
   private void initFilterViews()
@@ -1132,7 +1132,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
     setFullscreen(false);
 
     mPlacePage.setMapObject(object, true);
-    if (!mPlacePageRestored)
+    //if (!mPlacePageRestored)
       mPlacePage.setState(State.PREVIEW);
     mPlacePageRestored = false;
 

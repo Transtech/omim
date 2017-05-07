@@ -1934,7 +1934,8 @@ bool Framework::ShowMapForURL(string const & url)
   if (result != FAILED)
   {
     // Always hide current map selection.
-    DeactivateMapSelection(true /* notifyUI */);
+    //DeactivateMapSelection(true /* notifyUI */);
+    //InvalidateUserMarks();
 
     // set viewport and stop follow mode if any
     StopLocationFollow();

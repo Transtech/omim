@@ -1021,17 +1021,22 @@ public class PlacePageView extends RelativeLayout
     refreshMetadataOrHide(mMapObject.getMetadata(Metadata.MetadataType.FMD_EMAIL), mEmail, mTvEmail);
     refreshMetadataOrHide(mMapObject.getMetadata(Metadata.MetadataType.FMD_OPERATOR), mOperator, mTvOperator);
     refreshMetadataOrHide(Framework.nativeGetActiveObjectFormattedCuisine(), mCuisine, mTvCuisine);
-    refreshMetadataOrHide(mMapObject.getMetadata(Metadata.MetadataType.FMD_WIKIPEDIA), mWiki, null);
+//    refreshMetadataOrHide(mMapObject.getMetadata(Metadata.MetadataType.FMD_WIKIPEDIA), mWiki, null);
     refreshMetadataOrHide(mMapObject.getMetadata(Metadata.MetadataType.FMD_INTERNET), mWifi, null);
     refreshMetadataOrHide(mMapObject.getMetadata(Metadata.MetadataType.FMD_FLATS), mEntrance, mTvEntrance);
     refreshOpeningHours();
 
+    /*
     boolean showTaxiOffer = mMapObject.isReachableByTaxi() &&
                             LocationHelper.INSTANCE.getMyPosition() != null &&
                             ConnectionState.isConnected();
 
     UiUtils.showIf(showTaxiOffer, mTaxi);
+    */
 
+    UiUtils.hide(mEditPlace, mAddOrganisation, mAddPlace);
+
+    /*
     boolean inRouting = RoutingController.get().isNavigating() ||
                         RoutingController.get().isPlanning();
 
@@ -1045,6 +1050,7 @@ public class PlacePageView extends RelativeLayout
       UiUtils.showIf(Editor.nativeShouldShowAddBusiness(), mAddOrganisation);
       UiUtils.showIf(Editor.nativeShouldShowAddPlace(), mAddPlace);
     }
+    */
   }
 
   private void refreshOpeningHours()
