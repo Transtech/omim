@@ -63,9 +63,7 @@ public class DemoActivity extends BaseMwmFragmentActivity
         DEMO3_START.setSpeed( 0.0f );
         DEMO3_START.setAccuracy( 20 );
     }
-
-    public static MwmActivity mwmActivity;
-
+    
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
@@ -224,8 +222,8 @@ public class DemoActivity extends BaseMwmFragmentActivity
         MapObject endPoint = new MapObject(MapObject.API_POINT, "Spirit of Tasmania", null, null, -37.84241170038242, 144.93850708007812, null, null, false );
         Log.i( TAG, "Set end position to " + endPoint.getLat() + ", " + endPoint.getLon() );
 
-        RoutingController.get().attach( mwmActivity );
-        mwmActivity.startLocationToPoint( Statistics.EventName.MENU_P2P, AlohaHelper.MENU_POINT2POINT, endPoint );
+        RoutingController.get().attach( MwmApplication.getsMvmActivity() );
+        MwmApplication.getsMvmActivity().startLocationToPoint( Statistics.EventName.MENU_P2P, AlohaHelper.MENU_POINT2POINT, endPoint );
         Log.i( TAG, "Prepared route... " );
 
         get().startActivity( new Intent( get(), MwmActivity.class ) );
@@ -258,8 +256,8 @@ public class DemoActivity extends BaseMwmFragmentActivity
         MapObject endPoint = new MapObject(MapObject.API_POINT, "Mitcham Hotel", null, null, -37.816931, 145.193893, null, null, false );
         Log.i( TAG, "Set end position to " + endPoint.getLat() + ", " + endPoint.getLon() );
 
-        RoutingController.get().attach( mwmActivity );
-        mwmActivity.startLocationToPoint( Statistics.EventName.MENU_P2P, AlohaHelper.MENU_POINT2POINT, endPoint );
+        RoutingController.get().attach( MwmApplication.getsMvmActivity() );
+        MwmApplication.getsMvmActivity().startLocationToPoint( Statistics.EventName.MENU_P2P, AlohaHelper.MENU_POINT2POINT, endPoint );
         Log.i( TAG, "Prepared route... " );
 
         DemoLocationProvider.GPS_DATA_SOURCE = "/sdcard/MapsWithMe/Demo2.txt";

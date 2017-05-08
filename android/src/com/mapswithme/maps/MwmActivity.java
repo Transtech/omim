@@ -386,7 +386,6 @@ public class MwmActivity extends BaseMwmFragmentActivity
 
     public void showDemo()
     {
-        DemoActivity.mwmActivity = this;
         startActivity(new Intent(this, DemoActivity.class));
     }
 

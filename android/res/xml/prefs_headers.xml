@@ -39,4 +39,9 @@
     android:title="@string/about_menu_title"
     android:fragment="com.mapswithme.maps.settings.AboutFragment"/>
   -->
+
+  <header
+          android:id="@+id/launch_demo"
+          android:title="Launch Demo" />
+
 </preference-headers>

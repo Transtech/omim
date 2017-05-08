@@ -350,29 +350,28 @@
     <!--
     <activity
         android:name="ru.mail.android.mytarget.ads.MyTargetActivity"
-        android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|uiMode|screenSize|smallestScreenSize"/>
+        android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|uiMode|screenSize|smallestScreenSize"/-->
 
-      <activity
+    <activity
               android:name="com.mapswithme.maps.DemoActivity"
               android:configChanges="orientation|screenLayout|screenSize"
               android:label="@string/bookmarks"
               android:launchMode="singleTask"
               android:screenOrientation="landscape"
               android:parentActivityName="com.mapswithme.maps.MwmActivity">
-          <meta-data
+      <meta-data
                   android:name="android.support.PARENT_ACTIVITY"
                   android:value="com.mapswithme.maps.MwmActivity"/>
-      </activity>
+    </activity>
 
-      <receiver
-        android:name="com.mapswithme.maps.background.ConnectivityChangedReceiver"
-        android:enabled="true"
-        android:exported="true">
+    <receiver
+            android:name="com.mapswithme.maps.background.ConnectivityChangedReceiver"
+            android:enabled="true"
+            android:exported="true">
       <intent-filter>
         <action android:name="android.net.conn.CONNECTIVITY_CHANGE"/>
       </intent-filter>
     </receiver>
-    -->
 
     <service
         android:name="com.mapswithme.maps.background.WorkerService"

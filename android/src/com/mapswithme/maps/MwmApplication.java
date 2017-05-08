@@ -43,6 +43,7 @@ public class MwmApplication extends MultiDexApplication
   private static final String PW_EMPTY_APP_ID = "XXXXX";
 
   private static MwmApplication sSelf;
+  private static MwmActivity sMvmActivity;
   private SharedPreferences mPrefs;
   private AppBackgroundTracker mBackgroundTracker;
 
@@ -100,6 +101,14 @@ public class MwmApplication extends MultiDexApplication
   private static boolean isCrashlyticsEnabled()
   {
     return !BuildConfig.FABRIC_API_KEY.startsWith("0000");
+  }
+
+  public static MwmActivity getsMvmActivity() {
+    return sMvmActivity;
+  }
+
+  public static void setsMvmActivity(MwmActivity sMvmActivity) {
+    MwmApplication.sMvmActivity = sMvmActivity;
   }
 
   @SuppressWarnings("ResultOfMethodCallIgnored")

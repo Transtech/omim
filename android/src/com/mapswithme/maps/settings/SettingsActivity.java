@@ -17,6 +17,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.mapswithme.maps.DemoActivity;
 import com.mapswithme.maps.MwmApplication;
 import com.mapswithme.maps.R;
 import com.mapswithme.maps.base.BaseActivity;
@@ -99,11 +100,15 @@ public class SettingsActivity extends PreferenceActivity
   @Override
   public void onHeaderClick(@NonNull Header header, int position)
   {
+    if (header.id == R.id.launch_demo) {
+      startActivity(new Intent(this, DemoActivity.class));
+    }
+
+    /*
     if (header.id == R.id.group_map)
       Statistics.INSTANCE.trackEvent(Statistics.EventName.Settings.GROUP_MAP);
     else if (header.id == R.id.group_route)
       Statistics.INSTANCE.trackEvent(Statistics.EventName.Settings.GROUP_ROUTE);
-    /*
     else if (header.id == R.id.group_misc)
       Statistics.INSTANCE.trackEvent(Statistics.EventName.Settings.GROUP_MISC);
     else if (header.id == R.id.help)
