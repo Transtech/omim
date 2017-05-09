@@ -130,7 +130,6 @@ void Engine::ConfigureOnlineSearch(string url, string apiKey)
     {
       if (ProcessorOnline* processorOnline = dynamic_cast<ProcessorOnline*>(&processor)) {
         processorOnline->ConfigureOnlineSearch(url, apiKey);
-        LOG(LINFO, ("ConfigireOnlineSearch: " + url + ", " + apiKey));
       }
     });
 }

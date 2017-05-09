@@ -23,4 +23,9 @@
       android:title="@string/pref_map_auto_zoom"
       android:switchTextOn=""
       android:switchTextOff=""/>
+
+  <ListPreference
+          android:key="@string/pref_route_network"
+          android:title="@string/pref_route_network_title"/>
+
 </PreferenceScreen>
