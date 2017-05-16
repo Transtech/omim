@@ -19,6 +19,7 @@ import com.mapswithme.maps.bookmarks.data.BookmarkManager;
 import com.mapswithme.maps.downloader.CountryItem;
 import com.mapswithme.maps.downloader.MapManager;
 import com.mapswithme.maps.editor.Editor;
+import com.mapswithme.maps.location.DemoLocationProvider;
 import com.mapswithme.maps.location.TrackRecorder;
 import com.mapswithme.maps.routing.RoutingController;
 import com.mapswithme.maps.settings.StoragePathManager;
@@ -145,6 +146,8 @@ public class MwmApplication extends MultiDexApplication
     mBackgroundTracker = new AppBackgroundTracker();
     TrackRecorder.init();
     Editor.init();
+
+    DemoLocationProvider.stopNotification();
   }
 
   public void initNativeCore()

@@ -1,8 +1,19 @@
 package com.mapswithme.maps.location;
 
+import android.app.Application;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.location.Location;
 import android.os.SystemClock;
+import android.support.v7.app.NotificationCompat;
 import android.util.Log;
+import com.mapswithme.maps.MwmApplication;
+import com.mapswithme.maps.R;
 import com.mapswithme.util.concurrency.UiThread;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -136,6 +147,7 @@ public class DemoLocationProvider extends BaseLocationProvider
         }
 
         fakeThread = null;
+        stopNotification();
     }
 
     /**
@@ -286,6 +298,8 @@ public class DemoLocationProvider extends BaseLocationProvider
             Log.i( TAG, "Creating new fake GPS thread (" + num + ")" );
             Location prevLoc = null;
 
+            showNotification();
+
             while( keepSending )
             {
                 if( fakeData == null || fakeData.size() == 0 )
@@ -305,7 +319,8 @@ public class DemoLocationProvider extends BaseLocationProvider
 
                 long delay = 250;
                 if( mockLoc != null && prevLoc != null )
-                    delay = Math.min(Math.max( Math.abs( mockLoc.getTime() - prevLoc.getTime() ) / 4, 500), 1000);
+                    //delay = Math.min(Math.max( Math.abs( mockLoc.getTime() - prevLoc.getTime() ) / 4, 500), 1000);
+                    delay = Math.min(Math.max( Math.abs( mockLoc.getTime() - prevLoc.getTime() ) / 7, 300), 1000);
 
                 try
                 {
@@ -323,4 +338,56 @@ public class DemoLocationProvider extends BaseLocationProvider
         }
     }
 
+    private static BroadcastReceiver stopDemoReceiver = null;
+    private static final int ID_NOTIFICATION = 9999;
+
+    private void showNotification() {
+        final String KEY_STOP_DEMO = "STOP_DEMO";
+
+        Context context = MwmApplication.get();
+        final NotificationManager notificationManager = (NotificationManager) context.getSystemService(Application.NOTIFICATION_SERVICE);
+
+        stopNotification();
+        //notificationManager.cancel(ID_NOTIFICATION);
+        //if (stopDemoReceiver != null) context.unregisterReceiver(stopDemoReceiver);
+
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(KEY_STOP_DEMO);
+        stopDemoReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                if (intent.getAction().equals(KEY_STOP_DEMO)) {
+                    stop();
+                    LocationHelper.INSTANCE.setUseDemoGPS(false);
+                }
+            }
+        };
+
+        context.registerReceiver(stopDemoReceiver, filter);
+
+        Intent i = new Intent(KEY_STOP_DEMO);
+        PendingIntent pI = PendingIntent.getBroadcast(context, 0, i, 0);
+
+        Notification n  = new NotificationCompat.Builder(context)
+                .setContentTitle("DEMO")
+                .setContentText("Tap to stop mocked GPS")
+                .setSmallIcon(R.drawable.ic_launcher)
+                .setContentIntent(pI)
+                .setAutoCancel(false).build();
+
+        notificationManager.notify(ID_NOTIFICATION, n);
+    }
+
+    public static void stopNotification() {
+        Context context = MwmApplication.get();
+        final NotificationManager notificationManager = (NotificationManager) context.getSystemService(Application.NOTIFICATION_SERVICE);
+        notificationManager.cancel(ID_NOTIFICATION);
+
+        try {
+            if (stopDemoReceiver != null) {
+                context.unregisterReceiver(stopDemoReceiver);
+                stopDemoReceiver = null;
+            }
+        } catch (Exception e) {}
+    }
 }
