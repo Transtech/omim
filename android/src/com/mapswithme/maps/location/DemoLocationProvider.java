@@ -14,6 +14,7 @@ import android.support.v7.app.NotificationCompat;
 import android.util.Log;
 import com.mapswithme.maps.MwmApplication;
 import com.mapswithme.maps.R;
+import com.mapswithme.maps.routing.ComplianceController;
 import com.mapswithme.util.concurrency.UiThread;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -359,6 +360,7 @@ public class DemoLocationProvider extends BaseLocationProvider
                 if (intent.getAction().equals(KEY_STOP_DEMO)) {
                     stop();
                     LocationHelper.INSTANCE.setUseDemoGPS(false);
+                    ComplianceController.INSTANCE.stop("DemoLocationProvider");
                 }
             }
         };

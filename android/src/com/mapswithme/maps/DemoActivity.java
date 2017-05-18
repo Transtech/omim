@@ -148,7 +148,8 @@ public class DemoActivity extends BaseMwmFragmentActivity
                 break;
 
             case 1:
-                startRouteComplianceDemo();
+                //startRouteComplianceDemo();
+                startPlannedRouteDemo();
                 break;
 
             case 2:
@@ -195,6 +196,7 @@ public class DemoActivity extends BaseMwmFragmentActivity
         get().finish();
     }
 
+    /*
     private void startRouteComplianceDemo()
     {
         Toast.makeText( get(), "Preparing route compliance demo", Toast.LENGTH_SHORT ).show();
@@ -228,6 +230,48 @@ public class DemoActivity extends BaseMwmFragmentActivity
 
         get().startActivity( new Intent( get(), MwmActivity.class ) );
         Log.i( TAG, "Started demo 2" );
+        get().finish();
+    }
+    */
+
+    private void startPlannedRouteDemo() {
+        Toast.makeText( get(), "Preparing planned route demo", Toast.LENGTH_SHORT ).show();
+
+        Log.i( TAG, "Starting planned route demo" );
+
+        String country = MapManager.nativeFindCountry( TRANSTECH_OFFICE.getLatitude(), TRANSTECH_OFFICE.getLongitude() );
+        if ( TextUtils.isEmpty( country ))
+            return;
+
+        Log.i( TAG, "Found required country " + country);
+        GraphHopperRouter truckRouter = ComplianceController.get().getRouter( get() );
+        if( !truckRouter.setSelectedProfile( NETWORK_BDOUBLE ) )
+            Log.i( TAG, "Failed to set selected GH profile to '" + NETWORK_BDOUBLE + "'");
+
+        RoutingController.get().setRouterType( Framework.ROUTER_TYPE_EXTERNAL );
+
+        //set our start position
+        LocationHelper.INSTANCE.onLocationUpdated( DEMO3_START );
+
+        Log.i( TAG, "Set start position to " + DEMO3_START.getLatitude() + ", " + DEMO3_START.getLongitude() );
+
+        RoutingController.get().attach( MwmApplication.getsMvmActivity() );
+        //ComplianceController.INSTANCE.selectPlannedRoute(11127487, "Route compliance demo");
+        MwmApplication.getsMvmActivity().startLocationToPoint( Statistics.EventName.MENU_P2P, AlohaHelper.MENU_POINT2POINT, null );
+
+        //MwmApplication.getsMvmActivity().showRoutePlan(true, null);
+
+        Log.i( TAG, "Prepared route... " );
+
+        DemoLocationProvider.GPS_DATA_SOURCE = "/sdcard/MapsWithMe/Demo2.txt";
+        DemoLocationProvider.LOOP = false; //just once around the block
+        Log.i( TAG, "Set GPS data source to " + DemoLocationProvider.GPS_DATA_SOURCE );
+        LocationHelper.INSTANCE.setUseDemoGPS( true );
+        Log.i( TAG, "Started demo location provider" );
+
+        get().startActivity( new Intent( get(), MwmActivity.class ) );
+        Log.i( TAG, "Started demo 2" );
+
         get().finish();
     }
 
