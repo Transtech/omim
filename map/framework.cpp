@@ -1937,11 +1937,12 @@ bool Framework::ShowMapForURL(string const & url)
   {
     // Always hide current map selection.
     //DeactivateMapSelection(true /* notifyUI */);
-    //InvalidateUserMarks();
 
     // set viewport and stop follow mode if any
-    StopLocationFollow();
-    ShowRect(rect);
+    if (!IsRoutingActive()) {
+        StopLocationFollow();
+        ShowRect(rect);
+    }
 
     if (result != NO_NEED_CLICK)
     {
