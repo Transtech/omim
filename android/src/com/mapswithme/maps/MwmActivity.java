@@ -2,6 +2,7 @@ package com.mapswithme.maps;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.graphics.Rect;
@@ -18,6 +19,7 @@ import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -44,7 +46,6 @@ import com.mapswithme.maps.editor.*;
 import com.mapswithme.maps.location.CompassData;
 import com.mapswithme.maps.location.LocationHelper;
 import com.mapswithme.maps.news.FirstStartFragment;
-import com.mapswithme.maps.news.NewsFragment;
 import com.mapswithme.maps.routing.NavigationController;
 import com.mapswithme.maps.routing.RoutingController;
 import com.mapswithme.maps.routing.RoutingPlanController;
@@ -75,12 +76,7 @@ import com.mapswithme.maps.widget.menu.MyPositionButton;
 import com.mapswithme.maps.widget.placepage.BasePlacePageAnimationController;
 import com.mapswithme.maps.widget.placepage.PlacePageView;
 import com.mapswithme.maps.widget.placepage.PlacePageView.State;
-import com.mapswithme.util.Animations;
-import com.mapswithme.util.BottomSheetHelper;
-import com.mapswithme.util.InputUtils;
-import com.mapswithme.util.ThemeUtils;
-import com.mapswithme.util.UiUtils;
-import com.mapswithme.util.Utils;
+import com.mapswithme.util.*;
 import com.mapswithme.util.concurrency.UiThread;
 import com.mapswithme.util.sharing.ShareOption;
 import com.mapswithme.util.sharing.SharingHelper;
@@ -122,6 +118,10 @@ public class MwmActivity extends BaseMwmFragmentActivity
   // Instance state
   private static final String STATE_PP = "PpState";
   private static final String STATE_MAP_OBJECT = "MapObject";
+
+  private static final String STATE_DISCLAIMER_ACCEPTED = "DisclaimerAccepted";
+  private boolean disclaimerAccepted = false;
+
 
   // Map tasks that we run AFTER rendering initialized
   private final Stack<MapTask> mTasks = new Stack<>();
@@ -427,6 +427,8 @@ public class MwmActivity extends BaseMwmFragmentActivity
   public void onCreate(@Nullable Bundle savedInstanceState)
   {
     super.onCreate(savedInstanceState);
+
+    MwmApplication.setsMvmActivity(this);
 
     mIsFragmentContainer = getResources().getBoolean(R.bool.tabletLayout);
 
@@ -845,6 +847,8 @@ public class MwmActivity extends BaseMwmFragmentActivity
       mNavigationController.onSaveState(outState);
 
     RoutingController.get().onSaveState();
+    outState.putBoolean(STATE_DISCLAIMER_ACCEPTED, disclaimerAccepted);
+
     super.onSaveInstanceState(outState);
   }
 
@@ -866,6 +870,8 @@ public class MwmActivity extends BaseMwmFragmentActivity
 
     if (mNavigationController != null)
       mNavigationController.onRestoreState(savedInstanceState);
+
+    disclaimerAccepted = savedInstanceState.getBoolean(STATE_DISCLAIMER_ACCEPTED);
   }
 
   @Override
@@ -1013,6 +1019,8 @@ public class MwmActivity extends BaseMwmFragmentActivity
       TrafficManager.INSTANCE.attach(mTrafficButtonController);
     if (mNavigationController != null)
       TrafficManager.INSTANCE.attach(mNavigationController);
+
+    if (!disclaimerAccepted) showDisclaimer();
   }
 
   @Override
@@ -1746,5 +1754,30 @@ public class MwmActivity extends BaseMwmFragmentActivity
   public boolean shouldNotifyLocationNotFound()
   {
     return (mMapFragment != null && !mMapFragment.isFirstStart());
+  }
+
+  private void showDisclaimer() {
+    StringBuilder builder = new StringBuilder();
+    for (int resId : new int[]{R.string.dialog_routing_disclaimer_priority, R.string.dialog_routing_disclaimer_precision,
+            R.string.dialog_routing_disclaimer_recommendations, R.string.dialog_routing_disclaimer_borders,
+            R.string.dialog_routing_disclaimer_beware})
+      builder.append(MwmApplication.get().getString(resId)).append("\n\n");
+
+    new AlertDialog.Builder(getActivity())
+            .setTitle(R.string.dialog_routing_disclaimer_title)
+            .setMessage(builder.toString())
+            .setCancelable(false)
+            .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+              @Override
+              public void onClick(DialogInterface dialog, int which) {
+                finish();
+              }
+            })
+            .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+              @Override
+              public void onClick(DialogInterface dlg, int which) {
+                disclaimerAccepted = true;
+              }
+            }).show();
   }
 }
