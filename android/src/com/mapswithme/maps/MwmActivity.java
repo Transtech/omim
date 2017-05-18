@@ -458,6 +458,8 @@ public class MwmActivity extends BaseMwmFragmentActivity
     //  }
     //});
     //getWindow().getDecorView().addOnLayoutChangeListener(mVisibleRectMeasurer);
+
+    if (!disclaimerAccepted) showDisclaimer();
   }
 
   private void initViews()
@@ -1019,8 +1021,6 @@ public class MwmActivity extends BaseMwmFragmentActivity
       TrafficManager.INSTANCE.attach(mTrafficButtonController);
     if (mNavigationController != null)
       TrafficManager.INSTANCE.attach(mNavigationController);
-
-    if (!disclaimerAccepted) showDisclaimer();
   }
 
   @Override
