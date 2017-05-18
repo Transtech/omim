@@ -625,6 +625,8 @@ public class SearchFragment extends BaseMwmFragment
                     RoutingController.get().setStartPoint( mapObj );
                 }
 
+                RoutingController.get().showRoutePlan();
+
                 if( lastSeg != null )
                 {
                     //AG: hack - replace the MapObject name with the route name for display purposes

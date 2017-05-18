@@ -207,7 +207,7 @@ public class RoutingController
       mContainer.updateBuildProgress( mLastBuildProgress, mLastRouterType );
   }
 
-  private void showRoutePlan()
+  public void showRoutePlan()
   {
     if (mContainer != null)
       mContainer.showRoutePlan( true, new Runnable()
