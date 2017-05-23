@@ -119,10 +119,6 @@ public class MwmActivity extends BaseMwmFragmentActivity
   private static final String STATE_PP = "PpState";
   private static final String STATE_MAP_OBJECT = "MapObject";
 
-  private static final String STATE_DISCLAIMER_ACCEPTED = "DisclaimerAccepted";
-  private boolean disclaimerAccepted = false;
-
-
   // Map tasks that we run AFTER rendering initialized
   private final Stack<MapTask> mTasks = new Stack<>();
   private final StoragePathManager mPathManager = new StoragePathManager();
@@ -459,7 +455,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
     //});
     //getWindow().getDecorView().addOnLayoutChangeListener(mVisibleRectMeasurer);
 
-    if (!disclaimerAccepted) showDisclaimer();
+    if (!MwmApplication.disclaimerAccepted) showDisclaimer();
   }
 
   private void initViews()
@@ -849,7 +845,6 @@ public class MwmActivity extends BaseMwmFragmentActivity
       mNavigationController.onSaveState(outState);
 
     RoutingController.get().onSaveState();
-    outState.putBoolean(STATE_DISCLAIMER_ACCEPTED, disclaimerAccepted);
 
     super.onSaveInstanceState(outState);
   }
@@ -872,8 +867,6 @@ public class MwmActivity extends BaseMwmFragmentActivity
 
     if (mNavigationController != null)
       mNavigationController.onRestoreState(savedInstanceState);
-
-    disclaimerAccepted = savedInstanceState.getBoolean(STATE_DISCLAIMER_ACCEPTED);
   }
 
   @Override
@@ -1776,7 +1769,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
             .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
               @Override
               public void onClick(DialogInterface dlg, int which) {
-                disclaimerAccepted = true;
+                MwmApplication.disclaimerAccepted = true;
               }
             }).show();
   }

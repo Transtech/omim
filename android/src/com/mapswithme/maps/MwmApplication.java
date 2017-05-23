@@ -54,6 +54,8 @@ public class MwmApplication extends MultiDexApplication
   private Handler mMainLoopHandler;
   private final Object mMainQueueToken = new Object();
 
+  public static boolean disclaimerAccepted = false;
+
   private final MapManager.StorageCallback mStorageCallbacks = new MapManager.StorageCallback()
   {
     @Override
