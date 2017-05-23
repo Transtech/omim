@@ -373,40 +373,36 @@ public class RoutingController
       });
   }
 
-  public void start()
-  {
-    mLogger.d( "start" );
+  public void start() {
+    mLogger.d("start");
 
       if( DemoLocationProvider.DEMO_MODE )
       {
 //          mLogger.d("Starting DEMO location provider for TEST only!");
-          DemoLocationProvider.GPS_DATA_SOURCE = "/sdcard/MapsWithMe/Demo2.txt";
-          LocationHelper.INSTANCE.setUseDemoGPS( true );
-      }
+      DemoLocationProvider.GPS_DATA_SOURCE = "/sdcard/MapsWithMe/Demo2.txt";
+      LocationHelper.INSTANCE.setUseDemoGPS(true);
+    }
 
-      MapObject my = LocationHelper.INSTANCE.getMyPosition();
-      if (my == null)
-      {
-          mLogger.d("No MY_POSITION available");
-          mRoutingListener.onRoutingEvent( ResultCodesHelper.NO_POSITION, null );
-          return;
-      }
-      //the start point is just the start of the planned route and a POI MapObject type.
-      //The navigation won't work if we are not routing from our current location, so we check whether
-      //we're "close enough" and change the starting point to MY_POSITION instead
-      double distFromMyLoc = RouteUtil.haversineDistance(
-              my.getLat(), my.getLon(), mStartPoint.getLat(), mStartPoint.getLon() );
-      if( distFromMyLoc <= ComplianceController.OFFROUTE_THRESHOLD * 2 )
-      {
-          mLogger.d("We are only " + distFromMyLoc + "m from the route start point - start from my location instead");
-          mStartPoint = my;
-      }
+    MapObject my = LocationHelper.INSTANCE.getMyPosition();
+    if (my == null) {
+      mLogger.d("No MY_POSITION available");
+      mRoutingListener.onRoutingEvent(ResultCodesHelper.NO_POSITION, null);
+      return;
+    }
+    //the start point is just the start of the planned route and a POI MapObject type.
+    //The navigation won't work if we are not routing from our current location, so we check whether
+    //we're "close enough" and change the starting point to MY_POSITION instead
+    double distFromMyLoc = RouteUtil.haversineDistance(
+            my.getLat(), my.getLon(), mStartPoint.getLat(), mStartPoint.getLon());
+    if (distFromMyLoc <= ComplianceController.OFFROUTE_THRESHOLD * 2) {
+      mLogger.d("We are only " + distFromMyLoc + "m from the route start point - start from my location instead");
+      mStartPoint = my;
+    }
 
-    if (!MapObject.isOfType(MapObject.MY_POSITION, mStartPoint))
-    {
-        mLogger.d("No MY_POSITION available");
+    if (!MapObject.isOfType(MapObject.MY_POSITION, mStartPoint)) {
+      mLogger.d("No MY_POSITION available");
       Statistics.INSTANCE.trackEvent(Statistics.EventName.ROUTING_START_SUGGEST_REBUILD);
-      AlohaHelper.logClick( AlohaHelper.ROUTING_START_SUGGEST_REBUILD );
+      AlohaHelper.logClick(AlohaHelper.ROUTING_START_SUGGEST_REBUILD);
       suggestRebuildRoute();
       return;
     }
@@ -419,9 +415,9 @@ public class RoutingController
           return;
       }
 */
-      mStartPoint = my;
+    mStartPoint = my;
     Statistics.INSTANCE.trackEvent(Statistics.EventName.ROUTING_START);
-    AlohaHelper.logClick( AlohaHelper.ROUTING_START );
+    // AlohaHelper.logClick( AlohaHelper.ROUTING_START );
     setState(State.NAVIGATION);
 
     mContainer.showRoutePlan(false, null);
@@ -431,7 +427,8 @@ public class RoutingController
 
     Framework.nativeFollowRoute();
     LocationHelper.INSTANCE.restart();
-      ComplianceController.get().start( "RoutingController::start()" );
+
+    ComplianceController.get().start("RoutingController::start()");
   }
 
   private void suggestRebuildRoute()
@@ -495,6 +492,8 @@ public class RoutingController
     ThemeSwitcher.restart();
     Framework.nativeCloseRouting();
     LocationHelper.INSTANCE.restart();
+
+    ComplianceController.INSTANCE.stop("RoutingCOntroller::cancelInternal()");
   }
 
   public boolean cancel()

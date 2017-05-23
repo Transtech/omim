@@ -566,6 +566,7 @@ public class RoutingPlanController extends ToolbarController implements SlotFram
   {
     Button start = (Button) getViewById(R.id.start);
 
+    /*
     if (isTaxiRouterType())
     {
       final boolean isUberInstalled = Utils.isUberInstalled(mActivity);
@@ -585,25 +586,25 @@ public class RoutingPlanController extends ToolbarController implements SlotFram
       });
     }
     else
+    */
+
+    start.setText(mActivity.getText(R.string.p2p_start));
+    start.setOnClickListener(new View.OnClickListener()
     {
-      start.setText(mActivity.getText(R.string.p2p_start));
-      start.setOnClickListener(new View.OnClickListener()
+      @Override
+      public void onClick(View v)
       {
-        @Override
-        public void onClick(View v)
+        ((MwmActivity)mActivity).closeMenu(Statistics.EventName.ROUTING_START, AlohaHelper.ROUTING_START, new Runnable()
         {
-          ((MwmActivity)mActivity).closeMenu(Statistics.EventName.ROUTING_START, AlohaHelper.ROUTING_START, new Runnable()
+          @Override
+          public void run()
           {
-            @Override
-            public void run()
-            {
-                Log.i( "RoutingPlanController", "START button clicked..." );
-              RoutingController.get().start();
-            }
-          });
-        }
-      });
-    }
+            Log.i( "RoutingPlanController", "START button clicked..." );
+            RoutingController.get().start();
+          }
+        });
+      }
+    });
 
     UiUtils.updateAccentButton(start);
     UiUtils.show(start);
