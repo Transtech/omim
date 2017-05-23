@@ -7,7 +7,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.text.TextUtils;
-import android.util.Log;
 import android.util.Pair;
 import android.view.View;
 import android.widget.ImageView;
@@ -139,6 +138,7 @@ public class NavigationController implements TrafficManager.TrafficCallback
   {
     mNavMenu.onResume(null);
     //IFACE-1163 mSearchWheel.onResume();
+    ComplianceController.get().clearPlannedRouteSelection();
     ComplianceController.get().start("NavigationController::onResume()");
   }
 

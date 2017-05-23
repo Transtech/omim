@@ -98,6 +98,8 @@ public class ComplianceController implements LocationListener, GraphHopperRouter
         OFF_ROUTE
     }
 
+    private Integer selected_routeId = null;
+
     private ComplianceState complianceState = ComplianceState.UNKNOWN;
 
     public String init( final LocationHelper.UiCallback callback )
@@ -182,7 +184,16 @@ public class ComplianceController implements LocationListener, GraphHopperRouter
         return response;
     }
 
-    public void selectPlannedRoute( Integer routeId, String routeName )
+    public void selectPlannedRoute( Integer routeId, String routeName ) {
+        Log.d( TAG, "Select Planned Route id:" + routeId + " name:" + routeName );
+        selected_routeId = routeId;
+    }
+
+    public void clearPlannedRouteSelection() {
+        selected_routeId = null;
+    }
+
+    private void activatePlannedRoute( Integer routeId )
     {
         if( ghRouter.getPlannedRoute() != null )
             stop( "ComplianceController::selectPlannedRoute()" );
@@ -228,6 +239,9 @@ public class ComplianceController implements LocationListener, GraphHopperRouter
     public void start( String where )
     {
         Log.i( TAG, "ComplianceController::start() called from " + where + ". Currently " + currentMode + " trip: groupId " + groupId );
+
+        if (selected_routeId != null) activatePlannedRoute(selected_routeId);
+
         boolean restartRequired = shouldRestartRouteComplianceTrip();
 
 //        if( !TextUtils.isEmpty( imei ) && "358683065071954".equals( imei ) ) //GOUGHY TEST
@@ -277,6 +291,7 @@ public class ComplianceController implements LocationListener, GraphHopperRouter
     public void stop( String where )
     {
         DemoLocationProvider.DEMO_MODE = false;
+        clearPlannedRouteSelection();
 
         complianceState = ComplianceState.UNKNOWN;
         lastTts = 0L;
@@ -418,6 +433,7 @@ public class ComplianceController implements LocationListener, GraphHopperRouter
         geofences.clear();
         groupId = null;
         plannedRouteId = null;
+        clearPlannedRouteSelection();
 
         Setting.setString( callback.getActivity(),
                 Setting.currentEnvironment( callback.getActivity() ),
