@@ -466,5 +466,12 @@
       </intent-filter>
     </receiver>
 
+    <receiver android:name="com.mapswithme.transtech.MapdataUpdater">
+      <intent-filter>
+        <action android:name="android.intent.action.MEDIA_MOUNTED" />
+        <data android:scheme="file" />
+      </intent-filter>
+    </receiver>
+
   </application>
 </manifest>
