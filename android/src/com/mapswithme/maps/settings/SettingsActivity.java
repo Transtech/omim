@@ -157,7 +157,7 @@ public class SettingsActivity extends PreferenceActivity
     getAppDelegate().setSupportActionBar(toolbar);
 
     MwmApplication.get().initNativeCore();
-    MwmApplication.get().initCounters();
+    //MwmApplication.get().initCounters();
   }
 
   @Override
