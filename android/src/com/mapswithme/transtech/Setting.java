@@ -504,8 +504,8 @@ public class Setting implements Parcelable
         Setting.Environment env = Setting.currentEnvironment(context);
 
         String defaultValue;
-        if (env == Environment.PRODUCTION) defaultValue = "https://api.transtech.net.au/v1/geo/geocode?input=";
-        else if (env == Environment.STAGING) defaultValue = "https://api-staging.transtech.net.au:8067/v1/geo/geocode?input=";
+        if ((env == Environment.PRODUCTION) || (env == Environment.STAGING))
+            defaultValue = "https://api.transtech.net.au/v1/geo/geocode?input=";
         else defaultValue = "https://api-test.transtech.net.au:9067/v1/geo/geocode?input=";
 
         return Setting.getString(context,
