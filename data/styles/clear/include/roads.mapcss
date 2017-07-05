@@ -73,7 +73,6 @@ line|z7-[highway=residential_link],
 
 */
 
-
 line|z4[highway=world_level]
 {
     color: @trunk_orange_light;
@@ -1968,4 +1967,12 @@ line|z18-[hwtag=oneway]::arrows
   z-index: 1000;
   pattern-image: arrow-m.svg;
   pattern-spacing: 200;
+}
+
+line[access=bd]
+{
+    color: @heavy_vehicle_bd;
+    width: 2;
+    opacity: 1;
+    z-index: 1000;
 }

@@ -1,4 +1,7 @@
 world  +
+    access  +
+        bd  -
+        {}
     aerialway  +
         cable_car  -
         chair_lift  -
