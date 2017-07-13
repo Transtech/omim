@@ -3,11 +3,9 @@ package com.mapswithme.maps.search;
 import java.io.UnsupportedEncodingException;
 
 import android.content.Context;
-import android.util.Log;
 import com.mapswithme.maps.Framework;
 import com.mapswithme.maps.api.ParsedMwmRequest;
 import com.mapswithme.transtech.Setting;
-import com.mapswithme.transtech.SettingConstants;
 import com.mapswithme.util.Language;
 import com.mapswithme.util.Listeners;
 import com.mapswithme.util.concurrency.UiThread;
@@ -177,7 +175,7 @@ public enum SearchEngine implements NativeSearchListener,
 
   public void configureOnlineSearch(Context context) {
     String url = Setting.getSearchUrl(context);
-    String apiKey = Setting.getApiKey(context);
+    String apiKey = Setting.getApiKeyForSearch(context);
     
     nativeConfigureOnlineSearch(url, apiKey);
   }
