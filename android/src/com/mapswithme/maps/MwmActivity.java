@@ -727,7 +727,9 @@ public class MwmActivity extends BaseMwmFragmentActivity
           break;
 
         case SEARCH:
+          RoutingController.get().setRouterType(Framework.ROUTER_TYPE_EXTERNAL);
           RoutingController.get().cancelPlanning();
+
           closeMenu(Statistics.EventName.TOOLBAR_SEARCH, AlohaHelper.TOOLBAR_SEARCH, new Runnable()
           {
             @Override

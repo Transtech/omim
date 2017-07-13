@@ -770,8 +770,8 @@ public class RoutingController
 
     // Repeating tap on Uber icon should trigger the route building always,
     // because it may be "No internet connection, try later" case
-    if (router == mLastRouterType && !isTaxiRouterType())
-      return;
+    //if (router == mLastRouterType && !isTaxiRouterType())
+    //  return;
 
     mLastRouterType = router;
     Framework.nativeSetRouter(router);

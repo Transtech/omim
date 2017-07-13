@@ -187,10 +187,17 @@ public class ComplianceController implements LocationListener, GraphHopperRouter
     public void selectPlannedRoute( Integer routeId, String routeName ) {
         Log.d( TAG, "Select Planned Route id:" + routeId + " name:" + routeName );
         selected_routeId = routeId;
+
+        if( currentRouterType == Framework.ROUTER_TYPE_EXTERNAL && routeId != null )
+        {
+            ghRouter.setPlannedRouteId( routeId );
+            Log.i( TAG, "Setting selected planned route to trip: " + routeId );
+        }
     }
 
     public void clearPlannedRouteSelection() {
         selected_routeId = null;
+        ghRouter.setPlannedRouteId(null);
     }
 
     private void activatePlannedRoute( Integer routeId )
@@ -199,12 +206,6 @@ public class ComplianceController implements LocationListener, GraphHopperRouter
             stop( "ComplianceController::selectPlannedRoute()" );
 
         plannedRouteId = routeId;
-
-        if( currentRouterType == Framework.ROUTER_TYPE_EXTERNAL && routeId != null )
-        {
-            ghRouter.setPlannedRouteId( routeId );
-            Log.i( TAG, "Setting selected planned route to trip: " + routeId );
-        }
     }
 
     public boolean setNetworkProfile( String profile )
@@ -359,6 +360,7 @@ public class ComplianceController implements LocationListener, GraphHopperRouter
                     {
                         groupId = UUID.fromString( grpId );
                         selectPlannedRoute( plannedId, "Restarting" );
+                        activatePlannedRoute( plannedId );
                         Log.i( TAG, "We were in the middle of planned route " + plannedId + " - restarting" );
 
                         UiThread.runLater( new Runnable()
