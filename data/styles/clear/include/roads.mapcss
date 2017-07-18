@@ -1969,10 +1969,4 @@ line|z18-[hwtag=oneway]::arrows
   pattern-spacing: 200;
 }
 
-line[access=bd]
-{
-    color: @heavy_vehicle_bd;
-    width: 2;
-    opacity: 1;
-    z-index: 1000;
-}
+
