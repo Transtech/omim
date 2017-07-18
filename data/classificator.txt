@@ -1,7 +1,4 @@
 world  +
-    access  +
-        bd  -
-        {}
     aerialway  +
         cable_car  -
         chair_lift  -
@@ -146,6 +143,9 @@ world  +
         toll_booth  -
         wall  -
         {}
+    bd  +
+        yes  -
+        {}
     boundary  +
         administrative  +
             10  -
@@ -195,6 +195,9 @@ world  +
         plumber  -
         shoemaker  -
         tailor  -
+        {}
+    crane  +
+        yes  -
         {}
     earthquake:damage  +
         spontaneous_camp  -
