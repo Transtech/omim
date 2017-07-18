@@ -188,3 +188,5 @@
 
 /* Transtech */
 @heavy_vehicle_bd: #91B846;
+@heavy_vehicle_crane: #008B8B;
+

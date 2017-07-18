@@ -219,8 +219,8 @@ namespace ftype
   public:
     enum EType { ENTRANCE, HIGHWAY, ADDRESS, ONEWAY, PRIVATE, LIT, NOFOOT, YESFOOT,
                  NOBICYCLE, YESBICYCLE, BICYCLE_BIDIR, SURFPGOOD, SURFPBAD, SURFUGOOD, SURFUBAD,
-                 HASPARTS, NOCAR, YESCAR,
-                 RW_STATION, RW_STATION_SUBWAY, WHEELCHAIR_YES, ACCESS_BD };
+                 HASPARTS, NOCAR, YESCAR, ACCESS_BD, ACCESS_CRANE,
+                 RW_STATION, RW_STATION_SUBWAY, WHEELCHAIR_YES};
 
     CachedTypes()
     {
@@ -237,7 +237,7 @@ namespace ftype
         {"psurface", "paved_good"}, {"psurface", "paved_bad"},
         {"psurface", "unpaved_good"}, {"psurface", "unpaved_bad"},
         {"building", "has_parts"}, {"hwtag", "nocar"}, {"hwtag", "yescar"},
-        {"access", "bd"}
+        {"bd", "yes"}, {"crane", "yes"}
       };
       for (auto const & e : arr)
         m_types.push_back(c.GetTypeByPath(e));
@@ -313,6 +313,17 @@ namespace ftype
                 return ClassifObjectPtr();
               return current->BinaryFind(v);
             });
+
+        // Prevent merging different tags into one type
+//        ClassifObjectPtr pObj =
+//            path.size() == 1 ? ClassifObjectPtr()
+//                          : ForEachTagEx<ClassifObjectPtr>(
+//                                p, skipRows, [&current](string const & k, string const & v) {
+//                                  if (!NeedMatchValue(k, v))
+//                                    return ClassifObjectPtr();
+//                                  return current->BinaryFind(v);
+//                                });
+
 
         if (pObj)
         {
@@ -564,6 +575,9 @@ namespace ftype
     bool addOneway = false;
     bool noOneway = false;
 
+    bool accessBd = false;
+    bool accessCrane = false;
+
     // Get a copy of source types, because we will modify params in the loop;
     FeatureParams::TTypes const vTypes = params.m_Types;
     for (size_t i = 0; i < vTypes.size(); ++i)
@@ -580,7 +594,6 @@ namespace ftype
 
           { "access", "private", [&params] { params.AddType(types.Get(CachedTypes::PRIVATE)); }},
           { "access", "!", [&params] { params.AddType(types.Get(CachedTypes::PRIVATE)); }},
-          { "access", "bd", [&params] { params.AddType(types.Get(CachedTypes::ACCESS_BD)); }},
 
           { "lit", "~", [&params] { params.AddType(types.Get(CachedTypes::LIT)); }},
 
@@ -602,10 +615,31 @@ namespace ftype
           { "motorcar", "private", [&params] { params.AddType(types.Get(CachedTypes::NOCAR)); }},
           { "motorcar", "!", [&params] { params.AddType(types.Get(CachedTypes::NOCAR)); }},
           { "motorcar", "yes", [&params] { params.AddType(types.Get(CachedTypes::YESCAR)); }},
+
+          //{"bd", "~", [&accessBd] { accessBd = true; LOG(LINFO, ("is bd")); }},
+          //{"crane", "~", [&accessCrane] { accessCrane = true; LOG(LINFO, ("is crane")); }},
+          {"bd", "~", [&params] { params.AddType(types.Get(CachedTypes::ACCESS_BD)); }},
+          {"crane", "~", [&params] { params.AddType(types.Get(CachedTypes::ACCESS_CRANE)); }},
+
         });
 
         if (addOneway && !noOneway)
           params.AddType(types.Get(CachedTypes::ONEWAY));
+
+        /*
+        if (accessBd && accessCrane) {
+            params.AddType(types.Get(CachedTypes::ACCESS_BD_CRANE));
+            LOG(LINFO, ("ACCESS_BD_CRANE"));
+        }
+        else if (accessBd && !accessCrane) {
+            params.AddType(types.Get(CachedTypes::ACCESS_BD));
+            LOG(LINFO, ("ACCESS_BD"));
+        }
+        else if (accessCrane && !accessBd) {
+            params.AddType(types.Get(CachedTypes::ACCESS_CRANE));
+            LOG(LINFO, ("ACCESS_CRANE"));
+        }
+        */
 
         highwayDone = true;
       }

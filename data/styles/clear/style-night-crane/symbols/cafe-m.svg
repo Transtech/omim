@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="24px" height="23px" viewBox="0 0 24 23" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 39.1 (31720) - http://www.bohemiancoding.com/sketch -->
+    <title>cafe-m</title>
+    <desc>Created with Sketch.</desc>
+    <defs></defs>
+    <g id="POI-Night" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="Artboard-1" transform="translate(-174.000000, -547.000000)">
+            <g id="cafe-m" transform="translate(174.500000, 547.000000)">
+                <ellipse id="Oval-1" fill-opacity="0.1" fill="#FFFFFF" cx="11.5" cy="11.5" rx="11.5" ry="11.5"></ellipse>
+                <ellipse id="Oval-1" fill="#332714" cx="11.5" cy="11.5" rx="10.5" ry="10.5"></ellipse>
+                <path d="M14.9976807,7 L14.9976807,6 L5.99768066,6 L5.99768066,12.0657288 C5.99768066,13.4679565 7.00598147,14.5 8.49768066,14.5 L12.4976807,14.5 C14.0151369,14.5 14.9976807,13.3682861 14.9976807,13 L16.7441423,13 C17.4377333,13 18,12.4462891 18,11.7567961 L18,8.24320388 C18,7.55660134 17.4493284,7 16.7441423,7 L14.9976807,7 Z M14.9976807,11.75 L14.9976807,8.25 L16.7476807,8.25 L16.7476807,11.75 L14.9976807,11.75 Z M6.49768066,17 L14.4976807,17 L16,15.5 L5,15.5 L6.49768066,17 Z" id="Shape" fill-opacity="0.7" fill="#FFFFFF"></path>
+            </g>
+        </g>
+    </g>
+</svg>

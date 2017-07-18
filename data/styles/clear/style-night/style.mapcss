@@ -18,3 +18,21 @@ canvas
   default-lines: false;
   default-points: false;
 }
+
+/* required for mwm generation */
+
+line[bd=yes]
+{
+    color: @heavy_vehicle_bd;
+    width: 2;
+    opacity: 0;
+    z-index: 0;
+}
+
+line[crane=yes]
+{
+    color: @heavy_vehicle_crane;
+    width: 2;
+    opacity: 0;
+    z-index: 0;
+}
