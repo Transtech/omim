@@ -461,8 +461,8 @@ public:
   void ConnectToGpsTracker();
   void DisconnectFromGpsTracker();
 
-  void SetMapStyle(MapStyle mapStyle, string const & suffix);
-  void MarkMapStyle(MapStyle mapStyle, string const & suffix);
+  void SetMapStyle(MapStyle mapStyle);
+  void MarkMapStyle(MapStyle mapStyle);
   MapStyle GetMapStyle() const;
 
   void SetupMeasurementSystem();

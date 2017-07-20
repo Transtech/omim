@@ -197,14 +197,14 @@ public class Framework
 
   public static native double[] nativePredictLocation(double lat, double lon, double accuracy, double bearing, double speed, double elapsedSeconds);
 
-  public static native void nativeSetMapStyle(int mapStyle, String suffix);
+  public static native void nativeSetMapStyle(int mapStyle);
 
   /**
    * This method allows to set new map style without immediate applying. It can be used before
    * engine recreation instead of nativeSetMapStyle to avoid huge flow of OpenGL invocations.
    * @param mapStyle style index
    */
-  public static native void nativeMarkMapStyle(int mapStyle, String suffix);
+  public static native void nativeMarkMapStyle(int mapStyle);
 
   public static native void nativeSetRouter(@RouterType int routerType);
   @RouterType

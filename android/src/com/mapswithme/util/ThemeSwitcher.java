@@ -97,7 +97,7 @@ public final class ThemeSwitcher
 
     // Activity and drape engine will be recreated so we have to mark new map style.
     // Changes will be applied in process of recreation.
-    Framework.nativeMarkMapStyle(style, "");
+    Framework.nativeMarkMapStyle(style);
 
     DownloaderStatusIcon.clearCache();
 

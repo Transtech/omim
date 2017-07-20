@@ -69,8 +69,7 @@ string GetStyleSuffixForResource(MapStyle mapStyle)
 }  // namespace
 
 StyleReader::StyleReader()
-  : m_mapStyle(kDefaultMapStyle),
-    m_suffix("")
+  : m_mapStyle(kDefaultMapStyle)
 {
 }
 
@@ -84,22 +83,9 @@ MapStyle StyleReader::GetCurrentStyle()
   return m_mapStyle;
 }
 
-void StyleReader::SetSecondarySuffix(string const & suffix)
-{
-    m_suffix = suffix;
-}
-
-string StyleReader::GetSecondarySuffix()
-{
-    return m_suffix;
-}
-
 ReaderPtr<Reader> StyleReader::GetDrawingRulesReader()
 {
-//  string const rulesFile = string("drules_proto") + GetStyleSuffix(GetCurrentStyle()) + m_suffix +".bin";
-  string const rulesFile = string("drules_proto") + GetStyleSuffix(GetCurrentStyle()) +".bin";
-  LOG(LWARNING, ("theme GetDrawingRulesReader", rulesFile));
-
+  string const rulesFile = string("drules_proto") + GetStyleSuffix(GetCurrentStyle()) + ".bin";
   return GetPlatform().GetReader(rulesFile);
 }
 

@@ -84,8 +84,8 @@ namespace android
     void DetachSurface(bool destroyContext);
     bool AttachSurface(JNIEnv * env, jobject jSurface);
 
-    void SetMapStyle(MapStyle mapStyle, string suffix);
-    void MarkMapStyle(MapStyle mapStyle, string suffix);
+    void SetMapStyle(MapStyle mapStyle);
+    void MarkMapStyle(MapStyle mapStyle);
     MapStyle GetMapStyle() const;
 
     void SetupMeasurementSystem();
