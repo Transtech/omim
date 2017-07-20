@@ -534,7 +534,7 @@ void DrawWidget::OnLocationUpdate(location::GpsInfo const & info)
 
 void DrawWidget::SetMapStyle(MapStyle mapStyle)
 {
-  m_framework->SetMapStyle(mapStyle);
+  m_framework->SetMapStyle(mapStyle, "");
 }
 
 void DrawWidget::SubmitFakeLocationPoint(m2::PointD const & pt)

@@ -12,6 +12,16 @@ MapStyle MapStyleFromSettings(std::string const & str)
   else if (str == "MapStyleDark")
     return MapStyleDark;
 
+  else if (str == "MapStyleClearBD")
+    return MapStyleClearBD;
+  else if (str == "MapStyleDarkBD")
+    return MapStyleDarkBD;
+
+  else if (str == "MapStyleClearCrane")
+    return MapStyleClearCrane;
+  else if (str == "MapStyleDarkCrane")
+    return MapStyleDarkCrane;
+
   return kDefaultMapStyle;
 }
 
@@ -25,6 +35,16 @@ std::string MapStyleToString(MapStyle mapStyle)
     return "MapStyleClear";
   case MapStyleMerged:
     return "MapStyleMerged";
+
+  case MapStyleClearBD:
+      return "MapStyleClearBD";
+  case MapStyleDarkBD:
+      return "MapStyleDarkBD";
+
+  case MapStyleClearCrane:
+      return "MapStyleClearCrane";
+  case MapStyleDarkCrane:
+      return "MapStyleDarkCrane";
 
   case MapStyleCount:
     break;

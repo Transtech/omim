@@ -423,7 +423,7 @@ public class RoutingController
     mContainer.showRoutePlan(false, null);
     mContainer.showNavigation(true);
 
-    ThemeSwitcher.restart();
+    ThemeSwitcher.restart(false);
 
     Framework.nativeFollowRoute();
     LocationHelper.INSTANCE.restart();
@@ -489,7 +489,7 @@ public class RoutingController
     setBuildState(BuildState.NONE);
     setState(State.NONE);
 
-    ThemeSwitcher.restart();
+    ThemeSwitcher.restart(false);
     Framework.nativeCloseRouting();
     LocationHelper.INSTANCE.restart();
 

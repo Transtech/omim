@@ -457,7 +457,7 @@ public class SearchFragment extends BaseMwmFragment
 
     // change map style for the Map activity
     final int mapStyle = isDark ? Framework.MAP_STYLE_DARK : Framework.MAP_STYLE_CLEAR;
-    Framework.nativeSetMapStyle(mapStyle);
+    Framework.nativeSetMapStyle(mapStyle, "");
 
     return true;
   }

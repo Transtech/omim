@@ -221,6 +221,13 @@ public class ComplianceController implements LocationListener, GraphHopperRouter
         return true;
     }
 
+    public VehicleProfile getNetworkProfile() {
+        if (ghRouter != null)
+            return ghRouter.getSelectedProfile();
+
+        return null;
+    }
+
     public void setDefaultMode( ComplianceMode mode )
     {
         Log.i( TAG, "Default network adherence mode is: " + mode.name() );

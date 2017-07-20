@@ -164,7 +164,7 @@ public class MwmApplication extends MultiDexApplication
     initNativeStrings();
     BookmarkManager.nativeLoadBookmarks();
     TtsPlayer.INSTANCE.init(this);
-    ThemeSwitcher.restart();
+    ThemeSwitcher.restart(false);
     RoutingController.get().initialize();
     TrafficManager.INSTANCE.initialize();
     mIsFrameworkInitialized = true;

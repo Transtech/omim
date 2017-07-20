@@ -7,6 +7,13 @@ enum MapStyle
   MapStyleClear = 0,
   MapStyleDark = 1,
   MapStyleMerged = 2,
+
+  MapStyleClearBD = 3,
+  MapStyleDarkBD = 4,
+
+  MapStyleClearCrane = 5,
+  MapStyleDarkCrane = 6,
+
   // Add new map style here
 
   // Specifies number of MapStyle enum values, must be last

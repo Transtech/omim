@@ -1839,8 +1839,10 @@ void Framework::OnUpdateGpsTrackPointsCallback(vector<pair<size_t, location::Gps
   m_drapeEngine->UpdateGpsTrackPoints(move(pointsAdd), move(indicesRemove));
 }
 
-void Framework::MarkMapStyle(MapStyle mapStyle)
+void Framework::MarkMapStyle(MapStyle mapStyle, string const & suffix)
 {
+    LOG(LWARNING, ("theme MarkMapStyle", suffix));
+
   ASSERT_NOT_EQUAL(mapStyle, MapStyle::MapStyleMerged, ());
 
   // Store current map style before classificator reloading
@@ -1852,14 +1854,17 @@ void Framework::MarkMapStyle(MapStyle mapStyle)
   }
   settings::Set(kMapStyleKey, mapStyleStr);
   GetStyleReader().SetCurrentStyle(mapStyle);
+//  GetStyleReader().SetSecondarySuffix(suffix);
 
   alohalytics::TStringMap details {{"mapStyle", mapStyleStr}};
   alohalytics::Stats::Instance().LogEvent("MapStyle_Changed", details);
 }
 
-void Framework::SetMapStyle(MapStyle mapStyle)
+void Framework::SetMapStyle(MapStyle mapStyle, string const & suffix)
 {
-  MarkMapStyle(mapStyle);
+    LOG(LWARNING, ("theme SetMapStyle", suffix));
+
+  MarkMapStyle(mapStyle, suffix);
   CallDrapeFunction(bind(&df::DrapeEngine::UpdateMapStyle, _1));
   InvalidateUserMarks();
   UpdateMinBuildingsTapZoom();

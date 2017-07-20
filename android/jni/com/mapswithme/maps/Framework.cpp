@@ -235,14 +235,14 @@ bool Framework::AttachSurface(JNIEnv * env, jobject jSurface)
   return true;
 }
 
-void Framework::SetMapStyle(MapStyle mapStyle)
+void Framework::SetMapStyle(MapStyle mapStyle, string suffix)
 {
-  m_work.SetMapStyle(mapStyle);
+  m_work.SetMapStyle(mapStyle, suffix);
 }
 
-void Framework::MarkMapStyle(MapStyle mapStyle)
+void Framework::MarkMapStyle(MapStyle mapStyle, string suffix)
 {
-  m_work.MarkMapStyle(mapStyle);
+  m_work.MarkMapStyle(mapStyle, suffix);
 }
 
 MapStyle Framework::GetMapStyle() const
@@ -1089,19 +1089,19 @@ Java_com_mapswithme_maps_Framework_nativePredictLocation(JNIEnv * env, jclass, j
 }
 
 JNIEXPORT void JNICALL
-Java_com_mapswithme_maps_Framework_nativeSetMapStyle(JNIEnv * env, jclass, jint mapStyle)
+Java_com_mapswithme_maps_Framework_nativeSetMapStyle(JNIEnv * env, jclass, jint mapStyle, jstring suffix)
 {
   MapStyle const val = static_cast<MapStyle>(mapStyle);
   if (val != g_framework->GetMapStyle())
-    g_framework->SetMapStyle(val);
+    g_framework->SetMapStyle(val, jni::ToNativeString(env, suffix));
 }
 
 JNIEXPORT void JNICALL
-Java_com_mapswithme_maps_Framework_nativeMarkMapStyle(JNIEnv * env, jclass, jint mapStyle)
+Java_com_mapswithme_maps_Framework_nativeMarkMapStyle(JNIEnv * env, jclass, jint mapStyle, jstring suffix)
 {
   MapStyle const val = static_cast<MapStyle>(mapStyle);
   if (val != g_framework->GetMapStyle())
-    g_framework->MarkMapStyle(val);
+    g_framework->MarkMapStyle(val, jni::ToNativeString(env, suffix));
 }
 
 JNIEXPORT void JNICALL
