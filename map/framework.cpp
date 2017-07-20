@@ -1843,6 +1843,11 @@ void Framework::MarkMapStyle(MapStyle mapStyle)
 {
   ASSERT_NOT_EQUAL(mapStyle, MapStyle::MapStyleMerged, ());
 
+  if (mapStyle == GetMapStyle()) {
+      LOG(LINFO, ("Mapstyle not changed, MarkMapStyle request ignored"));
+      return;
+  }
+
   // Store current map style before classificator reloading
   std::string mapStyleStr = MapStyleToString(mapStyle);
   if (mapStyleStr.empty())

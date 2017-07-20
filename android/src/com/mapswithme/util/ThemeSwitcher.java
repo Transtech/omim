@@ -58,7 +58,7 @@ public final class ThemeSwitcher
         }
       }
 
-      Config.setCurrentUiTheme(theme);
+      Config.setCurrentUiThemeForced(theme);
       UiThread.cancelDelayedTasks(sCheckProc);
 
       if (ThemeUtils.isAutoTheme())
@@ -84,26 +84,28 @@ public final class ThemeSwitcher
   }
 
   @android.support.annotation.UiThread
-  static void changeMapStyle(String theme)
+  static void changeMapStyle(String theme, boolean uiThemeChange)
   {
     VehicleProfile vehicleProfile = ComplianceController.get().getNetworkProfile();
     if (vehicleProfile == null) {
       Log.w("ThemeSwitcher", "Unable to get vehicle profile, abondone map style change");
       return;
     }
-    int style = NetworkProfileToMapStyle(theme, vehicleProfile);
 
+    int style = NetworkProfileToMapStyle(theme, vehicleProfile);
     Log.i("ThemeSwitcher", "Vehicle Profile: " + vehicleProfile.getCode() + " theme:" + theme + " style: " + Integer.toString(style));
 
     // Activity and drape engine will be recreated so we have to mark new map style.
     // Changes will be applied in process of recreation.
     Framework.nativeMarkMapStyle(style);
 
-    DownloaderStatusIcon.clearCache();
+    if (uiThemeChange) {
+      DownloaderStatusIcon.clearCache();
 
-    Activity a = MwmApplication.backgroundTracker().getTopActivity();
-    if (a != null && !a.isFinishing())
-      a.recreate();
+      Activity a = MwmApplication.backgroundTracker().getTopActivity();
+      if (a != null && !a.isFinishing())
+        a.recreate();
+    }
   }
 
   static int NetworkProfileToMapStyle(String theme, VehicleProfile profile) {

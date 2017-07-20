@@ -31,6 +31,7 @@ import com.mapswithme.transtech.route.RouteConstants;
 import com.mapswithme.transtech.route.RouteGeofence;
 import com.mapswithme.transtech.route.RouteOffset;
 import com.mapswithme.transtech.route.RouteUtil;
+import com.mapswithme.util.ThemeSwitcher;
 import com.mapswithme.util.concurrency.ThreadPool;
 import com.mapswithme.util.concurrency.UiThread;
 import org.json.JSONException;
@@ -137,6 +138,8 @@ public class ComplianceController implements LocationListener, GraphHopperRouter
                             : ComplianceMode.NETWORK_ADHERENCE );
 
                     router.setListener( INSTANCE );
+
+                    ThemeSwitcher.restart(true);
                 }
             } );
         }
