@@ -64,6 +64,7 @@ public class Setting implements Parcelable
         MNAVEMS,
         MNAVSTATS,
         TRAILERID,
+        FORM,
         SMARTNAV2
     }
 

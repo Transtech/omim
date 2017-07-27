@@ -26,23 +26,38 @@ public interface SettingConstants
     public final static String GLOBAL_DEVICE_ID          = "device.imei";
     public final static String GLOBAL_IVU_ID             = "IvuId";
     public final static String GLOBAL_PAN_ENABLED        = "panEnabled";
+	public final static String GLOBAL_LAST_SHUTDOWN_AUTO = "lastShutdownWasAutomatic";
     public final static String GLOBAL_VEHICLE_REG        = "vehicle.registration";
     public final static String GLOBAL_VEHICLE_REG_STATE  = "vehicle.state";
     public final static String GLOBAL_VEHICLE_ID         = "vehicle.id";
     public final static String GLOBAL_VEHICLE_NAME       = "vehicle.name";
-    public final static String GLOBAL_COUNTRY_NAME       = "countryName";
+	public final static String GLOBAL_COUNTRY_NAME       = "country.name";
+	public final static String GLOBAL_COUNTRY_CODE       = "country.code";
     public final static String GLOBAL_QJ_CONFIG_URL      = "QJConfigURL";
     public final static String GLOBAL_WEBSERVICE_URL     = "WebServiceURL";
     public final static String GLOBAL_DRIVER_AUTH_URL    = "DriverAuthURL";
+	public final static String GLOBAL_USE_IVU_GPS_BROADCAST = "use.ivu.gps.broadcast";
+	public final static String GLOBAL_SHUTDOWN_AFTER_POWER_DISCONNECT     = "shutdown.after.power.disconnect";
+	public final static String GLOBAL_SHUTDOWN_ALERT_DISPLAY_TIME		  = "shutdown.alert.display.time";
+	public final static String GLOBAL_USING_FRAMED_PROTOCOL			      = "ivu.using.framed.protocol";
+	public final static String GLOBAL_SEND_BLUETOOTH_TOGGLE_AR = "send.bluetooth.toggle.ar";
+	public final static String GLOBAL_SEND_BLUETOOTH_REBOOT_AR = "send.bluetooth.reboot.ar";
 
     public final static String GLOBAL_DECLARED_REG       = "declared.registration";
     public final static String GLOBAL_DECLARED_REG_STATE = "declared.state";
 
+	public final static String GLOBAL_NTP_SERVER         = "ntp.server";
+	public final static String GLOBAL_DATE_FORMATS       = "date.formats";
+	public final static String GLOBAL_STATES             = "states";
+	public final static String GLOBAL_TIMEZONES          = "timezones";
+	public final static String GLOBAL_VEHICLE_TYPES      = "vehicle.types";
+	public final static String GLOBAL_IAP_COMMENT_TYPES  = "iap.comment_types";
+
     public final static String GLOBAL_USER               = "User";
     public final static String GLOBAL_VEHICLE_TYPE       = "VehicleTypeSettings";
     public final static String GLOBAL_COUNTRIES          = "Countries";
-    public final static String GLOBAL_VEHICLE_TYPES      = "VehicleTypes";
-    public final static String GLOBAL_IAP_COMMENT_TYPES  = "IAPCommentTypes";
+
+	public final static String GLOBAL_QUBE_CONNECTION_TYPE = "qube.connection.type";  // used by Hobbes, added here for ref only
 
     public final static String GLOBAL_DATA_PACK_ENABLED  = "datapack.enabled";
 
@@ -65,8 +80,15 @@ public interface SettingConstants
     public final static String GPSLIB_TIME_DELAY          = "filter.delay";
     public final static String GPSLIB_MIN_MOVING_SPEED    = "filter.speed.min";
     public final static String GPSLIB_ODO_SAVE_INTERVAL   = "odo.save.interval";
+	public final static String GPSLIB_GPS_VALID_AGE       = "gps.valid.age";
+	public final static String GPSLIB_GPS_VALID_AGE_TIER2 = "gps.valid.age.t2";
 
     /////////////////////////////////////////////////////////////////////////////////////
+
+	//////////////////////////////// WIFI SETTINGS ////////////////////////////////////
+
+	public final static String COMMON_WIFI_IDS 			 = "wifi.ids";
+	public final static String COMMON_WIFI_PREFIX 			 = "wifi.";
 
     //////////////////////////////// GPS TRACKING SETTINGS ////////////////////////////////////
 
@@ -110,6 +132,12 @@ public interface SettingConstants
 
     /////////////////////////////////////////////////////////////////////////////////////
 
+	/////////////////////////////// FORMS SETTINGS /////////////////////////////////////
+	public final static String FORMS_IMAGE_SIZE 		= "image.size";
+	public final static String FORMS_IMAGE_QUALITY 		= "image.quality";
+	public final static String FORMS_MAX_HISTORY_COUNT 	= "max.history.count";
+	public final static String FORMS_ALLOW_ATTACHMENTS  = "allow.attachments";
+	////////////////////////////////////////////////////////////////////////////////////////
 
     ////////////////////////////////SUM RECORDS SETTINGS /////////////////////////////////////////
 
@@ -120,6 +148,13 @@ public interface SettingConstants
 
     /////////////////////////////////////////////////////////////////////////////////////////
 
+	//////////////////////////////// MOVEMENT COMPLIANCE /////////////////////////////////////////
+
+	public final static String LOGGED_OFF_MOVEMENT_EVENT_STARTED_AT	= "logged.off.movement.event.started.at";
+	public final static String LOGGED_OFF_MOVEMENT_EVENT_STARTED 	= "logged.off.movement.event.started";
+	public final static String LOGGED_OFF_MOVEMENT_EVENT_THRESHOLD 	= "logged.off.movement.event.threshold";
+
+	/////////////////////////////////////////////////////////////////////////////////////////
 
     /////////////////////////////// IAPDeclaration SETTINGS /////////////////////////////////////
 
@@ -160,6 +195,10 @@ public interface SettingConstants
     public final static String SENTINEL_SYNC_INTERVAL           = "sync.interval";
     public final static String SENTINEL_CHECKPOINT_PORT         = "checkpoint.port";
     public final static String SENTINEL_ENABLED_FOR_DRIVER      = "sentinel.enabled.for.driver";
+
+	public final static String RESTING_MOVEMENT_EVENT_STARTED_AT	= "resting.movement.event.started.at";
+	public final static String RESTING_MOVEMENT_EVENT_STARTED		= "resting.movement.event.started";
+	public final static String RESTING_MOVEMENT_EVENT_THRESHOLD		= "resting.movement.event.threshold";
 
     /////////////////////////////////////////////////////////////////////////////////////
 
@@ -236,6 +275,7 @@ public interface SettingConstants
     public final static String SMARTJOBS_DELIVERY_CANCEL_VARIANCE_CODES    = "variance.delivery.cancellation";
     public final static String SMARTJOBS_IMAGE_SIZE    				= "image.size";
     public final static String SMARTJOBS_IMAGE_QUALITY    			= "image.quality";
+	public final static String SMARTJOBS_GEOFENCE_RADIUS  			= "geofence.radius";
 
 
     /////////////////////////////////////////////////////////////////////////////////////
@@ -243,6 +283,9 @@ public interface SettingConstants
     /////////////////////////////// Pretrip SETTINGS /////////////////////////////////////
 
     public final static String PRETRIP_CHECKLIST_IDS       = "checklist.ids";
+	public final static String PTC_IMAGE_SIZE    				= "image.size";
+	public final static String PTC_IMAGE_QUALITY    			= "image.quality";
+	public final static String PTC_ALLOW_ATTACHMENTS   			= "allow.attachments";
 
     /////////////////////////////////////////////////////////////////////////////////////
 
@@ -253,7 +296,6 @@ public interface SettingConstants
     public final static String SMARTNAV2_MAP_VERSION      = "map.version";
     public final static String SMARTNAV2_OTA_LAST_UPDATE_DATE = "ota.update.date";
     public final static String SMARTNAV2_OTA_UPDATE_STATUS = "ota.update.status";
-
 
     /////////////////////////////////////////////////////////////////////////////////////
 
