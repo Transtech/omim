@@ -44,6 +44,8 @@ public interface SettingConstants
     public final static String GLOBAL_VEHICLE_TYPES      = "VehicleTypes";
     public final static String GLOBAL_IAP_COMMENT_TYPES  = "IAPCommentTypes";
 
+    public final static String GLOBAL_DATA_PACK_ENABLED  = "datapack.enabled";
+
     /////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -247,6 +249,11 @@ public interface SettingConstants
     /////////////////////////////// SmartNav2 SETTINGS /////////////////////////////////////
 
     public final static String SMARTNAV2_SEARCH_URL       = "search.url";
+    public final static String SMARTNAV2_OTA_UPDATE_URL = "ota.update.url";
+    public final static String SMARTNAV2_MAP_VERSION      = "map.version";
+    public final static String SMARTNAV2_OTA_LAST_UPDATE_DATE = "ota.update.date";
+    public final static String SMARTNAV2_OTA_UPDATE_STATUS = "ota.update.status";
+
 
     /////////////////////////////////////////////////////////////////////////////////////
 

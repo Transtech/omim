@@ -386,6 +386,13 @@
     <service android:name="com.mapswithme.maps.location.TrackRecorderWakeService"
              android:exported="false"/>
 
+    <service android:name="com.mapswithme.transtech.OtaMapdataUpdater" android:exported="false">
+      <intent-filter>
+        <action android:name="com.mapswithme.transtech.action.CHECK_FOR_UPDATES"></action>
+      </intent-filter>
+    </service>
+
+
     <!-- our custom receiver, that will call Aloha & other handlers -->
     <!--
     <receiver

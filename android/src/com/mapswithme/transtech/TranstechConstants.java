@@ -53,4 +53,8 @@ public class TranstechConstants
     public static final int COMMS_EVENT_PRIORITY_LOW 	= 9;
 
     public static final String AMQP_ROUTING_KEY_ROUTE_TRIP     		= "iface.trip";
+
+    public static enum UPDATE_STATUS {
+        NA, FINISHED, FAILED, IN_PROGRESS, DISABLED, NOT_FOUND
+    };
 }

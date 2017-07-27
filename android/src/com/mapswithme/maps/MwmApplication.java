@@ -1,6 +1,6 @@
 package com.mapswithme.maps;
 
-import android.app.Application;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Environment;
@@ -25,6 +25,7 @@ import com.mapswithme.maps.routing.RoutingController;
 import com.mapswithme.maps.settings.StoragePathManager;
 import com.mapswithme.maps.sound.TtsPlayer;
 import com.mapswithme.maps.traffic.TrafficManager;
+import com.mapswithme.transtech.OtaMapdataUpdater;
 import com.mapswithme.util.*;
 //import com.mapswithme.util.statistics.PushwooshHelper;
 import com.mapswithme.util.statistics.Statistics;
@@ -143,6 +144,8 @@ public class MwmApplication extends MultiDexApplication
 
 //    if (!isInstallationIdFound)
 //      setInstallationIdToCrashlytics();
+
+    OtaMapdataUpdater.init(this);
 
     mPrefs = getSharedPreferences(getString(R.string.pref_file_name), MODE_PRIVATE);
     mBackgroundTracker = new AppBackgroundTracker();

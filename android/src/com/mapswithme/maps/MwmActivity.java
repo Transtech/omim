@@ -19,7 +19,6 @@ import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -82,9 +81,6 @@ import com.mapswithme.util.sharing.ShareOption;
 import com.mapswithme.util.sharing.SharingHelper;
 import com.mapswithme.util.statistics.AlohaHelper;
 import com.mapswithme.util.statistics.Statistics;
-
-import java.io.Serializable;
-import java.util.Stack;
 
 import java.io.Serializable;
 import java.util.Stack;
@@ -257,8 +253,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
 
   public static Intent createUpdateMapsIntent()
   {
-    return new Intent(MwmApplication.get(), MwmActivity.class)
-               .putExtra(EXTRA_UPDATE_COUNTRIES, true);
+    return new Intent(MwmApplication.get(), MwmActivity.class);
   }
 
   @Override

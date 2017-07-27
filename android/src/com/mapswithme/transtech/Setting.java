@@ -526,4 +526,40 @@ public class Setting implements Parcelable
                 SettingConstants.GLOBAL_WEBSERVICE_API_KEY,
                 "" );
     }
+
+    public static boolean isDataPackEnabled(Context context)
+    {
+        Setting.Environment env = Setting.currentEnvironment(context);
+        return Setting.getBoolean(context, env, Scope.COMMON, SettingConstants.GLOBAL_DATA_PACK_ENABLED,false);
+    }
+
+    public static String getOtaUpdateUrl(Context context)
+    {
+        Setting.Environment env = Setting.currentEnvironment(context);
+        return Setting.getString(context, env, Scope.SMARTNAV2, SettingConstants.SMARTNAV2_OTA_UPDATE_URL,"https://repo.transtech.net.au:8443/maps/");
+    }
+
+    public static String getMapVersion(Context context)
+    {
+        Setting.Environment env = Setting.currentEnvironment(context);
+        return Setting.getString(context, env, Scope.SMARTNAV2, SettingConstants.SMARTNAV2_MAP_VERSION,"");
+    }
+
+    public static String getOtaLastUpdateDate(Context context){
+        return Setting.getString(context, Environment.ALL, Scope.SMARTNAV2, SettingConstants.SMARTNAV2_OTA_LAST_UPDATE_DATE, "");
+    }
+
+    public static void setOtaLastUpdateDate(Context context, String date){
+        Setting.setString(context, Environment.ALL, Scope.SMARTNAV2, SettingConstants.SMARTNAV2_OTA_LAST_UPDATE_DATE, date, Origin.LOCAL, SettingConstants.SOURCE_DEVICE);
+    }
+
+    public static TranstechConstants.UPDATE_STATUS getOtaUpdateStatus(Context context){
+        return TranstechConstants.UPDATE_STATUS.valueOf(
+                Setting.getString(context, Environment.ALL, Scope.SMARTNAV2, SettingConstants.SMARTNAV2_OTA_UPDATE_STATUS, TranstechConstants.UPDATE_STATUS.NA.toString())
+        );
+    }
+
+    public static void setOtaUpdateStatus(Context context, TranstechConstants.UPDATE_STATUS status){
+        Setting.setString(context, Environment.ALL, Scope.SMARTNAV2, SettingConstants.SMARTNAV2_OTA_UPDATE_STATUS, status.toString(), Origin.LOCAL, SettingConstants.SOURCE_DEVICE);
+    }
 }
