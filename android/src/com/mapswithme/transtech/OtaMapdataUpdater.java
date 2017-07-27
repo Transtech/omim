@@ -1,17 +1,17 @@
 package com.mapswithme.transtech;
 
-import android.app.Activity;
-import android.app.AlarmManager;
-import android.app.PendingIntent;
-import android.app.Service;
+import android.app.*;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.IBinder;
 import android.os.SystemClock;
 import android.util.Log;
+import android.view.WindowManager;
 import com.mapswithme.maps.Framework;
 import com.mapswithme.maps.MwmApplication;
+import com.mapswithme.maps.R;
 import com.mapswithme.maps.background.Notifier;
 import com.mapswithme.util.ConnectionState;
 import org.apache.commons.io.IOUtils;
@@ -243,6 +243,24 @@ public class OtaMapdataUpdater extends Service {
         @Override
         protected void onPostExecute(Boolean result) {
             super.onPostExecute(result);
+
+            if (result) {
+                AlertDialog dlg = new AlertDialog.Builder(OtaMapdataUpdater.this)
+                        .setCancelable(false)
+                        .setTitle("Map Data Update")
+                        .setMessage("Map data updated.\nPlease restart for the update to take effect.")
+                        .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                System.exit(0);
+                            }
+                        })
+                        .setNegativeButton(R.string.cancel, null)
+                        .create();
+
+                dlg.getWindow().setType(WindowManager.LayoutParams.TYPE_SYSTEM_ALERT);
+                dlg.show();
+            }
         }
 
         private JSONArray getIndex(String baseUrl) throws IOException {

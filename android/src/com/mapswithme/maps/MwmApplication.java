@@ -42,8 +42,6 @@ public class MwmApplication extends MultiDexApplication
 {
   private final static String TAG = "MwmApplication";
 
-  private static final String PW_EMPTY_APP_ID = "XXXXX";
-
   private static MwmApplication sSelf;
   private static MwmActivity sMvmActivity;
   private SharedPreferences mPrefs;
