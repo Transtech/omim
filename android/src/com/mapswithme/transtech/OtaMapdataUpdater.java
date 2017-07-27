@@ -157,12 +157,12 @@ public class OtaMapdataUpdater extends Service {
                 if ("".equals(targetVersion)) {
                     // not configured, no update
                     Log.d(LOG_TAG, "Map version not configured, no update necessary");
-                    return true;
+                    return false;
                 }
                 else if (currentVersion.equalsIgnoreCase(targetVersion)) {
                     // version is current, no update
                     Log.d(LOG_TAG, "Map version up to date, no update necessary");
-                    return true;
+                    return false;
                 }
 
                 if (!isDownloadAllowed()) {
