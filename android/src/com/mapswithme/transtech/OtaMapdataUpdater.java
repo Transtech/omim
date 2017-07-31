@@ -26,7 +26,9 @@ import java.net.URLEncoder;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -179,13 +181,18 @@ public class OtaMapdataUpdater extends Service {
                 String baseUrl = Setting.getOtaUpdateUrl(APP) + targetVersion;
                 JSONArray jsonArray = getIndex(baseUrl);
 
+                List<String> unchangedFiles = new ArrayList<>();
+
                 // download and check
                 for (int i=0; i<jsonArray.length(); i++) {
                     JSONObject jsonObject = jsonArray.getJSONObject(i);
                     String filename = jsonObject.optString("name");
                     String checksum = jsonObject.optString("md5");
 
-                    if (!downloadFile(baseUrl, filename, checksum)) {
+                    if (isFileUnchanged(DATA_PATH, filename, checksum)) {
+                        unchangedFiles.add(filename);
+                    }
+                    else if (!downloadFile(baseUrl, filename, checksum)) {
                         throw new IOException("Error downloading " + filename);
                     }
                 }
@@ -197,7 +204,10 @@ public class OtaMapdataUpdater extends Service {
                     String filename = jsonObject.optString("name");
                     String compressType = jsonObject.optString("compressType");
 
-                    if ("zip".equalsIgnoreCase(compressType)) {
+                    if (unchangedFiles.contains(filename)) {
+                        Log.i(LOG_TAG, "Skipping unchanged file: " + filename);
+                    }
+                    else if ("zip".equalsIgnoreCase(compressType)) {
                         Notifier.notifyOtaMapdataUpdate("Unpacking " + filename);
 
                         if (unpackZip(filename, DATA_PATH)) {
@@ -286,6 +296,17 @@ public class OtaMapdataUpdater extends Service {
                 Log.w(LOG_TAG, "Unable to parse json: " + response);
                 return null;
             }
+        }
+
+        private boolean isFileUnchanged(String path, String filename, String md5) throws IOException {
+            File file = new File(path, filename);
+
+            if (file.exists() && fileMD5(file).equalsIgnoreCase(md5)) {
+                Log.i(LOG_TAG, filename + " exist and md5 matched");
+                return true;
+            }
+
+            return false;
         }
 
         private boolean downloadFile(String baseUrl, String filename, String md5) throws IOException {
