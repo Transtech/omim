@@ -155,8 +155,8 @@ public class SearchToolbarController extends ToolbarController
 
   public void activate()
   {
-    mQuery.requestFocus();
-    InputUtils.showKeyboard(mQuery);
+    //mQuery.requestFocus();
+    //InputUtils.showKeyboard(mQuery);
   }
 
   public void deactivate()
