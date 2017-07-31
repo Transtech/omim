@@ -22,6 +22,7 @@ import org.json.JSONObject;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
@@ -154,7 +155,7 @@ public class OtaMapdataUpdater extends Service {
 
                 Log.d(LOG_TAG,"Current Version:" + currentVersion + " Target Version:" + targetVersion);
 
-                if ("".equals(targetVersion)) {
+                if (targetVersion == null || "".equals(targetVersion)) {
                     // not configured, no update
                     Log.d(LOG_TAG, "Map version not configured, no update necessary");
                     return false;
@@ -289,7 +290,7 @@ public class OtaMapdataUpdater extends Service {
 
         private boolean downloadFile(String baseUrl, String filename, String md5) throws IOException {
             File outputFile = new File(APP.getCacheDir(), filename);
-            String url = baseUrl + "/" + filename;
+            String url = baseUrl + "/" + URLEncoder.encode(filename, "UTF-8").replace("+", "%20");;
 
             // check if existing and matched md5
             if (outputFile.exists() && fileMD5(outputFile).equalsIgnoreCase(md5)) {
