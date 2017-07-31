@@ -1,12 +1,17 @@
 package com.mapswithme.maps.routing;
 
 import android.app.Activity;
+import android.app.AlarmManager;
+import android.content.Context;
 import android.content.Intent;
 import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.text.TextUtils;
+import android.util.Log;
 import android.util.Pair;
 import android.view.View;
 import android.widget.ImageView;
@@ -14,6 +19,7 @@ import android.widget.TextView;
 import au.net.transtech.geo.model.VehicleProfile;
 import com.mapswithme.maps.Framework;
 import com.mapswithme.maps.MwmActivity;
+import com.mapswithme.maps.MwmApplication;
 import com.mapswithme.maps.R;
 import com.mapswithme.maps.bookmarks.data.DistanceAndAzimut;
 import com.mapswithme.maps.location.LocationHelper;
@@ -43,6 +49,8 @@ import java.util.concurrent.TimeUnit;
 
 public class NavigationController implements TrafficManager.TrafficCallback
 {
+  private static final String LOG_TAG = "NavigationController";
+
   private static final String STATE_SHOW_TIME_LEFT = "ShowTimeLeft";
 
   private final View mFrame;
@@ -78,6 +86,8 @@ public class NavigationController implements TrafficManager.TrafficCallback
   private boolean mShowTimeLeft = true;
 
   private double mNorth;
+
+  private Handler routeSyncHandler = new Handler();
 
   public NavigationController(Activity activity)
   {
@@ -128,14 +138,17 @@ public class NavigationController implements TrafficManager.TrafficCallback
     //IFACE-1163 mSearchButtonFrame = activity.findViewById(R.id.search_button_frame);
     //IFACE-1163 mSearchWheel = new SearchWheel(mSearchButtonFrame);
 
-      //TRANSTECH
-      requestRouteSync(activity);
-      if( activity instanceof LocationHelper.UiCallback)
-        ComplianceController.get().init( (LocationHelper.UiCallback) activity );
+    //TRANSTECH
+    //requestRouteSync(activity);
+    if( activity instanceof LocationHelper.UiCallback)
+      ComplianceController.get().init( (LocationHelper.UiCallback) activity );
+
   }
 
   public void onResume()
   {
+    scheduleRouteSync(true);
+
     mNavMenu.onResume(null);
     //IFACE-1163 mSearchWheel.onResume();
     ComplianceController.get().clearPlannedRouteSelection();
@@ -414,31 +427,47 @@ public class NavigationController implements TrafficManager.TrafficCallback
     // no op
   }
 
-    private void requestRouteSync(Activity activity)
-    {
-        try
-        {
-            JSONObject payload = new JSONObject();
-            payload.put( RouteConstants.RECORD_TYPE, RouteConstants.MESSAGE_TYPE_MFT);
-            payload.put( RouteConstants.SUB_TYPE, RouteConstants.SUB_TYPE_ROUTE_PLANNED );
+  private void requestRouteSync(Activity activity)
+  {
+      try
+      {
+          JSONObject payload = new JSONObject();
+          payload.put( RouteConstants.RECORD_TYPE, RouteConstants.MESSAGE_TYPE_MFT);
+          payload.put( RouteConstants.SUB_TYPE, RouteConstants.SUB_TYPE_ROUTE_PLANNED );
 
-            // populate all local trips
-            List<RouteTrip> allTrips = RouteUtil.findPlannedRoutes( activity );
-            JSONArray tripsJSON = new JSONArray();
-            for (RouteTrip trip : allTrips) {
-                JSONObject tripObj = new JSONObject();
-                tripObj.put(RouteConstants.ID, trip.getId());
-                tripObj.put(RouteConstants.VERSION, trip.getVersion());
+        // populate all local trips
+        List<RouteTrip> allTrips = RouteUtil.findPlannedRoutes( activity );
+        JSONArray tripsJSON = new JSONArray();
+        for (RouteTrip trip : allTrips) {
+            JSONObject tripObj = new JSONObject();
+            tripObj.put(RouteConstants.ID, trip.getId());
+            tripObj.put(RouteConstants.VERSION, trip.getVersion());
 
-                tripsJSON.put(tripObj);
-            }
-            payload.put(RouteConstants.TRIPS, tripsJSON);
-
-            TranstechUtil.publish( activity, TranstechConstants.AMQP_ROUTING_KEY_ROUTE_TRIP, TranstechConstants.COMMS_EVENT_PRIORITY_NORMAL, payload );
+            tripsJSON.put(tripObj);
         }
-        catch(JSONException ex)
-        {
+        payload.put(RouteConstants.TRIPS, tripsJSON);
 
-        }
+        TranstechUtil.publish( activity, TranstechConstants.AMQP_ROUTING_KEY_ROUTE_TRIP, TranstechConstants.COMMS_EVENT_PRIORITY_NORMAL, payload );
     }
+    catch(JSONException ex)
+    {
+
+    }
+  }
+
+  private void scheduleRouteSync(boolean immediate) {
+    routeSyncHandler.removeCallbacks(routeSyncRunnable);
+
+    long delay = 0;
+    if (!immediate) delay = 1000 * 60 * 60;
+    routeSyncHandler.postDelayed(routeSyncRunnable, delay);
+  }
+
+  private Runnable routeSyncRunnable = new Runnable() {
+    @Override
+    public void run() {
+      requestRouteSync(MwmApplication.getsMvmActivity());
+      scheduleRouteSync(false);
+    }
+  };
 }
