@@ -52,6 +52,23 @@ public class OtaMapdataUpdater extends Service {
         context.startService(new Intent(context, OtaMapdataUpdater.class).setAction(OtaMapdataUpdater.ACTION_CHECK_FOR_UPDATES));
     }
 
+    public static boolean isProvisioned() {
+        if ("0".equals(getCurrentMapdataVersion())) return false;
+        else return true;
+    }
+
+    public static void showProvisioningAlertDialog() {
+        AlertDialog dlg = new AlertDialog.Builder(MwmApplication.get())
+                .setCancelable(true)
+                .setTitle("Initial Map Data Download")
+                .setMessage("Provisioning, please keep Wifi connected")
+                .setPositiveButton(R.string.ok, null)
+                .create();
+
+        dlg.getWindow().setType(WindowManager.LayoutParams.TYPE_SYSTEM_ALERT);
+        dlg.show();
+    }
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -199,6 +216,7 @@ public class OtaMapdataUpdater extends Service {
 
                 // all download are ok, deploy
 
+                boolean deployOk = true;
                 for (int i=0; i<jsonArray.length(); i++) {
                     JSONObject jsonObject = jsonArray.getJSONObject(i);
                     String filename = jsonObject.optString("name");
@@ -210,26 +228,26 @@ public class OtaMapdataUpdater extends Service {
                     else if ("zip".equalsIgnoreCase(compressType)) {
                         Notifier.notifyOtaMapdataUpdate("Unpacking " + filename);
 
-                        if (unpackZip(filename, DATA_PATH)) {
-                            deleteFileFromCache(filename);
-                        }
+                        if (unpackZip(filename, DATA_PATH)) deleteFileFromCache(filename);
+                        else deployOk = false;
                     }
                     else {
                         Notifier.notifyOtaMapdataUpdate("Copying " + filename);
 
-                        if (copyFile(filename, DATA_PATH)) {
-                            deleteFileFromCache(filename);
-                        }
+                        if (copyFile(filename, DATA_PATH)) deleteFileFromCache(filename);
+                        else deployOk = false;
                     }
                 }
 
                 // done, write version
-                setCurrentMapdataVersion(targetVersion);
+                if (deployOk) {
+                    setCurrentMapdataVersion(targetVersion);
 
-                Setting.setOtaLastUpdateDate(APP, new SimpleDateFormat("MMM dd, yyyy h:mm:ss aa", Locale.ENGLISH).format(new Date()));
-                Setting.setOtaUpdateStatus(APP, TranstechConstants.UPDATE_STATUS.FINISHED);
+                    Setting.setOtaLastUpdateDate(APP, new SimpleDateFormat("MMM dd, yyyy h:mm:ss aa", Locale.ENGLISH).format(new Date()));
+                    Setting.setOtaUpdateStatus(APP, TranstechConstants.UPDATE_STATUS.FINISHED);
 
-                return true;
+                    return true;
+                }
 
             } catch (Exception e) {
                 Log.e(LOG_TAG, "Error checking for updates, will try again in half an hour.", e);
@@ -436,7 +454,7 @@ public class OtaMapdataUpdater extends Service {
                 // Need to create directories if not exists
                 if (zipEntry.isDirectory()) {
                     String outputFile = outputPath + filename;
-                    File fmd = new File(outputPath);
+                    File fmd = new File(outputFile);
                     fmd.mkdirs();
 
                     Log.i(LOG_TAG, "Created directory " + outputFile);
@@ -520,7 +538,7 @@ public class OtaMapdataUpdater extends Service {
         return ConnectionState.isWifiConnected() || Setting.isDataPackEnabled(APP);
     }
 
-    private String getCurrentMapdataVersion() {
+    private static String getCurrentMapdataVersion() {
         final File file = new File(DATA_PATH, "VERSION.TXT");
 
         try {

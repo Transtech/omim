@@ -75,6 +75,7 @@ import com.mapswithme.maps.widget.menu.MyPositionButton;
 import com.mapswithme.maps.widget.placepage.BasePlacePageAnimationController;
 import com.mapswithme.maps.widget.placepage.PlacePageView;
 import com.mapswithme.maps.widget.placepage.PlacePageView.State;
+import com.mapswithme.transtech.OtaMapdataUpdater;
 import com.mapswithme.util.*;
 import com.mapswithme.util.concurrency.UiThread;
 import com.mapswithme.util.sharing.ShareOption;
@@ -419,38 +420,46 @@ public class MwmActivity extends BaseMwmFragmentActivity
   {
     super.onCreate(savedInstanceState);
 
-    MwmApplication.setsMvmActivity(this);
+    // dirty hack
+    if (OtaMapdataUpdater.isProvisioned()) {
 
-    mIsFragmentContainer = getResources().getBoolean(R.bool.tabletLayout);
+      MwmApplication.setsMvmActivity(this);
 
-    if (!mIsFragmentContainer && (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP))
-      getWindow().addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+      mIsFragmentContainer = getResources().getBoolean(R.bool.tabletLayout);
 
-    setContentView(R.layout.activity_map);
-    initViews();
+      if (!mIsFragmentContainer && (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP))
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
 
-    Statistics.INSTANCE.trackConnectionState();
+      setContentView(R.layout.activity_map);
+      initViews();
 
-    Framework.nativeSetMapObjectListener(this);
+      Statistics.INSTANCE.trackConnectionState();
 
-    mSearchController = new FloatingSearchToolbarController(this);
-    mSearchController.setVisibilityListener(this);
-    processIntent(getIntent());
-    SharingHelper.prepare();
+      Framework.nativeSetMapObjectListener(this);
 
-    SearchEngine.INSTANCE.addListener(this);
-    SearchEngine.INSTANCE.configureOnlineSearch(this);
+      mSearchController = new FloatingSearchToolbarController(this);
+      mSearchController.setVisibilityListener(this);
+      processIntent(getIntent());
+      SharingHelper.prepare();
 
-    //TODO: uncomment after correct visible rect calculation.
-    //mVisibleRectMeasurer = new VisibleRectMeasurer(new VisibleRectListener() {
-    //  @Override
-    //  public void onVisibleRectChanged(Rect rect) {
-    //    Framework.nativeSetVisibleRect(rect.left, rect.top, rect.right, rect.bottom);
-    //  }
-    //});
-    //getWindow().getDecorView().addOnLayoutChangeListener(mVisibleRectMeasurer);
+      SearchEngine.INSTANCE.addListener(this);
+      SearchEngine.INSTANCE.configureOnlineSearch(this);
 
-    if (!MwmApplication.disclaimerAccepted) showDisclaimer();
+      //TODO: uncomment after correct visible rect calculation.
+      //mVisibleRectMeasurer = new VisibleRectMeasurer(new VisibleRectListener() {
+      //  @Override
+      //  public void onVisibleRectChanged(Rect rect) {
+      //    Framework.nativeSetVisibleRect(rect.left, rect.top, rect.right, rect.bottom);
+      //  }
+      //});
+      //getWindow().getDecorView().addOnLayoutChangeListener(mVisibleRectMeasurer);
+
+      if (!MwmApplication.disclaimerAccepted) showDisclaimer();
+    }
+    else {
+      OtaMapdataUpdater.showProvisioningAlertDialog();
+      finish();
+    }
   }
 
   private void initViews()
