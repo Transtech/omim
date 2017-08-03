@@ -36,6 +36,7 @@ public final class Notifier
     placeNotification(title, countriesName, pi, ID_UPDATE_AVAILABLE);
   }
 
+  /*
   public static void notifyDownloadFailed(String id, String name)
   {
     String title = APP.getString(R.string.app_name);
@@ -58,6 +59,7 @@ public final class Notifier
     placeNotification(title, content, pi, ID_DOWNLOAD_NEW_COUNTRY);
     Statistics.INSTANCE.trackEvent(Statistics.EventName.DOWNLOAD_COUNTRY_NOTIFICATION_SHOWN);
   }
+  */
 
   public static void notifyOtaMapdataUpdate(String content)
   {

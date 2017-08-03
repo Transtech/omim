@@ -55,6 +55,7 @@ public class MwmApplication extends MultiDexApplication
 
   public static boolean disclaimerAccepted = false;
 
+  /*
   private final MapManager.StorageCallback mStorageCallbacks = new MapManager.StorageCallback()
   {
     @Override
@@ -78,6 +79,7 @@ public class MwmApplication extends MultiDexApplication
     @Override
     public void onProgress(String countryId, long localSize, long remoteSize) {}
   };
+  */
 
   public MwmApplication()
   {
@@ -160,7 +162,7 @@ public class MwmApplication extends MultiDexApplication
 
     nativeInitFramework();
 
-    MapManager.nativeSubscribe(mStorageCallbacks);
+    //MapManager.nativeSubscribe(mStorageCallbacks);
 
     initNativeStrings();
     BookmarkManager.nativeLoadBookmarks();

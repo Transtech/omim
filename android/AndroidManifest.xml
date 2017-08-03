@@ -375,9 +375,9 @@
       </intent-filter>
     </receiver>
 
-    <service
+    <!--service
         android:name="com.mapswithme.maps.background.WorkerService"
-        android:exported="false"/>
+        android:exported="false"/-->
 
     <receiver android:name="com.mapswithme.maps.location.TrackRecorderWakeReceiver">
       <intent-filter>

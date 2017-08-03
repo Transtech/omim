@@ -41,6 +41,16 @@ public class OtaMapdataUpdater extends Service {
     public static final String ACTION_CHECK_FOR_UPDATES = "com.mapswithme.transtech.action.CHECK_FOR_UPDATES";
     public static final String EXTRA_IMMEDIATE_SCHEDULE = "extra_immediate_schedule";
 
+    public static final String ACTION_UPDATE_STATUS_BROADCAST = "com.mapswithme.transtech.action.UPDATE_STATUS_BROADCAST";
+    public static final String ACTION_UPDATE_PROGRESS_BROADCAST = "com.mapswithme.transtech.action.UPDATE_PROGRESS_BROADCAST";
+
+    public static final int STATUS_OK = 0;
+    public static final int STATUS_ERR_NO_WIFI = 1;
+    public static final int STATUS_ERR_DOWNLOAD_FAILED = 2;
+    public static final int STATUS_ERR_MAP_VERSION_NOT_CONFIGURED = 3;
+    public static final int STATUS_ERR_MD5= 4;
+
+
     private static final int BUFFER_SIZE = 4096;
     private static UpdateTask updateTask;
     private static long threadStartTime;
@@ -177,6 +187,7 @@ public class OtaMapdataUpdater extends Service {
                 if (targetVersion == null || "".equals(targetVersion)) {
                     // not configured, no update
                     Log.d(LOG_TAG, "Map version not configured, no update necessary");
+                    broadcastStatus(STATUS_ERR_MAP_VERSION_NOT_CONFIGURED);
                     return false;
                 }
                 else if (currentVersion.equalsIgnoreCase(targetVersion)) {
@@ -188,6 +199,7 @@ public class OtaMapdataUpdater extends Service {
                 if (!isDownloadAllowed()) {
                     // not connected to wifi or not data pack
                     Notifier.notifyOtaMapdataUpdatePending();
+                    broadcastStatus(STATUS_ERR_NO_WIFI);
                     return false;
                 }
 
@@ -227,12 +239,14 @@ public class OtaMapdataUpdater extends Service {
                     }
                     else if ("zip".equalsIgnoreCase(compressType)) {
                         Notifier.notifyOtaMapdataUpdate("Unpacking " + filename);
+                        broadcastProgress("Unpacking " + filename, -1);
 
                         if (unpackZip(filename, DATA_PATH)) deleteFileFromCache(filename);
                         else deployOk = false;
                     }
                     else {
                         Notifier.notifyOtaMapdataUpdate("Copying " + filename);
+                        broadcastProgress("Copying " + filename, -1);
 
                         if (copyFile(filename, DATA_PATH)) deleteFileFromCache(filename);
                         else deployOk = false;
@@ -246,12 +260,17 @@ public class OtaMapdataUpdater extends Service {
                     Setting.setOtaLastUpdateDate(APP, new SimpleDateFormat("MMM dd, yyyy h:mm:ss aa", Locale.ENGLISH).format(new Date()));
                     Setting.setOtaUpdateStatus(APP, TranstechConstants.UPDATE_STATUS.FINISHED);
 
+                    broadcastStatus(STATUS_OK);
+
                     return true;
                 }
 
             } catch (Exception e) {
                 Log.e(LOG_TAG, "Error checking for updates, will try again in half an hour.", e);
                 Setting.setOtaUpdateStatus(APP, TranstechConstants.UPDATE_STATUS.FAILED);
+
+                if (isDownloadAllowed()) broadcastStatus(STATUS_ERR_DOWNLOAD_FAILED);
+                else broadcastStatus(STATUS_ERR_NO_WIFI);
 
                 // if it fails, we keep trying every 30 minutes
                 scheduleCheck(AlarmManager.INTERVAL_HALF_HOUR);
@@ -339,6 +358,7 @@ public class OtaMapdataUpdater extends Service {
 
             if (!isDownloadAllowed()) {
                 Log.w(LOG_TAG, "Download blocked, not connected to wifi and no data pack");
+                broadcastStatus(STATUS_ERR_NO_WIFI);
                 return false;
             }
 
@@ -349,6 +369,7 @@ public class OtaMapdataUpdater extends Service {
 
             if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) {
                 Log.w(LOG_TAG, "GET " + url + " invalid response: " + connection.getResponseCode());
+                broadcastStatus(STATUS_ERR_DOWNLOAD_FAILED, connection.getResponseCode());
                 return false;
             }
 
@@ -358,6 +379,7 @@ public class OtaMapdataUpdater extends Service {
 
             String notifyMsg = "Downloading " + filename;
             Notifier.notifyOtaMapdataUpdate(notifyMsg);
+            broadcastProgress(notifyMsg + "\nKindly keep the WiFi connected.", 0);
 
             byte[] buf = new byte[BUFFER_SIZE];
             int count, total = 0;
@@ -372,12 +394,21 @@ public class OtaMapdataUpdater extends Service {
                     Log.d(LOG_TAG, "Downloaded " + total + " bytes of " + filename);
 
                     String progressNotifyMsg = notifyMsg;
+                    int progress = -1;
                     if (fileLength > 0) {
-                        progressNotifyMsg = progressNotifyMsg + " " + Integer.toString((int) (total * 100.0 /fileLength)) + "%";
+                        progress = (int) (total * 100.0 /fileLength);
+                        progressNotifyMsg = progressNotifyMsg + " " + Integer.toString(progress) + "%";
                     }
 
                     Notifier.notifyOtaMapdataUpdate(progressNotifyMsg);
+                    broadcastProgress(notifyMsg + "\nKindly keep the WiFi connected.", progress);
                     lastProgressReport = now;
+
+                    // safety check if wifi is still connected
+                    if (!isDownloadAllowed()) {
+                        broadcastStatus(STATUS_ERR_NO_WIFI);
+                        return false;
+                    }
                 }
             }
 
@@ -386,13 +417,15 @@ public class OtaMapdataUpdater extends Service {
 
             Log.i(LOG_TAG, "Downloaded " + total + " bytes of " + filename + " expect: " + Integer.toString(fileLength));
             Notifier.notifyOtaMapdataUpdate(notifyMsg + ": completed");
+            broadcastProgress(notifyMsg, 100);
 
             if (outputFile.exists() && fileMD5(outputFile).equalsIgnoreCase(md5)) {
                 Log.i(LOG_TAG, "md5 Ok");
                 return true;
             }
 
-            Log.w(LOG_TAG, "GET " + url + " failed");
+            Log.w(LOG_TAG, "GET " + url + "checksum failed");
+            broadcastStatus(STATUS_ERR_MD5);
 
             return false;
         }
@@ -534,8 +567,16 @@ public class OtaMapdataUpdater extends Service {
         return false;
     }
 
-    private boolean isDownloadAllowed() {
-        return ConnectionState.isWifiConnected() || Setting.isDataPackEnabled(APP);
+    public static boolean isDownloadAllowed() {
+        /* removed checking for data pack
+        boolean wifiCOnnected = ConnectionState.isWifiConnected();
+        boolean dataPackEnabled = Setting.isDataPackEnabled(APP);
+
+        Log.d(LOG_TAG, "isWifiConnected=" + Boolean.toString(wifiCOnnected) + " isDataPackEnabled=" + Boolean.toString(dataPackEnabled) );
+        return wifiCOnnected || dataPackEnabled;
+        */
+
+        return ConnectionState.isWifiConnected();
     }
 
     private static String getCurrentMapdataVersion() {
@@ -572,5 +613,23 @@ public class OtaMapdataUpdater extends Service {
         } catch (Exception e) {
             Log.e(LOG_TAG, e.getMessage());
         }
+    }
+
+    private void broadcastProgress(String message, int progress) {
+        Intent i = new Intent(ACTION_UPDATE_PROGRESS_BROADCAST);
+        i.putExtra("MESSAGE", message);
+        i.putExtra("PROGRESS", progress);
+        sendBroadcast(i);
+    }
+
+    private void broadcastStatus(int status) {
+        broadcastStatus(status, 0);
+    }
+
+    private void broadcastStatus(int status, int code) {
+        Intent i = new Intent(ACTION_UPDATE_STATUS_BROADCAST);
+        i.putExtra("STATUS", status);
+        i.putExtra("CODE", code);
+        sendBroadcast(i);
     }
 }

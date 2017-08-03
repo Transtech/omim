@@ -518,7 +518,7 @@ public enum LocationHelper
   @android.support.annotation.UiThread
   public void removeListener(LocationListener listener)
   {
-    removeListener(listener, false);
+    removeListener(listener, true);
   }
 
   void startSensors()

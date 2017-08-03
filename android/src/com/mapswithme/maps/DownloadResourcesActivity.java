@@ -1,21 +1,14 @@
 package com.mapswithme.maps;
 
 import android.annotation.SuppressLint;
-import android.content.ContentResolver;
-import android.content.Intent;
-import android.graphics.Color;
-import android.location.Location;
+import android.content.*;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.annotation.StringRes;
-import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.CheckBox;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.mapswithme.maps.MwmActivity.MapTask;
 import com.mapswithme.maps.MwmActivity.OpenUrlTask;
@@ -23,14 +16,9 @@ import com.mapswithme.maps.api.Const;
 import com.mapswithme.maps.api.ParsedMwmRequest;
 import com.mapswithme.maps.base.BaseMwmFragmentActivity;
 import com.mapswithme.maps.bookmarks.data.BookmarkManager;
-import com.mapswithme.maps.downloader.CountryItem;
-import com.mapswithme.maps.downloader.MapManager;
-import com.mapswithme.maps.location.LocationHelper;
-import com.mapswithme.maps.location.LocationListener;
 import com.mapswithme.maps.search.SearchEngine;
-import com.mapswithme.util.ConnectionState;
+import com.mapswithme.transtech.OtaMapdataUpdater;
 import com.mapswithme.util.Constants;
-import com.mapswithme.util.StringUtils;
 import com.mapswithme.util.UiUtils;
 import com.mapswithme.util.Utils;
 import com.mapswithme.util.concurrency.ThreadPool;
@@ -40,7 +28,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.List;
 
 @SuppressLint("StringFormatMatches")
 public class DownloadResourcesActivity extends BaseMwmFragmentActivity
@@ -50,38 +37,12 @@ public class DownloadResourcesActivity extends BaseMwmFragmentActivity
   static final String EXTRA_COUNTRY = "country";
   static final String EXTRA_AUTODOWNLOAD = "autodownload";
 
-  // Error codes, should match the same codes in JNI
-  private static final int ERR_DOWNLOAD_SUCCESS = 0;
-  private static final int ERR_NOT_ENOUGH_MEMORY = -1;
-  private static final int ERR_NOT_ENOUGH_FREE_SPACE = -2;
-  private static final int ERR_STORAGE_DISCONNECTED = -3;
-  private static final int ERR_DOWNLOAD_ERROR = -4;
-  private static final int ERR_NO_MORE_FILES = -5;
-  private static final int ERR_FILE_IN_PROGRESS = -6;
-
   private TextView mTvMessage;
-  private TextView mTvLocation;
   private ProgressBar mProgress;
-  private Button mBtnDownload;
-  private CheckBox mChbDownloadCountry;
-
-  private String mCurrentCountry;
+  private Button mBtnRetry;
   private MapTask mMapTaskToForward;
 
   private boolean mIsReadingAttachment;
-  private boolean mAreResourcesDownloaded;
-
-  private static final int DOWNLOAD = 0;
-  private static final int PAUSE = 1;
-  private static final int RESUME = 2;
-  private static final int TRY_AGAIN = 3;
-  private static final int PROCEED_TO_MAP = 4;
-  private static final int BTN_COUNT = 5;
-
-  private View.OnClickListener mBtnListeners[];
-  private String mBtnNames[];
-
-  private int mCountryDownloadListenerSlot;
 
   @SuppressWarnings("unused")
   private interface Listener
@@ -100,111 +61,56 @@ public class DownloadResourcesActivity extends BaseMwmFragmentActivity
       new KmzKmlProcessor()
   };
 
-  private final LocationListener mLocationListener = new LocationListener.Simple()
-  {
+  private BroadcastReceiver mOtaMapdataUpdaterReceiver = new BroadcastReceiver() {
     @Override
-    public void onLocationUpdated(Location location)
-    {
-      if (mCurrentCountry != null)
-        return;
+    public void onReceive(Context context, Intent intent) {
+      if (intent.getAction().equals(OtaMapdataUpdater.ACTION_UPDATE_PROGRESS_BROADCAST)) {
+        String message = intent.getStringExtra("MESSAGE");
+        int progress = intent.getIntExtra("PROGRESS", -1);
 
-      final double lat = location.getLatitude();
-      final double lon = location.getLongitude();
-      mCurrentCountry = MapManager.nativeFindCountry(lat, lon);
-      if (TextUtils.isEmpty(mCurrentCountry))
-      {
-        mCurrentCountry = null;
-        return;
-      }
+        UiUtils.hide(mBtnRetry);
+        mTvMessage.setText(message);
 
-      int status = MapManager.nativeGetStatus(mCurrentCountry);
-      String name = MapManager.nativeGetName(mCurrentCountry);
+        if (progress >= 0) {
+          mProgress.setIndeterminate(false);
+          mProgress.setMax(100);
+          mProgress.setProgress(progress);
 
-      UiUtils.show(mTvLocation);
-
-      if (status == CountryItem.STATUS_DONE)
-        mTvLocation.setText(String.format(getString(R.string.download_location_map_up_to_date), name));
-      else
-      {
-        final CheckBox checkBox = (CheckBox) findViewById(R.id.chb__download_country);
-        UiUtils.show(checkBox);
-
-        String locationText;
-        String checkBoxText;
-
-        if (status == CountryItem.STATUS_UPDATABLE)
-        {
-          locationText = getString(R.string.download_location_update_map_proposal);
-          checkBoxText = String.format(getString(R.string.update_country_ask), name);
+          UiUtils.show(mProgress);
         }
-        else
-        {
-          locationText = getString(R.string.download_location_map_proposal);
-          checkBoxText = String.format(getString(R.string.download_country_ask), name);
-        }
-
-        mTvLocation.setText(locationText);
-        checkBox.setText(checkBoxText);
-      }
-
-      LocationHelper.INSTANCE.removeListener(this);
-    }
-  };
-
-  private final Listener mResourcesDownloadListener = new Listener()
-  {
-    @Override
-    public void onProgress(final int percent)
-    {
-      if (!isFinishing())
-        mProgress.setProgress(percent);
-    }
-
-    @Override
-    public void onFinish(final int errorCode)
-    {
-      if (isFinishing())
-        return;
-
-      if (errorCode == ERR_DOWNLOAD_SUCCESS)
-      {
-        final int res = nativeStartNextFileDownload(mResourcesDownloadListener);
-        if (res == ERR_NO_MORE_FILES)
-          finishFilesDownload(res);
-      }
-      else
-        finishFilesDownload(errorCode);
-    }
-  };
-
-  private final MapManager.StorageCallback mCountryDownloadListener = new MapManager.StorageCallback()
-  {
-    @Override
-    public void onStatusChanged(List<MapManager.StorageCallbackData> data)
-    {
-      for (MapManager.StorageCallbackData item : data)
-      {
-        if (!item.isLeafNode)
-          continue;
-
-        switch (item.newStatus)
-        {
-        case CountryItem.STATUS_DONE:
-          mAreResourcesDownloaded = true;
-          showMap();
-          return;
-
-        case CountryItem.STATUS_FAILED:
-          MapManager.showError(DownloadResourcesActivity.this, item, null);
-          return;
+        else {
+          mProgress.setIndeterminate(true);
+          UiUtils.show(mProgress);
         }
       }
-    }
+      else if (intent.getAction().equals(OtaMapdataUpdater.ACTION_UPDATE_STATUS_BROADCAST)) {
+        int status = intent.getIntExtra("STATUS", 0);
+        int code = intent.getIntExtra("CODE", 0);
 
-    @Override
-    public void onProgress(String countryId, long localSize, long remoteSize)
-    {
-      mProgress.setProgress((int)localSize);
+        UiUtils.hide(mProgress);
+
+        switch(status) {
+          case OtaMapdataUpdater.STATUS_OK:
+            UiUtils.hide(mBtnRetry);
+            break;
+          case OtaMapdataUpdater.STATUS_ERR_NO_WIFI:
+            UiUtils.show(mBtnRetry);
+            mTvMessage.setText("WiFi not connected.\nBefore you start using the app, allow us to download some required resources.\nPlease connect to WiFi to start the provisioning.");
+            break;
+          case OtaMapdataUpdater.STATUS_ERR_DOWNLOAD_FAILED:
+            UiUtils.show(mBtnRetry);
+            mTvMessage.setText("Download failed, code:" + Integer.toString(code) + ", \nPlease connect to WiFi and retry.");
+            break;
+          case OtaMapdataUpdater.STATUS_ERR_MAP_VERSION_NOT_CONFIGURED:
+            UiUtils.show(mBtnRetry);
+            mTvMessage.setText("Map data version not configured.\nPlease ensure proper map data version is configured in NextGen");
+            break;
+          case OtaMapdataUpdater.STATUS_ERR_MD5:
+            UiUtils.show(mBtnRetry);
+            mTvMessage.setText("Checksum validation failed.\nPlease connect to WiFi and retry");
+            break;
+        }
+      }
     }
   };
 
@@ -212,19 +118,22 @@ public class DownloadResourcesActivity extends BaseMwmFragmentActivity
   protected void onCreate(Bundle savedInstanceState)
   {
     super.onCreate(savedInstanceState);
-    setContentView(R.layout.activity_download_resources);
+    setContentView(R.layout.activity_download_resources_transtech);
     initViewsAndListeners();
 
-    if (prepareFilesDownload(false))
-    {
-      Utils.keepScreenOn(true, getWindow());
-      suggestRemoveLiteOrSamsung();
+    UiUtils.hide(mBtnRetry);
 
-      setAction(DOWNLOAD);
+    if (!OtaMapdataUpdater.isProvisioned()) {
+      if (OtaMapdataUpdater.isDownloadAllowed()) {
+        UiUtils.show(mProgress);
+        mTvMessage.setText("Before you start using the app, allow us to download some required resources.\nKindly keep the WiFi connected.");
+      }
+      else {
+        UiUtils.hide(mProgress);
+        mTvMessage.setText("Before you start using the app, allow us to download some required resources.\nPlease connect to WiFi to start the provisioning.");
+      }
 
-      if (ConnectionState.isWifiConnected())
-        onDownloadClicked();
-
+      // block starting of main ui
       return;
     }
 
@@ -237,11 +146,6 @@ public class DownloadResourcesActivity extends BaseMwmFragmentActivity
   {
     super.onDestroy();
     Utils.keepScreenOn(false, getWindow());
-    if (mCountryDownloadListenerSlot != 0)
-    {
-      MapManager.nativeUnsubscribe(mCountryDownloadListenerSlot);
-      mCountryDownloadListenerSlot = 0;
-    }
   }
 
   @Override
@@ -249,181 +153,37 @@ public class DownloadResourcesActivity extends BaseMwmFragmentActivity
   {
     super.onResume();
 
-    if (!isFinishing())
-      LocationHelper.INSTANCE.addListener(mLocationListener, true);
+    IntentFilter intentFilter =  new IntentFilter();
+    intentFilter.addAction(OtaMapdataUpdater.ACTION_UPDATE_PROGRESS_BROADCAST);
+    intentFilter.addAction(OtaMapdataUpdater.ACTION_UPDATE_STATUS_BROADCAST);
+    registerReceiver(mOtaMapdataUpdaterReceiver, intentFilter);
   }
 
   @Override
   protected void onPause()
   {
     super.onPause();
-    LocationHelper.INSTANCE.removeListener(mLocationListener);
-  }
-
-  private void suggestRemoveLiteOrSamsung()
-  {
-    if (Utils.isPackageInstalled(Constants.Package.MWM_LITE_PACKAGE) || Utils.isPackageInstalled(Constants.Package.MWM_SAMSUNG_PACKAGE))
-      Toast.makeText(this, R.string.suggest_uninstall_lite, Toast.LENGTH_LONG).show();
-  }
-
-  private void setDownloadMessage(int bytesToDownload)
-  {
-    mTvMessage.setText(getString(R.string.download_resources, StringUtils.getFileSizeString(bytesToDownload)));
-  }
-
-  private boolean prepareFilesDownload(boolean showMap)
-  {
-    final int bytes = nativeGetBytesToDownload();
-    if (bytes == 0)
-    {
-      mAreResourcesDownloaded = true;
-      if (showMap)
-        showMap();
-
-      return false;
-    }
-
-    if (bytes > 0)
-    {
-      setDownloadMessage(bytes);
-
-      mProgress.setMax(bytes);
-      mProgress.setProgress(0);
-    }
-    else
-      finishFilesDownload(bytes);
-
-    return true;
+    unregisterReceiver(mOtaMapdataUpdaterReceiver);
   }
 
   private void initViewsAndListeners()
   {
     mTvMessage = (TextView) findViewById(R.id.tv__download_message);
     mProgress = (ProgressBar) findViewById(R.id.pb__download_resources);
-    mBtnDownload = (Button) findViewById(R.id.btn__download_resources);
-    mChbDownloadCountry = (CheckBox) findViewById(R.id.chb__download_country);
-    mTvLocation = (TextView) findViewById(R.id.tv__location);
 
-    mBtnListeners = new View.OnClickListener[BTN_COUNT];
-    mBtnNames = new String[BTN_COUNT];
+    mBtnRetry = (Button) findViewById(R.id.btn__download_resources);
 
-    mBtnListeners[DOWNLOAD] = new View.OnClickListener()
-    {
+    mBtnRetry.setOnClickListener(new View.OnClickListener() {
       @Override
-      public void onClick(View v)
-      {
-        onDownloadClicked();
+      public void onClick(View v) {
+        OtaMapdataUpdater.init(MwmApplication.get());
       }
-    };
-    mBtnNames[DOWNLOAD] = getString(R.string.download);
-
-    mBtnListeners[PAUSE] = new View.OnClickListener()
-    {
-      @Override
-      public void onClick(View v)
-      {
-        onPauseClicked();
-      }
-    };
-    mBtnNames[PAUSE] = getString(R.string.pause);
-
-    mBtnListeners[RESUME] = new View.OnClickListener()
-    {
-      @Override
-      public void onClick(View v)
-      {
-        onResumeClicked();
-      }
-    };
-    mBtnNames[RESUME] = getString(R.string.continue_download);
-
-    mBtnListeners[TRY_AGAIN] = new View.OnClickListener()
-    {
-      @Override
-      public void onClick(View v)
-      {
-        onTryAgainClicked();
-      }
-    };
-    mBtnNames[TRY_AGAIN] = getString(R.string.try_again);
-
-    mBtnListeners[PROCEED_TO_MAP] = new View.OnClickListener()
-    {
-      @Override
-      public void onClick(View v)
-      {
-        onProceedToMapClicked();
-      }
-    };
-    mBtnNames[PROCEED_TO_MAP] = getString(R.string.download_resources_continue);
-  }
-
-  private void setAction(int action)
-  {
-    mBtnDownload.setOnClickListener(mBtnListeners[action]);
-    mBtnDownload.setText(mBtnNames[action]);
-  }
-
-  private void doDownload()
-  {
-    if (nativeStartNextFileDownload(mResourcesDownloadListener) == ERR_NO_MORE_FILES)
-      finishFilesDownload(ERR_NO_MORE_FILES);
-  }
-
-  private void onDownloadClicked()
-  {
-    setAction(PAUSE);
-    doDownload();
-  }
-
-  private void onPauseClicked()
-  {
-    setAction(RESUME);
-    nativeCancelCurrentFile();
-  }
-
-  private void onResumeClicked()
-  {
-    setAction(PAUSE);
-    doDownload();
-  }
-
-  private void onTryAgainClicked()
-  {
-    if (prepareFilesDownload(true))
-    {
-      setAction(PAUSE);
-      doDownload();
-    }
-  }
-
-  private void onProceedToMapClicked()
-  {
-    mAreResourcesDownloaded = true;
-    showMap();
-  }
-
-  private static @StringRes int getErrorMessage(int res)
-  {
-    switch (res)
-    {
-    case ERR_NOT_ENOUGH_FREE_SPACE:
-      return R.string.not_enough_free_space_on_sdcard;
-
-    case ERR_STORAGE_DISCONNECTED:
-      return R.string.disconnect_usb_cable;
-
-    case ERR_DOWNLOAD_ERROR:
-      return (ConnectionState.isConnected() ? R.string.download_has_failed
-                                            : R.string.common_check_internet_connection_dialog);
-    default:
-      return R.string.not_enough_memory;
-    }
+    });
   }
 
   private void showMap()
   {
-    if (mIsReadingAttachment || !mAreResourcesDownloaded)
+    if (mIsReadingAttachment || !OtaMapdataUpdater.isProvisioned())
       return;
 
     final Intent intent = new Intent(this, MwmActivity.class);
@@ -441,41 +201,6 @@ public class DownloadResourcesActivity extends BaseMwmFragmentActivity
     startActivity(intent);
 
     finish();
-  }
-
-  private void finishFilesDownload(int result)
-  {
-    if (result == ERR_NO_MORE_FILES)
-    {
-      // World and WorldCoasts has been downloaded, we should register maps again to correctly add them to the model and generate indexes etc.
-      // TODO fix the hack when separate download of World-s will be removed or refactored
-      Framework.nativeDeregisterMaps();
-      Framework.nativeRegisterMaps();
-      if (mCurrentCountry != null && mChbDownloadCountry.isChecked())
-      {
-        CountryItem item = CountryItem.fill(mCurrentCountry);
-
-        UiUtils.hide(mChbDownloadCountry, mTvLocation);
-        mTvMessage.setText(getString(R.string.downloading_country_can_proceed, item.name));
-        mProgress.setMax((int)item.totalSize);
-        mProgress.setProgress(0);
-
-        mCountryDownloadListenerSlot = MapManager.nativeSubscribe(mCountryDownloadListener);
-        MapManager.nativeDownload(mCurrentCountry);
-        setAction(PROCEED_TO_MAP);
-      }
-      else
-      {
-        mAreResourcesDownloaded = true;
-        showMap();
-      }
-    }
-    else
-    {
-      mTvMessage.setText(getErrorMessage(result));
-      mTvMessage.setTextColor(Color.RED);
-      setAction(TRY_AGAIN);
-    }
   }
 
   private boolean dispatchIntent()
@@ -557,9 +282,7 @@ public class DownloadResourcesActivity extends BaseMwmFragmentActivity
     }
   }
 
-  /**
-   * Use this to invoke API task.
-   */
+  //Use this to invoke API task.
   private class MapsWithMeIntentProcessor implements IntentProcessor
   {
     @Override

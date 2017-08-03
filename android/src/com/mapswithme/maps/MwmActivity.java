@@ -245,16 +245,18 @@ public class MwmActivity extends BaseMwmFragmentActivity
 
   private VisibleRectMeasurer mVisibleRectMeasurer;
 
+  /*
   public static Intent createShowMapIntent(Context context, String countryId, boolean doAutoDownload)
   {
     return new Intent(context, DownloadResourcesActivity.class)
                .putExtra(DownloadResourcesActivity.EXTRA_COUNTRY, countryId)
                .putExtra(DownloadResourcesActivity.EXTRA_AUTODOWNLOAD, doAutoDownload);
   }
+  */
 
   public static Intent createUpdateMapsIntent()
   {
-    return new Intent(MwmApplication.get(), MwmActivity.class);
+    return new Intent(MwmApplication.get(), DownloadResourcesActivity.class);
   }
 
   @Override
@@ -420,46 +422,38 @@ public class MwmActivity extends BaseMwmFragmentActivity
   {
     super.onCreate(savedInstanceState);
 
-    // dirty hack
-    if (OtaMapdataUpdater.isProvisioned()) {
+    MwmApplication.setsMvmActivity(this);
 
-      MwmApplication.setsMvmActivity(this);
+    mIsFragmentContainer = getResources().getBoolean(R.bool.tabletLayout);
 
-      mIsFragmentContainer = getResources().getBoolean(R.bool.tabletLayout);
+    if (!mIsFragmentContainer && (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP))
+      getWindow().addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
 
-      if (!mIsFragmentContainer && (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP))
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+    setContentView(R.layout.activity_map);
+    initViews();
 
-      setContentView(R.layout.activity_map);
-      initViews();
+    Statistics.INSTANCE.trackConnectionState();
 
-      Statistics.INSTANCE.trackConnectionState();
+    Framework.nativeSetMapObjectListener(this);
 
-      Framework.nativeSetMapObjectListener(this);
+    mSearchController = new FloatingSearchToolbarController(this);
+    mSearchController.setVisibilityListener(this);
+    processIntent(getIntent());
+    SharingHelper.prepare();
 
-      mSearchController = new FloatingSearchToolbarController(this);
-      mSearchController.setVisibilityListener(this);
-      processIntent(getIntent());
-      SharingHelper.prepare();
+    SearchEngine.INSTANCE.addListener(this);
+    SearchEngine.INSTANCE.configureOnlineSearch(this);
 
-      SearchEngine.INSTANCE.addListener(this);
-      SearchEngine.INSTANCE.configureOnlineSearch(this);
+    //TODO: uncomment after correct visible rect calculation.
+    //mVisibleRectMeasurer = new VisibleRectMeasurer(new VisibleRectListener() {
+    //  @Override
+    //  public void onVisibleRectChanged(Rect rect) {
+    //    Framework.nativeSetVisibleRect(rect.left, rect.top, rect.right, rect.bottom);
+    //  }
+    //});
+    //getWindow().getDecorView().addOnLayoutChangeListener(mVisibleRectMeasurer);
 
-      //TODO: uncomment after correct visible rect calculation.
-      //mVisibleRectMeasurer = new VisibleRectMeasurer(new VisibleRectListener() {
-      //  @Override
-      //  public void onVisibleRectChanged(Rect rect) {
-      //    Framework.nativeSetVisibleRect(rect.left, rect.top, rect.right, rect.bottom);
-      //  }
-      //});
-      //getWindow().getDecorView().addOnLayoutChangeListener(mVisibleRectMeasurer);
-
-      if (!MwmApplication.disclaimerAccepted) showDisclaimer();
-    }
-    else {
-      OtaMapdataUpdater.showProvisioningAlertDialog();
-      finish();
-    }
+    if (!MwmApplication.disclaimerAccepted) showDisclaimer();
   }
 
   private void initViews()
