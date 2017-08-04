@@ -241,7 +241,10 @@ public class OtaMapdataUpdater extends Service {
                         Notifier.notifyOtaMapdataUpdate("Unpacking " + filename);
                         broadcastProgress("Unpacking " + filename, -1);
 
-                        if (unpackZip(filename, DATA_PATH)) deleteFileFromCache(filename);
+                        if (unpackZip(filename, DATA_PATH)) {
+                            // keep the zip file in cache, left it to the system to delete when necessary
+                            // deleteFileFromCache(filename);
+                        }
                         else deployOk = false;
                     }
                     else {
