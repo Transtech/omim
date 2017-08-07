@@ -386,6 +386,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
   @Override
   public void showDownloader(boolean openDownloaded)
   {
+    /*
     if (RoutingController.get().checkMigration(this))
       return;
 
@@ -401,6 +402,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
     {
       startActivity(new Intent(this, DownloaderActivity.class).putExtras(args));
     }
+    */
   }
 
   @Override
@@ -924,6 +926,11 @@ public class MwmActivity extends BaseMwmFragmentActivity
   protected void onResume()
   {
     super.onResume();
+
+    if (!OtaMapdataUpdater.isProvisioned()) {
+      startActivity(new Intent(this, DownloadResourcesActivity.class));
+      finish();
+    }
 
     mPlacePageRestored = mPlacePage.getState() != State.HIDDEN;
     mSearchController.refreshToolbar();
