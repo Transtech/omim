@@ -312,8 +312,8 @@ android {
 
     release {
       signingConfig signingConfigs.mapswithme
-      minifyEnabled true
-      shrinkResources true
+      minifyEnabled false
+      shrinkResources false
       proguardFile('proguard-mwm.txt')
       multiDexKeepFile file('multidex-config.txt')
     }
