@@ -16,8 +16,8 @@ class ResultCodesHelper
   static final int NO_ERROR = 0;
   static final int CANCELLED = 1;
   static final int NO_POSITION = 2;
-  private static final int INCONSISTENT_MWM_ROUTE = 3;
-  private static final int ROUTING_FILE_NOT_EXIST = 4;
+  static final int INCONSISTENT_MWM_ROUTE = 3;
+  static final int ROUTING_FILE_NOT_EXIST = 4;
   private static final int START_POINT_NOT_FOUND = 5;
   private static final int END_POINT_NOT_FOUND = 6;
   private static final int DIFFERENT_MWM = 7;

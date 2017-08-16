@@ -35,6 +35,7 @@ import java.util.concurrent.TimeUnit;
 @android.support.annotation.UiThread
 public class RoutingController
 {
+  private static final String LOG_TAG = "RoutingController";
   private static final int NO_SLOT = 0;
 
   private enum State
@@ -164,6 +165,18 @@ public class RoutingController
     {
       updatePlan();
       return;
+    }
+
+    switch (mLastResultCode) {
+      case ResultCodesHelper.NO_POSITION:
+        Log.e(LOG_TAG, "Suppressed ResultCode: No Position");
+        return;
+      case ResultCodesHelper.INCONSISTENT_MWM_ROUTE:
+        Log.e(LOG_TAG, "Suppressed ResultCode: INCONSISTENT_MWM_ROUTE");
+        return;
+      case ResultCodesHelper.ROUTING_FILE_NOT_EXIST:
+        Log.e(LOG_TAG, "Suppressed ResultCode: ROUTING_FILE_NOT_EXIST");
+        return;
     }
 
     setBuildState(BuildState.ERROR);

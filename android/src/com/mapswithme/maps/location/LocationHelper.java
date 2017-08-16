@@ -398,6 +398,7 @@ public enum LocationHelper
     if (!mUiCallback.shouldNotifyLocationNotFound())
       return;
 
+    /* Suppress alert and default to 'continue'
     Activity activity = mUiCallback.getActivity();
     String message = String.format("%s\n\n%s", activity.getString(R.string.current_location_unknown_message),
                                                activity.getString(R.string.current_location_unknown_title));
@@ -420,6 +421,10 @@ public enum LocationHelper
             setHasPendingNoLocation(false);
           }
         }).show();
+    */
+
+    mLocationStopped = false;
+    LocationState.nativeSwitchToNextMode();
   }
 
   public boolean hasPendingNoLocation()
