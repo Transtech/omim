@@ -168,9 +168,10 @@ public class RoutingController
     }
 
     switch (mLastResultCode) {
-      case ResultCodesHelper.NO_POSITION:
-        Log.e(LOG_TAG, "Suppressed ResultCode: No Position");
-        return;
+//      case ResultCodesHelper.NO_POSITION:
+//        Log.e(LOG_TAG, "Suppressed ResultCode: No Position");
+//        mLastResultCode = ResultCodesHelper.NO_ERROR;
+//        return;
       case ResultCodesHelper.INCONSISTENT_MWM_ROUTE:
         Log.e(LOG_TAG, "Suppressed ResultCode: INCONSISTENT_MWM_ROUTE");
         return;
