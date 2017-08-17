@@ -127,8 +127,15 @@ void ProcessorOnline::EmitFromJson(char const * jsonStr)
             my::FromJSONObjectOptionalField(addressObj, "country", addr_country);
           }
           
-          string address = addr_number + ", " + addr_street + ", " + addr_suburb;
-          
+          // quick format address into single line
+          string address = addr_number;
+
+          if (!address.empty() && !addr_street.empty()) address += ", ";
+          if (!addr_street.empty()) address += addr_street;
+
+          if (!address.empty() && !addr_suburb.empty() > 0) address += ", ";
+          if (!addr_suburb.empty()) address += addr_suburb;
+
           double lat = 0.0, lng = 0.0;
 
           json_t * gpsObj = json_object_get(obj, "GPS");

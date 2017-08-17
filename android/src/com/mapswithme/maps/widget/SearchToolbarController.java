@@ -9,6 +9,7 @@ import android.text.TextWatcher;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.TextView;
 
@@ -46,7 +47,7 @@ public class SearchToolbarController extends ToolbarController
     SearchToolbarController getController();
   }
 
-  public SearchToolbarController(View root, Activity activity)
+  public SearchToolbarController(View root, final Activity activity)
   {
     super(root, activity);
 
@@ -66,7 +67,15 @@ public class SearchToolbarController extends ToolbarController
 
         boolean isSearchAction = (actionId == EditorInfo.IME_ACTION_SEARCH);
 
-        return (isSearchDown || isSearchAction) && onStartSearchClick();
+        // IFACE-1319 Expected behaviour would be to simply close the keyboard...
+        //return (isSearchDown || isSearchAction) && onStartSearchClick();
+        if (isSearchDown || isSearchAction) {
+          InputMethodManager inputManager = (InputMethodManager) activity.getSystemService(activity.INPUT_METHOD_SERVICE);
+          inputManager.hideSoftInputFromWindow(activity.getCurrentFocus().getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
+          return true;
+        }
+
+        return false;
       }
     });
 
