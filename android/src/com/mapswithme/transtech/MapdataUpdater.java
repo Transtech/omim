@@ -5,6 +5,8 @@ import android.app.ProgressDialog;
 import android.content.*;
 import android.os.AsyncTask;
 import android.util.Log;
+import android.view.WindowManager;
+
 import com.mapswithme.maps.Framework;
 import com.mapswithme.maps.MwmApplication;
 import com.mapswithme.maps.R;
@@ -29,7 +31,7 @@ public class MapdataUpdater extends BroadcastReceiver {
             String curVersion = getVersion(Framework.nativeGetWritableDir());
             String extVersion = getVersion(externalPath);
 
-            new AlertDialog.Builder(MwmApplication.getsMvmActivity())
+            AlertDialog dlg = new AlertDialog.Builder(MwmApplication.get())
                     .setCancelable(false)
                     .setTitle("Map Data Update")
                     .setMessage("Do you want to update map data to version: " + extVersion + "?\nCurrent Version: " + curVersion)
@@ -44,7 +46,10 @@ public class MapdataUpdater extends BroadcastReceiver {
                         public void onClick(DialogInterface dlg, int which) {
                             dlg.dismiss();
                         }
-                    }).create().show();
+                    }).create();
+
+            dlg.getWindow().setType(WindowManager.LayoutParams.TYPE_SYSTEM_ALERT);
+            dlg.show();
 
         }
         else {
