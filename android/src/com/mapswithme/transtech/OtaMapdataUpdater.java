@@ -582,7 +582,7 @@ public class OtaMapdataUpdater extends Service {
         return ConnectionState.isWifiConnected();
     }
 
-    private static String getCurrentMapdataVersion() {
+    public static String getCurrentMapdataVersion() {
         final File file = new File(DATA_PATH, "VERSION.TXT");
 
         try {

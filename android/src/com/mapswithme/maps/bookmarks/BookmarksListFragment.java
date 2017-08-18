@@ -169,9 +169,9 @@ public class BookmarksListFragment extends BaseMwmListFragment
       ShareOption.EMAIL.shareMapObject(getActivity(), item, Sponsored.nativeGetCurrent());
       break;
 
-    case R.id.share:
-      ShareOption.ANY.shareMapObject(getActivity(), item, Sponsored.nativeGetCurrent());
-      break;
+//    case R.id.share:
+//      ShareOption.ANY.shareMapObject(getActivity(), item, Sponsored.nativeGetCurrent());
+//      break;
 
     case R.id.edit:
       EditBookmarkFragment.editBookmark(mCategory.getId(), item.getBookmarkId(), getActivity(), getChildFragmentManager());
