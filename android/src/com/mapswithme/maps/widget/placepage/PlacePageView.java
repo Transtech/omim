@@ -2,12 +2,10 @@ package com.mapswithme.maps.widget.placepage;
 
 import android.content.ActivityNotFoundException;
 import android.content.Context;
-import android.content.Intent;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.graphics.Color;
 import android.location.Location;
-import android.net.Uri;
 import android.os.Build;
 import android.support.annotation.ColorInt;
 import android.support.annotation.NonNull;
@@ -23,6 +21,7 @@ import android.text.TextUtils;
 import android.text.style.ForegroundColorSpan;
 import android.text.util.Linkify;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -49,10 +48,6 @@ import com.mapswithme.maps.bookmarks.data.BookmarkManager;
 import com.mapswithme.maps.bookmarks.data.DistanceAndAzimut;
 import com.mapswithme.maps.bookmarks.data.MapObject;
 import com.mapswithme.maps.bookmarks.data.Metadata;
-import com.mapswithme.maps.downloader.CountryItem;
-import com.mapswithme.maps.downloader.DownloaderStatusIcon;
-import com.mapswithme.maps.downloader.MapManager;
-import com.mapswithme.maps.editor.Editor;
 import com.mapswithme.maps.editor.OpeningHours;
 import com.mapswithme.maps.editor.data.TimeFormatUtils;
 import com.mapswithme.maps.editor.data.Timetable;
@@ -68,14 +63,12 @@ import com.mapswithme.maps.widget.ObservableScrollView;
 import com.mapswithme.maps.widget.ScrollViewShadowController;
 import com.mapswithme.maps.widget.recycler.DividerItemDecoration;
 import com.mapswithme.maps.widget.recycler.RecyclerClickListener;
-import com.mapswithme.util.ConnectionState;
 import com.mapswithme.util.Graphics;
 import com.mapswithme.util.StringUtils;
 import com.mapswithme.util.ThemeUtils;
 import com.mapswithme.util.UiUtils;
 import com.mapswithme.util.Utils;
 import com.mapswithme.util.concurrency.UiThread;
-import com.mapswithme.util.sharing.ShareOption;
 import com.mapswithme.util.statistics.AlohaHelper;
 import com.mapswithme.util.statistics.Statistics;
 
@@ -190,11 +183,12 @@ public class PlacePageView extends RelativeLayout
   private final ReviewAdapter mReviewAdapter = new ReviewAdapter();
 
   // Downloader`s stuff
-  private DownloaderStatusIcon mDownloaderIcon;
-  private TextView mDownloaderInfo;
-  private int mStorageCallbackSlot;
-  private CountryItem mCurrentCountry;
+  //private DownloaderStatusIcon mDownloaderIcon;
+  //private TextView mDownloaderInfo;
+  //private int mStorageCallbackSlot;
+  //private CountryItem mCurrentCountry;
 
+  /*
   private final MapManager.StorageCallback mStorageCallback = new MapManager.StorageCallback()
   {
     @Override
@@ -218,7 +212,9 @@ public class PlacePageView extends RelativeLayout
         updateDownloader();
     }
   };
+  */
 
+  /*
   private final Runnable mDownloaderDeferredDetachProc = new Runnable()
   {
     @Override
@@ -227,6 +223,7 @@ public class PlacePageView extends RelativeLayout
       detachCountry();
     }
   };
+  */
 
   public enum State
   {
@@ -454,6 +451,7 @@ public class PlacePageView extends RelativeLayout
       }
     });
 
+    /*
     mDownloaderIcon = new DownloaderStatusIcon(mPreview.findViewById(R.id.downloader_status_frame))
         .setOnIconClickListener(new OnClickListener()
         {
@@ -488,6 +486,7 @@ public class PlacePageView extends RelativeLayout
         });
 
     mDownloaderInfo = (TextView) mPreview.findViewById(R.id.tv__downloader_details);
+    */
 
     mShadowController = new ScrollViewShadowController((ObservableScrollView) mDetails)
         .addBottomShadow()
@@ -877,7 +876,7 @@ public class PlacePageView extends RelativeLayout
     // mSponsored = (mMapObject == null ? null : Sponsored.nativeGetCurrent());
     mSponsored = null;
 
-    detachCountry();
+    //detachCountry();
     if (mMapObject != null)
     {
       if (mSponsored != null)
@@ -894,9 +893,9 @@ public class PlacePageView extends RelativeLayout
           Sponsored.requestInfo(mSponsored, locale.toString());
       }
 
-      String country = MapManager.nativeGetSelectedCountry();
-      if (country != null && !RoutingController.get().isNavigating())
-        attachCountry(country);
+      //String country = MapManager.nativeGetSelectedCountry();
+      //if (country != null && !RoutingController.get().isNavigating())
+      //  attachCountry(country);
     }
 
     refreshViews();
@@ -1485,7 +1484,7 @@ public class PlacePageView extends RelativeLayout
 
   public void hide()
   {
-    detachCountry();
+    //detachCountry();
     setState(State.HIDDEN);
   }
 
@@ -1509,6 +1508,7 @@ public class PlacePageView extends RelativeLayout
     return false;
   }
 
+  /*
   private static boolean isInvalidDownloaderStatus(int status)
   {
     return (status != CountryItem.STATUS_DOWNLOADABLE &&
@@ -1571,6 +1571,7 @@ public class PlacePageView extends RelativeLayout
     mDownloaderIcon.show(false);
     UiUtils.hide(mDownloaderInfo);
   }
+  */
 
   MwmActivity getActivity()
   {

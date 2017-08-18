@@ -57,7 +57,7 @@ public class DownloadResourcesActivity extends BaseMwmFragmentActivity
       new Ge0IntentProcessor(),
       new MapsWithMeIntentProcessor(),
       new GoogleMapsIntentProcessor(),
-      new OpenCountryTaskProcessor(),
+      //new OpenCountryTaskProcessor(),
       new KmzKmlProcessor()
   };
 
