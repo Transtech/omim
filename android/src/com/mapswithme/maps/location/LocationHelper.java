@@ -9,6 +9,8 @@ import android.location.LocationManager;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AlertDialog;
+import android.widget.Toast;
+
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.mapswithme.maps.Framework;
@@ -398,8 +400,8 @@ public enum LocationHelper
     if (!mUiCallback.shouldNotifyLocationNotFound())
       return;
 
-    /* Suppress alert and default to 'continue'
     Activity activity = mUiCallback.getActivity();
+    /* Suppress alert and default to 'continue'
     String message = String.format("%s\n\n%s", activity.getString(R.string.current_location_unknown_message),
                                                activity.getString(R.string.current_location_unknown_title));
     new AlertDialog.Builder(activity)
@@ -425,6 +427,8 @@ public enum LocationHelper
 
     mLocationStopped = false;
     LocationState.nativeSwitchToNextMode();
+
+    Toast.makeText(activity, R.string.current_location_unknown_message, Toast.LENGTH_SHORT).show();
   }
 
   public boolean hasPendingNoLocation()
