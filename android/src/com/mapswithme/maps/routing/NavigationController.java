@@ -185,11 +185,11 @@ public class NavigationController implements TrafficManager.TrafficCallback
           Statistics.INSTANCE.trackEvent(Statistics.EventName.ROUTING_CLOSE);
           AlohaHelper.logClick(AlohaHelper.ROUTING_CLOSE);
           break;
-        case TRAFFIC:
-          TrafficManager.INSTANCE.toggle();
-          mNavMenu.refreshTraffic();
-          //TODO: Add statistics reporting (in separate task)
-          break;
+//        case TRAFFIC:
+//          TrafficManager.INSTANCE.toggle();
+//          mNavMenu.refreshTraffic();
+//          //TODO: Add statistics reporting (in separate task)
+//          break;
         case TOGGLE:
           mNavMenu.toggle(true);
           parent.refreshFade();

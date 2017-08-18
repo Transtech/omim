@@ -21,16 +21,16 @@ public class NavMenu extends BaseMenu
   private final RotateDrawable mToggleImage;
   @NonNull
   private final ImageView mTts;
-  @NonNull
-  private final ImageView mTraffic;
+  //@NonNull
+  //private final ImageView mTraffic;
 
   public enum Item implements BaseMenu.Item
   {
     TOGGLE(R.id.toggle),
     TTS_VOLUME(R.id.tts_volume),
     STOP(R.id.stop),
-    SETTINGS(R.id.settings),
-    TRAFFIC(R.id.traffic);
+    SETTINGS(R.id.settings);
+    //TRAFFIC(R.id.traffic);
 
     private final int mViewId;
 
@@ -63,7 +63,7 @@ public class NavMenu extends BaseMenu
     mapItem(Item.SETTINGS, mFrame);
 
     mTts = (ImageView) mapItem(Item.TTS_VOLUME, mFrame);
-    mTraffic = (ImageView) mapItem(Item.TRAFFIC, mFrame);
+    //mTraffic = (ImageView) mapItem(Item.TRAFFIC, mFrame);
   }
 
   @Override
@@ -91,7 +91,7 @@ public class NavMenu extends BaseMenu
     Drawable onIcon = Graphics.tint(mFrame.getContext(), R.drawable.ic_setting_traffic_on,
                                     R.attr.colorAccent);
     Drawable offIcon = Graphics.tint(mFrame.getContext(), R.drawable.ic_setting_traffic_off);
-    mTraffic.setImageDrawable(TrafficManager.INSTANCE.isEnabled() ? onIcon : offIcon);
+    //mTraffic.setImageDrawable(TrafficManager.INSTANCE.isEnabled() ? onIcon : offIcon);
   }
 
   @Override
@@ -136,6 +136,6 @@ public class NavMenu extends BaseMenu
     @Framework.RouterType
     int routerType = Framework.nativeGetRouter();
     UiUtils.showIf(show && routerType != Framework.ROUTER_TYPE_PEDESTRIAN, mTts);
-    UiUtils.showIf(show && routerType == Framework.ROUTER_TYPE_VEHICLE, mTraffic);
+    //UiUtils.showIf(show && routerType == Framework.ROUTER_TYPE_VEHICLE, mTraffic);
   }
 }

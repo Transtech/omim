@@ -1,7 +1,6 @@
 package com.mapswithme.maps;
 
 import android.annotation.SuppressLint;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Configuration;
@@ -24,7 +23,6 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.view.WindowManager;
-import android.widget.ImageButton;
 
 import com.mapswithme.maps.Framework.MapObjectListener;
 import com.mapswithme.maps.activity.CustomNavigateUpListener;
@@ -40,8 +38,15 @@ import com.mapswithme.maps.bookmarks.ChooseBookmarkCategoryFragment;
 import com.mapswithme.maps.bookmarks.data.Banner;
 import com.mapswithme.maps.bookmarks.data.BookmarkManager;
 import com.mapswithme.maps.bookmarks.data.MapObject;
-import com.mapswithme.maps.downloader.*;
-import com.mapswithme.maps.editor.*;
+import com.mapswithme.maps.downloader.DownloaderFragment;
+import com.mapswithme.maps.downloader.MapManager;
+import com.mapswithme.maps.downloader.MigrationFragment;
+import com.mapswithme.maps.editor.AuthDialogFragment;
+import com.mapswithme.maps.editor.Editor;
+import com.mapswithme.maps.editor.EditorActivity;
+import com.mapswithme.maps.editor.EditorHostFragment;
+import com.mapswithme.maps.editor.FeatureCategoryActivity;
+import com.mapswithme.maps.editor.ReportFragment;
 import com.mapswithme.maps.location.CompassData;
 import com.mapswithme.maps.location.LocationHelper;
 import com.mapswithme.maps.news.FirstStartFragment;
@@ -64,8 +69,6 @@ import com.mapswithme.maps.settings.StoragePathManager;
 import com.mapswithme.maps.settings.UnitLocale;
 import com.mapswithme.maps.sound.TtsPlayer;
 import com.mapswithme.maps.traffic.TrafficManager;
-import com.mapswithme.maps.traffic.widget.TrafficButton;
-import com.mapswithme.maps.traffic.widget.TrafficButtonController;
 import com.mapswithme.maps.uber.Uber;
 import com.mapswithme.maps.uber.UberInfo;
 import com.mapswithme.maps.widget.FadeView;
@@ -76,7 +79,12 @@ import com.mapswithme.maps.widget.placepage.BasePlacePageAnimationController;
 import com.mapswithme.maps.widget.placepage.PlacePageView;
 import com.mapswithme.maps.widget.placepage.PlacePageView.State;
 import com.mapswithme.transtech.OtaMapdataUpdater;
-import com.mapswithme.util.*;
+import com.mapswithme.util.Animations;
+import com.mapswithme.util.BottomSheetHelper;
+import com.mapswithme.util.InputUtils;
+import com.mapswithme.util.ThemeUtils;
+import com.mapswithme.util.UiUtils;
+import com.mapswithme.util.Utils;
 import com.mapswithme.util.concurrency.UiThread;
 import com.mapswithme.util.sharing.ShareOption;
 import com.mapswithme.util.sharing.SharingHelper;
@@ -135,11 +143,11 @@ public class MwmActivity extends BaseMwmFragmentActivity
   private FadeView mFadeView;
 
   private MyPositionButton mNavMyPosition;
-  private TrafficButton mTraffic;
+  //private TrafficButton mTraffic;
   @Nullable
   private NavigationButtonsAnimationController mNavAnimationController;
-  @Nullable
-  private TrafficButtonController mTrafficButtonController;
+  //@Nullable
+  //private TrafficButtonController mTrafficButtonController;
 
   private View mPositionChooser;
 
@@ -602,9 +610,9 @@ public class MwmActivity extends BaseMwmFragmentActivity
     zoomOut.setOnClickListener(this);
     View myPosition = frame.findViewById(R.id.my_position);
     mNavMyPosition = new MyPositionButton(myPosition);
-    ImageButton traffic = (ImageButton) frame.findViewById(R.id.traffic);
-    mTraffic = new TrafficButton(this, traffic);
-    mTrafficButtonController = new TrafficButtonController(mTraffic, this);
+    //ImageButton traffic = (ImageButton) frame.findViewById(R.id.traffic);
+    //mTraffic = new TrafficButton(this, traffic);
+    //mTrafficButtonController = new TrafficButtonController(mTraffic, this);
     mNavAnimationController = new NavigationButtonsAnimationController(
         zoomIn, zoomOut, myPosition, getWindow().getDecorView().getRootView());
   }
@@ -1017,8 +1025,8 @@ public class MwmActivity extends BaseMwmFragmentActivity
 
     if (MapFragment.nativeIsEngineCreated())
       LocationHelper.INSTANCE.attach(this);
-    if (mTrafficButtonController != null)
-      TrafficManager.INSTANCE.attach(mTrafficButtonController);
+    //if (mTrafficButtonController != null)
+    //  TrafficManager.INSTANCE.attach(mTrafficButtonController);
     if (mNavigationController != null)
       TrafficManager.INSTANCE.attach(mNavigationController);
   }
@@ -1030,8 +1038,8 @@ public class MwmActivity extends BaseMwmFragmentActivity
     LocationHelper.INSTANCE.detach(!isFinishing());
     RoutingController.get().detach();
     TrafficManager.INSTANCE.detachAll();
-    if (mTrafficButtonController != null)
-      mTrafficButtonController.destroy();
+    //if (mTrafficButtonController != null)
+    //  mTrafficButtonController.destroy();
   }
 
   @Override
@@ -1205,7 +1213,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
       if (mNavAnimationController != null)
         mNavAnimationController.disappearZoomButtons();
       mNavMyPosition.hide();
-      mTraffic.hide();
+      //mTraffic.hide();
     }
     else
     {
@@ -1229,7 +1237,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
       }
     });
     mNavMyPosition.show();
-    mTraffic.show();
+    //mTraffic.show();
   }
 
   @Override
@@ -1587,7 +1595,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
 
   private void adjustTraffic(int offsetX, int offsetY)
   {
-    mTraffic.setOffset(offsetX, offsetY);
+    //mTraffic.setOffset(offsetX, offsetY);
   }
 
   @Override
