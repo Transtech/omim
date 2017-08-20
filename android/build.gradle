@@ -7,7 +7,7 @@ buildscript {
   }
 
   dependencies {
-    classpath 'com.android.tools.build:gradle:2.2.3'
+    classpath 'com.android.tools.build:gradle:2.3.3'
     classpath 'io.fabric.tools:gradle:1.+'
   }
 }
@@ -269,17 +269,6 @@ android {
       project.task(type: Exec, "run${task}", dependsOn: "install${task}") {
         commandLine android.getAdbExe(), 'shell', 'am', 'start', '-n', "${applicationId}/com.mapswithme.maps.DownloadResourcesActivity"
       }
-
-      variant.outputs.each { output ->
-        if (output.outputFile != null && output.outputFile.name.endsWith('.apk')) {
-          def file = output.outputFile
-          // version at the end of each built apk
-          //output.outputFile = new File(file.parent, file.name.replace(".apk", "-" + android.defaultConfig.versionName + "-" + getDate() + ".apk"))
-          // set different versionCodes for different ABIs
-          int abiVersionCode = project.ext.versionCodes.get(output.getFilter(com.android.build.OutputFile.ABI)) ?: 0
-          output.versionCodeOverride = (abiVersionCode * 1000) + android.defaultConfig.versionCode
-        }
-      }
     }
   }
 
@@ -358,6 +347,7 @@ android {
     all*.exclude group: 'com.graphhopper', module: 'graphhopper-reader-overlay-data'
     all*.exclude group: 'org.slf4j', module: 'slf4j-log4j12'
   }
+  buildToolsVersion '26.0.1'
 }
 
 // Tasks needed to compile NDK part
