@@ -18,6 +18,9 @@ public final class Notifier
   private final static int ID_UPDATE_AVAILABLE = 1;
   private final static int ID_DOWNLOAD_FAILED = 2;
   private final static int ID_DOWNLOAD_NEW_COUNTRY = 3;
+  private final static int ID_OTA_MAPDATA_UPDATE = 4;
+  private final static int ID_OTA_MAPDATA_UPDATE_PENDING = 5;
+
 
   private static final MwmApplication APP = MwmApplication.get();
 
@@ -33,6 +36,7 @@ public final class Notifier
     placeNotification(title, countriesName, pi, ID_UPDATE_AVAILABLE);
   }
 
+  /*
   public static void notifyDownloadFailed(String id, String name)
   {
     String title = APP.getString(R.string.app_name);
@@ -54,6 +58,33 @@ public final class Notifier
 
     placeNotification(title, content, pi, ID_DOWNLOAD_NEW_COUNTRY);
     Statistics.INSTANCE.trackEvent(Statistics.EventName.DOWNLOAD_COUNTRY_NOTIFICATION_SHOWN);
+  }
+  */
+
+  public static void notifyOtaMapdataUpdate(String content)
+  {
+    PendingIntent pi = PendingIntent.getActivity(APP, 0, MwmActivity.createUpdateMapsIntent(),
+            PendingIntent.FLAG_UPDATE_CURRENT);
+
+    placeNotification("Smartnav2 OTA Update", content, pi, ID_OTA_MAPDATA_UPDATE);
+  }
+
+  public static void notifyOtaMapdataUpdatePending()
+  {
+    PendingIntent pi = PendingIntent.getActivity(APP, 0, MwmActivity.createUpdateMapsIntent(),
+            PendingIntent.FLAG_UPDATE_CURRENT);
+
+    placeNotification("Smartnav2 Update Available", "Please connect to WiFi to proceed", pi, ID_OTA_MAPDATA_UPDATE_PENDING);
+  }
+
+  public static void cancelOtaMapdataUpdate()
+  {
+    getNotificationManager().cancel(ID_OTA_MAPDATA_UPDATE);
+  }
+
+  public static void cancelOtaMapdataUpdatePending()
+  {
+    getNotificationManager().cancel(ID_OTA_MAPDATA_UPDATE_PENDING);
   }
 
   public static void cancelDownloadFailed()

@@ -78,6 +78,17 @@ unordered_map<int, unordered_map<int, dp::Color>> kColorConstants =
 
 dp::Color GetColorConstant(MapStyle style, ColorConstant constant)
 {
+  switch(style) {
+    case MapStyleClearBD:
+    case MapStyleClearCrane:
+      style = MapStyleClear;
+      break;
+    case MapStyleDarkBD:
+    case MapStyleDarkCrane:
+      style = MapStyleDark;
+      break;
+  }
+
   int const styleIndex = static_cast<int>(style);
   int const colorIndex = static_cast<int>(constant);
 

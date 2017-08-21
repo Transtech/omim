@@ -1,0 +1,191 @@
+/* BASE */
+@white: #ffffff;
+@background: #F5F5F3; /* E6E6D5 #EDEAE1;	/* @background: #f1eee8; */
+/*@backgroundone: #DEDECD;
+
+/* BOUNDARIES */
+@border_country: #63635C;
+@border_country_light: #73726B;
+@border_region: #73726B;
+
+
+/* ROADS */
+@trunk: #FFFFFF;
+@trunk_hard: #FFFFFF;
+@trunk_medium: #FFFFFF;
+@trunk_light: #FFFFFF;
+@primary:  #FFFFFF;
+
+/* YELLOW ROADS BUNDLE  */
+@primary_yellow: #FFFFFF;
+@primary_yellow_case: #E5A643;
+@trunk_yellow: #FFFFFF;
+@trunk_yellow_case: #CD764C;
+
+/* ORANGE ROADS BUNDLE  */
+ @trunk_orange: #FFFFFF;
+ @trunk_orange_hard: #FFFFFF;
+@trunk_orange_medium: #FFFFFF; /*FF6626*/
+ @trunk_orange_light: #FFFFFF;/*F57A45*/
+ @trunk_orange_world: #FFFFFF;
+ @trunk_yellow_world: #FFFFFF;
+@trunk_orange_case: #DDDDCC;
+  @primary_orange:  #FFFFFF;
+ @primary_orange_medium: #FFFFFF;
+@primary_orange_light: #FFFFFF;
+@primary_orange_case: #DDDDCC;
+@trunk_tunnel_orange: #FFFFFF;
+
+@primary_medium: #FFFFFF;
+@primary_light: #FFFFFF;
+@secondary: #FFFFFF;
+@residential: #FFFFFF;
+@tertiary: #FFFFFF;
+@unclassified: #FFFFFF;
+@pedestrian: #FFFFFF;
+@footway: #FFFFFF;
+@cycleway: #FFFFFF;
+@steps: #FFFFFF;
+@construction: #FFFFFF;
+@track: #FFFFFF;/*888844*/
+@bridleway: #FFFFFF;
+
+
+
+/* bridges */
+@bridge_background: #FFFFFF;
+@bridge_casing: #808080;
+
+/* tunnels */
+
+@primary_tunnel_orange: #FFFFFF;
+@primary_tunnel_yellow: #FFFFFF;
+@trunk_tunnel_orange: #FFFFFF;
+@trunk_tunnel_yellow: #FFFFFF;
+@primary_tunnel_casing: #808080;
+@trunk_tunnel_casing: #808080;
+@secondary_tunnel: #FFFFFF;
+@secondary_tunnel_casing:  #808080;
+@tertiary_tunnel: #FFFFFF;
+@tertiary_tunnel_casing:  #808080;
+@unclassified_tunnel: #FFFFFF;
+@unclassified_tunnel_casing: #808080;
+/*roads_links */
+@trunk_link: #FFFFFF;
+@primary_link: #FFFFFF;
+@secondary_link: #FFFFFF;
+@tertiary_link: #FFFFFF;
+
+
+/* TRANSPORT */
+@railway_light: #B2B1A2;
+@railway: #969586;
+@railway_dash: #EEEEEE;
+@railway_tunnel: #555555;
+@aerialway: #444444;
+@tram: #555555;
+@ferry: #4499Bb;
+
+/*aerodrome*/
+@aerodrome0: #D4BFF2;
+@aerodrome1: #D4BFF2;
+@aerodrome2: #D1C0EB;
+@aerodrome3: #CFC1E8;
+@aerodrome4: #CDC0E3;
+@aerodrome5: #C8BCDE;
+
+/* NATURAL */
+@glacier: #CDD2D4;
+@water: #CDD2D4;
+@river: #CDD2D4;
+@wetland: #ECECEA;
+@forest: #ECECEA;
+@park: #ECECEA; /* A5BF60 #A4B275 #BCCC74*/
+@natpark: #ECECEA;
+@beach: #ECECEA;
+/*forest-park*/
+@green0: #ECECEA;
+@green1: #ECECEA;
+@green2: #ECECEA;
+@green3: #ECECEA;
+@green4: #ECECEA;
+@green5: #ECECEA;
+/* BUILDINGS */
+@housename: #65655E;
+@building_label: #61615A;
+@building: #C9C8BB;
+@building_dark: #C2C0B3;
+
+/* LANDUSE */
+
+@pedestrian_area: #EDE8D6;
+@pedestrian_area_light: #F2EEDA;
+
+@unversity: #F8E4BA;
+@hospital: #F8D9D9;/*FADCDB*/
+@industrial: #E4E2EB;
+@sport: #D1CDA7;
+@parking: #F2F2CE;
+
+/* BARRIERS */
+@fence: #7F7E76;
+
+/* LABELS COLORS */
+@label_extra_dark: #000000;
+@label_dark: #222222;
+@label_medium: #333333;
+@label_light: #444444;
+@label_extra_light: #7F7F7F;
+
+@label_halo_bg: #E3E1D2;
+@label_halo_dark: #E3E1D2;
+@label_halo_medium: #EDEBDB;
+@label_halo_light: #FFFFFF;
+
+
+/* PLACE LABELS */
+@city_label: #666666;
+@city_label_light: #7F7F7F;
+@city_halo: #DDDDCC;
+@city_halo_light: #DDDDCC;
+@country_label: #8C8C8C;
+@state_name: #8C8C8C;
+@district_label: #7F7F7F;
+
+@poi_label: #444444;
+@subway_label: #333333;
+@railway_label: #333333;
+
+/* ROADS LABELS */
+@primary_road_label: #2E2E2E;
+@secondary_road_label: #333333;
+@road_label_halo: #FFFFFF;
+@shield: #fff;
+@shield_halo: #498F46;
+/* blue - #2E89B0; #687E94; #598DBE; */
+
+@label_dark: #333333;
+@label_light: #444444;
+@dark:  #333333;
+
+/* NATURAL LABELS */
+@water_label: #4499Bb;
+@park_label: #3A7921;
+@halo_park_label: #FFFFFF;
+@halo_water_label: #fff;
+
+/* UNIVERSAL HALO */
+@label_halo: #FFFFFF;
+
+
+/* PISTE */
+@piste: #C47AFF;
+@piste_novice:#5feb2e;
+@piste_easy: #0b27fb;
+@piste_intermadiate: #fc0e1b;
+@piste_expert: #220625;
+@piste_advanced: #0a0a0d;
+
+/* Transtech */
+@heavy_vehicle_bd: #91B846;
+@heavy_vehicle_crane: #008B8B;

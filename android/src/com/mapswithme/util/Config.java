@@ -326,7 +326,15 @@ public final class Config
       return;
 
     setString(KEY_MISC_UI_THEME, theme);
-    ThemeSwitcher.changeMapStyle(theme);
+    ThemeSwitcher.changeMapStyle(theme, true);
+  }
+
+  public static void setCurrentUiThemeForced(String theme)
+  {
+    boolean uiThemeChange = !getCurrentUiTheme().equals(theme);
+
+    setString(KEY_MISC_UI_THEME, theme);
+    ThemeSwitcher.changeMapStyle(theme, uiThemeChange);
   }
 
   public static String getUiThemeSettings()

@@ -185,3 +185,8 @@
 @piste_intermadiate: #fc0e1b;
 @piste_expert: #220625;
 @piste_advanced: #0a0a0d;
+
+/* Transtech */
+@heavy_vehicle_bd: #91B846;
+@heavy_vehicle_crane: #008B8B;
+

@@ -1151,3 +1151,5 @@ hwtag|yescar
 hwtag|nocar
 tourism|gallery
 historic|fort
+bd|yes
+crane|yes

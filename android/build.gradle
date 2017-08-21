@@ -7,7 +7,7 @@ buildscript {
   }
 
   dependencies {
-    classpath 'com.android.tools.build:gradle:2.2.3'
+    classpath 'com.android.tools.build:gradle:2.3.3'
     classpath 'io.fabric.tools:gradle:1.+'
   }
 }
@@ -20,6 +20,7 @@ allprojects {
     mavenCentral()
     maven { url 'https://maven.fabric.io/public' }
     maven { url 'http://maven.transtech.net.au:8081/artifactory/libs-snapshot-local' }
+    maven { url 'http://maven.transtech.net.au:8081/artifactory/libs-release-local' }
   }
 }
 /*
@@ -72,10 +73,10 @@ dependencies {
   // https://mvnrepository.com/artifact/net.sf.geographiclib/GeographicLib-Java
   compile group: 'net.sf.geographiclib', name: 'GeographicLib-Java', version: '1.47'
   //GraphHopper
-  compile 'com.graphhopper:graphhopper-core:0.9-SNAPSHOT'
-  compile 'com.graphhopper:graphhopper-reader-overlay-data:0.9-SNAPSHOT'
-  compile 'com.graphhopper:graphhopper-reader-osm:0.9-SNAPSHOT'
-  compile 'au.net.transtech.geo:geo-engine:1.2-SNAPSHOT'
+  compile 'com.graphhopper:graphhopper-core:0.9.0'
+  compile 'com.graphhopper:graphhopper-reader-overlay-data:0.9.0'
+  compile 'com.graphhopper:graphhopper-reader-osm:0.9.0'
+  compile 'au.net.transtech.geo:geo-engine:1.3'
 }
 
 def getDate() {
@@ -268,17 +269,6 @@ android {
       project.task(type: Exec, "run${task}", dependsOn: "install${task}") {
         commandLine android.getAdbExe(), 'shell', 'am', 'start', '-n', "${applicationId}/com.mapswithme.maps.DownloadResourcesActivity"
       }
-
-      variant.outputs.each { output ->
-        if (output.outputFile != null && output.outputFile.name.endsWith('.apk')) {
-          def file = output.outputFile
-          // version at the end of each built apk
-          //output.outputFile = new File(file.parent, file.name.replace(".apk", "-" + android.defaultConfig.versionName + "-" + getDate() + ".apk"))
-          // set different versionCodes for different ABIs
-          int abiVersionCode = project.ext.versionCodes.get(output.getFilter(com.android.build.OutputFile.ABI)) ?: 0
-          output.versionCodeOverride = (abiVersionCode * 1000) + android.defaultConfig.versionCode
-        }
-      }
     }
   }
 
@@ -311,8 +301,8 @@ android {
 
     release {
       signingConfig signingConfigs.mapswithme
-      minifyEnabled true
-      shrinkResources true
+      minifyEnabled false
+      shrinkResources false
       proguardFile('proguard-mwm.txt')
       multiDexKeepFile file('multidex-config.txt')
     }
@@ -357,6 +347,7 @@ android {
     all*.exclude group: 'com.graphhopper', module: 'graphhopper-reader-overlay-data'
     all*.exclude group: 'org.slf4j', module: 'slf4j-log4j12'
   }
+  buildToolsVersion '26.0.1'
 }
 
 // Tasks needed to compile NDK part

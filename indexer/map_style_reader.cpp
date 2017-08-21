@@ -20,14 +20,48 @@ string GetStyleSuffix(MapStyle mapStyle)
   {
    case MapStyleDark:
     return kSuffixDark;
-  case MapStyleClear:
+   case MapStyleClear:
     return kSuffixClear;
-  case MapStyleMerged:
+   case MapStyleMerged:
     return string();
 
-  case MapStyleCount:
+   case MapStyleClearBD:
+    return "_clear_bd";
+   case MapStyleDarkBD:
+    return "_dark_bd";
+
+   case MapStyleClearCrane:
+    return "_clear_crane";
+   case MapStyleDarkCrane:
+    return "_dark_crane";
+
+   case MapStyleCount:
     break;
   }
+
+  LOG(LWARNING, ("Unknown map style", mapStyle));
+  return kSuffixClear;
+}
+
+string GetStyleSuffixForResource(MapStyle mapStyle)
+{
+  switch (mapStyle)
+  {
+   case MapStyleDark:
+   case MapStyleDarkBD:
+   case MapStyleDarkCrane:
+    return kSuffixDark;
+   case MapStyleClear:
+   case MapStyleClearBD:
+   case MapStyleClearCrane:
+    return kSuffixClear;
+   case MapStyleMerged:
+    return string();
+
+   case MapStyleCount:
+    break;
+  }
+
   LOG(LWARNING, ("Unknown map style", mapStyle));
   return kSuffixClear;
 }
@@ -57,7 +91,7 @@ ReaderPtr<Reader> StyleReader::GetDrawingRulesReader()
 
 ReaderPtr<Reader> StyleReader::GetResourceReader(string const & file, string const & density)
 {
-  string const resourceDir = string("resources-") + density + GetStyleSuffix(GetCurrentStyle());
+  string const resourceDir = string("resources-") + density + GetStyleSuffixForResource(GetCurrentStyle());
   return GetPlatform().GetReader(my::JoinFoldersToPath(resourceDir, file));
 }
 

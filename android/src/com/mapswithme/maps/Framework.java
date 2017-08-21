@@ -19,8 +19,13 @@ import java.lang.annotation.RetentionPolicy;
  */
 public class Framework
 {
+  // Make sure in sync with MapStyle.hpp, map_style.cpp, MapStyleReader.cpp and chart_generator.cpp
   public static final int MAP_STYLE_CLEAR = 0;
   public static final int MAP_STYLE_DARK = 1;
+  public static final int MAP_STYLE_CLEAR_BD = 3;
+  public static final int MAP_STYLE_DARK_BD = 4;
+  public static final int MAP_STYLE_CLEAR_CRANE = 5;
+  public static final int MAP_STYLE_DARK_CRANE = 6;
 
   @Retention(RetentionPolicy.SOURCE)
   @IntDef({ROUTER_TYPE_VEHICLE, ROUTER_TYPE_PEDESTRIAN, ROUTER_TYPE_BICYCLE, ROUTER_TYPE_TAXI, ROUTER_TYPE_EXTERNAL})

@@ -387,9 +387,10 @@ public class Utils
                    }).show();
   }
 
-  /*
+
   public static String getInstallationId()
   {
+    /*
     final Context context = MwmApplication.get();
     final SharedPreferences sharedPrefs = context.getSharedPreferences(
       org.alohalytics.Statistics.PREF_FILE, Context.MODE_PRIVATE);
@@ -400,8 +401,10 @@ public class Utils
       return "";
 
     return installationId;
+    */
+    return "";
   }
-  */
+
 
   public static boolean isUberInstalled(@NonNull Activity context)
   {

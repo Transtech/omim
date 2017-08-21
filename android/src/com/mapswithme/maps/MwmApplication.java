@@ -1,6 +1,6 @@
 package com.mapswithme.maps;
 
-import android.app.Application;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Environment;
@@ -25,6 +25,7 @@ import com.mapswithme.maps.routing.RoutingController;
 import com.mapswithme.maps.settings.StoragePathManager;
 import com.mapswithme.maps.sound.TtsPlayer;
 import com.mapswithme.maps.traffic.TrafficManager;
+import com.mapswithme.transtech.OtaMapdataUpdater;
 import com.mapswithme.util.*;
 //import com.mapswithme.util.statistics.PushwooshHelper;
 import com.mapswithme.util.statistics.Statistics;
@@ -41,8 +42,6 @@ public class MwmApplication extends MultiDexApplication
 {
   private final static String TAG = "MwmApplication";
 
-  private static final String PW_EMPTY_APP_ID = "XXXXX";
-
   private static MwmApplication sSelf;
   private static MwmActivity sMvmActivity;
   private SharedPreferences mPrefs;
@@ -56,6 +55,7 @@ public class MwmApplication extends MultiDexApplication
 
   public static boolean disclaimerAccepted = false;
 
+  /*
   private final MapManager.StorageCallback mStorageCallbacks = new MapManager.StorageCallback()
   {
     @Override
@@ -79,6 +79,7 @@ public class MwmApplication extends MultiDexApplication
     @Override
     public void onProgress(String countryId, long localSize, long remoteSize) {}
   };
+  */
 
   public MwmApplication()
   {
@@ -123,7 +124,7 @@ public class MwmApplication extends MultiDexApplication
 
     //initHockeyApp();
 
-    initCrashlytics();
+//    initCrashlytics();
 //    final boolean isInstallationIdFound =
 //      setInstallationIdToCrashlytics();
 
@@ -144,6 +145,8 @@ public class MwmApplication extends MultiDexApplication
 //    if (!isInstallationIdFound)
 //      setInstallationIdToCrashlytics();
 
+    OtaMapdataUpdater.init(this);
+
     mPrefs = getSharedPreferences(getString(R.string.pref_file_name), MODE_PRIVATE);
     mBackgroundTracker = new AppBackgroundTracker();
     TrackRecorder.init();
@@ -159,12 +162,12 @@ public class MwmApplication extends MultiDexApplication
 
     nativeInitFramework();
 
-    MapManager.nativeSubscribe(mStorageCallbacks);
+    //MapManager.nativeSubscribe(mStorageCallbacks);
 
     initNativeStrings();
     BookmarkManager.nativeLoadBookmarks();
     TtsPlayer.INSTANCE.init(this);
-    ThemeSwitcher.restart();
+    ThemeSwitcher.restart(false);
     RoutingController.get().initialize();
     TrafficManager.INSTANCE.initialize();
     mIsFrameworkInitialized = true;
@@ -206,6 +209,7 @@ public class MwmApplication extends MultiDexApplication
   }
   */
 
+  /*
   private void initCrashlytics()
   {
     if (!isCrashlyticsEnabled())
@@ -215,6 +219,7 @@ public class MwmApplication extends MultiDexApplication
 
     nativeInitCrashlytics();
   }
+  */
 
   /*
   private static boolean setInstallationIdToCrashlytics()

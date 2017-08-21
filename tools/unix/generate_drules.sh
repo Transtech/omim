@@ -15,7 +15,7 @@ function BuildDrawingRules() {
   # Cleanup
   rm "$DATA_PATH"/drules_proto$suffix.{bin,txt} || true
   # Run script to build style
-  python "$OMIM_PATH/tools/kothic/src/libkomwm.py" --txt \
+  python2.7 "$OMIM_PATH/tools/kothic/src/libkomwm.py" --txt \
     -s "$DATA_PATH/styles/$styleType/style-$styleName/style.mapcss" \
     -o "$DATA_PATH/drules_proto$suffix"
 }
@@ -30,5 +30,11 @@ done
 # Building drawing rules
 BuildDrawingRules clear  clear _clear
 BuildDrawingRules clear  night _dark
+
+BuildDrawingRules clear  clear-bd _clear_bd
+BuildDrawingRules clear  night-bd _dark_bd
+
+BuildDrawingRules clear  clear-crane _clear_crane
+BuildDrawingRules clear  night-crane _dark_crane
 
 cp "$DATA_PATH/drules_proto_clear.bin" "$DATA_PATH/drules_proto.bin"

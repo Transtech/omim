@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="23px" height="23px" viewBox="0 0 23 23" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 39.1 (31720) - http://www.bohemiancoding.com/sketch -->
+    <title>pharmacy-m</title>
+    <desc>Created with Sketch.</desc>
+    <defs></defs>
+    <g id="POI-Night" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="Artboard-1" transform="translate(-174.000000, -324.000000)">
+            <g id="pharmacy-m" transform="translate(174.000000, 324.000000)">
+                <ellipse id="Oval-1-Copy-41" fill-opacity="0.1" fill="#FFFFFF" cx="11.5" cy="11.5" rx="11.5" ry="11.5"></ellipse>
+                <ellipse id="Oval-1-Copy-40" fill="#612C23" cx="11.5" cy="11.5" rx="10.5" ry="10.5"></ellipse>
+                <path d="M8,7.49790272 C8,5.56606439 9.57093664,4 11.5,4 C13.4329966,4 15,5.57691203 15,7.49790272 L15,15.5020973 C15,17.4339356 13.4290634,19 11.5,19 C9.56700338,19 8,17.423088 8,15.5020973 L8,7.49790272 Z M9.5,7.49791312 C9.5,6.39449617 10.3877296,5.5 11.5,5.5 C12.6045695,5.5 13.5,6.39826062 13.5,7.49791312 L13.5,11.5 L9.5,11.5 L9.5,7.49791312 Z" id="Combined-Shape" fill-opacity="0.7" fill="#FFFFFF" transform="translate(11.500000, 11.500000) rotate(45.000000) translate(-11.500000, -11.500000) "></path>
+            </g>
+        </g>
+    </g>
+</svg>

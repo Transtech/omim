@@ -139,6 +139,7 @@ public class GraphHopperRouter implements IRouter
         if( plannedRouteId != null && plannedRouteId.intValue() > 0 )
         {
             Log.i( TAG, "Returning pre-planned route ID '" + plannedRouteId + "'");
+            if (originalPlannedRoute == null) originalPlannedRoute = constructPreplannedRoute(plannedRouteId);
             route = originalPlannedRoute;
         }
         else if( routerType != Framework.ROUTER_TYPE_EXTERNAL )

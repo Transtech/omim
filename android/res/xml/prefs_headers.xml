@@ -33,15 +33,16 @@
     android:id="@+id/help"
     android:title="@string/help"
     android:fragment="com.mapswithme.maps.settings.HelpFragment"/>
-
-  <header
-    android:id="@+id/about"
-    android:title="@string/about_menu_title"
-    android:fragment="com.mapswithme.maps.settings.AboutFragment"/>
   -->
 
   <header
           android:id="@+id/launch_demo"
           android:title="Launch Demo" />
+
+
+  <header
+      android:id="@+id/about"
+      android:title="@string/about_menu_title"
+      android:fragment="com.mapswithme.maps.settings.AboutFragment"/>
 
 </preference-headers>

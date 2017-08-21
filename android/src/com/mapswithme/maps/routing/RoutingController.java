@@ -35,6 +35,7 @@ import java.util.concurrent.TimeUnit;
 @android.support.annotation.UiThread
 public class RoutingController
 {
+  private static final String LOG_TAG = "RoutingController";
   private static final int NO_SLOT = 0;
 
   private enum State
@@ -164,6 +165,19 @@ public class RoutingController
     {
       updatePlan();
       return;
+    }
+
+    switch (mLastResultCode) {
+//      case ResultCodesHelper.NO_POSITION:
+//        Log.e(LOG_TAG, "Suppressed ResultCode: No Position");
+//        mLastResultCode = ResultCodesHelper.NO_ERROR;
+//        return;
+      case ResultCodesHelper.INCONSISTENT_MWM_ROUTE:
+        Log.e(LOG_TAG, "Suppressed ResultCode: INCONSISTENT_MWM_ROUTE");
+        return;
+      case ResultCodesHelper.ROUTING_FILE_NOT_EXIST:
+        Log.e(LOG_TAG, "Suppressed ResultCode: ROUTING_FILE_NOT_EXIST");
+        return;
     }
 
     setBuildState(BuildState.ERROR);
@@ -423,7 +437,7 @@ public class RoutingController
     mContainer.showRoutePlan(false, null);
     mContainer.showNavigation(true);
 
-    ThemeSwitcher.restart();
+    ThemeSwitcher.restart(false);
 
     Framework.nativeFollowRoute();
     LocationHelper.INSTANCE.restart();
@@ -489,7 +503,7 @@ public class RoutingController
     setBuildState(BuildState.NONE);
     setState(State.NONE);
 
-    ThemeSwitcher.restart();
+    ThemeSwitcher.restart(false);
     Framework.nativeCloseRouting();
     LocationHelper.INSTANCE.restart();
 
@@ -770,8 +784,8 @@ public class RoutingController
 
     // Repeating tap on Uber icon should trigger the route building always,
     // because it may be "No internet connection, try later" case
-    if (router == mLastRouterType && !isTaxiRouterType())
-      return;
+    //if (router == mLastRouterType && !isTaxiRouterType())
+    //  return;
 
     mLastRouterType = router;
     Framework.nativeSetRouter(router);

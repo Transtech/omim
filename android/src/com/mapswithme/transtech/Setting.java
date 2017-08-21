@@ -64,6 +64,7 @@ public class Setting implements Parcelable
         MNAVEMS,
         MNAVSTATS,
         TRAILERID,
+        FORM,
         SMARTNAV2
     }
 
@@ -504,8 +505,7 @@ public class Setting implements Parcelable
         Setting.Environment env = Setting.currentEnvironment(context);
 
         String defaultValue;
-        if (env == Environment.PRODUCTION) defaultValue = "https://api.transtech.net.au/v1/geo/geocode?input=";
-        else if (env == Environment.STAGING) defaultValue = "https://api-staging.transtech.net.au:8067/v1/geo/geocode?input=";
+        if ((env == Environment.PRODUCTION) || (env == Environment.STAGING)) defaultValue = "https://api.transtech.net.au/v1/geo/geocode?input=";
         else defaultValue = "https://api-test.transtech.net.au:9067/v1/geo/geocode?input=";
 
         return Setting.getString(context,
@@ -515,13 +515,52 @@ public class Setting implements Parcelable
                 defaultValue );
     }
 
-    public static String getApiKey( Context context )
+    public static String getApiKeyForSearch(Context context )
     {
         Setting.Environment env = Setting.currentEnvironment(context);
-        return Setting.getString(context,
+
+        // force production api with a testing production api key for staging
+        if (env == Environment.STAGING) return "337b5b09f25bdc97e88eef8ad228a729";
+        else return Setting.getString(context,
                 env,
                 Setting.Scope.COMMON,
                 SettingConstants.GLOBAL_WEBSERVICE_API_KEY,
                 "" );
+    }
+
+    public static boolean isDataPackEnabled(Context context)
+    {
+        Setting.Environment env = Setting.currentEnvironment(context);
+        return Setting.getBoolean(context, env, Scope.COMMON, SettingConstants.GLOBAL_DATA_PACK_ENABLED,false);
+    }
+
+    public static String getOtaUpdateUrl(Context context)
+    {
+        Setting.Environment env = Setting.currentEnvironment(context);
+        return Setting.getString(context, env, Scope.SMARTNAV2, SettingConstants.SMARTNAV2_OTA_UPDATE_URL,"https://repo.transtech.net.au:8443/maps/");
+    }
+
+    public static String getMapVersion(Context context)
+    {
+        Setting.Environment env = Setting.currentEnvironment(context);
+        return Setting.getString(context, env, Scope.SMARTNAV2, SettingConstants.SMARTNAV2_MAP_VERSION,"");
+    }
+
+    public static String getOtaLastUpdateDate(Context context){
+        return Setting.getString(context, Environment.ALL, Scope.SMARTNAV2, SettingConstants.SMARTNAV2_OTA_LAST_UPDATE_DATE, "");
+    }
+
+    public static void setOtaLastUpdateDate(Context context, String date){
+        Setting.setString(context, Environment.ALL, Scope.SMARTNAV2, SettingConstants.SMARTNAV2_OTA_LAST_UPDATE_DATE, date, Origin.LOCAL, SettingConstants.SOURCE_DEVICE);
+    }
+
+    public static TranstechConstants.UPDATE_STATUS getOtaUpdateStatus(Context context){
+        return TranstechConstants.UPDATE_STATUS.valueOf(
+                Setting.getString(context, Environment.ALL, Scope.SMARTNAV2, SettingConstants.SMARTNAV2_OTA_UPDATE_STATUS, TranstechConstants.UPDATE_STATUS.NA.toString())
+        );
+    }
+
+    public static void setOtaUpdateStatus(Context context, TranstechConstants.UPDATE_STATUS status){
+        Setting.setString(context, Environment.ALL, Scope.SMARTNAV2, SettingConstants.SMARTNAV2_OTA_UPDATE_STATUS, status.toString(), Origin.LOCAL, SettingConstants.SOURCE_DEVICE);
     }
 }

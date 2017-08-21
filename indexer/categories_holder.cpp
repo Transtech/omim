@@ -385,7 +385,7 @@ int8_t CategoriesHolder::MapLocaleToInteger(string const & locale)
     return 17;  // Simplified Chinese by default for all other cases
   }
 
-  return kUnsupportedLocaleCode;
+  return 1; // default to en
 }
 
 // static

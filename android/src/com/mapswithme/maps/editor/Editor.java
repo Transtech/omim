@@ -12,7 +12,6 @@ import com.mapswithme.maps.BuildConfig;
 import com.mapswithme.maps.Framework;
 import com.mapswithme.maps.MwmApplication;
 import com.mapswithme.maps.background.AppBackgroundTracker;
-import com.mapswithme.maps.background.WorkerService;
 import com.mapswithme.maps.editor.data.FeatureCategory;
 import com.mapswithme.maps.editor.data.Language;
 import com.mapswithme.maps.editor.data.LocalizedName;
@@ -41,8 +40,8 @@ public final class Editor
     @Override
     public void onTransit(boolean foreground)
     {
-      if (!foreground)
-        WorkerService.startActionUploadOsmChanges();
+      //if (!foreground)
+      //  WorkerService.startActionUploadOsmChanges();
     }
   };
 

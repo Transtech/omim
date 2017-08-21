@@ -18,6 +18,7 @@ import com.mapswithme.maps.editor.Editor;
 import com.mapswithme.util.LocationUtils;
 import com.mapswithme.util.concurrency.UiThread;
 
+/*
 public class WorkerService extends IntentService
 {
   private static final String ACTION_CHECK_LOCATIION = "com.mapswithme.maps.action.check_location";
@@ -28,7 +29,7 @@ public class WorkerService extends IntentService
   /**
    * Starts this service to check if map download for current location is available. If the
    * service is already performing a task this action will be queued.
-   */
+   *
   static void startActionCheckLocation(Context context)
   {
     final Intent intent = new Intent(context, WorkerService.class);
@@ -38,7 +39,7 @@ public class WorkerService extends IntentService
 
   /**
    * Starts this service to upload map edits to osm servers.
-   */
+   *
   public static void startActionUploadOsmChanges()
   {
     final Intent intent = new Intent(MwmApplication.get(), WorkerService.class);
@@ -152,3 +153,4 @@ public class WorkerService extends IntentService
     return true;
   }
 }
+*/

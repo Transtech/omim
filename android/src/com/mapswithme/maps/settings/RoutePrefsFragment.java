@@ -16,6 +16,7 @@ import com.mapswithme.maps.routing.GraphHopperRouter;
 import com.mapswithme.maps.sound.LanguageData;
 import com.mapswithme.maps.sound.TtsPlayer;
 import com.mapswithme.util.Config;
+import com.mapswithme.util.ThemeSwitcher;
 import com.mapswithme.util.statistics.Statistics;
 
 import java.util.HashMap;
@@ -99,6 +100,9 @@ public class RoutePrefsFragment extends PreferenceFragment
             mNetwork.setValue( mSelectedNetwork );
             boolean result = ComplianceController.get().setNetworkProfile( mSelectedNetwork );
             update();
+
+            ThemeSwitcher.restart(true);
+
             return result;
         }
     };
