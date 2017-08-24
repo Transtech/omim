@@ -39,7 +39,7 @@ apply plugin: 'android-reporting'
 */
 buildscript {
   repositories {
-    mavenCentral()
+    jcenter()
   }
 
   dependencies {
