@@ -100,9 +100,11 @@ public class SettingsActivity extends PreferenceActivity
   @Override
   public void onHeaderClick(@NonNull Header header, int position)
   {
+    /*
     if (header.id == R.id.launch_demo) {
       startActivity(new Intent(this, DemoActivity.class));
     }
+    */
 
     /*
     if (header.id == R.id.group_map)
