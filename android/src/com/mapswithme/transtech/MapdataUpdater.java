@@ -31,6 +31,11 @@ public class MapdataUpdater extends BroadcastReceiver {
             String curVersion = getVersion(Framework.nativeGetWritableDir());
             String extVersion = getVersion(externalPath);
 
+            if ("0".equalsIgnoreCase(extVersion)) {
+                Log.i(TAG, "/smartnav2 directory missing VERSION.TXT");
+                return;
+            }
+
             AlertDialog dlg = new AlertDialog.Builder(MwmApplication.get())
                     .setCancelable(false)
                     .setTitle("Map Data Update")
@@ -88,11 +93,12 @@ public class MapdataUpdater extends BroadcastReceiver {
         protected void onPreExecute() {
             super.onPreExecute();
 
-            dlg = new ProgressDialog(MwmApplication.getsMvmActivity());
+            dlg = new ProgressDialog(MwmApplication.get());
             dlg.setTitle("Updating Maps");
             dlg.setMessage("Please wait...");
             dlg.setCancelable(false);
             dlg.setIndeterminate(true);
+            dlg.getWindow().setType(WindowManager.LayoutParams.TYPE_SYSTEM_ALERT);
             dlg.show();
         }
 
@@ -102,7 +108,7 @@ public class MapdataUpdater extends BroadcastReceiver {
             dlg.dismiss();
 
             if (success) {
-                new AlertDialog.Builder(MwmApplication.getsMvmActivity())
+                AlertDialog dlg = new AlertDialog.Builder(MwmApplication.get())
                         .setCancelable(false)
                         .setTitle("Map Data Update")
                         .setMessage(numCopied + " files updated.\nPlease restart for the update to take effect.")
@@ -112,10 +118,12 @@ public class MapdataUpdater extends BroadcastReceiver {
                                 System.exit(0);
                             }
                         })
-                        .create().show();
+                        .create();
+                dlg.getWindow().setType(WindowManager.LayoutParams.TYPE_SYSTEM_ALERT);
+                dlg.show();
             }
             else {
-                new AlertDialog.Builder(MwmApplication.getsMvmActivity())
+               AlertDialog dlg = new AlertDialog.Builder(MwmApplication.get())
                         .setCancelable(false)
                         .setTitle("Map Data Update")
                         .setIcon(android.R.drawable.ic_dialog_alert)
@@ -124,7 +132,9 @@ public class MapdataUpdater extends BroadcastReceiver {
                             @Override
                             public void onClick(DialogInterface dlg, int which) { dlg.dismiss(); }
                         })
-                        .create().show();
+                        .create();
+                dlg.getWindow().setType(WindowManager.LayoutParams.TYPE_SYSTEM_ALERT);
+                dlg.show();
             }
         }
 
@@ -166,6 +176,12 @@ public class MapdataUpdater extends BroadcastReceiver {
                 File directory = targetLocation.getParentFile();
                 if (directory != null && !directory.exists() && !directory.mkdirs()) {
                     throw new IOException("Cannot create dir " + directory.getAbsolutePath());
+                }
+
+                String filename = sourceLocation.getName();
+                if ("index.json".equalsIgnoreCase(filename)) {
+                    Log.w(TAG, "Skipped: " + filename);
+                    return;
                 }
 
                 publishProgress("Transferring " + sourceLocation.getName());
