@@ -208,7 +208,7 @@ public class GraphHopperRouter implements IRouter
             req.add( new Position( finishLat, finishLon ) );
 
             PMap currParams = new PMap();
-            currParams.put( GeoEngine.PARAM_TRUCK_TYPE, currentProfile.getCode() );
+            currParams.put( GeoEngine.PARAM_ENCODER, currentProfile.getCode() );
 
             return getGeoEngine().route( req, currParams );
         }
