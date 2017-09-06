@@ -282,7 +282,7 @@ public class SearchFragment extends BaseMwmFragment
                 "Unauthorized", "API Key not accepted.");
       else
         mResultsPlaceholder.setContent(R.drawable.img_search_nothing_found_light,
-                "Ops! An Error Occurred", "Code: " + Integer.toString(mErrorCode));
+                "Ops! an error has occurred", "Code: " + Integer.toString(mErrorCode));
     }
 
     UiUtils.showIf(show, mResultsPlaceholder);
