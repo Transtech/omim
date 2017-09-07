@@ -124,7 +124,7 @@ public class MwmApplication extends MultiDexApplication
 
     //initHockeyApp();
 
-//    initCrashlytics();
+    initCrashlytics();
 //    final boolean isInstallationIdFound =
 //      setInstallationIdToCrashlytics();
 
@@ -209,7 +209,6 @@ public class MwmApplication extends MultiDexApplication
   }
   */
 
-  /*
   private void initCrashlytics()
   {
     if (!isCrashlyticsEnabled())
@@ -219,7 +218,6 @@ public class MwmApplication extends MultiDexApplication
 
     nativeInitCrashlytics();
   }
-  */
 
   /*
   private static boolean setInstallationIdToCrashlytics()
