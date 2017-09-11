@@ -109,6 +109,14 @@ public class DownloadResourcesActivity extends BaseMwmFragmentActivity
             UiUtils.show(mBtnRetry);
             mTvMessage.setText("Checksum validation failed.\nPlease connect to WiFi and retry");
             break;
+          case OtaMapdataUpdater.STATUS_ERR_PROVISION_ZIP:
+            UiUtils.show(mBtnRetry);
+            mTvMessage.setText("Error in provision zip file\nPlease retry");
+            break;
+          case OtaMapdataUpdater.STATUS_ERR_PROVISION_MD5:
+            UiUtils.show(mBtnRetry);
+            mTvMessage.setText("Checksum validation failed.\nPlease retry");
+            break;
         }
       }
     }

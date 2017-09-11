@@ -50,7 +50,8 @@ public class OtaMapdataUpdater extends Service {
     public static final int STATUS_ERR_DOWNLOAD_FAILED = 2;
     public static final int STATUS_ERR_MAP_VERSION_NOT_CONFIGURED = 3;
     public static final int STATUS_ERR_MD5= 4;
-
+    public static final int STATUS_ERR_PROVISION_ZIP = 5;
+    public static final int STATUS_ERR_PROVISION_MD5 = 6;
 
     private static final int BUFFER_SIZE = 4096;
     private static UpdateTask updateTask;
@@ -59,12 +60,16 @@ public class OtaMapdataUpdater extends Service {
     private static final MwmApplication APP = MwmApplication.get();
     private static final String DATA_PATH = Framework.nativeGetWritableDir();
 
+    private static final String PROVISION_ZIP_PATH = DATA_PATH + "../";
+    private static final String PROVISION_FILE = "MapsWithMe.zip";
+
     public static void init(Context context) {
         context.startService(new Intent(context, OtaMapdataUpdater.class).setAction(OtaMapdataUpdater.ACTION_CHECK_FOR_UPDATES));
     }
 
     public static boolean isProvisioned() {
         if ("0".equals(getCurrentMapdataVersion())) return false;
+        if (isProvisionFileExist()) return false;
         else return true;
     }
 
@@ -185,6 +190,11 @@ public class OtaMapdataUpdater extends Service {
 
                 Log.d(LOG_TAG,"Current Version:" + currentVersion + " Target Version:" + targetVersion);
 
+                // check if provision file exist, regardless of version
+                if (isProvisionFileExist()) {
+                    return provisionFromLocalZip();
+                }
+
                 if (targetVersion == null || "".equals(targetVersion)) {
                     // not configured, no update
                     Log.d(LOG_TAG, "Map version not configured, no update necessary");
@@ -285,6 +295,50 @@ public class OtaMapdataUpdater extends Service {
             return false;
         }
 
+        private boolean provisionFromLocalZip() throws JSONException, IOException {
+            final File zipfile = new File(PROVISION_ZIP_PATH, PROVISION_FILE);
+
+            broadcastProgress("Provisioning...", -1);
+            unpackZip(zipfile, PROVISION_ZIP_PATH);
+
+            broadcastProgress("Verifying...", -1);
+            JSONArray jsonArray = getLocalIndex();
+
+            if (jsonArray == null) {
+                broadcastStatus(STATUS_ERR_PROVISION_ZIP);
+                return false;
+            }
+
+            for (int i=0; i<jsonArray.length(); i++) {
+                JSONObject jsonObject = jsonArray.getJSONObject(i);
+                String filename = jsonObject.optString("name");
+                String checksum = jsonObject.optString("md5");
+
+                // ignore heavy-vehicle-gh.zip not exist
+                if ("heavy-vehicle-gh.zip".equalsIgnoreCase(filename)) continue;
+
+                broadcastProgress("Verifying " + filename, -1);
+                if (!isFileUnchanged(DATA_PATH, filename, checksum)) {
+                    broadcastStatus(STATUS_ERR_MD5);
+                    return false;
+                }
+            }
+
+            // delete provision zip
+            try {
+                if (new File(PROVISION_ZIP_PATH, PROVISION_FILE).delete()) {
+                    Log.i(LOG_TAG, "deleted " + PROVISION_FILE + " from " + PROVISION_ZIP_PATH);
+                    return true;
+                }
+            }
+            catch (Exception e) {
+                Log.e(LOG_TAG, e.getMessage());
+            }
+
+            // should not reach here
+            return true;
+        }
+
         @Override
         protected void onPreExecute() {
 
@@ -337,6 +391,24 @@ public class OtaMapdataUpdater extends Service {
                 Log.w(LOG_TAG, "Unable to parse json: " + response);
                 return null;
             }
+        }
+
+        private JSONArray getLocalIndex() {
+            final File file = new File(DATA_PATH, "index.json");
+
+            if (file.exists()) {
+                try {
+                    InputStream in = new FileInputStream(file);
+                    String response = IOUtils.toString(in);
+                    return new JSONArray(response);
+                } catch (JSONException e) {
+                    Log.w(LOG_TAG, "Unable to parse json: " + e.getMessage());
+                } catch (IOException e) {
+                    Log.w(LOG_TAG, "Unable to read index.json: " + e.getMessage());
+                }
+            }
+
+            return null;
         }
 
         private boolean isFileUnchanged(String path, String filename, String md5) throws IOException {
@@ -470,9 +542,12 @@ public class OtaMapdataUpdater extends Service {
         return "";
     }
 
-    private boolean unpackZip(String zipname, String outputPath)
-    {
+    private boolean unpackZip(String zipname, String outputPath) {
         File zipfile = new File(APP.getCacheDir(), zipname);
+        return unpackZip(zipfile, outputPath);
+    }
+
+    private boolean unpackZip(File zipfile, String outputPath) {
 
         InputStream is;
         ZipInputStream zis;
@@ -640,7 +715,7 @@ public class OtaMapdataUpdater extends Service {
     }
 
     private static boolean isEmulator() {
-        return Build.FINGERPRINT.startsWith("generic")
+        boolean isEmu = Build.FINGERPRINT.startsWith("generic")
                 || Build.FINGERPRINT.startsWith("unknown")
                 || Build.MODEL.contains("google_sdk")
                 || Build.MODEL.contains("Emulator")
@@ -648,5 +723,16 @@ public class OtaMapdataUpdater extends Service {
                 || Build.MANUFACTURER.contains("Genymotion")
                 || (Build.BRAND.startsWith("generic") && Build.DEVICE.startsWith("generic"))
                 || "google_sdk".equals(Build.PRODUCT);
+
+        Log.i(LOG_TAG, "is emulator");
+        return isEmu;
+    }
+
+    // provision
+
+    private static boolean isProvisionFileExist() {
+        Log.i(LOG_TAG, "Data Path: " + DATA_PATH);
+        final File file = new File(DATA_PATH + "../", "MapsWithMe.zip");
+        return file.exists();
     }
 }
