@@ -673,6 +673,17 @@ public class ComplianceController implements LocationListener, GraphHopperRouter
 
     private void tripEvent( String type, String subType, JSONObject attrs )
     {
+        if (RouteConstants.MESSAGE_TYPE_TRIP_ENTRY.equals(type) || (RouteConstants.MESSAGE_TYPE_TRIP_EXIT.equals(type))) {
+            Location location = LocationHelper.INSTANCE.getLastKnownLocation();
+            if (location == null) {
+                Log.w(TAG, "Suppress trip event: location null");
+                return;
+            } else if (location.getLatitude() == 0.0f && location.getLongitude() == 0.0f) {
+                Log.w(TAG, "Suppress trip event: latlon 0");
+                return;
+            }
+        }
+
         try
         {
             VehicleProfile profile = ghRouter.getSelectedProfile();
