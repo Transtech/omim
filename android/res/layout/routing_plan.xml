@@ -29,7 +29,7 @@
 
       <RelativeLayout
           android:layout_width="match_parent"
-          android:layout_height="wrap_content">
+          android:layout_height="match_parent">
 
         <ImageView
             android:id="@+id/back"
@@ -99,10 +99,10 @@
 -->
           <LinearLayout
                   android:id="@+id/progress_frame"
-                  android:layout_width="fill_parent"
-                  android:layout_height="wrap_content"
-                  android:layout_alignRight="@id/back"
-                  android:layout_centerInParent="true"
+                  android:layout_width="?attr/actionBarSize"
+                  android:layout_height="?attr/actionBarSize"
+                  android:layout_alignParentRight="true"
+                  android:padding="10dp"
                   android:orientation="horizontal"
                   tools:background="#80FF0000">
 
@@ -111,7 +111,7 @@
                   style="@style/MwmWidget.ProgressWheel.RoutingPlan"
                   android:gravity="right"
                   android:layout_width="fill_parent"
-                  android:layout_height="wrap_content"
+                  android:layout_height="fill_parent"
                   android:layout_marginLeft="@dimen/routing_selector_wheel_margin"
                   android:layout_marginStart="@dimen/routing_selector_wheel_margin"
                   android:layout_marginTop="@dimen/routing_selector_wheel_margin"

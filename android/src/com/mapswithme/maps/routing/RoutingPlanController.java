@@ -167,6 +167,7 @@ public class RoutingPlanController extends ToolbarController implements SlotFram
 */
     View progressFrame = mToolbar.findViewById(R.id.progress_frame);
     mProgressTruck = (WheelProgressView) progressFrame.findViewById(R.id.progress_truck);
+    UiUtils.hide(mProgressTruck);
 //    mProgressVehicle = (WheelProgressView) progressFrame.findViewById(R.id.progress_vehicle);
 //    mProgressPedestrian = (WheelProgressView) progressFrame.findViewById(R.id.progress_pedestrian);
 //    mProgressBicycle = (WheelProgressView) progressFrame.findViewById(R.id.progress_bicycle);
@@ -360,10 +361,20 @@ public class RoutingPlanController extends ToolbarController implements SlotFram
 //      return;
 //    }
 
-    UiUtils.show(progressView);
-    progressView.setPending(progress == 0);
-    if (progress != 0)
-      progressView.setProgress(progress);
+    RoutingController.BuildState buildState = RoutingController.get().getBuildState();
+    if (buildState == RoutingController.BuildState.BUILDING) {
+      UiUtils.show(progressView);
+      if (progress > 50) {
+        progressView.setPending(false);
+        progressView.setProgress(progress);
+      }
+      else {
+        progressView.setPending(true);
+      }
+    }
+    else {
+      UiUtils.hide(progressView);
+    }
   }
 
   private void toggleSlots()
