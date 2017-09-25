@@ -655,7 +655,7 @@ public class OtaMapdataUpdater extends Service {
         return wifiCOnnected || dataPackEnabled;
         */
 
-        if (isEmulator()) return true;
+        //if (isEmulator()) return true;
 
         return ConnectionState.isWifiConnected();
     }

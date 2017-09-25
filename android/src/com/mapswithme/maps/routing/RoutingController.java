@@ -312,6 +312,7 @@ public class RoutingController
     }
   }
 
+  /*
   private void showDisclaimer(final MapObject startPoint, final MapObject endPoint)
   {
     StringBuilder builder = new StringBuilder();
@@ -335,6 +336,7 @@ public class RoutingController
           }
         }).show();
   }
+  */
 
   public void prepare(@Nullable MapObject endPoint)
   {
@@ -345,11 +347,13 @@ public class RoutingController
   {
     mLogger.d("prepare (" + (endPoint == null ? "route)" : "p2p)"));
 
+    /*
     if (!Config.isRoutingDisclaimerAccepted())
     {
       showDisclaimer(startPoint, endPoint);
       return;
     }
+    */
 
 //    if (startPoint != null && endPoint != null)
 //      mLastRouterType = Framework.nativeGetBestRouter(startPoint.getLat(), startPoint.getLon(),

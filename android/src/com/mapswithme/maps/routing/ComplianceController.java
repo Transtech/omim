@@ -16,6 +16,7 @@ import au.net.transtech.geo.model.MultiPointRoute;
 import au.net.transtech.geo.model.Position;
 import au.net.transtech.geo.model.VehicleProfile;
 import com.mapswithme.maps.Framework;
+import com.mapswithme.maps.MwmApplication;
 import com.mapswithme.maps.R;
 import com.mapswithme.maps.bookmarks.data.MapObject;
 import com.mapswithme.maps.location.DemoLocationProvider;
@@ -41,6 +42,8 @@ import org.opengts.util.GeoPoint;
 import java.text.DecimalFormat;
 import java.util.List;
 import java.util.UUID;
+
+import static com.mapswithme.maps.routing.GraphHopperRouter.NETWORK_CAR;
 
 /**
  * Class ComplianceController
@@ -68,7 +71,7 @@ public class ComplianceController implements LocationListener, GraphHopperRouter
         NONE
     }
 
-    private ComplianceMode defaultMode = ComplianceMode.NONE;
+    //private ComplianceMode defaultMode = ComplianceMode.NONE;
     private ComplianceMode currentMode = ComplianceMode.NONE;
 
     private ComplianceController()
@@ -133,9 +136,11 @@ public class ComplianceController implements LocationListener, GraphHopperRouter
                     if( Framework.nativeGetRouter() != Framework.ROUTER_TYPE_EXTERNAL )
                         Framework.nativeSetExternalRouter( router );
 
+                    /*
                     setDefaultMode( GraphHopperRouter.NETWORK_CAR.equals( router.getSelectedProfile().getCode() )
                             ? ComplianceMode.NONE
                             : ComplianceMode.NETWORK_ADHERENCE );
+                    */
 
                     router.setListener( INSTANCE );
 
@@ -217,9 +222,11 @@ public class ComplianceController implements LocationListener, GraphHopperRouter
         if( ghRouter != null )
             ghRouter.setSelectedProfile( profile );
 
+        /*
         setDefaultMode( GraphHopperRouter.NETWORK_CAR.equalsIgnoreCase( profile )
                 ? ComplianceMode.NONE
                 : ComplianceMode.NETWORK_ADHERENCE );
+        */
 
         return true;
     }
@@ -231,16 +238,37 @@ public class ComplianceController implements LocationListener, GraphHopperRouter
         return null;
     }
 
+    public String getSelectedNetworkFromSetting() {
+        return Setting.getString( MwmApplication.get(),
+                Setting.currentEnvironment(MwmApplication.get()),
+                Setting.Scope.SMARTNAV2,
+                SettingConstants.ROUTE_NETWORK,
+                NETWORK_CAR );
+    }
+
+    /*
     public void setDefaultMode( ComplianceMode mode )
     {
         Log.i( TAG, "Default network adherence mode is: " + mode.name() );
         defaultMode = mode;
     }
+    */
 
+    private ComplianceMode getDefaultMode() {
+        ComplianceMode mode = NETWORK_CAR.equalsIgnoreCase( getSelectedNetworkFromSetting() )
+                ? ComplianceMode.NONE
+                : ComplianceMode.NETWORK_ADHERENCE;
+
+        Log.i(TAG, "getDefautMode: " + mode.toString());
+        return mode;
+    }
+
+    /*
     public ComplianceMode getDefaultMode()
     {
         return defaultMode;
     }
+    */
 
     public ComplianceMode getCurrentMode()
     {
@@ -269,7 +297,7 @@ public class ComplianceController implements LocationListener, GraphHopperRouter
         lastTts = 0L;
         rerouteCount = 0;
 
-        if( (currentMode == ComplianceMode.NONE && defaultMode != ComplianceMode.NONE)
+        if( (currentMode == ComplianceMode.NONE && getDefaultMode() != ComplianceMode.NONE)
                 || (plannedRouteId != null && currentMode != ComplianceMode.ROUTE_COMPLIANCE) )
         {
             currentMode = (plannedRouteId == null)
@@ -330,10 +358,12 @@ public class ComplianceController implements LocationListener, GraphHopperRouter
 
         ghRouter.setPlannedRouteId( null );
         currentMode = ComplianceMode.NONE;
+
         groupId = null;
         complianceState = ComplianceState.UNKNOWN;
 
-        if( defaultMode != ComplianceMode.NONE )
+
+        if( getDefaultMode() != ComplianceMode.NONE )
         {
             UiThread.runLater( new Runnable()
             {
@@ -344,6 +374,8 @@ public class ComplianceController implements LocationListener, GraphHopperRouter
                 }
             });
         }
+
+        //defaultMode = ComplianceMode.NONE;
     }
 
     private boolean shouldRestartRouteComplianceTrip()
@@ -459,6 +491,7 @@ public class ComplianceController implements LocationListener, GraphHopperRouter
     @Override
     public void onLocationUpdated( final Location location )
     {
+
         if( complianceState == ComplianceState.UNKNOWN || currentMode == ComplianceMode.NONE )
             return;
 

@@ -723,17 +723,21 @@ public class GraphHopperRouter implements IRouter
     {
         if( selectedProfile == null )
         {
-            String network = Setting.getString( context,
-                    Setting.currentEnvironment( context ),
-                    Setting.Scope.SMARTNAV2,
-                    SettingConstants.ROUTE_NETWORK,
-                    NETWORK_CAR );
+            String network = getSelectedNetworkFromSetting();
 
             for( VehicleProfile vp : getGeoEngine().getVehicleProfiles() )
                 if( vp.getCode().equals( network ) )
                     selectedProfile = vp;
         }
         return selectedProfile;
+    }
+
+    public String getSelectedNetworkFromSetting() {
+        return Setting.getString( context,
+                Setting.currentEnvironment( context ),
+                Setting.Scope.SMARTNAV2,
+                SettingConstants.ROUTE_NETWORK,
+                NETWORK_CAR );
     }
 
     public double distanceFromNetwork(double lat, double lon)
