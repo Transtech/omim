@@ -576,6 +576,8 @@ public class OtaMapdataUpdater extends Service {
                 String outputFile = outputPath + filename;
                 FileOutputStream fout = new FileOutputStream(outputFile);
 
+                broadcastProgress("Unpacking " + filename, -1);
+
                 while ((count = zis.read(buffer)) != -1) {
                     fout.write(buffer, 0, count);
                 }
