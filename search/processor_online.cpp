@@ -26,6 +26,8 @@ ProcessorOnline::ProcessorOnline(Index const & index, CategoriesHolder const & c
                      storage::CountryInfoGetter const & infoGetter)
   : Processor(index, categories, suggests, infoGetter)
 {
+    m_lastQuery.clear();
+    m_lastHttpResult.clear();
 }
 
 void ProcessorOnline::Init(bool viewportSearch)
@@ -58,18 +60,32 @@ void ProcessorOnline::Search(SearchParams const & params, m2::RectD const & view
     SearchCoordinates();
 
     string httpResult;
-    SearchOnline(m_query, httpResult);
+
+    if (m_query == m_lastQuery) {
+        LOG(LDEBUG, ("Return cached search result"));
+        httpResult = m_lastHttpResult;
+    }
+    else {
+        SearchOnline(m_query, httpResult);
+    }
     
     if (!httpResult.empty()) {
       EmitFromJson(httpResult.c_str());
-    }
+      m_ranker.UpdateResults(true /* lastUpdate */);
+
+      m_lastQuery = m_query;
+      m_lastHttpResult = httpResult;
+    }    
   }
   catch (CancelException const &)
   {
     LOG(LDEBUG, ("Search has been cancelled."));
+//    SetQuery("");
   }
 
-  m_emitter.Finish(IsCancelled());
+//  m_emitter.Finish(IsCancelled());
+  m_emitter.Finish(true);
+
 }
 
 void ProcessorOnline::SearchCoordinates()

@@ -35,9 +35,12 @@ protected:
   void EmitFromJson(char const * jsonStr);
 
   Emitter m_emitter;
-  
+
 private:
   string m_url;
   string m_apiKey;
+
+  string m_lastQuery;
+  string m_lastHttpResult;
 };
 }  // namespace search
