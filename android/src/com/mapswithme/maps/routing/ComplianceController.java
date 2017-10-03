@@ -506,8 +506,8 @@ public class ComplianceController implements LocationListener, GraphHopperRouter
                 if( currentMode != ComplianceMode.ROUTE_COMPLIANCE || offset.geofenceCount == 0 )
                 {
                     Log.w( TAG, "BEEEP! OFF-ROUTE!" );
-                    complianceState = ComplianceState.OFF_ROUTE;
                     doOffRouteProcessing( location, offset );
+                    complianceState = ComplianceState.OFF_ROUTE;
                 }
             }
             else
