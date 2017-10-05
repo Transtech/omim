@@ -258,16 +258,16 @@ public class RoutingPlanController extends ToolbarController implements SlotFram
       return;
     }
 
-    if (!isTaxiRouterType())
-      setStartButton();
+    //if (!isTaxiRouterType())
+    setStartButton();
 
     showAltitudeChartAndRoutingDetails();
   }
 
   private void showAltitudeChartAndRoutingDetails()
   {
-    if (isTaxiRouterType())
-      return;
+//    if (isTaxiRouterType())
+//      return;
 
     UiUtils.hide(getViewById(R.id.error));
 //    UiUtils.hide(mUberFrame);
@@ -449,10 +449,10 @@ public class RoutingPlanController extends ToolbarController implements SlotFram
     return RoutingController.get().isVehicleRouterType();
   }
 
-  private boolean isTaxiRouterType()
-  {
-    return RoutingController.get().isTaxiRouterType();
-  }
+//  private boolean isTaxiRouterType()
+//  {
+//    return RoutingController.get().isTaxiRouterType();
+//  }
 
   void disableToggle()
   {

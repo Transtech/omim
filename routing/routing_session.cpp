@@ -20,7 +20,7 @@ using namespace traffic;
 namespace
 {
 
-int constexpr kOnRouteMissedCount = 5;
+int constexpr kOnRouteMissedCount = 3;
 
 // @TODO(vbykoianko) The distance should depend on the current speed.
 double constexpr kShowLanesDistInMeters = 500.;
@@ -243,7 +243,9 @@ RoutingSession::State RoutingSession::OnLocationPositionChanged(GpsInfo const & 
                                                         MercatorBounds::FromLatLon(info.m_latitude, info.m_longitude));
     if (my::AlmostEqualAbs(dist, m_lastDistance, kRunawayDistanceSensitivityMeters))
         return m_state;
-    if (dist > m_lastDistance)
+
+    // warren: move-away requirement removed for more resposive rerouting
+    //if (dist > m_lastDistance)
     {
       ++m_moveAwayCounter;
       m_lastDistance = dist;

@@ -2578,6 +2578,8 @@ void Framework::CheckLocationForRouting(GpsInfo const & info)
     return;
 
   RoutingSession::State state = m_routingSession.OnLocationPositionChanged(info, m_model.GetIndex());
+  LOG(LDEBUG, ("CheckLocationForRouting", state));
+
   if (state == RoutingSession::RouteNeedRebuild)
   {
     m_routingSession.RebuildRoute(MercatorBounds::FromLatLon(info.m_latitude, info.m_longitude),

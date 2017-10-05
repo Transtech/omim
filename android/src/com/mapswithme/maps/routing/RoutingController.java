@@ -214,8 +214,8 @@ public class RoutingController
 
   private void updateProgress()
   {
-    if (isUberPlanning())
-      return;
+//    if (isUberPlanning())
+//      return;
 
     if (mContainer != null)
       mContainer.updateBuildProgress( mLastBuildProgress, mLastRouterType );
@@ -259,8 +259,8 @@ public class RoutingController
 
     if (mContainer != null)
     {
-      if (isUberPlanning())
-        mContainer.updateBuildProgress(0, mLastRouterType);
+//      if (isUberPlanning())
+//        mContainer.updateBuildProgress(0, mLastRouterType);
 
       mContainer.showNavigation(isNavigating());
       mContainer.updateMenu();
@@ -281,15 +281,15 @@ public class RoutingController
     mLastBuildProgress = 0;
     mInternetConnected = ConnectionState.isConnected();
 
-    if (isTaxiRouterType())
-    {
-      if (!mInternetConnected)
-      {
-        completeUberRequest();
-        return;
-      }
+//    if (isTaxiRouterType())
+//    {
+//      if (!mInternetConnected)
+//      {
+//        completeUberRequest();
+//        return;
+//      }
 //      requestUberInfo();
-    }
+//    }
 
     setBuildState(BuildState.BUILDING);
     updatePlan();
@@ -302,15 +302,15 @@ public class RoutingController
     Framework.nativeBuildRoute(mStartPoint.getLat(), mStartPoint.getLon(), mEndPoint.getLat(), mEndPoint.getLon(), isP2P);
   }
 
-  private void completeUberRequest()
-  {
-    mUberRequestHandled = true;
-    if (mContainer != null)
-    {
-      mContainer.updateBuildProgress(100, mLastRouterType);
-      mContainer.updateMenu();
-    }
-  }
+//  private void completeUberRequest()
+//  {
+//    mUberRequestHandled = true;
+//    if (mContainer != null)
+//    {
+//      mContainer.updateBuildProgress(100, mLastRouterType);
+//      mContainer.updateMenu();
+//    }
+//  }
 
   /*
   private void showDisclaimer(final MapObject startPoint, final MapObject endPoint)
@@ -561,15 +561,15 @@ public class RoutingController
     return mState == State.PREPARE;
   }
 
-  boolean isUberPlanning()
-  {
-    return isTaxiRouterType() && mUberPlanning;
-  }
+//  boolean isUberPlanning()
+//  {
+//    return isTaxiRouterType() && mUberPlanning;
+//  }
 
-  boolean isTaxiRouterType()
-  {
-    return mLastRouterType == Framework.ROUTER_TYPE_TAXI;
-  }
+//  boolean isTaxiRouterType()
+//  {
+//    return mLastRouterType == Framework.ROUTER_TYPE_TAXI;
+//  }
 
   boolean isVehicleRouterType()
   {
@@ -776,7 +776,7 @@ public class RoutingController
     mEndPoint = point;
 
     Statistics.INSTANCE.trackEvent(Statistics.EventName.ROUTING_SWAP_POINTS);
-    AlohaHelper.logClick(AlohaHelper.ROUTING_SWAP_POINTS);
+//    AlohaHelper.logClick(AlohaHelper.ROUTING_SWAP_POINTS);
 
     setPointsInternal();
     checkAndBuildRoute();
@@ -878,21 +878,21 @@ public class RoutingController
     return true;
   }
 
-  private void requestUberInfo()
-  {
-    mUberPlanning = true;
-    Uber.nativeRequestUberProducts(mStartPoint.getLat(), mStartPoint.getLon(),
-                                   mEndPoint.getLat(), mEndPoint.getLon());
-    if (mContainer != null)
-      mContainer.updateBuildProgress(0, mLastRouterType);
-  }
+//  private void requestUberInfo()
+//  {
+//    mUberPlanning = true;
+//    Uber.nativeRequestUberProducts(mStartPoint.getLat(), mStartPoint.getLon(),
+//                                   mEndPoint.getLat(), mEndPoint.getLon());
+//    if (mContainer != null)
+//      mContainer.updateBuildProgress(0, mLastRouterType);
+//  }
 
-  @NonNull
-  UberLinks getUberLink(@NonNull String productId)
-  {
-    return Uber.nativeGetUberLinks(productId, mStartPoint.getLat(), mStartPoint.getLon(),
-                                   mEndPoint.getLat(), mEndPoint.getLon());
-  }
+//  @NonNull
+//  UberLinks getUberLink(@NonNull String productId)
+//  {
+//    return Uber.nativeGetUberLinks(productId, mStartPoint.getLat(), mStartPoint.getLon(),
+//                                   mEndPoint.getLat(), mEndPoint.getLon());
+//  }
 
   /**
    * Called from the native code
@@ -903,11 +903,11 @@ public class RoutingController
   {
     mUberPlanning = false;
     mLogger.d("onUberInfoReceived uberInfo = " + info);
-    if (isTaxiRouterType() && mContainer != null)
-    {
-      mContainer.onUberInfoReceived(info);
-      completeUberRequest();
-    }
+//    if (isTaxiRouterType() && mContainer != null)
+//    {
+//      mContainer.onUberInfoReceived(info);
+//      completeUberRequest();
+//    }
   }
 
   /**
@@ -920,10 +920,10 @@ public class RoutingController
     mUberPlanning = false;
     Uber.ErrorCode code = Uber.ErrorCode.valueOf(errorCode);
     mLogger.e("onUberError error = " + code);
-    if (isTaxiRouterType() && mContainer != null)
-    {
-      mContainer.onUberError(code);
-      completeUberRequest();
-    }
+//    if (isTaxiRouterType() && mContainer != null)
+//    {
+//      mContainer.onUberError(code);
+//      completeUberRequest();
+//    }
   }
 }
