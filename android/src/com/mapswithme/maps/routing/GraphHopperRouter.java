@@ -1,12 +1,15 @@
 package com.mapswithme.maps.routing;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.location.Location;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import au.net.transtech.geo.GeoEngine;
 import au.net.transtech.geo.model.*;
 import com.graphhopper.util.PMap;
 import com.mapswithme.maps.Framework;
+import com.mapswithme.maps.R;
 import com.mapswithme.maps.location.LocationHelper;
 import com.mapswithme.transtech.Setting;
 import com.mapswithme.transtech.SettingConstants;
@@ -210,6 +213,12 @@ public class GraphHopperRouter implements IRouter
             PMap currParams = new PMap();
             currParams.put( GeoEngine.PARAM_ENCODER, currentProfile.getCode() );
 
+            double vehicleHeightLimit = getVehicleHeighFromPref();
+            if (vehicleHeightLimit != 0.0) {
+                currParams.put(geoEngine.PARAM_HEIGHT_LIMIT, vehicleHeightLimit);
+                Log.i(TAG, "Applied height limit: " + vehicleHeightLimit);
+            }
+
             return getGeoEngine().route( req, currParams );
         }
         catch( Exception e )
@@ -219,6 +228,7 @@ public class GraphHopperRouter implements IRouter
         return null;
     }
 
+    // unused? TODO cleanup
     private Route supplementJourneyIfRequired( MultiPointRoute ghRoute, double startLat, double startLon, double finishLat, double finishLon )
     {
         try
@@ -226,7 +236,13 @@ public class GraphHopperRouter implements IRouter
             MultiPointRoute ghStartCar = null, ghFinishCar = null;
 
             PMap carParams = new PMap();
-            carParams.put( GeoEngine.PARAM_TRUCK_TYPE, NETWORK_CAR );
+            carParams.put( GeoEngine.PARAM_ENCODER, NETWORK_CAR );
+
+            double vehicleHeightLimit = getVehicleHeighFromPref();
+            if (vehicleHeightLimit != 0.0) {
+                carParams.put(geoEngine.PARAM_HEIGHT_LIMIT, vehicleHeightLimit);
+                Log.i(TAG, "Applied height limit: " + vehicleHeightLimit);
+            }
 
             if( ghRoute != null && ghRoute.getPath() != null && ghRoute.getPath().size() > 0 )
             {
@@ -276,6 +292,7 @@ public class GraphHopperRouter implements IRouter
         return null;
     }
 
+    // unused? TODO cleanup
     private MultiPointRoute routeByCar(double startLat, double startLon, double finishLat, double finishLon)
     {
         try
@@ -285,7 +302,14 @@ public class GraphHopperRouter implements IRouter
             req.add( new Position( finishLat, finishLon ) );
 
             PMap params = new PMap();
-            params.put( GeoEngine.PARAM_TRUCK_TYPE, NETWORK_CAR );
+            params.put( GeoEngine.PARAM_ENCODER, NETWORK_CAR );
+
+            double vehicleHeightLimit = getVehicleHeighFromPref();
+            if (vehicleHeightLimit != 0.0) {
+                params.put(geoEngine.PARAM_HEIGHT_LIMIT, vehicleHeightLimit);
+                Log.i(TAG, "Applied height limit: " + vehicleHeightLimit);
+            }
+
             MultiPointRoute ghRoute = getGeoEngine().route( req, params );
 
             return ghRoute;
@@ -732,12 +756,24 @@ public class GraphHopperRouter implements IRouter
         return selectedProfile;
     }
 
-    public String getSelectedNetworkFromSetting() {
+    private String getSelectedNetworkFromSetting() {
         return Setting.getString( context,
                 Setting.currentEnvironment( context ),
                 Setting.Scope.SMARTNAV2,
                 SettingConstants.ROUTE_NETWORK,
                 NETWORK_CAR );
+    }
+
+    private double getVehicleHeighFromPref() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        String val = prefs.getString(context.getResources().getString(R.string.pref_vehicle_height), "0.0");
+
+        try {
+            return Double.parseDouble(val);
+        }
+        catch (Exception e) {
+            return 0.0;
+        }
     }
 
     public double distanceFromNetwork(double lat, double lon)
