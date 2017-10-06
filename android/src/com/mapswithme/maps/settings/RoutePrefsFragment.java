@@ -8,7 +8,8 @@ import android.preference.PreferenceFragment;
 import android.preference.TwoStatePreference;
 import android.speech.tts.TextToSpeech;
 import android.support.annotation.NonNull;
-import au.net.transtech.geo.model.VehicleProfile;
+import android.util.Log;
+
 import com.mapswithme.maps.Framework;
 import com.mapswithme.maps.R;
 import com.mapswithme.maps.routing.ComplianceController;
@@ -23,8 +24,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import au.net.transtech.geo.model.VehicleProfile;
+
 public class RoutePrefsFragment extends PreferenceFragment
 {
+  private static final String TAG = "RoutePrefsFragment";
   private static final int REQUEST_INSTALL_DATA = 1;
 
   private TwoStatePreference mPrefEnabled;
@@ -175,27 +179,37 @@ public class RoutePrefsFragment extends PreferenceFragment
 //      mAdherenceMode.setChecked( ComplianceController.get().getDefaultMode() == ComplianceController.ComplianceMode.NETWORK_ADHERENCE );
 
       GraphHopperRouter truckRouter = ComplianceController.get().getRouter( RoutePrefsFragment.this.getActivity() );
-      List<VehicleProfile> profiles = truckRouter.getGeoEngine().getVehicleProfiles();
-      if( profiles != null && profiles.size() > 0 )
-      {
-          final CharSequence[] entries2 = new CharSequence[ profiles.size() ];
-          final CharSequence[] values2 = new CharSequence[ profiles.size() ];
+
+      try {
+        List<VehicleProfile> profiles = truckRouter.getGeoEngine().getVehicleProfiles();
+        if (profiles != null && profiles.size() > 0) {
+          final CharSequence[] entries2 = new CharSequence[profiles.size()];
+          final CharSequence[] values2 = new CharSequence[profiles.size()];
 
           int i = 0;
-          for( VehicleProfile vp : profiles )
-          {
-              entries2[ i ] = vp.getDescription();
-              values2[ i ] = vp.getCode();
-              i++;
+          for (VehicleProfile vp : profiles) {
+            entries2[i] = vp.getDescription();
+            values2[i] = vp.getCode();
+            i++;
           }
 
-          mNetwork.setEntries( entries2 );
-          mNetwork.setEntryValues( values2 );
+          mNetwork.setEntries(entries2);
+          mNetwork.setEntryValues(values2);
 
           VehicleProfile vp = truckRouter.getSelectedProfile();
-          mNetwork.setSummary( vp == null ? null : vp.getDescription() + " (" + vp.getCode() + ")" );
-          mNetwork.setValue( vp == null ? null : vp.getCode() );
+          mNetwork.setSummary(vp == null ? null : vp.getDescription() + " (" + vp.getCode() + ")");
+          mNetwork.setValue(vp == null ? null : vp.getCode());
+        }
       }
+      catch (Exception e) {
+        new android.support.v7.app.AlertDialog.Builder(getActivity())
+                .setMessage("Map version mismatched")
+                .create()
+                .show();
+
+        Log.e(TAG, e.getMessage());
+      }
+
       enableListeners( true );
   }
 
