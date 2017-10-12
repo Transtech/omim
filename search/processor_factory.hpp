@@ -23,8 +23,8 @@ public:
                                       vector<Suggest> const & suggests,
                                       storage::CountryInfoGetter const & infoGetter)
   {
-    //return make_unique<Processor>(index, categories, suggests, infoGetter);
-    return make_unique<ProcessorOnline>(index, categories, suggests, infoGetter);
+    return make_unique<Processor>(index, categories, suggests, infoGetter);
+    //return make_unique<ProcessorOnline>(index, categories, suggests, infoGetter);
 
   }
 };
