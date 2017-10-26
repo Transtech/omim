@@ -482,7 +482,7 @@ private:
   };
 
   void InitCountryInfoGetter();
-  void InitSearchEngine();
+  void InitSearchEngine(bool offlineSearch);
     
   DisplacementModeManager m_displacementModeManager;
 

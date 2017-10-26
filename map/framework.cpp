@@ -126,6 +126,7 @@ char const kAllow3dBuildingsKey[] = "Buildings3d";
 char const kAllowAutoZoom[] = "AutoZoom";
 char const kTrafficEnabledKey[] = "TrafficEnabled";
 char const kLargeFontsSize[] = "LargeFontsSize";
+char const kOfflineSearch[] = "OfflineSearch";
 
 double const kDistEqualQueryMeters = 100.0;
 double const kLargeFontsScaleFactor = 1.6;
@@ -338,7 +339,7 @@ void Framework::Migrate(bool keepDownloaded)
   m_model.Clear();
   GetStorage().Migrate(keepDownloaded ? existedCountries : TCountriesVec());
   InitCountryInfoGetter();
-  InitSearchEngine();
+  InitSearchEngine("0");
   RegisterAllMaps();
 
   m_trafficManager.SetCurrentDataVersion(GetStorage().GetCurrentDataVersion());
@@ -410,7 +411,12 @@ Framework::Framework()
   LOG(LDEBUG, ("Country info getter initialized"));
 
   // To avoid possible races - init search engine once in constructor.
-  InitSearchEngine();
+  std::string offlineSearchStr("false");
+  settings::Get(kOfflineSearch, offlineSearchStr);
+
+  bool offlineSearch = (offlineSearchStr == "true")? true : false;
+  InitSearchEngine(offlineSearch);
+
   LOG(LDEBUG, ("Search engine initialized"));
 
   RegisterAllMaps();
@@ -1365,7 +1371,7 @@ void Framework::InitCountryInfoGetter()
   m_infoGetter->InitAffiliationsInfo(&m_storage.GetAffiliations());
 }
 
-void Framework::InitSearchEngine()
+void Framework::InitSearchEngine(bool offlineSearch)
 {
   ASSERT(!m_searchEngine.get(), ("InitSearchEngine() must be called only once."));
   ASSERT(m_infoGetter.get(), ());
@@ -1376,7 +1382,7 @@ void Framework::InitSearchEngine()
     params.m_numThreads = 1;
     m_searchEngine.reset(new search::Engine(const_cast<Index &>(m_model.GetIndex()),
                                             GetDefaultCategories(), *m_infoGetter,
-                                            make_unique<search::ProcessorFactory>(), params));
+                                            make_unique<search::ProcessorFactory>(), params, offlineSearch));
   }
   catch (RootException const & e)
   {

@@ -21,11 +21,12 @@ public:
 
   virtual unique_ptr<Processor> Build(Index & index, CategoriesHolder const & categories,
                                       vector<Suggest> const & suggests,
-                                      storage::CountryInfoGetter const & infoGetter)
+                                      storage::CountryInfoGetter const & infoGetter, bool offlineSearch)
   {
-    //return make_unique<Processor>(index, categories, suggests, infoGetter);
-    return make_unique<ProcessorOnline>(index, categories, suggests, infoGetter);
-
+    if (offlineSearch)
+        return make_unique<Processor>(index, categories, suggests, infoGetter);
+    else
+        return make_unique<ProcessorOnline>(index, categories, suggests, infoGetter);
   }
 };
 }  // namespace search

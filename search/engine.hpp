@@ -94,7 +94,7 @@ public:
   // Doesn't take ownership of index and categories.
   Engine(Index & index, CategoriesHolder const & categories,
          storage::CountryInfoGetter const & infoGetter, unique_ptr<ProcessorFactory> factory,
-         Params const & params);
+         Params const & params, bool offlineSearch);
   ~Engine();
   
   void ConfigureOnlineSearch(string url, string apiKey);
