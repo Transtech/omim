@@ -8,7 +8,6 @@
 # There are no supported options in CONFIG for mobile platforms.
 # Please use XCode or gradle/Android Studio.
 
-
 lessThan(QT_MAJOR_VERSION, 5) {
   error("You need Qt 5 to build this project. You have Qt $$QT_VERSION")
 }

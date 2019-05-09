@@ -884,6 +884,7 @@ void Framework::FillApiMarkInfo(ApiMarkPoint const & api, place_page::Info & inf
   string const & name = api.GetName();
   if (!name.empty())
     info.m_customName = name;
+
   info.m_apiId = api.GetID();
   info.m_apiUrl = GenerateApiBackUrl(api);
 }
@@ -1960,7 +1961,9 @@ bool Framework::ShowMapForURL(string const & url)
       place_page::Info info;
       if (apiMark)
       {
+        // route-to here
         FillApiMarkInfo(*apiMark, info);
+        info.m_shouldShowRouteFrom = false;
         ActivateMapSelection(false, df::SelectionShape::OBJECT_USER_MARK, info);
       }
       else

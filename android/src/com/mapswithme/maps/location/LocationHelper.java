@@ -316,7 +316,7 @@ public enum LocationHelper
     }
     if (mMyPosition == null)
       mMyPosition = new MapObject(MapObject.MY_POSITION, "", "", "", mSavedLocation.getLatitude(),
-          mSavedLocation.getLongitude(), "", Banner.EMPTY, false);
+          mSavedLocation.getLongitude(), "", Banner.EMPTY, false, true);
 
     mLogger.d( "mMyPosition = " + mMyPosition.getLat() + ", " + mMyPosition.getLon() );
     return mMyPosition;

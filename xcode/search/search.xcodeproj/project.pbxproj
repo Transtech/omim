@@ -1050,8 +1050,8 @@
 				675346AF1A4055CF00A0A8C3 /* search */,
 				671C620B1AE9225100076BD0 /* search_tests */,
 				80DB630F1EAC50D800CD2620 /* search_integration_tests */,
-				80DB63621EAF112000CD2620 /* search_online_tests */,
 				679624821D10133300AE4E3C /* search_tests_support */,
+				80DB63621EAF112000CD2620 /* search_online_tests */,
 			);
 		};
 /* End PBXProject section */

@@ -415,7 +415,7 @@ public class ComplianceController implements LocationListener, GraphHopperRouter
 
                                 Log.i( TAG, "ComplianceController::start() Calling RoutingController::start() for planned route " + plannedId );
                                 RoutingController.get().setEndPoint( new MapObject( MapObject.POI, "", null, null,
-                                        endLat, endLng, null, null, false ) );
+                                        endLat, endLng, null, null, false, true ) );
                                 RoutingController.get().start();
                             }
                         }, 2000 );

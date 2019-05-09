@@ -44,6 +44,8 @@ public:
   bool ShouldShowAddBusiness() const;
   bool ShouldShowEditPlace() const;
 
+  bool ShouldShowRouteFrom() const;
+
   /// @returns true if Back API button should be displayed.
   bool HasApiUrl() const;
 
@@ -134,5 +136,7 @@ public:
   string m_localizedWifiString;
   /// Booking rating string
   string m_localizedRatingString;
+
+  bool m_shouldShowRouteFrom = true;
 };
 }  // namespace place_page

@@ -36,18 +36,19 @@ public class MapObject implements Parcelable
   @Nullable
   private Banner mBanner;
   private boolean mReachableByTaxi;
+  private boolean mShouldShowRouteFrom;
 
   public MapObject(@MapObjectType int mapObjectType, String title, String subtitle, String address,
                    double lat, double lon, String apiId, @Nullable Banner banner,
-                   boolean reachableByTaxi)
+                   boolean reachableByTaxi, boolean showRouteFrom)
   {
     this(mapObjectType, title, subtitle, address, lat, lon, new Metadata(), apiId, banner,
-         reachableByTaxi);
+         reachableByTaxi, showRouteFrom);
   }
 
   public MapObject(@MapObjectType int mapObjectType, String title, String subtitle, String address,
                    double lat, double lon, Metadata metadata, String apiId, @Nullable Banner banner,
-                   boolean reachableByTaxi)
+                   boolean reachableByTaxi, boolean showRouteFrom)
   {
     mMapObjectType = mapObjectType;
     mTitle = title;
@@ -59,6 +60,7 @@ public class MapObject implements Parcelable
     mApiId = apiId;
     mBanner = banner;
     mReachableByTaxi = reachableByTaxi;
+    mShouldShowRouteFrom = showRouteFrom;
   }
 
   protected MapObject(Parcel source)
@@ -73,7 +75,8 @@ public class MapObject implements Parcelable
          (Metadata) source.readParcelable(Metadata.class.getClassLoader()),
          source.readString(), // ApiId;
          (Banner) source.readParcelable(Banner.class.getClassLoader()),
-         source.readByte() != 0); // ReachableByTaxi
+         source.readByte() != 0, // ReachableByTaxi
+         source.readByte() != 0);
   }
 
   /**
@@ -219,6 +222,7 @@ public class MapObject implements Parcelable
     dest.writeString(mApiId);
     dest.writeParcelable(mBanner, 0);
     dest.writeByte((byte) (mReachableByTaxi ? 1 : 0));
+    dest.writeByte((byte) (mShouldShowRouteFrom ? 1 : 0));
   }
 
   public static final Creator<MapObject> CREATOR = new Creator<MapObject>()

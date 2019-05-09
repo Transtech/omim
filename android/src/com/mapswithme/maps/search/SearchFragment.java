@@ -469,7 +469,7 @@ public class SearchFragment extends BaseMwmFragment
     {
       //noinspection ConstantConditions
       final MapObject point = new MapObject(MapObject.SEARCH, result.name,
-          result.description.featureType, "", result.lat, result.lon, "", Banner.EMPTY, false);
+          result.description.featureType, "", result.lat, result.lon, "", Banner.EMPTY, false, true);
       RoutingController.get().onPoiSelected(point);
     }
 
@@ -624,14 +624,14 @@ public class SearchFragment extends BaseMwmFragment
         else if (firstSeg != null) {
           //AG: hack - replace the MapObject name with the route name for display purposes
           MapObject mapObj = new MapObject(MapObject.POI, routeName, null, null,
-                  firstSeg.getStart().getLatitude(), firstSeg.getStart().getLongitude(), null, null, false);
+                  firstSeg.getStart().getLatitude(), firstSeg.getStart().getLongitude(), null, null, false, true);
           RoutingController.get().setStartPoint(mapObj);
         }
 
         if (lastSeg != null) {
           //AG: hack - replace the MapObject name with the route name for display purposes
           MapObject mapObj = new MapObject(MapObject.POI, routeName, null, null,
-                  lastSeg.getStart().getLatitude(), lastSeg.getStart().getLongitude(), null, null, false);
+                  lastSeg.getStart().getLatitude(), lastSeg.getStart().getLongitude(), null, null, false, true);
           RoutingController.get().setEndPoint(mapObj);
         }
 

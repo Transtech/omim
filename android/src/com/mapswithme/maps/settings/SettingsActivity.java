@@ -83,7 +83,8 @@ public class SettingsActivity extends PreferenceActivity
     loadHeadersFromResource(R.xml.prefs_headers, target);
 
     mHeaders.clear();
-/* AG: disable OSM profile settings
+
+    /* AG: disable OSM profile settings
     for (Header h : target)
     {
       mHeaders.put(h.id, h);
@@ -94,17 +95,25 @@ public class SettingsActivity extends PreferenceActivity
         h.title = OsmOAuth.getUsername();
       }
     }
-*/
+    */
+
+    Header toRemove = null;
+    for (Header h : target) {
+      if (h.id == R.id.launch_demo) {
+        toRemove = h;
+      }
+    }
+
+    if (toRemove != null) target.remove(toRemove);
   }
 
   @Override
   public void onHeaderClick(@NonNull Header header, int position)
   {
-    /*
+
     if (header.id == R.id.launch_demo) {
       startActivity(new Intent(this, DemoActivity.class));
     }
-    */
 
     /*
     if (header.id == R.id.group_map)

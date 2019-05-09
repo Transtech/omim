@@ -35,9 +35,9 @@
     android:fragment="com.mapswithme.maps.settings.HelpFragment"/>
   -->
 
-  <!--header
-          android:id="@+id/launch_demo"
-          android:title="Launch Demo" /-->
+  <header
+      android:id="@+id/launch_demo"
+      android:title="Launch Demo" />
 
   <header
       android:id="@+id/about"

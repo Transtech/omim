@@ -74,7 +74,7 @@ public class DemoActivity extends BaseMwmFragmentActivity
 
         LinearLayout layout = (LinearLayout) findViewById( R.id.demo_layout );
 
-        for( int i = 0; i < 3; i++ )
+        for( int i = 0; i < 4; i++ )
         {
             View v = getLayoutInflater().inflate( R.layout.demo_item_layout, null );
 
@@ -122,6 +122,9 @@ public class DemoActivity extends BaseMwmFragmentActivity
             case 2:
                 return formatEntry("Network Compliance when Rerouting",
                         "The local device reroutes on a compliant network when driver diverts (B-Double)");
+
+            case 3:
+                return formatEntry("GPS-1", "");
         }
 
         return formatEntry("Whoops", "Not that many demos defined!");
@@ -154,6 +157,10 @@ public class DemoActivity extends BaseMwmFragmentActivity
 
             case 2:
                 startReRouteDemo();
+                break;
+
+            case 3:
+                startGPS1();
                 break;
 
             default:
@@ -297,7 +304,7 @@ public class DemoActivity extends BaseMwmFragmentActivity
 
         Log.i( TAG, "Set start position to " + DEMO3_START.getLatitude() + ", " + DEMO3_START.getLongitude() );
         //create a dummy bookmarked end point as our end position
-        MapObject endPoint = new MapObject(MapObject.API_POINT, "Mitcham Hotel", null, null, -37.816931, 145.193893, null, null, false );
+        MapObject endPoint = new MapObject(MapObject.API_POINT, "Mitcham Hotel", null, null, -37.816931, 145.193893, null, null, false, true );
         Log.i( TAG, "Set end position to " + endPoint.getLat() + ", " + endPoint.getLon() );
 
         RoutingController.get().attach( MwmApplication.getsMvmActivity() );
@@ -312,6 +319,21 @@ public class DemoActivity extends BaseMwmFragmentActivity
 
         get().startActivity( new Intent( get(), MwmActivity.class ) );
         Log.i( TAG, "Started demo 3" );
+        get().finish();
+    }
+
+    private void startGPS1() {
+        //set our start position
+        LocationHelper.INSTANCE.onLocationUpdated( TRANSTECH_OFFICE );
+
+        DemoLocationProvider.GPS_DATA_SOURCE = "/sdcard/MapsWithMe/Demo0.txt";
+        Log.i( TAG, "Set GPS data source to " + DemoLocationProvider.GPS_DATA_SOURCE );
+        LocationHelper.INSTANCE.setUseDemoGPS( true );
+        Log.i( TAG, "Started demo location provider" );
+
+        get().startActivity( new Intent( get(), MwmActivity.class ) );
+
+        Log.i( TAG, "Started GPS 1" );
         get().finish();
     }
 }

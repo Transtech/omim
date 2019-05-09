@@ -9,6 +9,7 @@ KNOWN_QMAKE_PATHS=( \
   /Developer/Tools/qmake \
   /usr/local/opt/qt5/bin/qmake \
   ~/Developer/Qt/5.?/clang_64/bin/qmake \
+  /Developer/Qt/5.?/clang_64/bin/qmake \
   ~/Qt/5.?/clang_64/bin/qmake \
   ~/Qt5.?.0/5.?/clang_64/bin/qmake \
   /cygdrive/c/Qt/5.?/msvc2013_64/bin/qmake.exe \

@@ -40,6 +40,11 @@ bool Info::ShouldShowEditPlace() const
          !IsMyPosition() && IsFeature();
 }
 
+bool Info::ShouldShowRouteFrom() const
+{
+    return m_shouldShowRouteFrom;
+}
+
 bool Info::HasApiUrl() const { return !m_apiUrl.empty(); }
 bool Info::HasWifi() const { return GetInternet() == osm::Internet::Wlan; }
 

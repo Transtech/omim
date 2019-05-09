@@ -3,7 +3,7 @@ CURRENT_PROJECT_VERSION = 7.0.4
 // Paths
 OMIM_ROOT = $(PROJECT_DIR)/../..
 BUILD_DIR = $(OMIM_ROOT)/../omim-build/xcode
-QT_PATH = /usr/local/opt/qt5
+QT_PATH = /Developer/Qt/5.8/clang_64
 BOOST_ROOT = $(OMIM_ROOT)/3party/boost
 
 HEADER_SEARCH_PATHS = $(inherited) $(OMIM_ROOT) $(BOOST_ROOT)
